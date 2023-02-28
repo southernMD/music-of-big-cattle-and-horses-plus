@@ -28,7 +28,7 @@ export default defineConfig({
           charset: false,
           javascriptEnabled: true,
           // 这样就能全局使用 src/assets/styles/mixins.less 定义的 变量
-          additionalData: `@import "${resolve('./src/renderer/src/assets/css/mixins.less')}";`
+          additionalData:  `@import "${resolve('./src/renderer/src/assets/css/mixins.less')}";`
         },
       }
     },

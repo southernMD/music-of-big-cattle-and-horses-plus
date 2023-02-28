@@ -12,19 +12,80 @@ const routes: Array<RouteRecordRaw> = [
     {
         path:'/app',
         name:'app',
-        component:()=>import('@renderer/components/AppSmall.vue')
-        // children:[
-        //     {
-        //         path: '/:pathMatch(.*)',
-        //         component: ()=>import('@/components/myVC/404.vue'),
-        //     }
-        // ]
+        component:()=>import('@renderer/views/AppSmall.vue'),
+        children:[
+            {
+                path:'FixRoute',
+                name:'FixRoute',
+                component:()=>import('@renderer/components/myVC/FixRoute.vue')
+            },
+            // {
+            //     path: 'findMusic',
+            //     name:'findMusic',
+            //     component:()=>import('@/views/FindMusic/index.vue'),
+            //     children:[
+            //         {
+            //             path:'find1',
+            //             name:'personalRecommend',
+            //             component:()=>import('@/views/FindMusic/personalRecommend/index.vue'),
+            //         },
+            //         {
+            //             path:'find2',
+            //             name:'q1',
+            //             component:()=>import('@/views/FindMusic/q1.vue'),
+            //         },
+            //         {
+            //             path:'find3',
+            //             name:'q2',
+            //             component:()=>import('@/views/FindMusic/q2.vue'),
+            //         }
+            //     ],
+            // },
+            {
+                path:`playlist`,
+                name:'playlist',
+                component:()=>import('@renderer/views/PlayList/index.vue'),
+                children:[
+                    {
+                        path:'song',
+                        name:'songPlaylist',
+                        component:()=>import('@renderer/views/PlayList/Song/index.vue'),
+                    },
+                    {
+                        path:'comment',
+                        name:'commentPlaylist',
+                        component:()=>import('@renderer/views/PlayList/Comment/index.vue'),
+                    }, {
+                        path:'whoStart',
+                        name:'whoStartPlaylist',
+                        component:()=>import('@renderer/views/PlayList/WhoStart/index.vue'),
+                    },
+                ],
+            },
+            // {
+            //     path:`personalFM`,
+            //     name:'personalFM',
+            //     component:()=>import('@/views/PersonalFM/index.vue'),
+            //     meta:{
+            //         keepAlive:true
+            //     }
+            // },
+            // {
+            //     path:`mydj`,
+            //     name:'mydj',
+            //     component:()=>import('@/views/MyDj/index.vue'),
+            // },
+            {
+                path: '/:pathMatch(.*)',
+                component: ()=>import('@renderer/components/myVC/404.vue'),
+            }
+        ]
     },
-    // {
-    //     path:'/lyric',
-    //     name:'lyric',
-    //     component:()=>import('@/views/lyric.vue')
-    // },
+    {
+        path:'/lyric',
+        name:'lyric',
+        component:()=>import('@renderer/views/lyric.vue')
+    },
     // {
     //     path:'/dragMessage',
     //     name:'dragMessage',

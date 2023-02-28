@@ -7,14 +7,14 @@
 </template>
 
 <script lang="ts" setup>
-import { getCurrentInstance, onMounted, toRef } from 'vue';
+import { getCurrentInstance, onMounted, toRef ,nextTick} from 'vue';
 import { getPxColor } from '@renderer/utils/getCanvasColor'
 import icon from '@renderer/assets/icon.png'
 import iconRed from '@renderer/assets/iconRed.png'
 
-import {useMainMenu} from '@renderer/store'
+import {useMainMenu,useGlobalVar} from '@renderer/store'
 let MainMenu = useMainMenu();
-
+let globalVar = useGlobalVar()
 let $el = getCurrentInstance()
 defineProps<{
     bkColor?: string,
@@ -28,50 +28,53 @@ let ctx: CanvasRenderingContext2D
 
 let flagC = toRef(MainMenu,'colorBlock')
 onMounted(() => {
-    canvas = document.querySelector(`#canvas${$el?.props.index}`) as HTMLCanvasElement
-    ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-    if($el?.props.other){
-        let ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-        ctx.beginPath()
-        let gradient = ctx.createRadialGradient(19,19,8,19,19,20);
-        gradient.addColorStop(1,"#7bf57e");
-        gradient.addColorStop(0,"white");
-        ctx.fillStyle = gradient;
-        ctx.rect(0,0,19,19)
-        ctx.fill()
-        ctx.closePath()
-        ctx.beginPath()
-        gradient = ctx.createRadialGradient(19,19,8,19,19,20);
-        gradient.addColorStop(1,"#6cc4de");
-        gradient.addColorStop(0,"white");
-        ctx.fillStyle = gradient;
-        ctx.rect(0,19,19,19)
-        ctx.fill()
-        ctx.closePath()
-        ctx.beginPath()
-        gradient = ctx.createRadialGradient(19,19,8,19,19,20);
-        gradient.addColorStop(1,"#ffdb76");
-        gradient.addColorStop(0,"white");
-        ctx.fillStyle = gradient;
-        ctx.rect(19,0,19,19)
-        ctx.fill()
-        ctx.closePath()
-        ctx.beginPath()
-        gradient = ctx.createRadialGradient(19,19,8,19,19,20);
-        gradient.addColorStop(1,"#f67260");
-        gradient.addColorStop(0,"white");
-        ctx.fillStyle = gradient;
-        ctx.rect(19,19,19,19)
-        ctx.fill()
-        ctx.closePath()
-    }else{
-        ctx.fillStyle = $el?.props.bkColor as string
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-    }
-    if(!$el?.props.border){
-        let dom = document.querySelector(`#dom${$el?.props.index}`) as HTMLElement
-        dom.style.border = 'none'
-    }
+    nextTick(()=>{
+        canvas = document.querySelector(`#canvas${$el?.props.index}`) as HTMLCanvasElement
+        ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+        if($el?.props.other){
+            let ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+            ctx.beginPath()
+            let gradient = ctx.createRadialGradient(19,19,8,19,19,20);
+            gradient.addColorStop(1,"#7bf57e");
+            gradient.addColorStop(0,"white");
+            ctx.fillStyle = gradient;
+            ctx.rect(0,0,19,19)
+            ctx.fill()
+            ctx.closePath()
+            ctx.beginPath()
+            gradient = ctx.createRadialGradient(19,19,8,19,19,20);
+            gradient.addColorStop(1,"#6cc4de");
+            gradient.addColorStop(0,"white");
+            ctx.fillStyle = gradient;
+            ctx.rect(0,19,19,19)
+            ctx.fill()
+            ctx.closePath()
+            ctx.beginPath()
+            gradient = ctx.createRadialGradient(19,19,8,19,19,20);
+            gradient.addColorStop(1,"#ffdb76");
+            gradient.addColorStop(0,"white");
+            ctx.fillStyle = gradient;
+            ctx.rect(19,0,19,19)
+            ctx.fill()
+            ctx.closePath()
+            ctx.beginPath()
+            gradient = ctx.createRadialGradient(19,19,8,19,19,20);
+            gradient.addColorStop(1,"#f67260");
+            gradient.addColorStop(0,"white");
+            ctx.fillStyle = gradient;
+            ctx.rect(19,19,19,19)
+            ctx.fill()
+            ctx.closePath()
+        }else{
+            ctx.fillStyle = $el?.props.bkColor as string
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+        }
+        if(!$el?.props.border){
+            let dom = document.querySelector(`#dom${$el?.props.index}`) as HTMLElement
+            dom.style.border = 'none'
+        }
+    })
+
 })
 
 const showColor = () => {
@@ -92,6 +95,10 @@ const showColor = () => {
         localStorage.setItem('colorBlock','1');
         flagC.value = $el?.props.index as string
         MainMenu.primaryColor = 'rgb(236,65,65)'
+        if(globalVar.oneself){
+            document.documentElement.style.setProperty(`--broundColor`, `rgba(245,245,245,.8)`)
+            localStorage.setItem('broundColor',`rgba(245,245,245,.8)`)
+        }
     }else{
         MainMenu.iconSrc = icon
         let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
@@ -109,6 +116,10 @@ const showColor = () => {
         localStorage.setItem('colorBlock',`${$el?.props.index}`);
         flagC.value = $el?.props.index as string
         MainMenu.primaryColor = `rgb(${arr[0]}, ${arr[1]}, ${arr[2]})`
+        if(globalVar.oneself){
+            document.documentElement.style.setProperty(`--broundColor`, `rgba(${arr[0]}, ${arr[1]}, ${arr[2]},.8)`)
+            localStorage.setItem('broundColor',`${arr[0]},${arr[1]},${arr[2]},.8`)
+        }
     }
 
 }

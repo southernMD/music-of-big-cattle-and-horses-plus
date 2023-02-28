@@ -1,9 +1,9 @@
 <template>
     <div class="bk" @dblclick.stop id="bkChangeSkin">
         <div class="list">
-            <Tag message="主题" :ifClick="flagList[0]" @click="changeTag(0)"></Tag>
-            <Tag message="纯色" :ifClick="flagList[1]" @click="changeTag(1)"></Tag>
-            <Tag message="自定义" :ifClick="flagList[2]" @click="changeTag(2)"></Tag>
+            <Tag message="主题" :ifClick="flagList[0]" @click="changeTag(0)" name="zhuti"></Tag>
+            <Tag message="纯色" :ifClick="flagList[1]" @click="changeTag(1)" name="cunse"></Tag>
+            <Tag message="自定义" :ifClick="flagList[2]" @click="changeTag(2)" name="zidingyi"></Tag>
         </div>
         <div class="main">
             <div v-if="flagList[0]" class="zhuti">
@@ -125,60 +125,13 @@ const recover = ()=>{
     v.src = ''
     const h:any = document.getElementById('mainBackground') as HTMLImageElement
     h.src = ''
+    window.electron.ipcRenderer.send('recove-background')
     changeNMred()
+    localStorage.setItem('oneself','0')
+    globalVar.oneself = 0
 }
 
-//换被景图
-window.electron.ipcRenderer.on('file-ready',({},{liu,extname})=>{
-    console.log(liu,extname);
-    const file = new File([liu], `background.${extname}`, { type: `image/${extname}` });
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = function() {
-        const newUrl = this.result;
-        const h:any = document.getElementById('mainBackground') as HTMLImageElement
-        h.src = newUrl
-        const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-        v.src = ''
-    };
-    // const h = document.querySelector('#header') as HTMLElement
-    // h.style.backgroundImage =   "data:image/png;base64," + base64
-    localStorage.setItem('broundColor', '33,33,36,.8')
-    document.documentElement.style.setProperty(`--broundColor`, `rgba(33,33,36,.8)`)
-    document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
-    MainMenu.colorBlock = extname
-    localStorage.setItem('colorBlock', extname);
-})
 
-window.electron.ipcRenderer.on('mp4-ready',({})=>{
-    globalVar.loadingMp4Bk = true
-    fetch(`http://127.0.0.1:2233/video`).then((response)=>{
-        return response.arrayBuffer()
-    }).then((buffer)=>{
-        console.log(buffer);
-        const url = URL.createObjectURL(new Blob([buffer],{
-            type:"video/mp4"
-        }))
-        const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-        v.src = url
-        v.play()
-        const h = document.getElementById('mainBackground') as HTMLImageElement
-        h.src = ''
-        localStorage.setItem('broundColor', '33,33,36,.8')
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(33,33,36,.8)`)
-        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-        localStorage.setItem('MainTitle', `255, 255, 255`)
-        localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-        localStorage.setItem('MainMenuHover', `255, 255, 255`)
-    })
-})
 </script>
 
 <style lang="less" scoped>

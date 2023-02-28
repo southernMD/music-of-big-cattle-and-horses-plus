@@ -33,7 +33,8 @@ export default (window:BrowserWindow) =>{
             .outputOptions(
                 '-movflags', 'frag_keyframe+empty_moov+faststart',
                 '-preset', 'veryfast', //以损失画质换取流畅度
-                '-g', '18')
+                '-g', '18',
+                )
             .on('progress', function ({timemark}) {
                 window.webContents.send('loading-mp4',{p:Math.ceil(pickTime(timemark)/pickTime(total)*100)})
                 console.log(Math.ceil(pickTime(timemark)/pickTime(total)*100));

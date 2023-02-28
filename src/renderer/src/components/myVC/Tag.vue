@@ -3,7 +3,8 @@
         noDrag:!Main.dragMouse,
         active:ifClick || $route.name == name,
         disActive:!ifClick || $route.name != name,
-        big:(ifClick || $route.name == name) && big
+        big:(ifClick || $route.name == name) && big,
+        'tag-oneself':oneself
     }">
         <span  class="message" ref="message">{{message}}</span>
         <div class="line" ref="line"></div>
@@ -12,11 +13,12 @@
 
 <script lang="ts" setup>
 import { getCurrentInstance, onMounted,ComponentInternalInstance,ref, toRef, watch,nextTick } from 'vue';
-import {useMainMenu,useMain} from '@renderer/store'
+import {useMainMenu,useMain,useGlobalVar} from '@renderer/store'
 import {useRouter,useRoute} from 'vue-router'
 // const $router = useRouter()
 const $route = useRoute()
 const MainMenu = useMainMenu();
+const globalVar = useGlobalVar();
 const Main = useMain();
 const $el:ComponentInternalInstance = getCurrentInstance() as ComponentInternalInstance
     defineProps<{
@@ -25,6 +27,7 @@ const $el:ComponentInternalInstance = getCurrentInstance() as ComponentInternalI
         ifClick:boolean
         size?:number
         name?:string
+        oneself?:number
     }
     >()
     onMounted(()=>{
@@ -140,6 +143,11 @@ const $el:ComponentInternalInstance = getCurrentInstance() as ComponentInternalI
             margin: 0 auto;
             margin-top: 5px;
             font-size: inherit;
+        }
+    }
+    .tag-oneself{
+        :hover{
+            color:rgb(255,255,255);
         }
     }
 </style>

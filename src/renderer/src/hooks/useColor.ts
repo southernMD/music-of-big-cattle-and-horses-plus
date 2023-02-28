@@ -1,16 +1,19 @@
 import {onMounted,onBeforeUnmount,watch,toRef} from 'vue'
-import {useMainMenu} from '@renderer/store'
+import {useMainMenu,useGlobalVar} from '@renderer/store'
 export default function (): any {
     const MainMenu = useMainMenu();
+    const globalVar = useGlobalVar()
     let mainColor = toRef(MainMenu, 'colorBlock')
     let primaryColor = toRef(MainMenu, 'primaryColor')
+    let flag = 0
     watch(mainColor, (newValue) => {
         if(newValue.length == 0){
             newValue = localStorage.getItem('colorBlock') as string
             MainMenu.iconSrc = "/src/assets/icon.png"
         }
-        if (newValue === 'NMblack') {
-            document.documentElement.style.setProperty('--broundColor', `rgba(34,34,37,1)`);
+        if (newValue === 'NMblack'  || globalVar.oneself && flag++ == 0) {
+            if(!globalVar.oneself)document.documentElement.style.setProperty('--broundColor', `rgba(34,34,37,1)`);
+            // if(globalVar.oneself)document.documentElement.style.setProperty('--broundColor', `rgba(34,34,37,.8)`);
             document.documentElement.style.setProperty('--radioBkColor', `rgb(34,34,37)`);
             document.documentElement.style.setProperty('--otherBkColor', `rgb(43,43,43)`);
             document.documentElement.style.setProperty('--mianbanBkColor', `rgb(54,54,54)`);

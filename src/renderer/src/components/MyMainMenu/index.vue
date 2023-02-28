@@ -22,13 +22,13 @@
         </div>
         <div class="right">
             <div v-show="!songMenu" class="user" @click="loginOrPerson" ref="user">
-                <el-image draggable="false" style="width:30px; height: 30px" :src="icon" :class="{noDrag:!Main.dragMouse}">
+                <el-image draggable="false" style="width:30px; height: 30px" :src="BasicApi.profile?.avatarUrl" :class="{noDrag:!Main.dragMouse}">
                     <template #error>
                         <el-image draggable="false" :src="icon" style="width: 30px; height: 30px"></el-image>
                     </template>
                 </el-image>
                 <div @dblclick.stop :class="{noDrag:!Main.dragMouse}">
-                    <span class="userName">{{'未登陆' }}</span>
+                    <span class="userName">{{ BasicApi.profile?.nickname || '未登陆' }}</span>
                     <i class="iconfont icon-xiajiantou"></i>
                 </div>
                 <Teleport to="#header" v-if="flagMessage">
@@ -51,18 +51,18 @@
                 <i class="iconfont icon-guanbi_o" @click="guanbi" :class="{noDrag:!Main.dragMouse}"></i>
             </div>
         </div>
-        <!-- <slot name="songLrc"></slot>  -->
+        <slot name="songLrc"></slot> 
     </header>
-    <!-- <Teleport to=".smallApp">
+    <Teleport to=".smallApp">
         <div class="red-line"></div>
-    </Teleport> -->
+    </Teleport>
 </template>
 
 <script lang="ts" setup>
 import { Component, ref, Ref, toRef, watch, defineAsyncComponent } from 'vue'
 
 // import { useElectronToApp, useMainMenu, useBasicApi, useMain,useGlobalVar } from '@renderer/store'  //pinia
-import {useMainMenu,useMain,useGlobalVar} from '@renderer/store'
+import {useMainMenu,useMain,useGlobalVar,useBasicApi} from '@renderer/store'
 import { onMounted, getCurrentInstance, ComponentInternalInstance } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import icon from '@renderer/assets/icon.png'
@@ -72,7 +72,7 @@ import iconRed from '@renderer/assets/iconRed.png'
 // const LoginPage = defineAsyncComponent(() => import('../LoginPage.vue'))
 
 // const ElectronToApp = useElectronToApp();
-// const BasicApi = useBasicApi();
+const BasicApi = useBasicApi();
 const MainMenu = useMainMenu();
 const Main = useMain()
 const globalVar = useGlobalVar();
@@ -80,7 +80,7 @@ const $el = getCurrentInstance() as ComponentInternalInstance;
 const $router = useRouter();
 const $route = useRoute();
 let model: Ref<boolean> = ref(true)
-// let flagLogin: Ref<boolean> = toRef(globalVar,'flagLogin')
+let flagLogin: Ref<boolean> = toRef(globalVar,'flagLogin')
 // let time: any = null;
 let moveFlag: Ref<boolean> = ref(false)
 let mouseX: number = 0;
@@ -170,7 +170,7 @@ const dbBig = (e: Event) => {
 //单击拖动
 const dragWin = (e: any) => {
     console.log('e.path.length',e.path.length );
-    if (e.path.length == 6 || e.path.length == 7) {
+    if (e.path.length == 8 || e.path.length == 7) {
         moveFlag.value = true;
         mouseX = e.pageX
         mouseY = e.pageY
@@ -226,22 +226,22 @@ onMounted(() => {
 })
 
 // //正式业务开始
-// let userMessage = toRef(BasicApi, 'profile')
+let userMessage = toRef(BasicApi, 'profile')
 
 
-// const loginOrPerson = async (e: any): Promise<any> => {
-//     let arr = [...e.target.classList]
-//     if (!userMessage.value) { //无信息则扫码登陆
-//         flagLogin.value = true;
-//     } else if (arr.includes('el-image__inner')) {
-//         console.log('个人中心页');
-//     } else {
-//         flagMessage.value = !flagMessage.value
-//         flagSkin.value = false
-//         let dom: HTMLElement = $el.refs.user as HTMLElement
-//         reSetLeft(dom)
-//     }
-// }
+const loginOrPerson = async (e: any): Promise<any> => {
+    let arr = [...e.target.classList]
+    if (!userMessage.value) { //无信息则扫码登陆
+        flagLogin.value = true;
+    } else if (arr.includes('el-image__inner')) {
+        console.log('个人中心页');
+    } else {
+        flagMessage.value = !flagMessage.value
+        flagSkin.value = false
+        let dom: HTMLElement = $el.refs.user as HTMLElement
+        reSetLeft(dom)
+    }
+}
 
 // //个人信息
 // // const personalMessage = () => {

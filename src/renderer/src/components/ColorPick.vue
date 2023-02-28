@@ -2,41 +2,52 @@
     <div class="pick-color">
         <div class="hue">
             <canvas id="canvasHue" width="240" height="4"></canvas>
-            <div class="btn btnT btnX"  @mousedown="beginMove"></div>
+            <div class="btn btnT btnX" ref="btnT"  @mousedown="beginMove"></div>
         </div>
         <div class="mask">
             <canvas id="canvasSMask" width="240" height="4"></canvas>
-            <div class="btn btnB btnX"  @mousedown="beginMove"></div>
+            <div class="btn btnB btnX" ref="btnB"  @mousedown="beginMove"></div>
         </div>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted,toRef,watch } from 'vue';
+import { onMounted,toRef,watch,getCurrentInstance,ComponentInternalInstance,nextTick } from 'vue';
 import { hsl } from '../utils/hsl'
 import {getPxColor} from '../utils/getCanvasColor'
-import {useMainMenu} from '@renderer/store'
+import {useMainMenu,useGlobalVar} from '@renderer/store'
 import icon from '@renderer/assets/icon.png'
 
 const MainMenu = useMainMenu();
+const globalVar = useGlobalVar()
 let flagC = toRef(MainMenu,'colorBlock')
 let clickX: number;
 let _that: HTMLElement;
 let which: HTMLElement;
-
+const $el = getCurrentInstance() as ComponentInternalInstance 
 let Hue: HTMLCanvasElement;
 let SMask: HTMLCanvasElement
 
 watch(flagC,()=>{
-    if(flagC.value !== 'Other'){
-        localStorage.setItem('baseT','0')
-        localStorage.setItem('baseB','0')
-        const btns = document.querySelectorAll('.btnX')
-        btns.forEach((btn:any)=>{
-            btn.style.left = 0
-        })
-    }
+    nextTick(()=>{
+        const bT = $el.refs.btnT as HTMLElement
+        const bB = $el.refs.btnB as HTMLElement
+        if(flagC.value !== 'Other' && !flagC.value.startsWith('.')){
+            localStorage.setItem('baseT','0')
+            localStorage.setItem('baseB','0')
+            bT.style.left = 0 + 'px'
+            bB.style.left = 0 + 'px'
+        }
+    })
+
 },{immediate:true})
+
+onMounted(()=>{
+    const bT = $el.refs.btnT as HTMLElement
+    const bB = $el.refs.btnB as HTMLElement
+    bT.style.left = localStorage.getItem('baseT') + 'px'
+    bB.style.left = localStorage.getItem('baseB') + 'px'
+})
 
 const beginMove = (e: MouseEvent) => {
     clickX = e.pageX
@@ -86,6 +97,10 @@ function movingFn(e: MouseEvent) {
         localStorage.setItem('primaryColor',`${color[0]},${color[1]},${color[2]}`)
         localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},1`)
         MainMenu.primaryColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+        if(globalVar.oneself){
+            document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},.8)`)
+            localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},.8`)
+        }
     } else if (which.classList.contains('mask')) {
         let moveDistance = e.pageX - clickX + baseB
         if (moveDistance < 0) moveDistance = 0
@@ -99,6 +114,10 @@ function movingFn(e: MouseEvent) {
         localStorage.setItem('primaryColor',`${color[0]},${color[1]},${color[2]}`)
         localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},1`)
         MainMenu.primaryColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+        if(globalVar.oneself){
+            document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},.8)`)
+            localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},.8`)
+        }
     }
 }
 function endMove(): void {
