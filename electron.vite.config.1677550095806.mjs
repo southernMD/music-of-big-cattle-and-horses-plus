@@ -1,0 +1,49 @@
+// electron.vite.config.ts
+import { resolve } from "path";
+import { defineConfig, externalizeDepsPlugin, bytecodePlugin } from "electron-vite";
+import vue from "@vitejs/plugin-vue";
+import AutoImport from "unplugin-auto-import/vite";
+import Components from "unplugin-vue-components/vite";
+import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
+var electron_vite_config_default = defineConfig({
+  main: {
+    plugins: [externalizeDepsPlugin(), bytecodePlugin()],
+    build: {
+      rollupOptions: {
+        external: ["express"]
+      }
+    }
+  },
+  preload: {
+    plugins: [externalizeDepsPlugin(), bytecodePlugin()]
+  },
+  renderer: {
+    resolve: {
+      alias: {
+        "@renderer": resolve("src/renderer/src")
+      }
+    },
+    css: {
+      preprocessorOptions: {
+        less: {
+          charset: false,
+          javascriptEnabled: true,
+          // 这样就能全局使用 src/assets/styles/mixins.less 定义的 变量
+          additionalData: `@import "${resolve("./src/renderer/src/assets/css/mixins.less")}";`
+        }
+      }
+    },
+    plugins: [
+      vue(),
+      AutoImport({
+        resolvers: [ElementPlusResolver()]
+      }),
+      Components({
+        resolvers: [ElementPlusResolver()]
+      })
+    ]
+  }
+});
+export {
+  electron_vite_config_default as default
+};

@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.web.json" }],
+  "compilerOptions": {
+    // ...
+    "types": ["element-plus/global","p-queue"],
+    "paths": {
+      "p-queue": ["./node_modules/p-queue/dist/index"]
+    }
+  }
+}
