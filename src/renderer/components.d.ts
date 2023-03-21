@@ -57,7 +57,4 @@ declare module '@vue/runtime-core' {
     WriteCommit: typeof import('./src/components/myVC/WriteCommit/index.vue')['default']
     ZhuanJi: typeof import('./src/components/myVC/LineMusic/ZhuanJi/index.vue')['default']
   }
-  export interface ComponentCustomProperties {
-    vInfiniteScroll: typeof import('element-plus/es')['ElInfiniteScroll']
-  }
 }
