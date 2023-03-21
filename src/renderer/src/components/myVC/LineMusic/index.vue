@@ -22,10 +22,10 @@
             <i class="iconfont icon-aixin_fill xin" :class="{ noDrag: !Main.dragMouse }" v-show="ifLike()"
                 @click="likeOrDislike"></i>
             <i class="iconfont icon-xiazai1" :class="{ noDrag: !Main.dragMouse }" @click="download(id)"
-                v-if="!ifDownload && !downloadId.includes(id)"></i>
+                v-if="!ifDownload && !downloadId.includes(id) && !local"></i>
             <canvas id="loadingCanvas" width="25" height="25" ref="loadingCanvas"
-                v-show="downloadId.includes(id)"></canvas>
-            <i class="iconfont icon-zhengque" v-if="!(downloadId.includes(id)) && !(!ifDownload)"
+                v-show="downloadId.includes(id) && !local"></canvas>
+            <i class="iconfont icon-zhengque" v-if="!(downloadId.includes(id)) && !(!ifDownload) && !local"
                 :class="{ noDrag: !Main.dragMouse }"></i>
             <!-- <canvas id="loadingCanvas" width="18" height="18" ref="loadingCanvas"
                 v-show="true"></canvas> -->
@@ -55,7 +55,7 @@
                 <span v-else style="padding-left: 5px;">未知专辑</span>
             </div>
         </div>
-        <div class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{ dayjsMMSS(time) }}</span>
+        <div v-if="!local" class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{ dayjsMMSS(time) }}</span>
         </div>
         <div class="hot" v-if="hot">
             <div class="bk">
@@ -88,7 +88,7 @@ const props = defineProps<{
     title: string,
     singer: Array<any>,
     zhuanji?: any,
-    time: number,
+    time?: number,
     id: number,
     tns?: Array<string>,
     alia?: Array<string>,
@@ -99,6 +99,8 @@ const props = defineProps<{
     type?: string
     length?: number //歌单内歌曲总长度
     oneselfColor: boolean //是否启用oneself样式
+    local?:boolean // 是否本地歌曲
+    path?:string //本地歌曲路径
 }>()
 //leftblock传过来的id，限自己的歌单的id
 let playListid = inject<Ref<number>>('playListId') as Ref<number>
@@ -186,7 +188,7 @@ const replaceLocationed = () => {
 
 let addLoading = ref(false)
 let addLoadingMessage = ref(false)
-const $emit = defineEmits(['warpPlace'])
+const $emit = defineEmits(['warpPlace','localPlay'])
 const fnMouseDrag = async (e: any) => {
     for (let i = 0; i < e.path.length; i++) {
         if (e.path[i].classList != undefined && e.path[i].classList.contains('dragMouseStyleAdd')) {
@@ -338,62 +340,66 @@ const heartJust = async () => {
 
 
 const gotoPlay = (e: MouseEvent) => {
-    let _this = $el.refs['line-music'] as HTMLElement
-    let father = _this.parentNode as HTMLElement
-    if (originalList.value.length != 0 && father.getAttribute('id') != 'play-list-Panel-bottom') {
-        playingList.value = originalList.value as [any]
-        playingPrivileges.value = originalPrivileges.value as [any]
-    }
-    nextTick(async () => {
-        if (father.getAttribute('id') === 'song-sheet') {
-            console.log('添加到播放列表');
-            if (Main.beforePlayListId == playListid.value) {
-                Main.playing = $el.props.id as number
+    if(!props.local){
+        let _this = $el.refs['line-music'] as HTMLElement
+        let father = _this.parentNode as HTMLElement
+        if (originalList.value.length != 0 && father.getAttribute('id') != 'play-list-Panel-bottom') {
+            playingList.value = originalList.value as [any]
+            playingPrivileges.value = originalPrivileges.value as [any]
+        }
+        nextTick(async () => {
+            if (father.getAttribute('id') === 'song-sheet') {
+                console.log('添加到播放列表');
+                if (Main.beforePlayListId == playListid.value) {
+                    Main.playing = $el.props.id as number
+                    Main.playingindex = $el.props.index as number
+                    Main.playStatus = 'play'
+                    Main.songType = 'song'
+                    heartJust()
+                    return;
+                }
+                let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                Main.playingList = result.songs
+                Main.playingPrivileges = result.privileges
                 Main.playingindex = $el.props.index as number
+                Main.playing = $el.props.id as number
+                Main.beforePlayListId = playListid.value
                 Main.playStatus = 'play'
                 Main.songType = 'song'
+                console.log(Main.beforePlayListId, Main.playListId[0]);
                 heartJust()
-                return;
+            } else if (father.getAttribute('id') == 'play-list-Panel-bottom') {
+                Main.playing = $el.props.id as number
+                Main.playingindex = $el.props.index as number + 1
+                Main.playStatus = 'play'
+            } else if (father.getAttribute('id') === 'every-day') {
+                Main.playingList = BasicApi.everyDaySong
+                let playingPrivileges: Array<any> = []
+                BasicApi.everyDaySong.forEach((val) => {
+                    playingPrivileges.push(val.privilege)
+                })
+                Main.playingPrivileges = playingPrivileges
+                Main.playingindex = Number($el.props.index)
+                Main.playing = BasicApi.everyDaySong[Number($el.props.index) - 1].id
+                Main.playStatus = 'play'
+                Main.songType = 'song'
             }
-            let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
-            Main.playingList = result.songs
-            Main.playingPrivileges = result.privileges
-            Main.playingindex = $el.props.index as number
-            Main.playing = $el.props.id as number
-            Main.beforePlayListId = playListid.value
-            Main.playStatus = 'play'
-            Main.songType = 'song'
-            console.log(Main.beforePlayListId, Main.playListId[0]);
-            heartJust()
-        } else if (father.getAttribute('id') == 'play-list-Panel-bottom') {
-            Main.playing = $el.props.id as number
-            Main.playingindex = $el.props.index as number + 1
-            Main.playStatus = 'play'
-        } else if (father.getAttribute('id') === 'every-day') {
-            Main.playingList = BasicApi.everyDaySong
-            let playingPrivileges: Array<any> = []
-            BasicApi.everyDaySong.forEach((val) => {
-                playingPrivileges.push(val.privilege)
-            })
-            Main.playingPrivileges = playingPrivileges
-            Main.playingindex = Number($el.props.index)
-            Main.playing = BasicApi.everyDaySong[Number($el.props.index) - 1].id
-            Main.playStatus = 'play'
-            Main.songType = 'song'
-        }
-        //通知主进程修改播放图片以及文字
-        // $el.props.title
-    })
-    let str = $el.props.title + ' - ';
-    let singerArr = $el.props.singer as unknown as Array<any>
-    singerArr.forEach((element, index) => {
-        str += element.name
-        if (index != singerArr.length - 1) str += ' / '
-    })
-    window.electron.ipcRenderer.send('change-play-thum', str)
-    window.electron.ipcRenderer.send('render-play')
-    globalVar.closePointOutMessage = '已开始播放'
-    globalVar.closePointOut = true
+            //通知主进程修改播放图片以及文字
+            // $el.props.title
+        })
+        let str = $el.props.title + ' - ';
+        let singerArr = $el.props.singer as unknown as Array<any>
+        singerArr.forEach((element, index) => {
+            str += element.name
+            if (index != singerArr.length - 1) str += ' / '
+        })
+        window.electron.ipcRenderer.send('change-play-thum', str)
+        window.electron.ipcRenderer.send('render-play')
+        globalVar.closePointOutMessage = '已开始播放'
+        globalVar.closePointOut = true
+    }else{
+        $emit('localPlay',{index:props.index,id:props.id})
+    }
 }
 
 //下载音乐

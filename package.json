@@ -1,9 +1,9 @@
 {
-  "name": "2",
-  "version": "1.0.0",
-  "description": "An Electron application with Vue and TypeScript",
+  "name": "bingNMmusic",
+  "version": "0.0.1",
+  "description": "An MusicPlayer application with Vue-ts and Electron",
   "main": "./out/main/index.js",
-  "author": "example.com",
+  "author": "southernmd",
   "homepage": "https://www.electronjs.org",
   "scripts": {
     "format": "prettier --write .",
@@ -36,12 +36,17 @@
     "md5": "^2.3.0",
     "mysql": "^2.18.1",
     "nanoid": "3",
+    "node-id3": "^0.2.6",
+    "node-vibrant": "3.1.6",
     "nodemailer": "^6.9.1",
     "p-queue": "^7.3.4",
     "pinia": "^2.0.31",
     "pinia-plugin-persistedstate": "^3.1.0",
     "portfinder": "^1.0.32",
-    "vue-router": "^4.1.6"
+    "ref-napi": "^3.0.3",
+    "request": "^2.88.2",
+    "vue-router": "^4.1.6",
+    "windows-mutex": "^0.4.1"
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^1.0.1",
@@ -51,6 +56,7 @@
     "@types/fluent-ffmpeg": "^2.1.20",
     "@types/mysql": "^2.15.21",
     "@types/node": "16.18.11",
+    "@types/request": "^2.48.8",
     "@vitejs/plugin-vue": "^4.0.0",
     "@vue/eslint-config-prettier": "^7.0.0",
     "@vue/eslint-config-typescript": "^11.0.2",

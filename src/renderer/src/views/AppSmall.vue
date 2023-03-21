@@ -16,7 +16,7 @@
                 </template>
             </Suspense>
         </Teleport>
-        <MyDialog :flag="downloadFlag" @cancel="closed" @confirm="toDownload">
+        <MyDialog :flag="downloadFlag" @cancel="closed" @confirm="toDownload" @closeDialog="closed">
             <template #header>
                 <span class="title">下载音质选择</span>
             </template>
@@ -173,8 +173,9 @@ flagC.value = localStorage.getItem('colorBlock') as string
 const downloadFlag = toRef(globalVar, 'downloadFlag')
 const downloadLevel = toRef(globalVar, 'downloadLevel')
 const level = ref('standard')
-const closed = () => {
+const closed = (done?:()=>void) => {
     downloadFlag.value = false
+    if(done)done()
 }
 const levelList = ['标准(128kbit/s)', '较高(192kbit/s)', '极高(320kbit/s)', '无损(999kbit/s)']
 const levelListEn = ['standard', 'higher', 'exhigh', 'lossless']
@@ -289,7 +290,19 @@ const getUrl = async (controller: AbortController) => {
         .then(stream => new Response(stream))
         .then(response => response.arrayBuffer())
         .then(async () => {
-            //@ts-ignore
+            const detail = (await MainPinia.reqSongDetail([id])).data.songs[0]
+            console.log(detail);
+            const title = `${detail.name}`
+            const artistId:any[] = []
+            const artist = (detail.ar.map((item)=>{
+                artistId.push(item.id)
+                return `${item.name}`
+            })).join('/')
+            const image = detail.al.picUrl
+            const album = `${detail.al.name}`
+            const id3 = {
+                title,artist,image,album,ids:[detail.id,detail.al.id,...artistId],time:detail.dt
+            }
             const mergedChunks = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
             let offset = 0;
             for (const chunk of chunks) {
@@ -297,13 +310,14 @@ const getUrl = async (controller: AbortController) => {
                 offset += chunk.byteLength;
             }
             const arrayBuffer = mergedChunks.buffer;
-            window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: downloadLevel.value.songName })
+            window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: downloadLevel.value.songName,id3 })
             globalVar.musicPick.delete(id)
             WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
             // window.electron.ipcRenderer.send('save-music-pick',{name:downloadLevel.value.songName})
             // globalVar.loadingValue.delete(id)
             // globalVar.downloadId = globalVar.downloadId.filter(item => item != id)
-        }).catch(() => {
+        }).catch((err) => {
+            console.log(err);
             globalVar.musicPick.set(id, chunks)
             //@ts-ignore
             downloadObj.ifcancel = true

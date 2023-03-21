@@ -8,11 +8,8 @@ import videoServer from './video-server'
 import httpSever from './http/app'
 import {createWindow,lrcwindow} from './windows'
 // import *  as bytenode from 'bytenode'
-
 fs.mkdirSync('download', { recursive: true });
-
 // encryptFile()
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -26,6 +23,7 @@ fs.mkdirSync('download', { recursive: true });
 //   `
 //   writeFileSync(__dirname + '/index.js',tpl);
 // }
+app.setAppUserModelId('大牛马音乐')
 app.whenReady().then(async() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')

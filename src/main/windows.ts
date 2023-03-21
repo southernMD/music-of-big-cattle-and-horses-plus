@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage} from 'electron'
-import { join,extname } from 'path'
+import { join,extname, parse, resolve } from 'path'
 import fs from 'fs'
 import os from 'os'
 import icon from '../../build/favicon.ico?asset'
@@ -10,7 +10,9 @@ import nextIcon from '../../build/next.png?asset'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import {registerWindowId,removeWindowId} from './windowManager'
 import chokidar from 'chokidar'
-// import * as mm from 'music-metadata';
+import NodeID3 from 'node-id3'
+import request from 'request'
+import crypto from 'crypto'
 export const createWindow = ():BrowserWindow=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     let X: number, Y: number; //鼠标基于显示器的坐标
@@ -32,6 +34,9 @@ export const createWindow = ():BrowserWindow=>{
         preload: join(__dirname, '../preload/index.js'),
         sandbox: false
       }
+    })
+    mainWindow.setAppDetails({
+      appId:'大牛马音乐'
     })
     mainWindow.webContents.toggleDevTools()
   
@@ -149,6 +154,15 @@ export const createWindow = ():BrowserWindow=>{
     })
     mainWindow.setThumbnailClip({ x: 10, y: 0, width: 150, height: 60 })
     mainWindow.setThumbnailToolTip('大牛马音乐')
+
+    // const albumImage = nativeImage.createFromPath('resources/background.jpg');
+    // const hwnd = mainWindow.getNativeWindowHandle().readUInt32LE(0);
+
+    // const user32 = new ffi.Library('user32.dll', {
+    //   'SendMessageA': ['long', ['long', 'int', 'long', 'long']],
+    // });
+
+
     ipcMain.on('change-play-thum', (e, message) => {
         console.log(message);
 
@@ -288,27 +302,43 @@ export const createWindow = ():BrowserWindow=>{
         removeWindowId('Main');
     })
 
-    ipcMain.on('save-music',(e,{arrayBuffer,name})=>{
+    ipcMain.on('save-music',(e,{arrayBuffer,name,id3})=>{
       const buffer = Buffer.from(arrayBuffer);
+      const imageUrl = id3.image
       fs.mkdirSync('download', { recursive: true });
       const cleanFileName = name.replace(/[\\/:\*\?"<>\|]/g, "");
-      fs.writeFileSync(`download/${cleanFileName}.mp3`, buffer);
-      // arrayBuffer = new Uint8Array(arrayBuffer);
-      // const tags = NodeID3.read(arrayBuffer);
-      // console.log(tags);
-      // NodeID3.write(tags, arrayBuffer, function(err, buffer) {
-      //   if (err) {
-      //     console.error(err);
-      //     return;
-      //   }
-      //   fs.writeFileSync(`download/${cleanFileName}.mp3`, buffer);
-      // });
-      // mm.parseBuffer(arrayBuffer, 'audio/mpeg').then(metadata => {
-      //   console.log(metadata);
-      // }).catch(err => {
-      //   console.error(err.message);
-      // });
-      e.reply('save-music-finished',name)
+      arrayBuffer = new Uint8Array(arrayBuffer);
+      request.get(imageUrl, { encoding: null },function(error, response, body){
+        if(error)console.log(error);
+        const image = {
+          mime: `image/${parse(imageUrl).ext}`,
+          imageBuffer: body,
+        };
+        const oldtags = NodeID3.read(arrayBuffer);
+        const newTags = Object.assign({},oldtags, id3);
+        newTags['image'] = image
+        newTags['userDefinedText']=
+        [{
+          "description":"song id",
+          "value":id3.ids[0]
+        },{
+          "description":"al id",
+          "value":id3.ids[0]
+        },{
+          "description":"ar ids",
+          "value":id3.ids.slice(2).join(',')
+        }]
+        NodeID3.update(newTags, arrayBuffer, function(err, buffer) {
+          if (err) {
+            console.error(err);
+            return;
+          }
+          fs.writeFileSync(`download/${cleanFileName}.mp3`, buffer);
+          console.log(NodeID3.read(`download/${cleanFileName}.mp3`))
+        });
+        e.reply('save-music-finished',cleanFileName)
+      })
+
     })
     ipcMain.on('get-download-list',(e)=>{
       if (fs.existsSync('download')) {
@@ -318,6 +348,18 @@ export const createWindow = ():BrowserWindow=>{
         e.reply('look-download-list',[])
       }
     })
+    ipcMain.on('get-download-list-detail',(e)=>{
+      if (fs.existsSync('download')) {
+        const Files = fs.readdirSync('download')
+        const detail:any[] = []
+        Files.forEach((item)=>{
+          detail.push(Object.assign(NodeID3.read(`download/${item}`),{path:resolve(`download/${item}`)}))
+        })
+        e.reply('look-download-list-detail',detail)
+      }else {
+        e.reply('look-download-list-detail',[])
+      }
+    })
     //下载目录文件变化
     const watcher = chokidar.watch('download', {
       persistent: true
@@ -325,6 +367,11 @@ export const createWindow = ():BrowserWindow=>{
     const delMusic = (path:string)=>{
       const Files = fs.readdirSync('download')
       mainWindow.webContents.send('look-download-list',Files)
+      const detail:any[] = []
+      Files.forEach((item)=>{
+        detail.push(NodeID3.read(`download/${item}`))
+      })
+      mainWindow.webContents.send('look-download-list-detail',detail)
     }
     const delDir = (path:string)=>{
       watcher.off('unlink', delMusic)
@@ -367,8 +414,100 @@ export const createWindow = ():BrowserWindow=>{
     //   });
     //   writeStream.end()
     // })
+    //获取下载目录路径
+    ipcMain.handle('get-download-path',()=>{
+      return resolve('download')
+    })
+    ipcMain.on('open-download-dir',()=>{
+      shell.openPath(resolve('download'))
+    })
+    //获取本地音乐
+    ipcMain.handle('get-local-music',({},{path})=>{
+      const buffer = Buffer.from(fs.readFileSync(path))
+      return {base64:buffer.toString('base64')}
+    })
+    //添加本地文件目录
+    ipcMain.handle('add-local-dir',({})=>{
+       const paths:string[] | undefined = dialog.showOpenDialogSync(mainWindow,{
+        title:'选择添加目录',
+        properties:['openDirectory','promptToCreate','dontAddToRecent'],
+      })
+      if(paths == undefined){
+        return {canceled:true,path:[]}
+      }else{
+        return {canceled:false,path:paths}
+      }
+    })
+    let watcherLocalMusic: chokidar.FSWatcher | null = null;
+    let paths:any[] = [];
+    let delPath:any[] = []
+    const DELAY_MS = 500; // 设定延迟时间为 500ms
+    let timer;
+    let timer2;
+    ipcMain.handle('watch-files-toread-music',({},{readPath})=>{
+      console.log(readPath);
+      if (watcherLocalMusic !== null) {
+        watcherLocalMusic.close(); // 如果 watcher 已经存在，关闭它
+      }
+      watcherLocalMusic = chokidar.watch(readPath, {
+        persistent: true,
+      })
+      watcherLocalMusic.on('all', (event, path) => {
+        if(extname(path) == '.mp3'){
+          console.log(event, path);
+          if(event == 'add' || event == 'change'){
+            const t = Object.assign(NodeID3.read(path),{path})
+            if(t.comment && t.comment.text.startsWith("163 key(Don't modify)")){
+              t.comment.text = pares163Key(t.comment.text)
+            }
+            paths.push(t);
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+              mainWindow.webContents.send('local-music-paths-add', paths);
+              paths = [];
+            }, DELAY_MS);
+          }else if(event == 'unlink'){
+            delPath.push(path)
+            clearTimeout(timer2);
+            timer2 = setTimeout(() => {
+              mainWindow.webContents.send('local-music-paths-del', delPath);
+              delPath = [];
+            }, DELAY_MS);
+          }
+        }
+      })
+      // const delMusic = ()=>{
+      //   const Files = fs.readdirSync('download')
+      //   const detail:any[] = []
+      //   Files.forEach((item)=>{
+      //     detail.push(NodeID3.read(`download/${item}`))
+      //   })
+      //   mainWindow.webContents.send('local-music',{Files,detail})
+      //   return {Files,detail}
+      // }
+      // const delDir = (path:string)=>{
+      //   watcher.off('unlink', delMusic)
+      //   watcher.off('unlinkDir', delDir)
+      //   watcher.close()
+      //   fs.mkdirSync('download', { recursive: true });
+      //   watcher.on('unlink',delMusic)
+      //   watcher.on('unlinkDir',delDir)
+      // }
+      // watcher.on('unlink',delMusic)
+      // watcher.on('unlinkDir',delDir)
+      // return delMusic()
+    })
     return mainWindow
 }
+
+const pares163Key = (comment:string)=>{
+  const key = comment.substring(22); // 移除 163 key(Don't modify):
+  const aes128ecbDecipher = crypto.createDecipheriv('aes-128-ecb', '#14ljk_!\\]&0U<\'(', '');
+  //@ts-ignore
+  const aesd = aes128ecbDecipher.update(key, 'base64') + aes128ecbDecipher.final(); // Base64 解码，AES 解密
+  return JSON.parse(aesd.substring(6)) // 移除 music: 并解析 JSON
+}
+
 
 export const lrcwindow = (): any => {
   const child = new BrowserWindow({

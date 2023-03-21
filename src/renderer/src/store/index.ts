@@ -241,6 +241,8 @@ interface T {
     emojiName: Array<Array<string>>
     clearText: boolean,
     songType: string
+    localListPath:string[]
+    localListPathFlag:boolean[]
     // immheart:boolean
 }
 export const useMain = defineStore('Main', {
@@ -265,9 +267,9 @@ export const useMain = defineStore('Main', {
             originalsongIndex: -1,
             isMy: 'true',
             isMyCreate: false,
-            playing: -1,
+            playing: -99999,
             playingindex: -1,
-            beforePlayListId: -1,
+            beforePlayListId: -1,   //0下载 -2本地 -3最近播放
             playStatus: 'stop',
             detailStatus: 'close',
             dragMouse: false,
@@ -313,7 +315,9 @@ export const useMain = defineStore('Main', {
                 ['[钟情]', '[叉]']
             ],
             clearText: false,
-            songType: 'song'
+            songType: 'song',
+            localListPath:[],
+            localListPathFlag:[]
         }
     },
     actions: {
@@ -631,7 +635,7 @@ export const useMain = defineStore('Main', {
                 this.originalsongIndex = -1,
                 this.isMy = 'true',
                 this.isMyCreate = false,
-                this.playing = -1,
+                this.playing = -99999,
                 this.playingindex = -1,
                 this.beforePlayListId = -1,
                 this.playStatus = 'play',
@@ -647,7 +651,10 @@ export const useMain = defineStore('Main', {
                 this.wayIndex = 0,
                 this.likeChange = ' , '
         }
-    }
+    },
+    persist: [{
+        paths: ['localListPath', 'localListPathFlag'],
+    }]
 })
 
 interface V {

@@ -34,10 +34,10 @@
                                     :id="playingList[playingindex - 1]?.ar[index]?.id">
                                     {{ playingList[playingindex - 1]?.ar[index].name }}
                                     <span v-if="index != playingList[playingindex - 1]?.ar.length - 1" style="transform: rotate(-10deg) translateY(-2px);
-                                        display: inline-block;
-                                        font-size: 10px;
-                                        padding-right: 3px;
-                                        ">/</span>
+                                                display: inline-block;
+                                                font-size: 10px;
+                                                padding-right: 3px;
+                                                ">/</span>
                                 </span>
                             </span>
                         </div>
@@ -49,9 +49,9 @@
                     <div class="left" @click="showDetail">
                         <i class="iconfont icon-xiangxiajiantou"></i>
                     </div>
-                    <div class="right">
+                    <div class="right" :class="{'right-contsee':Main.playing < 0}" >
                         <!-- :likeJust()?'icon-aixin_fill':'icon-aixin' -->
-                        <div class="todo" @click="likeOrDislike" :class="{ noDrag: !Main.dragMouse }">
+                        <div class="todo"  @click="likeOrDislike" :class="{ noDrag: !Main.dragMouse }">
                             <i v-if="likeFlag" class="iconfont icon-aixin"></i>
                             <i v-else class="iconfont icon-aixin_fill"></i>
                         </div>
@@ -95,7 +95,7 @@
                 </div>
             </div>
             <div class="bottom" :class="{ 'bottom-oneself': globalVar.oneself == 1 }">
-                <div class="number-before" v-show="playingList.length!=0">{{ nowTime }}</div>
+                <div class="number-before" v-show="playingList.length != 0">{{ nowTime }}</div>
                 <div class="audio-line" ref="audio-line" :class="{ 'audio-line-oneself': globalVar.oneself == 1 }"
                     @click="clickAudioPlay">
                     <div class="line-loading" ref="line-loading" :class="{ 'line-loading-oneself': globalVar.oneself }"
@@ -103,7 +103,7 @@
                     <div class="line-play" ref="line-play" v-show="playingList.length"></div>
                     <div class="block" ref="block" v-show="playingList.length" @mousedown="audioPlay"></div>
                 </div>
-                <div class="number-end" v-show="playingList.length!=0">{{ endTime }}</div>
+                <div class="number-end" v-show="playingList.length != 0">{{ endTime }}</div>
             </div>
         </div>
         <div class="right" :class="{ 'right-oneself': globalVar.oneself }" v-show="playingList.length">
@@ -233,6 +233,7 @@ watch(playingId, () => {
 let likeMessage = ref('')
 let loadingFlag = ref(false)
 const likeOrDislike = () => {
+    if(Main.playing < 0) return
     let likeIndex = likes.value.indexOf(playingId.value)
     if (likeIndex != -1) {
         //取消喜欢
@@ -367,28 +368,107 @@ let simiSong = ref<any>()
 let simiPlaylist = ref<any>()
 //获取播放url
 watch(playingId, async () => {
-    if (playingId.value != -1) {
+    if (Main.beforePlayListId == 0 || Main.beforePlayListId == -2) {
         audio = document.querySelector('audio') as HTMLAudioElement
         audio.currentTime = 0
         audio.pause()
-        let result: any = await Main.reqSongUrl(playingId.value)
-        lyric.value = (await Main.reqLyric(playingId.value)).data
-        await musicCanSee(result.data.data[0].url,0,0)
-        SongUrl.value = result.data.data[0].url
-        nextTick(() => {
+        console.log(playingId.value);
+        lyric.value = {}
+        simiSong.value = []
+        simiPlaylist.value = []
+        if(playingId.value > 0){
+            const [lyricData, simiSongData, simiPlaylistData] = await Promise.all([
+            Main.reqLyric(playingId.value),
+            Main.reqSimiSong(playingId.value),
+            Main.reqSimiPlaylist(playingId.value)
+        ]);
+            console.log(lyricData.data);
+            lyric.value = lyricData.data;
+            simiSong.value = simiSongData.data.songs;
+            simiPlaylist.value = simiPlaylistData.data.playlists;
+        }
+        window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(({ base64 }) => {
+            SongUrl.value = `data:audio/mp3;base64,${base64}`
+            AC = new AudioContext()
+            gainNode = AC.createGain()
+            analyser = AC.createAnalyser();
+            loadingCanSeeUrl = true
+            const arrayBuffer = base64ToArrayBuffer(base64)
+            AC.decodeAudioData(arrayBuffer).then((AudioBuffer) => {
+                // console.log(AudioBuffer.getChannelData(1));
+                // console.log(AudioBuffer.getChannelData(0));
+                musicBuffer = AudioBuffer
+                bufferSource = AC.createBufferSource();
+                analyser.fftSize = 256;
+                bufferSource.connect(analyser);
+                analyser.connect(AC.destination);
+                bufferSource.buffer = AudioBuffer;
+                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                bufferSource.connect(gainNode)
+                gainNode.connect(AC.destination);
+                gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
+                // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+                draw()
+                const t = setTimeout(() => {
+                    bufferSource.start(0, 0)
+                    loadingCanSeeUrl = false
+                    clearTimeout(t)
+                }, 0)
+            })
             stopOrPlayFlag.value = false
-            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            bufferSource.playbackRate.value = audio.playbackRate
-            audio.play()
+            nextTick(() => {
+                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                if (bufferSource) bufferSource.playbackRate.value = audio.playbackRate
+                audio.play()
+                nowLevel.value = 'local'
+                levelName.value = '本地'
+                playStatus.value = 'play'
+                let str = playingList.value[playingindex.value - 1].name + ' - ';
+                let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
+                singerArr.forEach((element, index) => {
+                    str += element.name
+                    if (index != singerArr.length - 1) str += ' / '
+                })
+                window.electron.ipcRenderer.send('change-play-thum', str)
+                window.electron.ipcRenderer.send('render-play')
+                // stopPlayAudip()
+            })
         })
-        nowLevel.value = 'standard'
-        levelName.value = '标准'
-        //喜欢这首歌的人也听与包含这首歌的歌单
-        simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
-        simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
-        console.log(simiSong, simiPlaylist);
+    } else {
+        if (playingId.value != -1) {
+            audio = document.querySelector('audio') as HTMLAudioElement
+            audio.currentTime = 0
+            audio.pause()
+            let result: any = await Main.reqSongUrl(playingId.value)
+            lyric.value = (await Main.reqLyric(playingId.value)).data
+            await musicCanSee(result.data.data[0].url, 0, 0)
+            SongUrl.value = result.data.data[0].url
+            nextTick(() => {
+                stopOrPlayFlag.value = false
+                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                bufferSource.playbackRate.value = audio.playbackRate
+                audio.play()
+            })
+            nowLevel.value = 'standard'
+            levelName.value = '标准'
+            //喜欢这首歌的人也听与包含这首歌的歌单
+            simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
+            simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
+            console.log(simiSong, simiPlaylist);
+        }
     }
 })
+function base64ToArrayBuffer(base64) {
+    const binaryStr = atob(base64);
+    const len = binaryStr.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
 // let t = setTimeout(async ()=>{
 //             const CiId = await electronIpc.ipcSendSync('getWindowId','Ci');
 //             clearTimeout(t);
@@ -429,7 +509,7 @@ onMounted(async () => {
     //     try {
     //         bufferSource.start()
     //     } catch (error) {
-            
+
     //     }
     // })
     //加载进度
@@ -461,30 +541,30 @@ onMounted(async () => {
         }
     })
     //播放完毕
-    audio.addEventListener('ended', async() => {
+    audio.addEventListener('ended', async () => {
         console.log('播放完毕');
         stopOrPlayFlag.value = true;
         bufferSource.stop()
         if (wayIndex.value == 0 || wayIndex.value == 4) {
             nextSongThor()
         } else if (wayIndex.value == 1) {
-                AC = new AudioContext()
-                gainNode = AC.createGain()
-                analyser = AC.createAnalyser();
-                const currentTime = AC.currentTime;
-                bufferSource.stop(currentTime);
-                bufferSource.disconnect()
-                bufferSource = AC.createBufferSource()
-                bufferSource.buffer = musicBuffer
-                bufferSource.connect(AC.destination)
-                bufferSource.connect(analyser);
-                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                bufferSource.start();
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-                bufferSource.connect(gainNode)
-                gainNode.connect(AC.destination);
-                gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                draw()
+            AC = new AudioContext()
+            gainNode = AC.createGain()
+            analyser = AC.createAnalyser();
+            const currentTime = AC.currentTime;
+            bufferSource.stop(currentTime);
+            bufferSource.disconnect()
+            bufferSource = AC.createBufferSource()
+            bufferSource.buffer = musicBuffer
+            bufferSource.connect(AC.destination)
+            bufferSource.connect(analyser);
+            bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            bufferSource.start();
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            bufferSource.connect(gainNode)
+            gainNode.connect(AC.destination);
+            gainNode.gain.setValueAtTime(-1, AC.currentTime)
+            draw()
             audio.play()
             stopOrPlayFlag.value = false
         } else if (wayIndex.value == 2) {
@@ -508,7 +588,7 @@ onMounted(async () => {
 let clickX: number;
 let baseWidth: number;
 const audioPlay = (e: MouseEvent) => {
-    if(loadingCanSeeUrl)return
+    if (loadingCanSeeUrl) return
     audioPlayFlag.value = true;
     clickX = e.pageX;
     window.addEventListener('mousemove', audioPlayMoving)
@@ -557,32 +637,32 @@ const audioPlayEnd = () => {
     playLine = $el.refs['line-play'] as HTMLElement
     let wh = playLine.style.width
     audio.currentTime = Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01
-        const currentTime = AC.currentTime;
-        AC = new AudioContext()
-        gainNode = AC.createGain()
-        analyser = AC.createAnalyser();
-        bufferSource.stop(currentTime);
-        bufferSource.disconnect()
-        bufferSource = AC.createBufferSource()
-        bufferSource.buffer = musicBuffer
-        bufferSource.connect(AC.destination)
-        bufferSource.connect(analyser);
-        bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-        bufferSource.start(0,Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01);
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        bufferSource.connect(gainNode)
-        gainNode.connect(AC.destination);
-        gainNode.gain.setValueAtTime(-1, AC.currentTime)
-        draw()
+    const currentTime = AC.currentTime;
+    AC = new AudioContext()
+    gainNode = AC.createGain()
+    analyser = AC.createAnalyser();
+    bufferSource.stop(currentTime);
+    bufferSource.disconnect()
+    bufferSource = AC.createBufferSource()
+    bufferSource.buffer = musicBuffer
+    bufferSource.connect(AC.destination)
+    bufferSource.connect(analyser);
+    bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+    bufferSource.start(0, Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    bufferSource.connect(gainNode)
+    gainNode.connect(AC.destination);
+    gainNode.gain.setValueAtTime(-1, AC.currentTime)
+    draw()
     audioPlayFlag.value = false;
     suo.value = false
     window.removeEventListener('mousemove', audioPlayMoving)
     window.removeEventListener('mouseup', audioPlayEnd)
 }
 
-const loginQuit = toRef(globalVar,'loginQuit')
-watch(loginQuit,()=>{
-    if(loginQuit.value == true){
+const loginQuit = toRef(globalVar, 'loginQuit')
+watch(loginQuit, () => {
+    if (loginQuit.value == true) {
         loginQuit.value = false
         bufferSource.stop(AC.currentTime)
         audio.pause()
@@ -594,7 +674,7 @@ watch(loginQuit,()=>{
 
 //点击修改播放
 const clickAudioPlay = (e: MouseEvent) => {
-    if(loadingCanSeeUrl)return
+    if (loadingCanSeeUrl) return
     if (playingList.value.length) {
         if (suo.value) {
             audio = document.querySelector('audio') as HTMLAudioElement
@@ -618,7 +698,7 @@ const clickAudioPlay = (e: MouseEvent) => {
             bufferSource.connect(AC.destination)
             bufferSource.connect(analyser);
             bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            bufferSource.start(0,wh / line.offsetWidth * audio.duration);
+            bufferSource.start(0, wh / line.offsetWidth * audio.duration);
             bufferSource.connect(gainNode)
             gainNode.connect(AC.destination);
             gainNode.gain.setValueAtTime(-1, AC.currentTime)
@@ -649,7 +729,7 @@ const stopOrPlay = () => {
         } else {
             audio.pause();
             Main.playStatus = 'stop'
-            if(AC && AC.state === "running")AC.suspend();
+            if (AC && AC.state === "running") AC.suspend();
             window.electron.ipcRenderer.send('render-play-fail')
         }
     }
@@ -954,22 +1034,22 @@ const stopPlayAudip = () => {
 
     }
 }
-const oneself = toRef(globalVar,'oneself')
-watch(oneself,()=>{
+const oneself = toRef(globalVar, 'oneself')
+watch(oneself, () => {
     let dom = $el.refs.top as HTMLElement
-    if(oneself.value == 0){
-        if(dom.classList.contains('can-oneself')){
+    if (oneself.value == 0) {
+        if (dom.classList.contains('can-oneself')) {
             dom.classList.remove('can-oneself')
             dom.classList.add('can')
-        }else if(dom.classList.contains('remove-oneself')){
+        } else if (dom.classList.contains('remove-oneself')) {
             dom.classList.remove('remove-oneself')
             dom.classList.add('remover')
         }
-    }else{
-        if(dom.classList.contains('can')){
+    } else {
+        if (dom.classList.contains('can')) {
             dom.classList.add('can-oneself')
             dom.classList.remove('can')
-        }else if(dom.classList.contains('remove')){
+        } else if (dom.classList.contains('remove')) {
             dom.classList.remove('remove')
             dom.classList.add('remove-oneself')
         }
@@ -1051,10 +1131,10 @@ const changeSpanLevel = async (level: string, level2: string) => {
     let t = audio.currentTime
     let result: any = await Main.reqSongUrl(playingId.value, nowLevel.value)
     nextTick(async () => {
-        await musicCanSee(result.data.data[0].url,t,100)
+        await musicCanSee(result.data.data[0].url, t, 100)
         SongUrl.value = result.data.data[0].url
         audio = document.querySelector('audio') as HTMLAudioElement
-        console.log(Number(speedPower.value.substring(0, speedPower.value.length - 1)),'DAJSIDHAYUCGAWJHUYADGA');
+        console.log(Number(speedPower.value.substring(0, speedPower.value.length - 1)), 'DAJSIDHAYUCGAWJHUYADGA');
         bufferSource.playbackRate.value = audio.playbackRate
         setTimeout(() => {
             audio.currentTime = t
@@ -1170,24 +1250,23 @@ let AC: AudioContext;
 let bufferSource: AudioBufferSourceNode;
 let gainNode: GainNode;
 let analyser: AnalyserNode;
-let musicBuffer:AudioBuffer
-let dataArray:Uint8Array
-let loadingCanSeeUrl:boolean = false
-const musicCanSee = (url: string,offset:number,timer:number) => {
+let musicBuffer: AudioBuffer
+let dataArray: Uint8Array
+let loadingCanSeeUrl: boolean = false
+const musicCanSee = (url: string, offset: number, timer: number) => {
     if (bufferSource) bufferSource.stop()
     AC = new AudioContext()
     gainNode = AC.createGain()
     analyser = AC.createAnalyser();
     loadingCanSeeUrl = true
     return new Promise<any>((resolve) => {
-        fetch(url,{mode:'cors'}).then((response) => {
+        fetch(url, { mode: 'cors' }).then((response) => {
             return response.arrayBuffer()
         }).then((buffer) => {
             // console.log('拉取音频流解码成AudioBuffer',buffer);
             //拉取音频流解码成AudioBuffer
             //音频可视化
             console.log(buffer);
-
             AC.decodeAudioData(buffer).then((AudioBuffer) => {
                 // console.log(AudioBuffer);
                 musicBuffer = AudioBuffer
@@ -1205,11 +1284,11 @@ const musicCanSee = (url: string,offset:number,timer:number) => {
                 // color.addColorStop(0, 'rgba(102, 204, 255,1)');
                 draw()
                 resolve('ok')
-                const t = setTimeout(()=>{
-                    bufferSource.start(0,offset)
+                const t = setTimeout(() => {
+                    bufferSource.start(0, offset)
                     loadingCanSeeUrl = false
                     clearTimeout(t)
-                },timer)
+                }, timer)
             })
         })
     })
@@ -1227,8 +1306,8 @@ function draw() {
         analyser.getByteFrequencyData(dataArray)
         // 绘制向上的线条
         canvasCTX.fillStyle = document.documentElement.style.getPropertyValue('--primaryColor')
-        canvasCTX.fillRect(oW / 2 + (i * 8), oH, 2, -barHeight/4+30);
-        canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight/4+30);
+        canvasCTX.fillRect(oW / 2 + (i * 8), oH, 2, -barHeight / 4 + 30);
+        canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight / 4 + 30);
     }
 }
 
@@ -1468,6 +1547,13 @@ function draw() {
                 i {
                     color: @font-color;
                     font-size: 20px;
+                }
+            }
+            >.right-contsee{
+                opacity: 0;
+                cursor: default;
+                .todo{
+                    cursor: default !important;
                 }
             }
         }
