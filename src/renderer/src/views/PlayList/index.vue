@@ -529,7 +529,19 @@ const getUrl = async (id, name) => {
         .then(stream => new Response(stream))
         .then(response => response.arrayBuffer())
         .then(async () => {
-            // @ts-ignore
+            const detail = (await Main.reqSongDetail([id])).data.songs[0]
+            console.log(detail);
+            const title = `${detail.name}`
+            const artistId:any[] = []
+            const artist = (detail.ar.map((item)=>{
+                artistId.push(item.id)
+                return `${item.name}`
+            })).join('/')
+            const image = detail.al.picUrl
+            const album = `${detail.al.name}`
+            const id3 = {
+                title,artist,image,album,ids:[detail.id,detail.al.id,...artistId],time:detail.dt
+            }
             const mergedChunks = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
             let offset = 0;
             for (const chunk of chunks) {
@@ -537,7 +549,7 @@ const getUrl = async (id, name) => {
                 offset += chunk.byteLength;
             }
             const arrayBuffer = mergedChunks.buffer;
-            window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: name })
+            window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: name,id3 })
             globalVar.musicPick.delete(id)
             WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
             // window.electron.ipcRenderer.send('save-music-pick',{name})

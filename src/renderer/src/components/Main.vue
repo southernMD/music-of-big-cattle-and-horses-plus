@@ -23,6 +23,10 @@
               <template #default>
                 <i class="iconfont icon-xiazai"></i>
               </template>
+              <template #jump v-if="Main.beforePlayListId == 0 || Main.beforePlayListId == -2">
+                  <i v-if="Main.playStatus == 'play'" class="iconfont icon-shengyin_shiti songStatus"></i>
+                  <i v-else-if="Main.playStatus == 'stop'" class="iconfont icon-shengyin03-mianxing songStatus"></i>
+                </template>
             </LeftBlock>
             <LeftBlock message="最近播放" :big="false" name="playLately">
               <template #default>
@@ -403,6 +407,9 @@ window.addEventListener('contextmenu', (e) => {
           font-size: 15px !important;
           font-weight: normal !important;
         }
+        .songStatus {
+            color: @small-font-red !important;
+          }
       }
     }
 

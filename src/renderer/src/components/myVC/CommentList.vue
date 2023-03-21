@@ -112,7 +112,7 @@ watch(nowPage, async () => {
   .comment {
     height: auto;
     width: 100vw;
-    margin-bottom: 100px;
+    margin-bottom: 200px;
 
     // background-color: blue;
     .commentList {

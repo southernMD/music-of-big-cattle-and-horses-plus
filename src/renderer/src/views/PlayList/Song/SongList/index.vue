@@ -99,8 +99,6 @@ watch(route, () => {
 
 function searchKeyFn() {
     if (searchKey.value != '') {
-        console.log('ddwdf');
-
         listCopy.value = [];
         list.value.forEach((element, index) => {
             // console.log(Boolean(element.tns));

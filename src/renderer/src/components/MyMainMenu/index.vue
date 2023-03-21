@@ -180,7 +180,7 @@ const dbBig = (e: Event) => {
 //单击拖动
 const dragWin = (e: any) => {
     console.log('e.path.length', e.path.length);
-    if (e.path.length == 8 || e.path.length == 7) {
+    if (e.path.length == 8 || e.path.length == 7 || ((e.path.length == 9 || e.path.length == 10) && Main.detailStatus == 'open')) {
         moveFlag.value = true;
         mouseX = e.pageX
         mouseY = e.pageY

@@ -5,17 +5,21 @@ import {onMounted,onBeforeUnmount,defineEmits} from 'vue'
 export default function (deleteDilog:any,$emit:any,id:string): any {
     onMounted(() => {
         deleteDilog = (e: any) => {
-            let dom = document.querySelector(`#${id}`) as HTMLElement;
-            if (!(e.path.includes(dom))) {
-                let flag = e.path.every((element: any) => {
-                    return !(element.className?.includes('icon-3zuidahua-1') 
-                    || element.className?.includes('icon-24gl-minimize')
-                    || element.className?.includes('user')
-                    || element.className?.includes('icon-huanfu')
-                    )
-                });
-                console.log(flag);
-                if (flag) $emit('close')
+            try {
+                let dom = document.querySelector(`#${id}`) as HTMLElement;
+                if (!(e.path.includes(dom))) {
+                    let flag = e.path.every((element: any) => {
+                        return !(element.className?.includes('icon-3zuidahua-1') 
+                        || element.className?.includes('icon-24gl-minimize')
+                        || element.className?.includes('user')
+                        || element.className?.includes('icon-huanfu')
+                        )
+                    });
+                    console.log(flag);
+                    if (flag) $emit('close')
+                }
+            } catch (error) {
+                console.log(error);
             }
         }
         window.addEventListener('click', deleteDilog)

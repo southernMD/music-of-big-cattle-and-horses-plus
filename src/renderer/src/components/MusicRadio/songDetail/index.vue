@@ -1,7 +1,7 @@
 <template>
   <div class="songDetail" v-show="detailStatus == 'open'" id="songDetail" ref="songDetail">
-    <div class="bk">
-      <MyMainMenu :songMenu="true" :changefontColor="true" :scrollY="scrollY">
+    <div class="bk" ref="bk">
+      <MyMainMenu :songMenu="true" :changefontColor="true" :scrollY="scrollY" ref="MyMainMenuRef">
         <template #songLrc>
           <transition name="songLrc">
             <div v-show="detailStatus == 'open' && scrollY >= 300" class="song-lrc">
@@ -133,7 +133,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useMain, useMainMenu, useElectronToApp } from "@renderer/store";
+import { useMain, useMainMenu, useElectronToApp, useGlobalVar } from "@renderer/store";
 import {
   toRef,
   watch,
@@ -144,10 +144,12 @@ import {
   getCurrentInstance,
   ComponentInternalInstance,
   ref,
-inject,
+  inject,
 } from "vue";
+import Vibrant from 'node-vibrant';
 import { ElScrollbar } from "element-plus";
 import { useRouter } from 'vue-router'
+import MyMainMenu from '@renderer/components/MyMainMenu/index.vue'
 const Main = useMain();
 const MainMenu = useMainMenu();
 const $el = getCurrentInstance() as ComponentInternalInstance;
@@ -215,7 +217,7 @@ let totalPage = ref(0)
 let nowPage = ref(1);
 let moreHot = ref(false)
 watch(playingId, async () => {
-  if (playingId.value != -1) {
+  if (playingId.value > 0) {
     let result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
     hotComments.value = result.hotComments;
     comments.value = result.comments;
@@ -226,6 +228,13 @@ watch(playingId, async () => {
     moreHot.value = result.moreHot
     commentFlag.value = true
     nowPage.value = 1;
+  }else{
+     hotComments.value = []
+     comments.value = []
+     total.value = 0
+     totalPage.value = 0
+     nowPage.value = 1
+     moreHot.value = false
   }
 
 })
@@ -277,12 +286,44 @@ watch(playStatus, () => {
     pian.style.animationPlayState = "paused";
   }
 });
-
+const globalVar = useGlobalVar()
+const MyMainMenuRef = ref<InstanceType<typeof MyMainMenu>>()
 watch(playingindex, () => {
   if (playingindex.value != -1) {
     let pian = $el.refs.pian as HTMLElement;
-    pian.style.backgroundImage =
-      "url(" + playingList.value[playingindex.value - 1]?.al?.picUrl + ")";
+    pian.style.backgroundImage = "url(" + playingList.value[playingindex.value - 1]?.al?.picUrl + ")";
+    if (!globalVar.oneself && MainMenu.colorBlock != 'NMblack') {
+      const image = new Image();
+      image.crossOrigin = 'Anonymous'
+      image.src = playingList.value[playingindex.value - 1]?.al?.picUrl;
+      const vibrant = new Vibrant(image);
+      let maxPopulation = 0
+      let hc: [number, number, number] = [0, 0, 0]
+      vibrant.getPalette().then((palette) => {
+        console.log(palette);
+        for (let key of Object.keys(palette)) {
+          if (palette[key].population > maxPopulation) {
+            maxPopulation = palette[key].population
+            hc[0] = palette[key].hsl[0] * 360
+            hc[1] = palette[key].hsl[1] * 100
+            hc[2] = palette[key].hsl[2] * 100
+          }
+        }
+        console.log(maxPopulation);
+        if (hc[0] !== 0) {
+          hc[1] = 30;
+          hc[2] = 85;
+        }
+        const bk: any = $el.refs.bk as HTMLElement
+        bk.style.backgroundColor = 'transparent';
+        bk.style.backgroundImage = 'linear-gradient(hsl(' + hc[0] + ',' + hc[1] + "%," + hc[2] + '%),#fff)'
+        //@ts-ignore
+        MyMainMenuRef.value.$refs.header.style.backgroundColor = 'transparent';
+        //@ts-ignore
+        MyMainMenuRef.value.$refs.header.style.backgroundImage = `hsl(${hc[0]},${hc[1]},${hc[2]})`
+      })
+    }
+
     //清除歌词滚动
     let dom = document.querySelector(`#detailSongName`) as HTMLElement;
     dom.removeAttribute("style");
@@ -295,6 +336,48 @@ watch(playingindex, () => {
     }, 0);
   }
 });
+
+watch(() => MainMenu.colorBlock, () => {
+  if (!globalVar.oneself && MainMenu.colorBlock != 'NMblack') {
+    const image = new Image();
+    image.crossOrigin = 'Anonymous'
+    image.src = playingList.value[playingindex.value - 1]?.al?.picUrl;
+    const vibrant = new Vibrant(image);
+    let maxPopulation = 0
+    let hc: [number, number, number] = [0, 0, 0]
+    vibrant.getPalette().then((palette) => {
+      console.log(palette);
+      for (let key of Object.keys(palette)) {
+        if (palette[key].population > maxPopulation) {
+          maxPopulation = palette[key].population
+          hc[0] = palette[key].hsl[0] * 360
+          hc[1] = palette[key].hsl[1] * 100
+          hc[2] = palette[key].hsl[2] * 100
+        }
+      }
+      console.log(maxPopulation);
+      if (hc[0] !== 0) {
+        hc[1] = 30;
+        hc[2] = 85;
+      }
+      const bk: any = $el.refs.bk as HTMLElement
+      bk.style.backgroundColor = 'transparent';
+      bk.style.backgroundImage = 'linear-gradient(hsl(' + hc[0] + ',' + hc[1] + "%," + hc[2] + '%),#fff)'
+      //@ts-ignore
+      MyMainMenuRef.value.$refs.header.style.backgroundColor = 'transparent';
+      //@ts-ignore
+      MyMainMenuRef.value.$refs.header.style.backgroundImage = `hsl(${hc[0]},${hc[1]},${hc[2]})`
+    })
+  } else {
+    const bk: any = $el.refs.bk as HTMLElement
+    bk.style.backgroundColor = '';
+    bk.style.backgroundImage = ""
+    //@ts-ignore
+    MyMainMenuRef.value.$refs.header.style.backgroundImage = ''
+    //@ts-ignore
+    MyMainMenuRef.value.$refs.header.style.backgroundColor = '';
+  }
+})
 
 let moveSingerFlag = ref(true);
 let time1: any, time2: any;
@@ -339,9 +422,9 @@ const prevenDrag = (e: MouseEvent) => {
 };
 
 let BKbase64 = inject<Ref<string>>('BKbase64') as Ref<string>
-watch(BKbase64,()=>{
+watch(BKbase64, () => {
   const h: any = $el.refs.songDetail as HTMLElement
-  if(h)h.style.backgroundImage = 'url(' + BKbase64.value + ')'
+  if (h) h.style.backgroundImage = 'url(' + BKbase64.value + ')'
 })
 window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
   console.log(liu, extname);
@@ -406,10 +489,11 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
   background-position: center;
   background-size: cover;
   z-index: 11;
-  >.bk{
+
+  >.bk {
     width: 100vw;
     height: 100vh;
-    background-color:@other-bk-color-op;
+    background-color: @other-bk-color-op;
   }
 
   :deep(header) {
@@ -686,5 +770,17 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
     transform: translateY(0px);
   }
 
+  // color: #d19550;
+  // color: rgb(32, 171, 223);
+  color: hsl(28, 50%, 88%);
+  color: hsl(27, 36%, 85%);
+  color: hsl(23, 27%, 85%);
+  color: hsl(0, 2%, 82%);
+  color: hsl(198, 36%, 86%);
+  color: hsl(16, 18%, 88%);
+  color: hsl(4, 14%, 79%);
+  color: hsl(209, 34%, 88%);
+  color: hsl(42, 30%, 80%);
+  color: hsl(0, 0%, 83%);
 }
 </style>

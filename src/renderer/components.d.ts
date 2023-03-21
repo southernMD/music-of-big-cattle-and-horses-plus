@@ -17,6 +17,7 @@ declare module '@vue/runtime-core' {
     CommentList: typeof import('./src/components/myVC/CommentList.vue')['default']
     DetailSmallBlock: typeof import('./src/components/myVC/DetailSmallBlock.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDivider: typeof import('element-plus/es')['ElDivider']
     ElForm: typeof import('element-plus/es')['ElForm']
