@@ -7,7 +7,7 @@ import {
     SongUrl, Lyric, simiSong, simiPlaylist, songDetail, commentMusic, commentNew, commentHot,
     playlistTracks, songOrderUpdate, playlistOrderUpdate, playmodeIntelligenceList, likeQ, commentPlaylist,
     comment, recommendSongs, recommendPlayList, programRecommend, djProgramToplist,
-    personal_fm, fm_trash, userDj, startDj, SongDlUrl
+    personal_fm, fm_trash, userDj, startDj, SongDlUrl,Search, SearchSuggest
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -243,7 +243,9 @@ interface T {
     songType: string
     localListPath:string[]
     localListPathFlag:boolean[]
+    searchNumber:number
     // immheart:boolean
+    searchHistory:string[]
 }
 export const useMain = defineStore('Main', {
     state: (): T => {
@@ -269,7 +271,7 @@ export const useMain = defineStore('Main', {
             isMyCreate: false,
             playing: -99999,
             playingindex: -1,
-            beforePlayListId: -1,   //0下载 -2本地 -3最近播放
+            beforePlayListId: -1,   //0下载 -2本地 -3最近播放 -4私人FM
             playStatus: 'stop',
             detailStatus: 'close',
             dragMouse: false,
@@ -317,7 +319,9 @@ export const useMain = defineStore('Main', {
             clearText: false,
             songType: 'song',
             localListPath:[],
-            localListPathFlag:[]
+            localListPathFlag:[],
+            searchNumber:0,
+            searchHistory:[]
         }
     },
     actions: {
@@ -618,6 +622,43 @@ export const useMain = defineStore('Main', {
                 alert('error')
             }
         },
+        //search
+        async reqSearch(key:string,type?:string,limit?:number,offset?:number){
+            let result = await Search(key,type,limit,offset)
+            console.log(result);
+            if(type=='1')this.searchNumber = result.data.result.songCount
+            if(type=='100')this.searchNumber = result.data.result.artistCount
+            if(type=='10')this.searchNumber = result.data.result.albumCount
+            if(type=='1000')this.searchNumber = result.data.result.playlistCount
+            if(type=='1006')this.searchNumber = result.data.result.songCount
+            if(this.searchNumber != 0){
+                return new Promise<any>((resolve, reject) => {
+                    if(type=='1')resolve(result.data.result.songs)
+                    if(type=='100')resolve(result.data.result.artists)
+                    if(type=='10')resolve(result.data.result.albums)
+                    if(type=='1000')resolve(result.data.result.playlists)
+                    if(type=='1006')resolve(result.data.result.songs)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve([])
+                })
+            }
+
+        },
+        //search suggest
+        async reqSearchSuggest(key:string,type?:'mobile'){
+            let result = await SearchSuggest(key,type)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data.result)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -653,7 +694,7 @@ export const useMain = defineStore('Main', {
         }
     },
     persist: [{
-        paths: ['localListPath', 'localListPathFlag'],
+        paths: ['localListPath', 'localListPathFlag','searchHistory'],
     }]
 })
 
@@ -668,19 +709,22 @@ interface V {
     changeTimeFlag: boolean //修改播放时间
     timeValue: number
     mainScroll: number //主滚动
-    scrollToTop: boolean
+    scrollToTop: boolean //主滚动条跳转
     lrcScrollSuo: boolean //阻止歌词以滚动的方式跳转
     rubishFlag: boolean //点击垃圾桶
     loginQuit: boolean//退出登录
     downloadFlag: boolean
     downloadLevel: { play: string, download: string, songName: string, id: number }
     loadDefault: boolean
+    loadMessageDefaultFlag:boolean //全局提示文本
+    loadMessageDefault:string //全局提示文本
     downloadId: number[]    //下载id
     loadingValue: Map<number, [number, number]> //下载值
     downLoadAll: number //全下指标
     downloadList: { id: number, name: string, level?: string, br?: number, controller: AbortController ,ifcancel:boolean,url:string}[]
     initDownloadButton: boolean
     musicPick:Map<number,Uint8Array[]>
+    searchKey:string
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -703,12 +747,15 @@ export const useGlobalVar = defineStore('globalVar', {
             downloadFlag: false,
             downloadLevel: { play: '', download: '', songName: '', id: -1 },
             loadDefault: false,
+            loadMessageDefaultFlag:false,
+            loadMessageDefault:'',
             downloadId: [],
             loadingValue: new Map(),
             downLoadAll: 0,
             downloadList: [],
             initDownloadButton: false,
-            musicPick:new Map()
+            musicPick:new Map(),
+            searchKey:''
         }
     }
 })

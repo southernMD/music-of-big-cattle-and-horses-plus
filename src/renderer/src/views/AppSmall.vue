@@ -1,5 +1,5 @@
 <template>
-    <div class="background">
+    <div class="AppSmall">
         <img src="" alt="" id="mainBackground">
         <video src="" id="mainBackgroundVideo" :muted="true" loop></video>
         <MyMainMenu></MyMainMenu>
@@ -29,6 +29,7 @@
             </template>
         </MyDialog>
         <Loading :loading="true" message="" v-if="loadDefault" :width="20"></Loading>
+        <Loading :loading="false" :showTime="1000" :width="'180'" :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag" @close="globalVar.loadMessageDefaultFlag = false"></Loading>
     </div>
 </template>
 
@@ -365,7 +366,6 @@ video {
     min-height: 270px;
     background-color: @other-bk-color;
     border-radius: .2em;
-
     .el-dialog__headerbtn {
         color: @font-color !important;
         width: auto;

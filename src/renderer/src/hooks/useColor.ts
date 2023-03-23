@@ -76,6 +76,8 @@ export default function (): any {
             document.documentElement.style.setProperty('--emojiPointDisActive', `rgb(48,48,48)`);
             document.documentElement.style.setProperty('--FMAr', `rgb(80,125,175)`);
             document.documentElement.style.setProperty('--FMArHover', `rgb(11,88,176)`);
+            document.documentElement.style.setProperty('--borderColor', `rgb(81,81,81)`);
+
             primaryColor.value = `rgb(236,65,65)`
             MainMenu.iconSrc = "/src/assets/icon.png"
             // document.documentElement.style.setProperty('--fontColorHover',`rgb(255,255,255)`);
@@ -143,6 +145,8 @@ export default function (): any {
             document.documentElement.style.setProperty('--emojiPointDisActive', `rgb(242,242,242)`);
             document.documentElement.style.setProperty('--FMAr', `rgb(46,91,142)`);
             document.documentElement.style.setProperty('--FMArHover', `rgb(46,89,138)`);
+            document.documentElement.style.setProperty('--borderColor', `rgb(216,216,216)`);
+
         }
         if (newValue === 'NMred') {
             MainMenu.iconSrc = "/src/assets/icon.png"

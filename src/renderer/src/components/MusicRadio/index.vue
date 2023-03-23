@@ -368,7 +368,7 @@ let simiSong = ref<any>()
 let simiPlaylist = ref<any>()
 //获取播放url
 watch(playingId, async () => {
-    if (Main.beforePlayListId == 0 || Main.beforePlayListId == -2) {
+    if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
         audio = document.querySelector('audio') as HTMLAudioElement
         audio.currentTime = 0
         audio.pause()
@@ -1180,6 +1180,8 @@ const clearList = () => {
 
 //按键监视
 const keyDownWatch = (e: KeyboardEvent) => {
+    const activeEl = document.activeElement;
+    if (!activeEl || activeEl.tagName.toLowerCase() === 'input') return
     if (e.ctrlKey) {
         if (e.code == 'ArrowRight') {
             nextSongThor();
@@ -1372,7 +1374,7 @@ function draw() {
                     .el-image__placeholder {
                         width: 49px;
                         height: 50px;
-                        background-image: url('@/../image/cloudmusic_5e9Ef54bbN.png');
+                        background-image: url('/src/assets/image/cloudmusic_5e9Ef54bbN.png');
                         background-repeat: no-repeat;
                         margin-left: 5px;
                         transform: translate(5px, 1px);

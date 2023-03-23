@@ -99,11 +99,52 @@ const routes: Array<RouteRecordRaw> = [
                     },
                 ]
             },
-            // {
-            //     path:`mydj`,
-            //     name:'mydj',
-            //     component:()=>import('@/views/MyDj/index.vue'),
-            // },
+            {
+                path:`mydj`,
+                name:'mydj',
+                component:()=>import('@renderer/views/MyDj/index.vue'),
+
+            },
+            {
+                path:`search`,
+                name:'search',
+                component:()=>import('@renderer/views/search/index.vue'),
+                children:[
+                    {
+                        path:'1',
+                        name:'1',
+                        component:()=>import('@renderer/views/search/1/index.vue'),
+                    },
+                    {
+                        path:'10',
+                        name:'10',
+                        component:()=>import('@renderer/views/search/10/index.vue'),
+                    },
+                    {
+                        path:'100',
+                        name:'100',
+                        component:()=>import('@renderer/views/search/100/index.vue'),
+
+                    },
+                    {
+                        path:'1000',
+                        name:'1000',
+                        component:()=>import('@renderer/views/search/1000/index.vue'),
+
+                    },
+                    {
+                        path:'1002',
+                        name:'1002',
+                        component:()=>import('@renderer/views/search/1002/index.vue'),
+
+                    },
+                    {
+                        path:'1006',
+                        name:'1006',
+                        component:()=>import('@renderer/views/search/1006/index.vue'),
+                    },
+                ]
+            },
             {
                 path: '/:pathMatch(.*)',
                 component: ()=>import('@renderer/components/myVC/404.vue'),

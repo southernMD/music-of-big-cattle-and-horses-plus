@@ -21,24 +21,24 @@ const MainMenu = useMainMenu();
 const globalVar = useGlobalVar();
 const Main = useMain();
 const $el:ComponentInternalInstance = getCurrentInstance() as ComponentInternalInstance
-    defineProps<{
-        message:string
-        big?:boolean
-        ifClick:boolean
-        size?:number
-        name?:string
-        oneself?:number
-    }
-    >()
-    onMounted(()=>{
-        nextTick(()=>{
-            if($el.props.size){
-                let dom = $el.refs.message as HTMLElement
-                console.log(dom);
-                dom.style.fontSize = Number($el.props.size) + 'px'
-            }
-        })
+defineProps<{
+    message:string
+    big?:boolean
+    ifClick:boolean
+    size?:number
+    name?:string
+    oneself?:number
+}
+>()
+onMounted(()=>{
+    nextTick(()=>{
+        if($el.props.size){
+            let dom = $el.refs.message as HTMLElement
+            console.log(dom);
+            dom.style.fontSize = Number($el.props.size) + 'px'
+        }
     })
+})
 
 // let color = toRef(MainMenu,'primaryColor')
 // watch(color,(newValue)=>{

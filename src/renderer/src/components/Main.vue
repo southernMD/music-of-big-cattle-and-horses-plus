@@ -1,7 +1,7 @@
 <template>
   <!-- <el-config-provider size="small" :z-index="3000" :locale="zhCn"> -->
   <!-- </el-config-provider> -->
-  <div class="main" :class="{'main-oneself':globalVar.oneself == 1}">
+  <div class="main" :class="{'main-oneself':globalVar.oneself == 1,'red-line':MainMenu.colorBlock == 'NMblack'}" >
     <el-scrollbar ref="scrollbarRefLeft" @scroll="barLeft">
       <aside @mouseover="leftOver" :class="{'aside-right-color-oneself':globalVar.oneself == 1}">
         <div class="top">
@@ -33,23 +33,21 @@
                 <i class="iconfont icon-shizhong"></i>
               </template>
             </LeftBlock>
-            <div v-if="ifLogin">
-              <LeftBlock message="我的音乐云盘" :big="false" name="cloud">
-                <template #default>
-                  <i class="iconfont icon-yun_o"></i>
-                </template>
-              </LeftBlock>
-              <LeftBlock message="我的播客" :big="false" name="mydj">
-                <template #default>
-                  <i class="iconfont icon-changpian"></i>
-                </template>
-              </LeftBlock>
-              <LeftBlock message="我的收藏" :big="false" name="myStart">
-                <template #default>
-                  <i class="iconfont icon-wodeshoucang"></i>
-                </template>
-              </LeftBlock>
-            </div>
+            <LeftBlock v-if="false" message="我的音乐云盘" :big="false" name="cloud">
+              <template #default>
+                <i class="iconfont icon-yun_o"></i>
+              </template>
+            </LeftBlock>
+            <LeftBlock message="我的播客" :big="false" name="mydj">
+              <template #default>
+                <i class="iconfont icon-changpian"></i>
+              </template>
+            </LeftBlock>
+            <LeftBlock v-if="false" message="我的收藏" :big="false" name="myStart">
+              <template #default>
+                <i class="iconfont icon-wodeshoucang"></i>
+              </template>
+            </LeftBlock>
           </div>
         </div>
         <div class="play-list">
@@ -162,8 +160,10 @@ const $router = useRouter();
 
 const messageList:Ref<any[]> = ref([])
 const routeName:Ref<any[]> = ref([])
-const findMusic = ['个性推荐', 'q2', 'q3']
-const findMusicRouteName = ['personalRecommend', 'q1', 'q2']
+// const findMusic = ['个性推荐', 'q2', 'q3']
+const findMusic = ['个性推荐']
+// const findMusicRouteName = ['personalRecommend', 'q1', 'q2']
+const findMusicRouteName = ['personalRecommend']
 const downloadMusic = ['下载管理', '本地音乐']
 const downloadMusicRouteName = ['downloaded', 'local']
 watch(route,()=>{
@@ -347,6 +347,9 @@ window.addEventListener('contextmenu', (e) => {
 </script>
 
 <style lang="less" scoped>
+.red-line{
+  border-top: 2px solid #b72525;
+}
 .noDrag {
   cursor: pointer;
 }

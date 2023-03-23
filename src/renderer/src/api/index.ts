@@ -421,3 +421,30 @@ export const SongDlUrl = (id:number,br:number)=>{
         }
     })
 }
+
+//搜索
+
+export const Search = (key:string,type?:string,limit?:number,offset?:number)=>{
+    return axios({
+        url:`/cloudsearch?keywords=${key}`,
+        method:'POST',
+        params:{
+            type,limit,offset,
+        },
+        data:{
+            cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
+        }
+    })
+}
+// http://120.48.43.32:3000/search?keywords=114
+
+//搜索建议
+export const SearchSuggest = (keywords:string,type?:'mobile')=>{
+    return axios({
+        url:`/search/suggest?keywords=${keywords}`,
+        method:'POST',
+        params:{
+            type
+        }
+    })
+}

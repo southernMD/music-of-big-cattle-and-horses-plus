@@ -19,7 +19,10 @@
                 </div>
                 <div :key="2" class="search" v-show="scrollY == undefined || scrollY < 300">
                     <i class="iconfont icon-search"></i>
-                    <input type="text" :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
+                    <input class="search-input" @input="searchSuggestThrottle" v-model="searchKey" @focus="flagSearch=true" @click="flagSearch=true" @keydown="goSearch" type="text" :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
+                    <Teleport to="#header" v-if="flagSearch">
+                        <SearchTip @close="flagSearch = false" @changeFlag="flag = true" :listTop="listTop" ></SearchTip>
+                    </Teleport>
                 </div>
             </transition-group>
         </div>
@@ -63,21 +66,26 @@
     <Teleport to=".smallApp">
         <div class="red-line"></div>
     </Teleport>
+    <MyDialog :flag="flag" @confirm="delAll" @cancel="flag = false" @closeDialog="close">
+        <template #midle>
+            确认删除历史记录？
+        </template>
+    </MyDialog>
 </template>
 
 <script lang="ts" setup>
 import { Component, ref, Ref, toRef, watch, defineAsyncComponent, nextTick, watchEffect } from 'vue'
-
+import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 // import { useElectronToApp, useMainMenu, useBasicApi, useMain,useGlobalVar } from '@renderer/store'  //pinia
 import { useMainMenu, useMain, useGlobalVar, useBasicApi } from '@renderer/store'
 import { onMounted, getCurrentInstance, ComponentInternalInstance } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import icon from '@renderer/assets/icon.png'
 import iconRed from '@renderer/assets/iconRed.png'
+import {throttle} from 'lodash'
 // const ChangeSkin = defineAsyncComponent(() => import('./changeSkin/index.vue'))
 // const PersonalMessage = defineAsyncComponent(() => import('./PersonalMessage/index.vue'))
 // const LoginPage = defineAsyncComponent(() => import('../LoginPage.vue'))
-
 // const ElectronToApp = useElectronToApp();
 const BasicApi = useBasicApi();
 const MainMenu = useMainMenu();
@@ -398,6 +406,37 @@ watch(mainColor,()=>{
         draw()
     }
 })
+//搜锁
+const searchKey = toRef(globalVar,'searchKey')
+const goSearch = (e:KeyboardEvent)=>{
+    if(e.code == 'Enter' && searchKey.value.trim().length != 0){
+        flagSearch.value = false
+        Main.searchHistory.push(searchKey.value.trim())
+        if(Main.detailStatus == 'open')Main.detailStatus = 'close'
+        $router.push({
+            name:'1',
+            query:{
+                key:searchKey.value.trim()
+            }
+        })
+    }
+}
+const flagSearch = ref(false)
+const flag = ref(false)
+const delAll = ()=>{
+    Main.searchHistory = []
+    flag.value= false
+}
+const close = (done: () => void)=>{
+    done()
+    flag.value = false
+}
+const listTop = ref({allMatch:[]})
+const searchSuggest = async()=>{
+    listTop.value = (await Main.reqSearchSuggest(searchKey.value.trim(),'mobile')).allMatch
+}
+const searchSuggestThrottle = throttle(searchSuggest,500)
+
 </script> 
 
 <style lang="less" scoped>

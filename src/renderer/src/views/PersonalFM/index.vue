@@ -140,6 +140,7 @@ const addPlay = () => {
 let one = ref(false)
 onActivated(() => {
     globalVar.scrollToTop = true;
+    Main.beforePlayListId = -4
     if (Main.playStatus == 'stop') {
         Main.songType = 'FM'
         playStatus.value = 'play'

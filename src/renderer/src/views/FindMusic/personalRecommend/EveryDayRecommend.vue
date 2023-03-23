@@ -193,6 +193,7 @@ const go = ()=>{
             margin-bottom: 15px;
             font-weight: bolder;
             margin-left: 10px;
+            width: 100px;
         }
         .main{
             display: flex;

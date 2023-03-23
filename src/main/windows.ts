@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage} from 'electron'
+import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage, globalShortcut} from 'electron'
 import { join,extname, parse, resolve } from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -496,6 +496,20 @@ export const createWindow = ():BrowserWindow=>{
       // watcher.on('unlink',delMusic)
       // watcher.on('unlinkDir',delDir)
       // return delMusic()
+    })
+    //全局播放
+    globalShortcut.register('Ctrl+Alt+Left',()=>{
+      mainWindow.webContents.send('main-prev')
+    })
+    globalShortcut.register('Ctrl+Alt+P',()=>{
+      mainWindow.webContents.send('main-play')
+    })
+    globalShortcut.register('Ctrl+Alt+Right',()=>{
+      mainWindow.webContents.send('main-next')
+    })
+    //歌词请求出现详情页面
+    ipcMain.on('lrc-open-playDetail',()=>{
+      mainWindow.show()
     })
     return mainWindow
 }

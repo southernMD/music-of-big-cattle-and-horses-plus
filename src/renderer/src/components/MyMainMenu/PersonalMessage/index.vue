@@ -1,5 +1,5 @@
 <template>
-    <div class="bk" @dblclick.stop  id="bkUserMessage" >
+    <div class="bk" @dblclick.stop  id="bkUserMessage" ref="bk">
         <div class="top">
             <div class="dongtai">
                 <div class="number">114</div>
@@ -55,12 +55,12 @@ defineProps<{
 let left: Ref<any> = toRef($el.props, 'l')
 
 watch(left, (newValue, oldValue) => {
-    let dom: HTMLElement = document.querySelector('.bk') as HTMLElement
+    let dom: HTMLElement = $el.refs.bk as HTMLElement
     dom.style.left = newValue + 'px'
 })
 
 onMounted(() => {
-    let dom: HTMLElement = document.querySelector('.bk') as HTMLElement
+    let dom: HTMLElement = $el.refs.bk as HTMLElement
     dom.style.left = left.value + 'px'
 })
 
