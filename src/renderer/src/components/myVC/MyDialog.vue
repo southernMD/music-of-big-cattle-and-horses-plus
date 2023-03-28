@@ -1,12 +1,12 @@
 <template>
     <el-dialog v-model="flagC" align-center draggable class="downloadDialog" :close-on-click-modal="false"
-        :before-close="closeDialog">
+        :before-close="closeDialog" :destroy-on-close="destroy">
         <template #header>
             <slot name="header"></slot>
         </template>
         <slot name="midle"></slot>
         <template #footer>
-            <el-button @click="confirm" class="go">确认</el-button>
+            <el-button @click="confirm" class="go">{{ confirmName }}</el-button>
             <el-button type="primary" @click="cancel" class="fa">{{ cancelName }}</el-button>
         </template>
     </el-dialog>
@@ -22,6 +22,14 @@ const props = defineProps({
     cancelName: {
         type: String,
         default: '取消'
+    },
+    confirmName:{
+        type: String,
+        default: '确认'
+    },
+    destroy:{
+        type: Boolean,
+        default:false
     }
 })
 
@@ -50,5 +58,10 @@ const closeDialog = (done: () => void)=>{
 </script>
 
 <style scoped lang="less">
-
+:slotted(.title){
+    font-weight: bolder;
+}
+:slotted(:deep(.main-slot)){
+    height: 200px;
+}
 </style>

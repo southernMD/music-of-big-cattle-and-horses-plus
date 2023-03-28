@@ -11,7 +11,7 @@
         <div class="loading">
             <div class="bk" v-show="!val.ifcancel">
                 <div class="fill" :key="val.id"
-                    :style="{ 'width': ((globalVar.loadingValue.get(val.id)[0] / globalVar.loadingValue.get(val.id)[1])) * 100 + '%' }">
+                    :style="{ 'width':  loadingFillWidth}">
                 </div>
             </div>
             <div class="txt" :class="{ 'txt-oneself': globalVar.oneself }" v-show="val.ifcancel">
@@ -27,10 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, watch, getCurrentInstance, ComponentInternalInstance, ref, inject, ShallowRef } from 'vue'
+import { toRef, watch,computed, getCurrentInstance, ComponentInternalInstance, ref, inject, ShallowRef } from 'vue'
 import { useGlobalVar, useMain } from '@renderer/store';
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
+
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const globalVar = useGlobalVar()
 const Main = useMain()
@@ -45,6 +46,9 @@ const props = defineProps<{
         ifcancel: boolean
     }
 }>()
+const loadingFillWidth = computed(() => {
+  return ((globalVar.loadingValue.get(props.val.id)[0] / globalVar.loadingValue.get(props.val.id)[1])) * 100 + '%'
+})
 function searchFather(d: HTMLElement): HTMLElement {
     if (d.classList.contains('line-music')) {
         return d;

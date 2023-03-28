@@ -166,7 +166,7 @@ import {
     Ref, nextTick, toRef, watch, shallowRef
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
-import { throttle } from 'lodash'
+import { before, throttle } from 'lodash'
 import { useMain, useGlobalVar, useMainMenu } from '@renderer/store';
 import { rand } from '@renderer/utils/rand';
 import { useRouter } from 'vue-router';
@@ -366,98 +366,113 @@ const showDetail = () => {
 
 let simiSong = ref<any>()
 let simiPlaylist = ref<any>()
-//获取播放url
-watch(playingId, async () => {
-    if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
+const loaclPlayWay = async()=>{
+    audio = document.querySelector('audio') as HTMLAudioElement
+    audio.currentTime = 0
+    audio.pause()
+    console.log(playingId.value);
+    lyric.value = {}
+    simiSong.value = []
+    simiPlaylist.value = []
+    if(playingId.value > 0){
+        const [lyricData, simiSongData, simiPlaylistData] = await Promise.all([
+        Main.reqLyric(playingId.value),
+        Main.reqSimiSong(playingId.value),
+        Main.reqSimiPlaylist(playingId.value)
+    ]);
+        console.log(lyricData.data);
+        lyric.value = lyricData.data;
+        simiSong.value = simiSongData.data.songs;
+        simiPlaylist.value = simiPlaylistData.data.playlists;
+    }
+    window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(({ base64 }) => {
+        SongUrl.value = `data:audio/mp3;base64,${base64}`
+        AC = new AudioContext()
+        gainNode = AC.createGain()
+        analyser = AC.createAnalyser();
+        loadingCanSeeUrl = true
+        const arrayBuffer = base64ToArrayBuffer(base64)
+        AC.decodeAudioData(arrayBuffer).then((AudioBuffer) => {
+            // console.log(AudioBuffer.getChannelData(1));
+            // console.log(AudioBuffer.getChannelData(0));
+            musicBuffer = AudioBuffer
+            bufferSource = AC.createBufferSource();
+            analyser.fftSize = 256;
+            bufferSource.connect(analyser);
+            analyser.connect(AC.destination);
+            bufferSource.buffer = AudioBuffer;
+            bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            bufferSource.connect(gainNode)
+            gainNode.connect(AC.destination);
+            gainNode.gain.setValueAtTime(-1, AC.currentTime)
+            // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
+            // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+            draw()
+            const t = setTimeout(() => {
+                bufferSource.start(0, 0)
+                loadingCanSeeUrl = false
+                clearTimeout(t)
+            }, 0)
+        })
+        stopOrPlayFlag.value = false
+        nextTick(() => {
+            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            if (bufferSource) bufferSource.playbackRate.value = audio.playbackRate
+            audio.play()
+            nowLevel.value = 'local'
+            levelName.value = '本地'
+            playStatus.value = 'play'
+            let str = playingList.value[playingindex.value - 1].name + ' - ';
+            let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
+            singerArr.forEach((element, index) => {
+                str += element.name
+                if (index != singerArr.length - 1) str += ' / '
+            })
+            window.electron.ipcRenderer.send('change-play-thum', str)
+            window.electron.ipcRenderer.send('render-play')
+            // stopPlayAudip()
+        })
+    })
+}
+const normalPlayWay = async()=>{
+    if (playingId.value != -1) {
         audio = document.querySelector('audio') as HTMLAudioElement
         audio.currentTime = 0
         audio.pause()
-        console.log(playingId.value);
-        lyric.value = {}
-        simiSong.value = []
-        simiPlaylist.value = []
-        if(playingId.value > 0){
-            const [lyricData, simiSongData, simiPlaylistData] = await Promise.all([
-            Main.reqLyric(playingId.value),
-            Main.reqSimiSong(playingId.value),
-            Main.reqSimiPlaylist(playingId.value)
-        ]);
-            console.log(lyricData.data);
-            lyric.value = lyricData.data;
-            simiSong.value = simiSongData.data.songs;
-            simiPlaylist.value = simiPlaylistData.data.playlists;
-        }
-        window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(({ base64 }) => {
-            SongUrl.value = `data:audio/mp3;base64,${base64}`
-            AC = new AudioContext()
-            gainNode = AC.createGain()
-            analyser = AC.createAnalyser();
-            loadingCanSeeUrl = true
-            const arrayBuffer = base64ToArrayBuffer(base64)
-            AC.decodeAudioData(arrayBuffer).then((AudioBuffer) => {
-                // console.log(AudioBuffer.getChannelData(1));
-                // console.log(AudioBuffer.getChannelData(0));
-                musicBuffer = AudioBuffer
-                bufferSource = AC.createBufferSource();
-                analyser.fftSize = 256;
-                bufferSource.connect(analyser);
-                analyser.connect(AC.destination);
-                bufferSource.buffer = AudioBuffer;
-                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-                bufferSource.connect(gainNode)
-                gainNode.connect(AC.destination);
-                gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
-                // color.addColorStop(0, 'rgba(102, 204, 255,1)');
-                draw()
-                const t = setTimeout(() => {
-                    bufferSource.start(0, 0)
-                    loadingCanSeeUrl = false
-                    clearTimeout(t)
-                }, 0)
-            })
+        let result: any = await Main.reqSongUrl(playingId.value)
+        lyric.value = (await Main.reqLyric(playingId.value)).data
+        await musicCanSee(result.data.data[0].url, 0, 0)
+        SongUrl.value = result.data.data[0].url
+        nextTick(() => {
             stopOrPlayFlag.value = false
-            nextTick(() => {
-                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                if (bufferSource) bufferSource.playbackRate.value = audio.playbackRate
-                audio.play()
-                nowLevel.value = 'local'
-                levelName.value = '本地'
-                playStatus.value = 'play'
-                let str = playingList.value[playingindex.value - 1].name + ' - ';
-                let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-                singerArr.forEach((element, index) => {
-                    str += element.name
-                    if (index != singerArr.length - 1) str += ' / '
-                })
-                window.electron.ipcRenderer.send('change-play-thum', str)
-                window.electron.ipcRenderer.send('render-play')
-                // stopPlayAudip()
-            })
+            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            bufferSource.playbackRate.value = audio.playbackRate
+            audio.play()
         })
-    } else {
-        if (playingId.value != -1) {
-            audio = document.querySelector('audio') as HTMLAudioElement
-            audio.currentTime = 0
-            audio.pause()
-            let result: any = await Main.reqSongUrl(playingId.value)
-            lyric.value = (await Main.reqLyric(playingId.value)).data
-            await musicCanSee(result.data.data[0].url, 0, 0)
-            SongUrl.value = result.data.data[0].url
-            nextTick(() => {
-                stopOrPlayFlag.value = false
-                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                bufferSource.playbackRate.value = audio.playbackRate
-                audio.play()
-            })
-            nowLevel.value = 'standard'
-            levelName.value = '标准'
-            //喜欢这首歌的人也听与包含这首歌的歌单
-            simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
-            simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
-            console.log(simiSong, simiPlaylist);
-        }
+        nowLevel.value = 'standard'
+        levelName.value = '标准'
+        //喜欢这首歌的人也听与包含这首歌的歌单
+        simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
+        simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
+        console.log(simiSong, simiPlaylist);
+    }
+}
+//获取播放url
+watch(playingId, async () => {
+    if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
+        loaclPlayWay()
+    } else if(Main.beforePlayListId == -3){
+        nextTick(()=>{
+            if(Main.playingList[Main.playingindex - 1].localPath){
+                loaclPlayWay()
+            }else{
+                normalPlayWay()
+            }
+        })
+
+    }else{
+        normalPlayWay()
     }
 })
 function base64ToArrayBuffer(base64) {
@@ -1312,6 +1327,19 @@ function draw() {
         canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight / 4 + 30);
     }
 }
+//历史播放
+watch(SongUrl,()=>{
+    if(playingList.value.length > 100)playingList.value.length = 100
+    const t = playingList.value[playingindex.value - 1]
+    t['privilege'] = Main.playingPrivileges[playingindex.value - 1]
+    if(!t['privilege'])t['privilege'] = playingList.value[playingindex.value - 1].privilege
+    console.log(t);
+    t['lately'] = new Date().getTime()
+    Main.latelyPlay = Main.latelyPlay.filter((item)=>{
+        return item.id != t.id
+    })
+    Main.latelyPlay.unshift(t)
+})
 
 </script>
 

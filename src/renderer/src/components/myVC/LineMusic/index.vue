@@ -18,15 +18,15 @@
                         class="iconfont icon-shengyin03-mianxing songStatus"></i></span>
                 <span v-else-if="indexSearch">{{ indexSearch > 9 ? indexSearch : `0${indexSearch}` }}</span>
                 <span v-else>{{ index > 9 ? index : `0${index}` }}</span>
-                <i class="iconfont icon-aixin xin" :class="{ noDrag: !Main.dragMouse }" v-show="!ifLike()"
+                <i class="iconfont icon-aixin xin" :class="{ noDrag: !Main.dragMouse }" v-show="!ifLike() && !lately"
                     @click="likeOrDislike"></i>
-                <i class="iconfont icon-aixin_fill xin" :class="{ noDrag: !Main.dragMouse }" v-show="ifLike()"
+                <i class="iconfont icon-aixin_fill xin" :class="{ noDrag: !Main.dragMouse }" v-show="ifLike() && !lately"
                     @click="likeOrDislike"></i>
                 <i class="iconfont icon-xiazai1" :class="{ noDrag: !Main.dragMouse }" @click="download(id)"
-                    v-if="!ifDownload && !downloadId.includes(id) && !local"></i>
+                    v-if="!ifDownload && !downloadId.includes(id) && !local && !lately"></i>
                 <canvas id="loadingCanvas" width="25" height="25" ref="loadingCanvas"
-                    v-show="downloadId.includes(id) && !local"></canvas>
-                <i class="iconfont icon-zhengque" v-if="!(downloadId.includes(id)) && !(!ifDownload) && !local"
+                    v-show="downloadId.includes(id) && !local  && !lately && loadingValue.get(id) && loadingValue.get(id)?.[0] > 0"></canvas>
+                <i class="iconfont icon-zhengque" v-if="!(downloadId.includes(id)) && !(!ifDownload) && !local  && !lately"
                     :class="{ noDrag: !Main.dragMouse }"></i>
                 <!-- <canvas id="loadingCanvas" width="18" height="18" ref="loadingCanvas"
                 v-show="true"></canvas> -->
@@ -56,8 +56,11 @@
                     <span v-else style="padding-left: 5px;">未知专辑</span>
                 </div>
             </div>
-            <div v-if="!local" class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{
+            <div v-if="!local && !lately" class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{
                 dayjsMMSS(time) }}</span>
+            </div>
+            <div v-if="lately" class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{
+                Timeago(time) }}</span>
             </div>
             <div class="hot" v-if="hot">
                 <div class="bk">
@@ -81,7 +84,7 @@
 
 <script lang="ts" setup>
 import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef } from 'vue';
-import { dayjsMMSS } from '@renderer/utils/dayjs'
+import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
 import { useMain, useBasicApi, useGlobalVar } from '@renderer/store';
 import Singer from './Singer/index.vue'
 import ZhuanJi from './ZhuanJi/index.vue'
@@ -95,7 +98,7 @@ const props = defineProps<{
     title: string,
     singer: Array<any>,
     zhuanji?: any,
-    time?: number,
+    time?: number | string,
     id: number,
     tns?: Array<string>,
     alia?: Array<string>,
@@ -109,6 +112,7 @@ const props = defineProps<{
     local?: boolean // 是否本地歌曲
     path?: string //本地歌曲路径
     privilegeAndListSearchOnly?: any//搜索专属音质传递
+    lately?:boolean
 }>()
 //leftblock传过来的id，限自己的歌单的id
 let playListid = inject<Ref<number>>('playListId') as Ref<number>
@@ -407,6 +411,15 @@ const gotoPlay = (e: MouseEvent) => {
                 // }else{
 
                 // }
+            }else if(father.getAttribute('id') === 'lately'){
+                Main.playingList = Main.latelyPlay
+                Main.playingPrivileges = Main.latelyPlay.map((it)=>{
+                    return it.privilege
+                })
+                Main.beforePlayListId = -3
+                Main.playingindex = props.index as number
+                Main.playing =  props.id
+                Main.playStatus = 'play'
             }
             //通知主进程修改播放图片以及文字
             // $el.props.title
@@ -552,20 +565,20 @@ watch(downLoadAll, async () => {
 
 <style lang="less" scoped>
 .dragMouseStyleCan {
-    cursor: url('@/assets/point.png'), auto;
+    cursor: url('@renderer/assets/point.png'), auto;
 
     div,
     span {
-        cursor: url('@/assets/point.png'), auto;
+        cursor: url('@renderer/assets/point.png'), auto;
     }
 }
 
 .dragMouseStyleMyself {
-    cursor: url('@/assets/stop.png'), auto;
+    cursor: url('@renderer/assets/stop.png'), auto;
 
     div,
     span {
-        cursor: url('@/assets/stop.png'), auto;
+        cursor: url('@renderer/assets/stop.png'), auto;
     }
 }
 
@@ -613,6 +626,7 @@ watch(downLoadAll, async () => {
             span {
                 padding-left: 20px;
                 font-size: 13px;
+                max-width: 10px
             }
 
             .xin {

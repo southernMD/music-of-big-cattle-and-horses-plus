@@ -77,6 +77,7 @@ export default function (): any {
             document.documentElement.style.setProperty('--FMAr', `rgb(80,125,175)`);
             document.documentElement.style.setProperty('--FMArHover', `rgb(11,88,176)`);
             document.documentElement.style.setProperty('--borderColor', `rgb(81,81,81)`);
+            document.documentElement.style.setProperty('--pickBkColor', `rgb(41, 43, 47)`);
 
             primaryColor.value = `rgb(236,65,65)`
             MainMenu.iconSrc = "/src/assets/icon.png"
@@ -146,6 +147,7 @@ export default function (): any {
             document.documentElement.style.setProperty('--FMAr', `rgb(46,91,142)`);
             document.documentElement.style.setProperty('--FMArHover', `rgb(46,89,138)`);
             document.documentElement.style.setProperty('--borderColor', `rgb(216,216,216)`);
+            document.documentElement.style.setProperty('--pickBkColor', `rgb(0, 0, 0)`);
 
         }
         if (newValue === 'NMred') {

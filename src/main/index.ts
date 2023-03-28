@@ -6,7 +6,7 @@ import fs from 'fs'
 import os from 'os'
 import videoServer from './video-server'
 import httpSever from './http/app'
-import {createWindow,lrcwindow} from './windows'
+import {createWindow,lrcwindow,dragWindw} from './windows'
 // import *  as bytenode from 'bytenode'
 fs.mkdirSync('download', { recursive: true });
 // encryptFile()
@@ -41,7 +41,7 @@ app.whenReady().then(async() => {
   httpSever()
   videoServer(createWindow())
   lrcwindow()
-  
+  dragWindw()
   //右键菜单
   ipcMain.on('show-context-menu', (event) => {
     const menu = Menu.buildFromTemplate([{

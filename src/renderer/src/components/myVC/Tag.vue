@@ -87,7 +87,7 @@ onMounted(()=>{
 <style lang="less" scoped>
     
 .dragMouseStyleNo{
-    cursor: url('@/assets/stop.png'),auto;
+    cursor: url('@renderer/assets/stop.png'),auto;
 }
 .noDrag{
     cursor: pointer;

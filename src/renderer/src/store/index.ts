@@ -7,7 +7,8 @@ import {
     SongUrl, Lyric, simiSong, simiPlaylist, songDetail, commentMusic, commentNew, commentHot,
     playlistTracks, songOrderUpdate, playlistOrderUpdate, playmodeIntelligenceList, likeQ, commentPlaylist,
     comment, recommendSongs, recommendPlayList, programRecommend, djProgramToplist,
-    personal_fm, fm_trash, userDj, startDj, SongDlUrl,Search, SearchSuggest
+    personal_fm, fm_trash, userDj, startDj, SongDlUrl,Search, SearchSuggest, PlayListCreate,playlistTags,
+    updatePlayList,updatePlayListTags,updatePlayListdesc, uploadPlaylistPic
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -65,6 +66,10 @@ interface S {
     hotDjProgram: Array<any>
     startDjArr: Array<any>
     createDjArr: Array<any>
+    tagsDetail:{
+        sub:any[],
+        categories:any[]
+    }
 }
 
 export const useBasicApi = defineStore('BaseApi', {
@@ -77,7 +82,11 @@ export const useBasicApi = defineStore('BaseApi', {
             DjSongRecommend: [],
             hotDjProgram: [],
             startDjArr: [],
-            createDjArr: []
+            createDjArr: [],
+            tagsDetail:{
+                sub:[],
+                categories:[]
+            }
         }
     },
     actions: {
@@ -200,6 +209,29 @@ export const useBasicApi = defineStore('BaseApi', {
             } else {
                 alert('error')
             }
+        },
+        //歌曲的tags
+        async reqPlayListTags(){
+            let result = await playlistTags()
+            if(result.data.code == 200){
+                return new Promise<{sub:any[],categories:any[]}>((resolve, reject) => {
+                    this.tagsDetail.sub = result.data.sub
+                    this.tagsDetail.categories = Object.values(result.data.categories)
+                    resolve({
+                        sub:result.data.sub,
+                        categories:Object.values(result.data.categories)
+                    })
+                })
+            }else{
+                return new Promise<{sub:any[],categories:any[]}>((resolve, reject) => {
+                    this.tagsDetail.sub = []
+                    this.tagsDetail.categories = []
+                    resolve({
+                        sub:[],
+                        categories:[]
+                    })
+                })
+            }
         }
     }
 })
@@ -246,6 +278,7 @@ interface T {
     searchNumber:number
     // immheart:boolean
     searchHistory:string[]
+    latelyPlay:any[]
 }
 export const useMain = defineStore('Main', {
     state: (): T => {
@@ -321,7 +354,8 @@ export const useMain = defineStore('Main', {
             localListPath:[],
             localListPathFlag:[],
             searchNumber:0,
-            searchHistory:[]
+            searchHistory:[],
+            latelyPlay:[]
         }
     },
     actions: {
@@ -659,6 +693,80 @@ export const useMain = defineStore('Main', {
                 })
             }
         },
+        //创建歌单
+        async reqPlayListCreate(name:string,privacy?:number){
+            let result = await PlayListCreate(name,privacy)
+            if(result.data.code == 200){
+                result = await this.reqPlaylistDetail(result.data.id)
+                if(result.data.code == 200){
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(result.data.playlist)
+                    })
+                }else{
+                    return new Promise<any>((resolve, reject) => {
+                        resolve({})
+                    })
+                }
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        //修改歌单信息
+        async reqUpdatePlayList(index:string,id:number,name:string,desc:string,tags:string){
+            let result = await updatePlayList(id,name,desc,tags)
+            console.log(result.data['/api/playlist/desc/update'].code);
+            console.log(result.data['/api/playlist/tags/update'].code);
+            console.log(result.data['/api/playlist/update/name'].code);
+            if(
+                result.data['/api/playlist/desc/update'].code == 200 &&
+                result.data['/api/playlist/tags/update'].code == 200 &&
+                result.data['/api/playlist/update/name'].code == 200 
+            ){
+                let result2 = await this.reqPlaylistDetail(id)
+                console.log(result2.data.playlist);
+                const playinglist = result2.data.playlist
+                delete playinglist['tracks']
+                delete playinglist['trackIds']
+                this.playList[index] = playinglist
+                new Promise<boolean>((resolve, reject) => {
+                    resolve(result2)
+                })
+            }else{
+                new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqUpdatePlayListTags(index:number,id:number,tags:string){
+            let result = await updatePlayListTags(id,tags)
+            if(result.data.code == 200){
+                this.playList[index].tags = tags.split(';')
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    reject(false)
+                })
+            }
+        },
+        async reqUploadPlaylistPic(id:number,formData:FormData,imgSize:number,imgX:number,imgY:number){
+            let result = await  uploadPlaylistPic(id,formData,imgSize,imgX,imgY)
+            console.log(result.data.data.url);
+            console.log(result.data.data);
+            console.log(result.data);
+            if(result.data.data.code == 200){
+                return new Promise<string>((resolve, reject) => {
+                    resolve(result.data.data.url)
+                })
+            }else{
+                return new Promise<string>((resolve, reject) => {
+                    resolve('')
+                })
+            }
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -694,7 +802,7 @@ export const useMain = defineStore('Main', {
         }
     },
     persist: [{
-        paths: ['localListPath', 'localListPathFlag','searchHistory'],
+        paths: ['localListPath', 'localListPathFlag','searchHistory','latelyPlay'],
     }]
 })
 
@@ -757,5 +865,8 @@ export const useGlobalVar = defineStore('globalVar', {
             musicPick:new Map(),
             searchKey:''
         }
+    },
+    actions:{
+
     }
 })

@@ -7,7 +7,7 @@
         <div class="top">
           <LeftBlock message="发现音乐" :big="true" name="findMusic">
           </LeftBlock>
-          <LeftBlock message="播客" :big="true" name="djPlay">
+          <LeftBlock message="播客" :big="true" name="djPlay" v-if="false">
           </LeftBlock>
           <LeftBlock message="关注" :big="true" name="follow">
           </LeftBlock>
@@ -28,7 +28,7 @@
                   <i v-else-if="Main.playStatus == 'stop'" class="iconfont icon-shengyin03-mianxing songStatus"></i>
                 </template>
             </LeftBlock>
-            <LeftBlock message="最近播放" :big="false" name="playLately">
+            <LeftBlock message="最近播放" :big="false" name="Latelyplay">
               <template #default>
                 <i class="iconfont icon-shizhong"></i>
               </template>
@@ -38,7 +38,7 @@
                 <i class="iconfont icon-yun_o"></i>
               </template>
             </LeftBlock>
-            <LeftBlock message="我的播客" :big="false" name="mydj">
+            <LeftBlock  v-if="false" message="我的播客" :big="false" name="mydj" >
               <template #default>
                 <i class="iconfont icon-changpian"></i>
               </template>
@@ -69,7 +69,7 @@
                   <i class="iconfont icon-aixin"></i>
                 </template>
                 <template #jump>
-                  <div class="bk" :class="{'bk-oneself':globalVar.oneself == 1}" @click.stop="heartJump" title="开启鸡动模式">
+                  <div class="bk" v-show="false" :class="{'bk-oneself':globalVar.oneself == 1}" @click.stop="heartJump" title="开启鸡动模式">
                     <i class="iconfont icon-xindong"></i>
                   </div>
                 </template>
@@ -141,6 +141,17 @@
       </LocationSong> -->
     </main>
   </div>
+  <MyDialog :flag="addPlayFlag" @confirm="createPlayList" @cancel="addPlayFlag = false " @closeDialog="addPlayFlag = false">
+    <template #header>
+      <span class="title1">新建歌单</span>
+    </template>
+    <template #midle>
+      <div class="create">
+        <el-input v-model="playListName" placeholder="请输入新歌单标题"></el-input>
+        <el-checkbox v-model="yinsi" size="large" label="设置为隐私歌单"></el-checkbox>
+      </div>
+    </template>
+  </MyDialog>
 </template>
 <script setup lang="ts">
 //   import { ElConfigProvider } from 'element-plus'
@@ -150,7 +161,7 @@ import { useMainMenu, useMain,useGlobalVar } from '../store'
 import { useRoute, useRouter } from 'vue-router';
 
 import LeftBlock from './myVC/LeftBlock.vue';
-
+import MyDialog from './myVC/MyDialog.vue';
 
 const MainMenu = useMainMenu();
 const Main = useMain();
@@ -294,8 +305,29 @@ const showPlay = () => {
   playlistFlag.value = !playlistFlag.value
 }
 
+const addPlayFlag = ref(false)
+const yinsi = ref(false)
+const playListName = ref('')
 const addPlay = () => {
+  addPlayFlag.value = true
   console.log('增加歌单');
+}
+const createPlayList = async()=>{
+  if(playListName.value.length == 0)return
+  globalVar.loadDefault = true
+  addPlayFlag.value = false
+  const result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  if(result.id){
+    globalVar.loadDefault = false
+    globalVar.loadMessageDefault = '创建歌单成功'
+    globalVar.loadMessageDefaultFlag = true
+    Main.playList.splice(1,0,result)
+  }else{
+    globalVar.loadDefault = false
+    globalVar.loadMessageDefaultFlag = true
+  }
+
+  console.log(result);
 }
 
 // const heartJump = async () => {
@@ -588,4 +620,50 @@ window.addEventListener('contextmenu', (e) => {
   background-color: @onselfColor;
   color:@oneselfFontColor;
 }
+
+.title1 {
+    color: @font-color;
+    font-weight: bolder;
+}
+
+.create{
+  display: flex;
+  flex-direction: column;
+  :deep(label){
+    height: 25px;
+
+    .el-checkbox__label {
+      font-size: 13px;
+      color: @font-color;
+    }
+    --el-checkbox-bg-color:@other-bk-color;
+    --el-checkbox-input-border-color-hover:@primary-color;
+    --el-checkbox-input-border:1px solid @border-color;
+  }
+  :deep(.is-checked) {
+    :deep(.el-el-checkbox__input) {
+      border-color: @primary-color;
+      background-color: @primary-color;
+    }
+    --el-checkbox-checked-bg-color:@primary-color;
+    --el-checkbox-checked-input-border-color:@primary-color;
+    .el-checkbox__label {
+        color: @primary-color;
+    }
+  }
+  :deep(.el-input){
+    margin-bottom: 10px;
+    --el-input-focus-border-color:@border-color;
+    --el-input-bg-color: @left-click-color;
+    --el-input-border-color:@border-color;
+    --el-input-hover-border-color:@border-color;
+    input{
+      color: @font-color !important;
+    }
+    input::placeholder{
+      color: @small-font-color !important;
+    }
+  }
+}
+
 </style>

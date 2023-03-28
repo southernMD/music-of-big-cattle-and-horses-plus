@@ -239,7 +239,7 @@ const load = async() => {
 
 <style lang="less" scoped>
 .dragMouseStyleCan {
-    cursor: url('@/assets/point.png'), auto;
+    cursor: url('@renderer/assets/point.png'), auto;
 }
 
 .music-list {

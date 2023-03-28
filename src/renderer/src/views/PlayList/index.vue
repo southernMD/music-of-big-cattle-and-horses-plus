@@ -7,7 +7,7 @@
                 <div class="title">
                     <div class="Btag">歌单</div>
                     <span>{{ playList[index]?.name }}</span>
-                    <i class="iconfont icon-xiugaioryijian" :class="{ noDrag: !Main.dragMouse }"></i>
+                    <i class="iconfont icon-xiugaioryijian" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
                 </div>
                 <div class="author">
                     <el-image fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator.avatarUrl">
@@ -73,10 +73,10 @@
                     </div>
                 </div>
                 <div class="small">
-                    <div class="tags">
+                    <div class="tags" v-show="index!=0">
                         <span class="title">标签&nbsp;:&nbsp;</span>
                         <span class="add" v-if="tags.length === 0 && isMy == 'true'"
-                            :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }">添加标签</span>
+                            :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }" @click="add">添加标签</span>
                         <span v-else v-for="(value, index) in tags" :key="value" class="add"
                             :class="{ noDrag: !Main.dragMouse }">
                             {{ value }}
@@ -92,10 +92,10 @@
                             numberSimp(dynamic?.playCount)
                         }}</span>
                     </div>
-                    <div class="describe">
+                    <div class="describe" v-show="index!=0">
                         <span class="title">简介&nbsp;:&nbsp;</span>
                         <span class="add" v-if="!playList[index]?.description && isMy == 'true'"
-                            :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }">添加简介</span>
+                            :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }" @click="addDetail">添加简介</span>
                         <span class="txt" :class="{ 'txt-oneself': globalVar.oneself }" id="description"
                             v-html="playList[index]?.description">
                         </span>
@@ -136,6 +136,7 @@
             </keep-alive>
         </router-view>
     </div>
+    <AddTipDialog ref="AddTipDialogRef" @confirm="confirm" :index="+index"></AddTipDialog>
 </template>
 
 <script lang="ts" setup>
@@ -149,6 +150,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMain, useBasicApi, useMainMenu, useGlobalVar } from '@renderer/store';
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
+import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
 const BasicApi = useBasicApi();
 const Main = useMain()
 const route = useRoute();
@@ -313,6 +315,7 @@ let routeQuery = toRef(route, 'query')
 watch(routeQuery, async () => {
     let Rn = route.name as string
     isMy.value = route.query.my as string || 'true'
+    console.log('^^^^^^^(((((((((((())))))))))))))');
     if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
         nextTick(() => {
             //样式修改
@@ -564,8 +567,38 @@ const getUrl = async (id, name) => {
     // })
 }
 
+//编辑歌单信息
+const gotoUpdatePlayList = () => {
+    router.push({
+        name: 'editPlayList',
+        query: {
+            index: index.value
+        }
+    })
+}
+const AddTipDialogRef = ref<InstanceType<typeof AddTipDialog>>()
+const add = ()=>{
+    AddTipDialogRef.value!.clearFormTags = false
+    AddTipDialogRef.value!.confirmFlag = false
+    AddTipDialogRef.value!.addTagsFlag = true
+    AddTipDialogRef.value!.choiceNumber = Main.playList[index.value].tags.length
+}
+const confirm = async(tag)=>{
+    console.log(tag);
+    try {
+        await Main.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
+        tags.value = Main.playList[index.value].tags
+        globalVar.loadMessageDefault = '保存成功!'
+        globalVar.loadMessageDefaultFlag = true
+    } catch (error) {
+        globalVar.loadMessageDefault = '保存失败!'
+        globalVar.loadMessageDefaultFlag = true
+    }
+}
 
-
+const addDetail = ()=>{
+    gotoUpdatePlayList()
+}
 </script>
 
 <style lang="less" scoped>

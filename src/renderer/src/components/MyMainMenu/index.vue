@@ -441,11 +441,11 @@ const searchSuggestThrottle = throttle(searchSuggest,500)
 
 <style lang="less" scoped>
 .dragMouseStyleCan {
-    cursor: url('@/assets/stop.png'), auto;
+    cursor: url('@renderer/assets/stop.png'), auto;
 
     div,
     span {
-        cursor: url('@/assets/stop.png'), auto;
+        cursor: url('@renderer/assets/stop.png'), auto;
     }
 }
 

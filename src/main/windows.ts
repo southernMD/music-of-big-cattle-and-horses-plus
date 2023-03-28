@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage, globalShortcut} from 'electron'
+import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage, globalShortcut, Menu} from 'electron'
 import { join,extname, parse, resolve } from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -511,6 +511,31 @@ export const createWindow = ():BrowserWindow=>{
     ipcMain.on('lrc-open-playDetail',()=>{
       mainWindow.show()
     })
+    //选择修改歌单封面
+    ipcMain.on('detail-pic', (event) => {
+      dialog.showOpenDialog(mainWindow,{
+        title:'选择一张图片或一段视频',
+        filters:[
+          {name:'图片资源',extensions:['jpg','png','jpeg','webp']},
+        ],
+        properties:['openFile','promptToCreate']
+      }).then((obj)=>{
+        const {canceled,filePaths} = obj
+        if(!canceled){
+          const filePath = filePaths[0]
+          fs.readFile(filePath,(err,data)=>{
+            if (err) {
+              event.returnValue = err.toString()
+            } else {
+              event.returnValue = data.toString('base64')
+            }
+          })
+        } else {
+          event.returnValue = null
+        }
+      })
+    })
+    
     return mainWindow
 }
 
@@ -617,4 +642,81 @@ export const lrcwindow = (): any => {
 
   return child
 }
-  
+
+export const dragWindw = ():BrowserWindow=>{
+  const win = new BrowserWindow({
+      width:100,
+      height:23,
+      minHeight:0,
+      frame: false,
+      // show:false,
+      transparent: true,
+      backgroundColor: '#00000000',
+      // useContentSize:true,
+      skipTaskbar: true,
+      alwaysOnTop:true,
+      // titleBarStyle:'hidden'
+      webPreferences: {
+          nodeIntegration: true,
+          // contextIsolation: false,
+          preload: join(__dirname, "../preload/index.js"),
+      },
+  })
+  win.setPosition(9999,9999)
+  win.webContents.on('did-finish-load', () => {
+      // 二、注册窗口id
+      registerWindowId('drageMessage', win.webContents.id);
+  })
+  win.webContents.on('destroyed', () => {
+      // 三、销毁窗口 id
+      removeWindowId('drageMessage');
+  })
+  Menu.setApplicationMenu(null);
+  win.setContentSize(100, 25)
+  win.setSize(100, 25)
+  win.setIgnoreMouseEvents(true)
+  // win.webContents.toggleDevTools()
+  // win.loadURL(`http://${process.env["VITE_DEV_SERVER_HOST"]}:${process.env["VITE_DEV_SERVER_PORT"]}/#/dragMessage`)
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/#/dragMessage`)
+  } else {
+    win.loadFile(join(__dirname, '../renderer/index.html#dragMessage'))
+  }
+  let ifChanged = false
+  let hM = 25
+  let wM = 25
+  ipcMain.on('change-drag-width',(e,message)=>{
+      if(message.width + 5 < 25){
+          wM = 25
+          hM = 25
+      }else{
+          wM = message.width + 5
+          hM = 25
+      }
+      ifChanged = true
+  })
+  let mouseListener:any
+  ipcMain.on('begin-drag',(e)=>{
+      // let {message,backGroundColor} = messageObj
+      let X = screen.getCursorScreenPoint().x
+      let Y = screen.getCursorScreenPoint().y
+      win.setPosition(X+30,Y)
+      if(!mouseListener){
+          mouseListener = setInterval(()=>{
+              if(ifChanged){
+                  X = screen.getCursorScreenPoint().x
+                  Y = screen.getCursorScreenPoint().y
+                  win.setContentBounds({width:wM,height:hM,x:X+30,y:Y})
+              }
+          },10)
+      }
+      win.showInactive()
+  })
+  ipcMain.on('end-drag',(e)=>{
+      clearInterval(mouseListener)
+      mouseListener = null
+      ifChanged = false
+      win.hide()
+  })
+  return win
+}

@@ -448,3 +448,67 @@ export const SearchSuggest = (keywords:string,type?:'mobile')=>{
         }
     })
 }
+
+//创建歌单
+export const PlayListCreate = (name:string,privacy?:number)=>{
+    return axios({
+        url:`/playlist/create?name=${name}&t=${new Date().getTime()}`,
+        method:'POST',
+        params:{
+            privacy
+        },
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+//TAGS
+export const playlistTags = ()=>{
+    return axios({
+        url:'/playlist/catlist',
+        method:'GET'
+    })
+}
+
+export const updatePlayList = (id:number,name:string,desc:string,tags:string)=>{
+    return axios({
+        url:`/playlist/update?id=${id}&name=${name}&desc=${desc}&tags=${tags}&t=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+export const updatePlayListTags = (id:number,tags:string)=>{
+    return axios({
+        url:`/playlist/tags/update?id=${id}&tags=${tags}&t=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+export const updatePlayListdesc = (id:number,desc:string)=>{
+    return axios({
+        url:`/playlist/desc/update?id=${id}&desc=${desc}&t=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+//上传歌单图片
+export const uploadPlaylistPic = (id:number,formData:FormData,imgSize:number,imgX:number,imgY:number)=>{
+    const url = `/playlist/cover/update?id=${id}&imgSize=${
+        imgSize
+      }&imgX=${imgX}&imgY=${imgY}&timestamp=${Date.now()}&cookie=${localStorage.getItem('cookieUser')}`
+    return axios({
+        url:url,
+        method:'POST',
+        data: formData,
+    })
+}

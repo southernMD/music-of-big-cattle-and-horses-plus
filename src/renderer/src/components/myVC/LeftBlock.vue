@@ -165,22 +165,22 @@ const go = async () => {
 
 <style lang="less" scoped>
 .dragMouseStyleCan{
-    cursor: url('@/assets/point.png'),auto;
+    cursor: url('@renderer/assets/point.png'),auto;
     div,span{
-        cursor: url('@/assets/point.png'),auto;
+        cursor: url('@renderer/assets/point.png'),auto;
     }
 }
 .dragMouseStyleMyself{
-    cursor: url('@/assets/stop.png'),auto;
+    cursor: url('@renderer/assets/stop.png'),auto;
     div,span{
-        cursor: url('@/assets/stop.png'),auto;
+        cursor: url('@renderer/assets/stop.png'),auto;
     }
 }
 .noDrag{
     cursor: pointer;
 }
 .dragMouseStyleAdd{
-    cursor: url('@/assets/add.png'),pointer;
+    cursor: url('@renderer/assets/add.png'),pointer;
 }
 .noDrag{
     cursor: pointer;

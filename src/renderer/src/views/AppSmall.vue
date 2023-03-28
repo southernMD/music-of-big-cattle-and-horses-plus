@@ -166,7 +166,8 @@ else if (!(cookie == '' || cookie == null || cookie == undefined)) {
 const p1 = BasicApi.reqRecommendSongs()
 const p2 = BasicApi.reqRecommendPlayList()
 const p3 = BasicApi.reqDjProgramToplist(10)
-await Promise.all([p1, p2, p3])
+const p4 = BasicApi.reqPlayListTags()
+await Promise.allSettled([p1, p2, p3,p4])
 MainPinia.reqPersonal_fm()
 
 let flagC = toRef(MainMenu, 'colorBlock')
@@ -334,7 +335,52 @@ window.electron.ipcRenderer.on('look-download-list', ({ }, args: any[]) => {
 
 provide('downloadList', downloadList)
 
+let draggable = toRef(MainPinia,'dragMouse')
+//拖动监视
+let dragMessageId:number | null = null;
+let t = setInterval(()=>{
+    dragMessageId = window.electron.ipcRenderer.sendSync('getWindowId','drageMessage');
+    if(dragMessageId){
+        clearInterval(t);
+    }
+},100)
+watch(draggable,(newValue,oldValue)=>{
+    console.log(newValue,oldValue);
+    if(newValue == true){
+        console.log('拖动开始');
+        window.electron.ipcRenderer.send('begin-drag')
+        window.electron.ipcRenderer.sendTo(dragMessageId as number,'send-to-drag-Message',{message:MainPinia.dragMessage})
+    }
+    if(newValue == false){
+        console.log('拖动结束');
+        window.electron.ipcRenderer.send('end-drag')
+        window.electron.ipcRenderer.sendTo(dragMessageId as number,'send-to-drag-end')
 
+    }
+})
+watch(()=>MainMenu.colorBlock,(newValue)=>{
+    if(newValue === 'NMblack'  || globalVar.oneself){
+        let t = setInterval(()=>{
+            if(dragMessageId){
+                window.electron.ipcRenderer.sendTo(dragMessageId,'send-to-drag-bkColor',
+                {backGroundColor:document.documentElement.style.getPropertyValue('--otherBkColor'),
+                    fontColor:document.documentElement.style.getPropertyValue('--fontColor')
+                })
+                clearInterval(t);
+            }
+        },100)
+    }else{
+        let t = setInterval(()=>{
+            if(dragMessageId){
+                window.electron.ipcRenderer.sendTo(dragMessageId as number,'send-to-drag-bkColor',
+                {backGroundColor:document.documentElement.style.getPropertyValue('--otherBkColor'),
+                    fontColor:document.documentElement.style.getPropertyValue('--fontColor')
+                })
+                clearInterval(t)
+            }
+        },100)
+    }
+},{immediate:true})
 </script>
 
 <style scoped lang="less">

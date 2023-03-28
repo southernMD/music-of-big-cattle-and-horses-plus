@@ -10,6 +10,7 @@ export {}
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     404: typeof import('./src/components/myVC/404.vue')['default']
+    AddTipDialog: typeof import('./src/components/myVC/AddTipDialog.vue')['default']
     ChangeSkin: typeof import('./src/components/MyMainMenu/changeSkin/index.vue')['default']
     ColorBlock: typeof import('./src/components/myVC/ColorBlock.vue')['default']
     ColorPick: typeof import('./src/components/ColorPick.vue')['default']

@@ -6,8 +6,8 @@
                 <div class="title">搜索历史<i class="iconfont icon-lajixiang" @click="changeFlag"></i></div>
                 <div class="historyList">
                     <div class="tip" v-for="val,index in Main.searchHistory">
-                        <span>{{val}}</span>
-                        <i class="iconfont icon-guanbi_o" @click="del(index)"></i>
+                        <span @click="goSearch(val)">{{val}}</span>
+                        <i class="iconfont icon-guanbi_o" @click.stop="del(index)"></i>
                     </div>
                 </div>
             </div>
@@ -63,6 +63,15 @@ const fasterSearch = (key:string,type:number)=>{
     globalVar.searchKey = key
     $emit('close')
 }
+const goSearch = (key:string)=>{
+    $router.push({
+        name:'1',
+        query:{
+            key
+        }
+    })
+    $emit('close')
+}
 </script>
 
 <style scoped lang="less">
@@ -71,7 +80,7 @@ const fasterSearch = (key:string,type:number)=>{
     position: absolute;
     top: 70px;
     left: 300px;
-    height: 200px;
+    height: 300px;
     background-color: @mianban-bk-color;
     box-shadow: @shadow;
     width: 400px;
@@ -84,7 +93,7 @@ const fasterSearch = (key:string,type:number)=>{
     .scroll{
         margin: 20px 20px;
         margin-right: 0;
-        height: 180px;
+        height: 280px;
         .noLength{
             height: inherit;
             .title{
@@ -117,6 +126,7 @@ const fasterSearch = (key:string,type:number)=>{
                         white-space: nowrap;
                         text-overflow: ellipsis;
                         overflow: hidden;
+                        cursor: pointer;
                     }
                     i{
                         font-size: 12px;

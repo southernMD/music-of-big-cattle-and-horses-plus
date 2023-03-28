@@ -146,7 +146,17 @@ const routes: Array<RouteRecordRaw> = [
                 ]
             },
             {
-                path: '/:pathMatch(.*)',
+                path:'Latelyplay',
+                name:'Latelyplay',
+                component:()=>import('@renderer/views/LatelyPlay/index.vue'),
+            },
+            {
+                path:'editPlayList',
+                name:'editPlayList',
+                component:()=>import('@renderer/views/editPlayList/index.vue')
+            },
+            {
+                path: ':pathMatch(.*)',
                 component: ()=>import('@renderer/components/myVC/404.vue'),
             }
         ]
@@ -156,11 +166,11 @@ const routes: Array<RouteRecordRaw> = [
         name:'lyric',
         component:()=>import('@renderer/views/lyric.vue')
     },
-    // {
-    //     path:'/dragMessage',
-    //     name:'dragMessage',
-    //     component:()=>import('@/views/dragMessage.vue')
-    // },
+    {
+        path:'/dragMessage',
+        name:'dragMessage',
+        component:()=>import('@renderer/views/dragMessage.vue')
+    },
     {
         path:'/',
         redirect:`/app/findMusic/find1`
@@ -180,3 +190,6 @@ const router = createRouter({
 
 //导出router
 export default router
+
+
+
