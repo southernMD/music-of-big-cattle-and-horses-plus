@@ -840,7 +840,7 @@ const addDetail = ()=>{
                     }
                 }
 
-                .fengxiang {
+                @stop-btn-bk                .fengxiang {
                     margin-left: 10px;
                     min-width: 100px;
                     width: auto;

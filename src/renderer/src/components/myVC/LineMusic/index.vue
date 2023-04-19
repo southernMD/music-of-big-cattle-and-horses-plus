@@ -1,7 +1,7 @@
 <template>
     <div class="line-music" :data-index="index" :data-id="id" :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
-        dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy',
+        dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid == -1 && Main.dragMouse,
         topColor: topColorid == id && Main.dragType == 'songMy',
         bottomColor: Main.dragMouse && Main.dragType == 'songMy' && (length == index || length == indexSearch) && Main.mouseDragOnIndex == -1,
         'line-music-oneself': globalVar.oneself == 1 && oneselfColor != false
@@ -221,7 +221,7 @@ const fnMouseDrag = async (e: any) => {
     }
     let domTop = document.querySelector('.topColor') as HTMLElement | null
     let domBottom = document.querySelector('.bottomColor') as HTMLElement | null
-    if (domTop) {
+    if (domTop && playListid.value != -1) {
         let addIndex = Number(domTop.getAttribute('data-index'))
         console.log(Main.dragIndex - 1, addIndex - 1);
         if (Main.dragIndex - 1 > addIndex - 1) {      //上拖拽

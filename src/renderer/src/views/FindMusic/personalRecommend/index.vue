@@ -3,7 +3,7 @@
         <div>
             <EveryDayRecommend></EveryDayRecommend>
             <EveryDayRecommendPlayList></EveryDayRecommendPlayList>
-            <RecommendDjSong></RecommendDjSong>
+            <RecommendDjSong v-if="false"></RecommendDjSong>
         </div>
     </div>
 </template>
@@ -27,6 +27,5 @@ onActivated(()=>{
 
 .p-r {
     margin-left: 5px;
-
 }
 </style>

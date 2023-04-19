@@ -17,7 +17,6 @@ declare module '@vue/runtime-core' {
     Comment: typeof import('./src/components/myVC/Comment.vue')['default']
     CommentList: typeof import('./src/components/myVC/CommentList.vue')['default']
     DetailSmallBlock: typeof import('./src/components/myVC/DetailSmallBlock.vue')['default']
-    DjBlock: typeof import('./src/components/myVC/DjBlock.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
     ElDialog: typeof import('element-plus/es')['ElDialog']
@@ -33,6 +32,7 @@ declare module '@vue/runtime-core' {
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     Emoji: typeof import('./src/components/myVC/WriteCommit/emoji/index.vue')['default']
+    EventBlock: typeof import('./src/components/myVC/eventBlock.vue')['default']
     FixRoute: typeof import('./src/components/myVC/FixRoute.vue')['default']
     FloatTag: typeof import('./src/components/myVC/FloatTag.vue')['default']
     HBlock: typeof import('./src/components/myVC/HBlock.vue')['default']
@@ -40,6 +40,7 @@ declare module '@vue/runtime-core' {
     LineMusic: typeof import('./src/components/myVC/LineMusic/index.vue')['default']
     Loading: typeof import('./src/components/myVC/Loading.vue')['default']
     LoadingBig: typeof import('./src/components/myVC/LoadingBig.vue')['default']
+    LocationSong: typeof import('./src/components/myVC/LocationSong.vue')['default']
     LoginPage: typeof import('./src/components/LoginPage.vue')['default']
     Main: typeof import('./src/components/Main.vue')['default']
     MusicRadio: typeof import('./src/components/MusicRadio/index.vue')['default']
@@ -61,5 +62,8 @@ declare module '@vue/runtime-core' {
     Tag: typeof import('./src/components/myVC/Tag.vue')['default']
     WriteCommit: typeof import('./src/components/myVC/WriteCommit/index.vue')['default']
     ZhuanJi: typeof import('./src/components/myVC/LineMusic/ZhuanJi/index.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vInfiniteScroll: typeof import('element-plus/es')['ElInfiniteScroll']
   }
 }

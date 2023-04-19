@@ -25,7 +25,7 @@
                 <span>播放时间</span>
             </div>
         </div>
-        <div class="lately">
+        <div class="lately" id="lately">
             <LineMusic 
             @localPlay="localPlay"
             v-for="val,index in Main.latelyPlay" 

@@ -41,10 +41,10 @@ let playListRand = shallowRef(sampleSize(playList.value,10))
     width: 100%;
     height: auto;
     border-radius: 0.5em;
-
     // align-items: start;
     // -webkit-backdrop-filter: blur(10px);
     // backdrop-filter: blur(10px);
+    padding-bottom: 100px;
     .bk {
         width: calc(150px + 75%);
         max-width: 1200px;

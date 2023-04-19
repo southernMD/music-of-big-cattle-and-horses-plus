@@ -122,7 +122,7 @@
       </aside>
     </el-scrollbar>
     <main @mouseover="rightOver" >
-      <div class="stopS" v-if="route.path.includes('findMusic') || route.path.includes('download') ">
+      <div class="stopS" v-if="route.path.includes('findMusic') || route.path.includes('download')">
         <header>
           <Tag :class="{'tag-oneself':globalVar.oneself == 1}" v-for="(value,index) in messageList" :message="value" :big="true" :size="16" :ifClick="clickFlag[index]" :name="routeName[index]"
             @click="go(index)"></Tag>
@@ -137,8 +137,8 @@
         </router-view>
         <router-view v-if="!$route.meta.keepAlive" />
       </el-scrollbar>
-      <!-- <LocationSong v-show="Number(route.query.id) == Main.beforePlayListId" @scroolToSong="scroolToSong">
-      </LocationSong> -->
+      <LocationSong v-show="Number(route.query.id) == Main.beforePlayListId" @scroolToSong="scroolToSong">
+      </LocationSong>
     </main>
   </div>
   <MyDialog :flag="addPlayFlag" @confirm="createPlayList" @cancel="addPlayFlag = false " @closeDialog="addPlayFlag = false">
@@ -154,7 +154,7 @@
   </MyDialog>
 </template>
 <script setup lang="ts">
-//   import { ElConfigProvider } from 'element-plus'
+  import { ElScrollbar } from 'element-plus'
 //   import zhCn from 'element-plus/lib/locale/lang/zh-cn'
 import { toRef, ref, watch,nextTick, Ref } from 'vue';
 import { useMainMenu, useMain,useGlobalVar } from '../store'
@@ -220,8 +220,8 @@ const rightOver = () => {
 }
 
 //滚动到顶部
-const scrollbarRef = ref<InstanceType<any>>()
-const scrollbarRefLeft = ref<InstanceType<any>>()
+const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
+const scrollbarRefLeft = ref<InstanceType<typeof ElScrollbar>>()
 watch(route, () => {
   console.log(route.name);
   scrollbarRef.value!.setScrollTop(0)
@@ -274,6 +274,7 @@ watch(pageY, () => {
   }
 
 })
+
 type scrollObj = {
   scrollLeft: number,
   scrollTop: number
@@ -373,6 +374,13 @@ window.addEventListener('contextmenu', (e) => {
   e.stopPropagation()
   if (e.pageY > MainMenu.Height) {
     window.electron.ipcRenderer.send('show-context-menu')
+  }
+})
+
+watch(()=>globalVar.changeMainScroll,()=>{
+  if(globalVar.changeMainScroll!=0){
+    scrollbarRef.value!.setScrollTop(rightScroll.value + globalVar.changeMainScroll)
+    globalVar.changeMainScroll = 0;
   }
 })
 
@@ -596,6 +604,7 @@ window.addEventListener('contextmenu', (e) => {
     min-height: calc(100vh - 60px - 70px - 40px);
 
     .stopS {
+      margin-top: -10px;
       header {
         width: 100%;
         height: 40px;
@@ -609,6 +618,10 @@ window.addEventListener('contextmenu', (e) => {
         }
         .tag-oneself{
           color: @oneselfFontColor ;
+        }
+        .follow{
+          font-size: 20px;
+          font-weight: bolder;
         }
       }
     }

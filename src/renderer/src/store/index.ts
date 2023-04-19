@@ -833,6 +833,7 @@ interface V {
     initDownloadButton: boolean
     musicPick:Map<number,Uint8Array[]>
     searchKey:string
+    changeMainScroll:number //修改主右滚动条
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -863,7 +864,8 @@ export const useGlobalVar = defineStore('globalVar', {
             downloadList: [],
             initDownloadButton: false,
             musicPick:new Map(),
-            searchKey:''
+            searchKey:'',
+            changeMainScroll:0
         }
     },
     actions:{

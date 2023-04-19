@@ -177,6 +177,26 @@ export const createWindow = ():BrowserWindow=>{
     ipcMain.on('to-close', () => {
       mainWindow.close();
     })
+    mainWindow.on('close', (e) => {
+      // e.preventDefault()
+      app.quit();
+      //点击关闭按钮向渲染进程请求页面
+      //选择退出模式
+      // let giveWayToMain = (event: Electron.IpcMainEvent, message?: string) => {
+      //     ipcMain.removeListener('give-way-to-main', giveWayToMain)
+      //     //选择已存在方案
+      //     if (message === 'quit') {
+      //         win.destroy();
+      //     } else if (message === 'leave') {
+      //         win.hide();
+      //     } else {
+      //         //展示退出面板
+      //         event.reply('main-back-way-to-render', { ifToClose: true })
+      //     }
+      // }
+      // win.webContents.send('check-up-quit-way')
+      // ipcMain.on('give-way-to-main', giveWayToMain)
+  })
     ipcMain.on('to-small', () => {
       mainWindow.minimize();
     })
@@ -569,7 +589,7 @@ export const lrcwindow = (): any => {
         preload: join(__dirname, "../preload/index.js"),
       },
   })
-  // child.webContents.toggleDevTools()
+  child.webContents.toggleDevTools()
   //注册名称
   child.webContents.on('did-finish-load', () => {
       // 二、注册窗口id
@@ -583,8 +603,9 @@ export const lrcwindow = (): any => {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     child.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/#/lyric`)
   } else {
-    child.loadFile(join(__dirname, '../renderer/index.html#lyric'))
+    child.loadURL(`file://${__dirname}/../renderer/index.html#/lyric`)
   }
+
   function SendXY(){
       child.webContents.send('lyric-x-y',{x:child.getSize()[0],y:child.getSize()[1]})
   }
@@ -638,8 +659,6 @@ export const lrcwindow = (): any => {
   ipcMain.on('mouse-no',()=>{
       child.setIgnoreMouseEvents(true,{forward:true})
   })
-
-
   return child
 }
 
@@ -680,7 +699,7 @@ export const dragWindw = ():BrowserWindow=>{
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/#/dragMessage`)
   } else {
-    win.loadFile(join(__dirname, '../renderer/index.html#dragMessage'))
+    win.loadURL(`file://${__dirname}/../renderer/index.html#/dragMessage`)
   }
   let ifChanged = false
   let hM = 25

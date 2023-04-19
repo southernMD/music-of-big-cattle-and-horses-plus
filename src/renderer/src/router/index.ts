@@ -156,6 +156,11 @@ const routes: Array<RouteRecordRaw> = [
                 component:()=>import('@renderer/views/editPlayList/index.vue')
             },
             {
+                path:'follow',
+                name:'follow',
+                component:()=>import('@renderer/views/Follow/index.vue')
+            },
+            {
                 path: ':pathMatch(.*)',
                 component: ()=>import('@renderer/components/myVC/404.vue'),
             }
