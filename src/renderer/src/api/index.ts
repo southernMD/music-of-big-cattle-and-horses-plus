@@ -512,3 +512,17 @@ export const uploadPlaylistPic = (id:number,formData:FormData,imgSize:number,img
         data: formData,
     })
 }
+
+//关注动态
+export const MyEvent = ()=>{
+    return axios({
+        url:`/event?t=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+
+

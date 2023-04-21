@@ -9,8 +9,14 @@
         </header>
         <main>
             <div class="left">
-                <eventBlock></eventBlock>
-                <eventBlock></eventBlock>
+                <div v-show="valFlag">加载中</div>
+                <eventBlock v-for="item,index in list" 
+                :val="item" 
+                :pics="otherList[index].pics"
+                :type="otherList[index].type"
+                :user="otherList[index].user"
+                :time="otherList[index].showTime"
+                ></eventBlock>
             </div>
             <div class="right">
                 <div class="top">
@@ -45,7 +51,30 @@
 </template>
 
 <script setup lang="ts">
-import { } from 'vue'
+import {ref,Ref, watch } from 'vue'
+import { useMain } from '@renderer/store';
+const Main = useMain()
+const valFlag = ref(true)
+const listFlag = ref(false)
+const list:Ref<any[]> = ref([])
+const otherList:Ref<any[]> = ref([])
+Main.reqMyEvent().then((val)=>{
+    val.sort((a,b)=>{
+        return b.showTime - a.showTime;
+    })
+    val.forEach((item,index)=>{
+        list.value.push(JSON.parse(item.json))
+        delete val[index].json
+    })
+    console.log(list.value);
+    otherList.value = val
+    console.log(otherList.value);
+    listFlag.value = true
+})
+watch(listFlag,()=>{
+    valFlag.value = false;
+})
+//
 </script>
 
 <style scoped lang="less">

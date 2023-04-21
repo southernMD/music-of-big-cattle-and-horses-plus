@@ -1,39 +1,58 @@
 <template>
   <div class="eventBlock">
-    <img  src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg" alt="" fill="cover">
+    <img  :src="user.avatarUrl" alt="" fill="cover">
     <div class="msg">
         <div class="top">
-            <div class="name"><span>荣华之梦</span> <span>{{ '发布动态' }}</span></div>
-            <div class="time">11月51日</div>
+            <div class="name"><span>{{ user.nickname }}</span> <span>{{ typeMap.get(type) }}</span></div>
+            <div class="time">{{ Timeago2(time) }}</div>
         </div>
-        <div class="msg2" v-show="ifZhuanfu">
-            铁转得卖记堂求钱笑娘百对？接可继转需姑恶取。卡农共端曾店！告求团校著争可担卫东靠静果夫。代康价神位？业桌贵生神负养西写馆？置必药森袋可腿呀点德所组须必萨起火接！读缺将啊定坐多旅许。衣方性通迹否忘说。！
+        <div class="msg2" v-show="ifZhuanfu" v-html="RegTxt(val.msg)" >
         </div>
         <div class="base" :class="{zhuanfa:ifZhuanfu}">
             <div class="msg2">
-                <span class="name" v-if="ifZhuanfu">@{{ '荣华之梦' }}</span> <span v-if="ifZhuanfu">{{ '分享单曲：' }}</span>铁转得卖记堂求钱笑娘百对？接可继转需姑恶取。卡农共端曾店！告求团校著争可担卫东靠静果夫。代康价神位？业桌贵生神负养西写馆？置必药森袋可腿呀点德所组须必萨起火接！读缺将啊定坐多旅许。衣方性通迹否忘说。！
+                <span class="name" v-if="ifZhuanfu">@{{ '荣华之梦' }}</span> 
+                <span v-if="ifZhuanfu">{{ '分享单曲：' }}</span>
+                <span class="txt" v-html="!ifZhuanfu?RegTxt(val.msg):'是转发'"></span>
             </div>
             <div class="share">
                 <div class="bk">
-                    <el-image draggable="false"  src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg" alt="" fill="cover"></el-image >
+                    <el-image draggable="false"  :src="shareCover" alt="" fill="cover">
+                        <template #error>
+                            <div class="image-slot">
+                            </div>
+                        </template>
+                    </el-image >
                     <div class="t">
-                        <div class="title">荣华之恶<span>(原曲:可怜的布尔什)</span></div>
+                        <div class="title"><span class="tag">{{ tagName }}</span>{{shareTitle}}<span>{{ otherMessage }}</span></div>
                         <div class="other">
-                            <span>污妖王</span>
-                            <span class="_">/</span>
-                            <span>啊脱看</span>
+                            <span v-for="it,index in smallMessage">
+                                {{ it }}
+                                <span class="_" v-if="index+1!=smallMessage.length">/</span>
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="imgs" v-show="!bigFlag && imgsList.length > 1">
+            <div class="imgs" v-show="!bigFlag && pics.length > 1">
                 <!-- squareUrl -->
-                <div class="bk" v-for="i in 9" @click="bingImg('http://p1.music.126.net/WQOMKxOQrOVpEobazH_tQQ==/109951168551613493.jpg')">
+                <div class="bk" :style="{backgroundImage:`url('${item.squareUrl}')`}" v-for="item in pics" @click="bingImg(item.rectangleUrl,item.originUrl)">
                 </div>
             </div>
-            <div class="imgBig" v-show="!bigFlag && imgsList.length == 1">
-                <!-- rectangleUrl -->
-                <img draggable="false" :src="bigUrl" alt="" @click="bingImg('http://p1.music.126.net/WQOMKxOQrOVpEobazH_tQQ==/109951168551613493.jpg')">
+            <div class="imgBig" v-show="!bigFlag && pics.length == 1">
+                <!-- originUrl -->
+                <div class="bk">
+                    <div class="img" draggable="false" 
+                    :class="{
+                        'img-heigher':pics[0]?.height > pics[0]?.width,
+                        'img-widther':pics[0]?.height < pics[0]?.width,
+                        'img-same':Math.abs(pics[0]?.height - pics[0]?.width) <= 100,
+                    }"
+                    :style="{
+                        backgroundImage:`url('${pics[0]?.originUrl}')`,
+                        height:pics[0]?.height + 'px',
+                        width:pics[0]?.width + 'px',
+                    }"  @click="bingImg(pics[0].originUrl,pics[0].originUrl)"></div>
+                </div>
             </div>
             <div class="imgShow" v-show="bigFlag">
                 <div class="icon">
@@ -42,8 +61,8 @@
                     <span><i class="iconfont icon-xiazai1"></i><span>下载</span></span>
                 </div>
                 <div class="big">
-                    <!-- rectangleUrl -->
-                    <img  @click="closeBig" src="http://p1.music.126.net/WQOMKxOQrOVpEobazH_tQQ==/109951168551613493.jpg" alt="">
+                    <!-- originUrl -->
+                    <img  @click="closeBig" :src="bigUrl" alt="">
                 </div>
             </div>
             <div class="option">
@@ -75,11 +94,11 @@
     </div>
   </div>
   <Teleport to="body">
-    <div class="model"  @click.self="closeModel" v-show="modelFlag">
+    <div class="model" draggable="false"  @click.self="closeModel" v-show="modelFlag">
         <!-- originUrl -->
         <i class="iconfont icon-guanbi_o" @click="closeModel"></i>
         <Transition name="scl">
-            <img :src="modeSrc" ref="imgModel" alt="" v-show="imgModelFlag">
+            <img :src="modeSrc" draggable="false" ref="imgModel" alt="" v-show="imgModelFlag">
         </Transition>
     </div>
   </Teleport>
@@ -88,7 +107,48 @@
 <script setup lang="ts">
 import {Ref, ref, watch} from 'vue'
 import {useMain,useGlobalVar} from '@renderer/store'
+import { Timeago2 } from '@renderer/utils/dayjs'
 // import {regEmoji} from '@/utils/regEmoji'
+
+const props = defineProps<{
+    val:any
+    pics:any[]
+    type:number
+    user:any
+    time:number
+}>()
+const typeMap = new Map([
+[18,'分享单曲'],
+[19,'分享专辑'],
+[28,'分享电台节目'],
+[17, '分享电台节目'],
+[22,'转发'],
+[35,'分享歌单'],
+[13,'分享歌单'],
+[24,'分享专栏文章'],
+[41, '分享视频'],
+[21,'分享视频'],
+[56,'发布动态']
+])
+
+const tagName = ref('')
+const shareTitle = ref('')
+const otherMessage = ref('')
+const shareCover = ref('')
+const smallMessage = ref([])
+watch(()=>props.type,()=>{
+    if(props.type == 18){
+        tagName.value = '歌曲'
+        shareTitle.value = props.val.song.name
+        otherMessage.value =props.val.song.alias.length == 0?'':'('+ props.val.song.alias.join('、') + ')'
+        shareCover.value = props.val.song.album.picUrl
+        smallMessage.value = props.val.song.artists.map(it=>it.name)
+    }else if(props.type == 35){
+        tagName.value = '歌单'
+    }
+},{immediate:true})
+
+
 const Main = useMain()
 const globalVar = useGlobalVar();
 let commitMessage = ref('')
@@ -101,24 +161,27 @@ const subCommit = ()=>{
 const showPingLun = ref(false)
 const bigUrl = ref('')
 const bigFlag = ref(false)
-const bingImg = (url:string)=>{
+const originUrlT = ref('')
+const bingImg = (url:string,originUrl:string)=>{
     bigUrl.value = url
     bigFlag.value = true
+    originUrlT.value = originUrl
 }
 const closeBig = ()=>{
     bigFlag.value = false
 }
 const showFill = ()=>{
     modelFlag.value = true
-    modeSrc.value = 'http://p1.music.126.net/VUd7IchQS3bZh05I-_pw9Q==/109951168551613491.jpg'
+    modeSrc.value = originUrlT.value;
 }
 const modelFlag = ref(false)
 const modeSrc = ref('')
-const imgModel = ref<InstanceType<typeof Image>>()
+const imgModel = ref<InstanceType<typeof Image >>()
 const imgModelFlag = ref(false)
 watch(modeSrc,()=>{
     if(modeSrc.value != ''){
         imgModel.value!.onload = ()=>{
+            cal.value = 1
             imgModelFlag.value = true;
         }
     }
@@ -131,6 +194,59 @@ const closeModel = ()=>{
         clearTimeout(t);
     },300)
 }
+
+const cal = ref(1);
+const scaleFn = (e:WheelEvent)=>{
+    //放大图片
+    if(e.deltaY < 0){
+        cal.value+=0.1
+    }else{
+        cal.value-=0.1
+    }
+    if(cal.value >=2)cal.value = 2;
+    else if(cal.value <=0.5)cal.value = 0.5
+    console.log(cal.value);
+    imgModel.value!.style.transform = `scale(${cal.value})`
+}
+
+const dragX = ref(0)
+const dragY = ref(0)
+const dragstart = (e:MouseEvent)=>{
+    dragX.value += e.clientX
+    dragY.value += e.clientY
+    imgModel.value!.style.cursor = 'grabbing'
+    window.addEventListener('mousemove',draging)
+    window.addEventListener('mouseup',dragend)
+}
+const draging = (e:MouseEvent)=>{
+    imgModel.value!.style.left = e.clientX - dragX.value + 'px'
+    imgModel.value!.style.top =  e.clientY - dragY.value + 'px'
+}
+
+const dragend = (e:MouseEvent)=>{
+    imgModel.value!.style.cursor = 'grab'
+    dragX.value = -imgModel.value!.style.left.split('px')[0]
+    dragY.value = -imgModel.value!.style.top.split('px')[0]
+    window.removeEventListener('mousemove',draging)
+    window.removeEventListener('mouseup',dragend)
+}
+
+watch(modelFlag,()=>{
+    if(modelFlag.value){
+        window.addEventListener('wheel',scaleFn)
+        imgModel.value!.addEventListener('mousedown',dragstart)
+    }else{
+        window.removeEventListener('wheel',scaleFn)
+        imgModel.value!.removeEventListener('mousedown',dragstart)
+        dragX.value = 0
+        dragY.value = 0
+        imgModel.value!.style.left = '0px'
+        imgModel.value!.style.top = '0px'
+        imgModel.value!.style.transform = `scale(1)`
+    }
+})
+
+//是否滚动主页面
 const commentlist = ref<InstanceType<typeof HTMLElement>>()
 const observer = new IntersectionObserver((entries) => {
     console.log(entries);
@@ -152,8 +268,18 @@ const showPing = ()=>{
 }
 
 //是不是转发
-const ifZhuanfu = ref(true)
-const imgsList = ref([1,2])
+const ifZhuanfu = ref(false)
+if(props.type == 22)ifZhuanfu.value = true
+
+//处理文字
+const RegTxt = (msg:string)=>{
+    msg = msg.replace(/#.*?#/g, '');
+    const linkRegex = /((http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?)/g;
+    msg = msg.replace(linkRegex, '<a href="$1" target="_blank">链接地址</a>');
+    msg = msg.replace(/(@.+?)：/g, '<a href="javascript:;">$1</a>：');
+    return msg;
+}
+
 </script>
 <style scoped lang="less">
     .noDrag{
@@ -209,13 +335,27 @@ const imgsList = ref([1,2])
                 margin-bottom: 15px;
                 font-size: 14px;
                 line-height: 20px;
+                >:deep(a){
+                    color: @url-color;
+                    &:hover{
+                        color: @url-color-hover;
+                    }
+                }
             }
             .base{
                 >.msg2{
-                margin-top: 5px;
-                margin-bottom: 15px;
-                font-size: 14px;
-                line-height: 20px;
+                    margin-top: 5px;
+                    margin-bottom: 15px;
+                    font-size: 14px;
+                    line-height: 20px;
+                    .txt{
+                        >:deep(a){
+                            color: @url-color;
+                            &:hover{
+                                color: @url-color-hover;
+                            }
+                        }
+                    }
                 }
                 .share{
                     margin-bottom: 10px;
@@ -246,6 +386,14 @@ const imgsList = ref([1,2])
                             >span{
                                 color: @small-font-color;
                             }
+                            >.tag{
+                                color: @primary-color;
+                                display: inline-block;
+                                border: 1px solid  @primary-color;
+                                font-size: 10px;
+                                padding: 1px;
+                                margin-right: 5px;
+                            }
                         }
                         .other{
                             font-size: 13px;
@@ -255,8 +403,7 @@ const imgsList = ref([1,2])
                             margin-top: 5px;
                             ._{
                                 font-size: 10px;
-                                margin-right: 3px;
-                                margin-left: 3px;
+                                margin-right: 5px;
                                 transform: rotate(-5deg);
                             }
                         }
@@ -268,8 +415,6 @@ const imgsList = ref([1,2])
                     width: 100%;
                     flex-wrap: wrap;
                     .bk{
-                        //squareUrl
-                        background-image: url("http://p1.music.126.net/P8qfDfgEytgzxPpzBNSaUw==/109951168551623586.jpg");
                         width: 120px;
                         height:120px;
                         margin-right: 15px;
@@ -283,15 +428,33 @@ const imgsList = ref([1,2])
                     }
                 }
                 >.imgBig{
-                    img{
-                        max-width: 400px;
-                        max-height: 300px;
-                        border-radius: .5em;
-                        cursor:zoom-in;
+                    user-select: none;
+                    .bk{
+                        max-height: 500px;
+                        max-width: 500px;
+                        user-select: none;
+                        .img-heigher{
+                            max-height: 500px;
+                            max-width: 300px;
+                        }
+                        .img-widther{
+                            max-width: 380px;
+                            max-height: 250px;
+                        }
+                        .img-same{
+                            max-width: 250px;
+                            max-height: 250px;
+                        }
+                        .img{
+                            border-radius: .5em;
+                            cursor:zoom-in;
+                            background-size: cover;
+                            background-position: center;
+                        }
                     }
                 }
                 >.imgShow{
-                    height: 300px;
+                    height: auto;
                     background-color: @left-click-color;
                     border-radius: .5em;
                     margin-bottom: 10px;
@@ -320,10 +483,10 @@ const imgsList = ref([1,2])
                         display: flex;
                         justify-content: center;
                         align-items: center;
+                        padding: 10px;
                         height: calc(100% - 30px);
                         img{
-                            max-width: 460px;
-                            max-height: 280px;
+                            max-width:100%;
                             cursor: zoom-out;
                         }
                     }
@@ -478,11 +641,19 @@ const imgsList = ref([1,2])
             font-size: 50px;
             color: @font-color;
             cursor: pointer;
+            z-index: 1002;
+        }
+        img{
+            z-index: 1001;
+            max-width: 80%;
+            max-height: 80%;
+            position: relative;
+            cursor: grab;
         }
     }
     //开始过度
     .scl-enter-from{
-        transform:scale(0%);
+        transform:scale(0%) !important;
     }
     //开始过度了
     .scl-enter-active{
@@ -490,18 +661,15 @@ const imgsList = ref([1,2])
     }
     //过度完成
     .scl-enter-to{
-        transform:scale(100%);
+        transform:scale(100%) !important;
     }
-    //离开的过度
-    .scl-leave-from{
-        transform:scale(100%);
-    }
+
     //离开中过度
     .scl-leave-active{
         transition: all .2s linear;
     }
     //离开完成
     .scl-leave-to{
-        transform:scale(0%);
+        transform:scale(0%) !important;
     }
 </style>

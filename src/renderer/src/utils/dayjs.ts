@@ -26,3 +26,18 @@ export const Timeago = (timestamp:number)=>{
       return dayjs(timestamp).format('YYYY-MM-DD');
     }
 }
+
+export const Timeago2 = (timestamp:number)=>{
+  const now = dayjs();
+  const targetTime = dayjs(timestamp);
+  if (now.isSame(targetTime, 'day')) {
+    return format(targetTime.valueOf(), 'zh_CN');
+  } else if (now.isSame(targetTime.add(1, 'day'), 'day')) {
+    return targetTime.format('昨天 HH:mm');
+  } else if(now.diff(targetTime, 'year') < 1){
+    return targetTime.format('MM月DD日 HH:mm');
+  }else{
+    return targetTime.format('YYYY年MM月DD日 HH:mm');
+  }
+}
+

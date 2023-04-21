@@ -8,7 +8,7 @@ import {
     playlistTracks, songOrderUpdate, playlistOrderUpdate, playmodeIntelligenceList, likeQ, commentPlaylist,
     comment, recommendSongs, recommendPlayList, programRecommend, djProgramToplist,
     personal_fm, fm_trash, userDj, startDj, SongDlUrl,Search, SearchSuggest, PlayListCreate,playlistTags,
-    updatePlayList,updatePlayListTags,updatePlayListdesc, uploadPlaylistPic
+    updatePlayList,updatePlayListTags,updatePlayListdesc, uploadPlaylistPic,MyEvent
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -753,7 +753,7 @@ export const useMain = defineStore('Main', {
             }
         },
         async reqUploadPlaylistPic(id:number,formData:FormData,imgSize:number,imgX:number,imgY:number){
-            let result = await  uploadPlaylistPic(id,formData,imgSize,imgX,imgY)
+            let result = await uploadPlaylistPic(id,formData,imgSize,imgX,imgY)
             console.log(result.data.data.url);
             console.log(result.data.data);
             console.log(result.data);
@@ -764,6 +764,19 @@ export const useMain = defineStore('Main', {
             }else{
                 return new Promise<string>((resolve, reject) => {
                     resolve('')
+                })
+            }
+        },
+        //关注动态
+        async reqMyEvent(){
+            let result = await MyEvent();
+            if(result.data.code == 200){
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve(result.data.event)
+                })
+            }else{
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve([])
                 })
             }
         },
