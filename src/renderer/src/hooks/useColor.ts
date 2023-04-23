@@ -78,7 +78,8 @@ export default function (): any {
             document.documentElement.style.setProperty('--FMArHover', `rgb(11,88,176)`);
             document.documentElement.style.setProperty('--borderColor', `rgb(81,81,81)`);
             document.documentElement.style.setProperty('--pickBkColor', `rgb(41, 43, 47)`);
-
+            document.documentElement.style.setProperty('--flowHoverColor', `rgb(53, 54, 56)`);
+            
             primaryColor.value = `rgb(236,65,65)`
             MainMenu.iconSrc = "/src/assets/icon.png"
             // document.documentElement.style.setProperty('--fontColorHover',`rgb(255,255,255)`);
@@ -148,6 +149,7 @@ export default function (): any {
             document.documentElement.style.setProperty('--FMArHover', `rgb(46,89,138)`);
             document.documentElement.style.setProperty('--borderColor', `rgb(216,216,216)`);
             document.documentElement.style.setProperty('--pickBkColor', `rgb(0, 0, 0)`);
+            document.documentElement.style.setProperty('--flowHoverColor', `rgb(239, 239, 240)`);
 
         }
         if (newValue === 'NMred') {

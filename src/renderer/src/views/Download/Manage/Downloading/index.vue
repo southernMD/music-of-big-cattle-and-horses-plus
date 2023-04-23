@@ -47,7 +47,6 @@ import { Queue, RunFunction } from 'p-queue/dist/queue';
 const Main = useMain()
 const globalVar = useGlobalVar()
 const downloadQueue = inject('downloadQueue') as ShallowRef<PromiseQueue<Queue<RunFunction, QueueAddOptions>, QueueAddOptions>>
-const $el = getCurrentInstance() as ComponentInternalInstance
 const downloadALL = () => {
   const refs = loadingLineMusicRefs.value.slice(); // 复制数组
   globalVar.downloadList.forEach(async(item,index) => {

@@ -118,6 +118,7 @@ defineExpose({tags,clearFormTags,confirmFlag,addTagsFlag,choiceNumber})
         }
         margin-bottom: 20px;
     }
+    
     .tag-list{
         display: flex;
         width: 100%;

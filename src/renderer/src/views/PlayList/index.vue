@@ -840,7 +840,7 @@ const addDetail = ()=>{
                     }
                 }
 
-                @stop-btn-bk                .fengxiang {
+                .fengxiang {
                     margin-left: 10px;
                     min-width: 100px;
                     width: auto;
@@ -850,7 +850,7 @@ const addDetail = ()=>{
                     display: flex;
                     align-items: center;
                     flex-wrap: nowrap;
-
+                    background-color:@stop-btn-bk  ;
                     i {
                         color: #666666;
                         padding-left: 10px;

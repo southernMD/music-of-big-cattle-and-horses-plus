@@ -514,9 +514,9 @@ export const uploadPlaylistPic = (id:number,formData:FormData,imgSize:number,img
 }
 
 //关注动态
-export const MyEvent = ()=>{
+export const MyEvent = (lasttime = -1)=>{
     return axios({
-        url:`/event?t=${new Date().getTime()}`,
+        url:`/event?t=${new Date().getTime()}&lasttime=${lasttime}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser')

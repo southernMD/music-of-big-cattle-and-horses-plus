@@ -1,20 +1,20 @@
 <template>
-  <div class="eventBlock">
+  <div class="eventBlock" ref="eventBlock">
     <img  :src="user.avatarUrl" alt="" fill="cover">
     <div class="msg">
         <div class="top">
             <div class="name"><span>{{ user.nickname }}</span> <span>{{ typeMap.get(type) }}</span></div>
             <div class="time">{{ Timeago2(time) }}</div>
         </div>
-        <div class="msg2" v-show="ifZhuanfu" v-html="RegTxt(val.msg)" >
+        <div class="msg2" v-show="ifZhuanfu" v-html="RegTxt(msg)" >
         </div>
-        <div class="base" :class="{zhuanfa:ifZhuanfu}">
+        <div class="base" :class="{zhuanfa:ifZhuanfu}" @click.self="ifZhuanfu?goZhuanFa():()=>{} ">
             <div class="msg2">
-                <span class="name" v-if="ifZhuanfu">@{{ '荣华之梦' }}</span> 
-                <span v-if="ifZhuanfu">{{ '分享单曲：' }}</span>
-                <span class="txt" v-html="!ifZhuanfu?RegTxt(val.msg):'是转发'"></span>
+                <span class="name" v-if="ifZhuanfu">@{{ props.val.event.user.nickname }}</span> 
+                <span v-if="ifZhuanfu">{{ `${typeMap.get(typeI)}：` }}</span>
+                <span class="txt" v-html="!ifZhuanfu?RegTxt(msg):RegTxt(valI.msg)"></span>
             </div>
-            <div class="share">
+            <div class="share" @click="shareHandle" v-if="Object.keys(valI).length != 1 && typeI != 35">
                 <div class="bk">
                     <el-image draggable="false"  :src="shareCover" alt="" fill="cover">
                         <template #error>
@@ -33,25 +33,25 @@
                     </div>
                 </div>
             </div>
-            <div class="imgs" v-show="!bigFlag && pics.length > 1">
+            <div class="imgs" v-show="!bigFlag && picsI.length > 1">
                 <!-- squareUrl -->
-                <div class="bk" :style="{backgroundImage:`url('${item.squareUrl}')`}" v-for="item in pics" @click="bingImg(item.rectangleUrl,item.originUrl)">
+                <div class="bk" :style="{backgroundImage:`url('${item.squareUrl}')`}" v-for="item in picsI" @click="bingImg(item.originUrl,item.originUrl)">
                 </div>
             </div>
-            <div class="imgBig" v-show="!bigFlag && pics.length == 1">
+            <div class="imgBig" v-show="!bigFlag && picsI.length == 1">
                 <!-- originUrl -->
                 <div class="bk">
                     <div class="img" draggable="false" 
                     :class="{
-                        'img-heigher':pics[0]?.height > pics[0]?.width,
-                        'img-widther':pics[0]?.height < pics[0]?.width,
-                        'img-same':Math.abs(pics[0]?.height - pics[0]?.width) <= 100,
+                        'img-heigher':picsI[0]?.height > picsI[0]?.width,
+                        'img-widther':picsI[0]?.height < picsI[0]?.width,
+                        'img-same':Math.abs(picsI[0]?.height - picsI[0]?.width) <= 100,
                     }"
                     :style="{
-                        backgroundImage:`url('${pics[0]?.originUrl}')`,
-                        height:pics[0]?.height + 'px',
-                        width:pics[0]?.width + 'px',
-                    }"  @click="bingImg(pics[0].originUrl,pics[0].originUrl)"></div>
+                        backgroundImage:`url('${picsI[0]?.originUrl}')`,
+                        height:(picsI[0]?.height?picsI[0]?.height:300) + 'px',
+                        width:(picsI[0]?.width?picsI[0]?.width:300) + 'px',
+                    }"  @click="bingImg(picsI[0].originUrl,picsI[0].originUrl)"></div>
                 </div>
             </div>
             <div class="imgShow" v-show="bigFlag">
@@ -60,7 +60,7 @@
                     <span @click="showFill"><i class="iconfont icon-youshangjiao"></i><span>查看原图</span></span>
                     <span><i class="iconfont icon-xiazai1"></i><span>下载</span></span>
                 </div>
-                <div class="big">
+                <div class="big" ref="bigImg">
                     <!-- originUrl -->
                     <img  @click="closeBig" :src="bigUrl" alt="">
                 </div>
@@ -100,6 +100,9 @@
         <Transition name="scl">
             <img :src="modeSrc" draggable="false" ref="imgModel" alt="" v-show="imgModelFlag">
         </Transition>
+        <div class="download" title="下载">
+            <i class="iconfont icon-xiazai1"  title="下载"></i>
+        </div>
     </div>
   </Teleport>
 </template>
@@ -117,13 +120,24 @@ const props = defineProps<{
     user:any
     time:number
 }>()
+const valI = ref()
+const msg = ref('')
+const picsI:Ref<any[]> = ref([])
+const typeI = ref()
+watch(()=>props,()=>{
+    valI.value = props.val
+    msg.value = props.val.msg
+    picsI.value = props.pics
+    typeI.value = props.type
+},{immediate:true,deep:true})
+
 const typeMap = new Map([
 [18,'分享单曲'],
 [19,'分享专辑'],
 [28,'分享电台节目'],
 [17, '分享电台节目'],
 [22,'转发'],
-[35,'分享歌单'],
+[35,'发布动态'],
 [13,'分享歌单'],
 [24,'分享专栏文章'],
 [41, '分享视频'],
@@ -135,17 +149,56 @@ const tagName = ref('')
 const shareTitle = ref('')
 const otherMessage = ref('')
 const shareCover = ref('')
-const smallMessage = ref([])
-watch(()=>props.type,()=>{
-    if(props.type == 18){
+const smallMessage:Ref<string[]> = ref([])
+//是不是转发
+const ifZhuanfu = ref(false)
+
+const typeChange = ()=>{
+    if(typeI.value == 18){
         tagName.value = '歌曲'
-        shareTitle.value = props.val.song.name
-        otherMessage.value =props.val.song.alias.length == 0?'':'('+ props.val.song.alias.join('、') + ')'
-        shareCover.value = props.val.song.album.picUrl
-        smallMessage.value = props.val.song.artists.map(it=>it.name)
-    }else if(props.type == 35){
+        shareTitle.value = valI.value.song.name
+        otherMessage.value =valI.value.song.alias.length == 0?'':'('+ valI.value.song.alias.join('、') + ')'
+        shareCover.value = valI.value.song.album.picUrl
+        smallMessage.value = valI.value.song.artists.map(it=>it.name)
+    }else if(typeI.value == 13){
         tagName.value = '歌单'
+        shareTitle.value = valI.value.playlist.name
+        shareCover.value = valI.value.playlist.coverImgUrl
+        smallMessage.value = [`by ${valI.value.playlist.creator.nickname}`]
+    }else if(typeI.value == 19){
+        tagName.value = '专辑'
+        shareCover.value = valI.value.album.picUrl
+        shareTitle.value = valI.value.album.name
+        smallMessage.value = valI.value.album.artists.map(it=>it.name)
+    }else if(typeI.value== 56){
+        tagName.value = '手机活动'
+        shareCover.value = valI.value.resource.coverImgUrl
+        shareTitle.value = valI.value.resource.title
+        smallMessage.value =[valI.value.resource.subTitle]
+    }else if(typeI.value == 35){}
+    else if(typeI.value== 41){
+        tagName.value = '视频'
+        shareCover.value = valI.value.video.coverUrl
+        shareTitle.value = valI.value.video.description
+        smallMessage.value = ['视频暂不支持播放']
+    }else if(typeI.value== 22){
+        ifZhuanfu.value = true
+        valI.value = JSON.parse(props.val.event.json)
+        console.log(valI.value);
+        picsI.value = props.val.event.pics
+        typeI.value = props.val.event.type
+        typeChange()
+    }else if(typeI.value== 28 || typeI.value==17){
+        tagName.value = '电台'
+        shareCover.value = valI.value.program.coverUrl
+        shareTitle.value = valI.value.program.name
+        smallMessage.value = [valI.value.program.radio.name]
+        
     }
+}
+
+watch(()=>typeI,()=>{
+    typeChange()
 },{immediate:true})
 
 
@@ -162,6 +215,7 @@ const showPingLun = ref(false)
 const bigUrl = ref('')
 const bigFlag = ref(false)
 const originUrlT = ref('')
+const bigImg = ref<InstanceType<typeof HTMLElement>>()
 const bingImg = (url:string,originUrl:string)=>{
     bigUrl.value = url
     bigFlag.value = true
@@ -267,9 +321,7 @@ const showPing = ()=>{
     observer.observe(commentlist.value!)
 }
 
-//是不是转发
-const ifZhuanfu = ref(false)
-if(props.type == 22)ifZhuanfu.value = true
+
 
 //处理文字
 const RegTxt = (msg:string)=>{
@@ -277,9 +329,33 @@ const RegTxt = (msg:string)=>{
     const linkRegex = /((http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?)/g;
     msg = msg.replace(linkRegex, '<a href="$1" target="_blank">链接地址</a>');
     msg = msg.replace(/(@.+?)：/g, '<a href="javascript:;">$1</a>：');
+    msg = msg.replace(/(@.+?) /g, '<a href="javascript:;">$1</a> ');
+    msg = msg.replace(/\n/g, "<br>");
     return msg;
 }
 
+const shareHandle = async()=>{
+    if(typeI.value == 18){
+        const result = (await Main.reqSongDetail([valI.value.song.id])).data
+        console.log(result);
+        let index = 0
+        if (Main.playingindex == -1) index = 0
+        else index = Main.playingindex
+        Main.playingList.splice(index, 0, result.songs[0])
+        Main.playingPrivileges.splice(index, 0, result.privileges[0])
+        Main.playingindex = index + 1
+        Main.playing =  valI.value.song.id
+        Main.playStatus = 'play'
+        Main.songType = 'song'
+    }else if(typeI.value == 19){
+        console.log('props');
+    }else if(typeI.value == 56){
+        window.open(valI.value.resource.webviewUrl, '_blank')
+    }
+}
+const goZhuanFa = ()=>{
+    console.log('转发');
+}
 </script>
 <style scoped lang="less">
     .noDrag{
@@ -374,7 +450,9 @@ const RegTxt = (msg:string)=>{
                             position:static;
                             width: 40px;
                             height: 40px;
-                            border-radius: 5rem;
+                            :deep(img){
+                                border-radius: .2em;
+                            }
                         }
                     }
                     .t{
@@ -484,7 +562,7 @@ const RegTxt = (msg:string)=>{
                         justify-content: center;
                         align-items: center;
                         padding: 10px;
-                        height: calc(100% - 30px);
+                        height: auto;
                         img{
                             max-width:100%;
                             cursor: zoom-out;
@@ -590,6 +668,10 @@ const RegTxt = (msg:string)=>{
                 background-color: @left-click-color;
                 border-radius: .5em;
                 margin-bottom: 10px;
+                cursor: pointer;
+                &:hover{
+                    background-color: @flow-hover-color;
+                }
                 >.msg2{
                     color: @small-font-color;
                     padding-top: 10px;
@@ -607,7 +689,7 @@ const RegTxt = (msg:string)=>{
                     .bk{
                         background-color: @other-bk-color;
                         &:hover{
-                        background-color: @other-bk-color-op;
+                            background-color: @other-bk-color-op;
                         }
                     }
                 }
@@ -634,7 +716,7 @@ const RegTxt = (msg:string)=>{
         display: flex;
         justify-content: center;
         align-items: center;
-        i{
+        >i{
             position: absolute;
             top: 20px;
             right: 20px;
@@ -649,6 +731,28 @@ const RegTxt = (msg:string)=>{
             max-height: 80%;
             position: relative;
             cursor: grab;
+        }
+        .download{
+            width:80px;
+            height: 30px;
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            bottom: 20px;
+            background-color: @other-bk-color-op;
+            z-index: 1002;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor:pointer;
+            &:hover{
+                background-color: @other-bk-color;
+            }
+            i{
+                font-size: 20px;
+                color: @font-color;
+            }
         }
     }
     //开始过度

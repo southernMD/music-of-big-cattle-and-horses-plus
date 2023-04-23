@@ -768,15 +768,15 @@ export const useMain = defineStore('Main', {
             }
         },
         //关注动态
-        async reqMyEvent(){
-            let result = await MyEvent();
+        async reqMyEvent(lasttime = -1){
+            let result = await MyEvent(lasttime);
             if(result.data.code == 200){
-                return new Promise<any[]>((resolve, reject) => {
-                    resolve(result.data.event)
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
                 })
             }else{
-                return new Promise<any[]>((resolve, reject) => {
-                    resolve([])
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
                 })
             }
         },

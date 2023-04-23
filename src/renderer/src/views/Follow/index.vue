@@ -8,15 +8,16 @@
             </div>
         </header>
         <main>
-            <div class="left">
-                <div v-show="valFlag">加载中</div>
+            <div class="left" ref="leftRef">
                 <eventBlock v-for="item,index in list" 
                 :val="item" 
                 :pics="otherList[index].pics"
                 :type="otherList[index].type"
                 :user="otherList[index].user"
                 :time="otherList[index].showTime"
+                :ref="ref => { return listRefs[index] = ref as InstanceType<typeof eventBlock> }"
                 ></eventBlock>
+                <div v-show="valFlag">加载中</div>
             </div>
             <div class="right">
                 <div class="top">
@@ -51,30 +52,79 @@
 </template>
 
 <script setup lang="ts">
-import {ref,Ref, watch } from 'vue'
+import {ref,Ref, watch,nextTick } from 'vue'
+import eventBlock from '@renderer/components/myVC/eventBlock.vue';
 import { useMain } from '@renderer/store';
 const Main = useMain()
 const valFlag = ref(true)
 const listFlag = ref(false)
 const list:Ref<any[]> = ref([])
 const otherList:Ref<any[]> = ref([])
-Main.reqMyEvent().then((val)=>{
-    val.sort((a,b)=>{
+const lasttime = ref(-1)
+const leftRef = ref<(InstanceType<typeof HTMLElement>)>()
+Main.reqMyEvent().then(async(val)=>{
+    const event:any[] = val.event
+    event.sort((a,b)=>{
         return b.showTime - a.showTime;
     })
-    val.forEach((item,index)=>{
+    event.forEach((item,index)=>{
         list.value.push(JSON.parse(item.json))
-        delete val[index].json
+        delete event[index].json
     })
     console.log(list.value);
-    otherList.value = val
+    otherList.value = event
     console.log(otherList.value);
     listFlag.value = true
+    lasttime.value = val.lasttime
+    nextTick(()=>{
+        // 获取所有子元素
+        const children = leftRef.value!.querySelectorAll('.eventBlock')
+        // 获取子元素数量
+        const length = children.length;
+        // 获取最后一个子元素
+        const lastChild = children[length - 1];
+        observer.observe(lastChild)
+    })
 })
 watch(listFlag,()=>{
-    valFlag.value = false;
-})
-//
+    if(listFlag.value ){
+        valFlag.value = false;
+    }else{
+        valFlag.value = true;
+    }
+})//
+const listRefs = ref<(InstanceType<typeof eventBlock>[])>([]);
+const observer = new IntersectionObserver((entries) => {
+    console.log(entries);
+    if (entries[0].isIntersecting) {
+        console.log('元素已经出现在视口中');
+        listFlag.value = false
+        Main.reqMyEvent(lasttime.value).then((val)=>{
+            const event:any[] = val.event
+            event.forEach((item,index)=>{
+                list.value.push(JSON.parse(item.json))
+                delete event[index].json
+            })
+            console.log(list.value);
+            otherList.value.push(...event)
+            console.log(otherList.value);
+            listFlag.value = true
+            lasttime.value = val.lasttime
+            observer.disconnect()
+            nextTick(()=>{
+                // 获取所有子元素
+                const children = leftRef.value!.querySelectorAll('.eventBlock')
+                // 获取子元素数量
+                const length = children.length;
+                // 获取最后一个子元素
+                const lastChild = children[length - 1];
+                observer.observe(lastChild)
+            })
+        })
+    } else {
+        console.log('元素还未出现在视口中');
+    }
+});
 </script>
 
 <style scoped lang="less">
