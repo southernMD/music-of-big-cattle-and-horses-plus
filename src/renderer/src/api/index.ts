@@ -244,7 +244,7 @@ export const commentNew = (id:number,type:number,pageNo?:number,pageSize?:number
     if(cursor)t['cursor'] = cursor
     t['cookie'] = localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
     return axios({
-        url:`/comment/music?time=${new Date().getTime()}`,
+        url:`/comment/new?time=${new Date().getTime()}`,
         method:'POST',
         data:t
     })
@@ -524,5 +524,46 @@ export const MyEvent = (lasttime = -1)=>{
     })
 }
 
+//动态评论
+export const MyEventComment = (threadId:string,limit?:number,offset?:number,before?:number)=>{
+    let t:any = {threadId}
+    if(limit !=undefined)t['limit'] = limit
+    if(offset !=undefined)t['offset'] = offset
+    if(before !=undefined)t['before'] = before
+    t['cookie'] = localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
+    return axios({
+        url:`/comment/event?t=${new Date().getTime()}&threadId=${threadId}`,
+        method:'POST',
+        data:t
+    })
+}
 
+//资源点赞
+//t: 操作,1 为点赞,其他为取消点赞
+export const LikeResource = (id:string | number,type:number,t:1|any)=>{
+    let url = ''
+    if(typeof id == 'string'){
+        url = `/resource/like?t=${t}&type=${type}&threadId=${id}&time=${new Date().getTime()}`
+    }else{
+        url = `/resource/like?t=${t}&type=${type}&id=${id}&time=${new Date().getTime()}`
+    }
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+//转发用户动态
+export const eventForward = (uid:Number,evid:number,forwards:string)=>{
+    return axios({
+        url:`/event/forward?evId=${evid}&uid=${uid}&forwards=${forwards}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
 

@@ -182,7 +182,7 @@ let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbof
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
 const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
-
+let animationId;
 
 let playingList = toRef(Main, 'playingList')
 let playingPrivileges = toRef(Main, 'playingPrivileges')
@@ -408,6 +408,8 @@ const loaclPlayWay = async()=>{
             gainNode.gain.setValueAtTime(-1, AC.currentTime)
             // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
             // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+            drawIndex.value++
+            cancelAnimationFrame(animationId)
             draw()
             const t = setTimeout(() => {
                 bufferSource.start(0, 0)
@@ -560,9 +562,10 @@ onMounted(async () => {
         console.log('播放完毕');
         stopOrPlayFlag.value = true;
         bufferSource.stop()
-        if (wayIndex.value == 0 || wayIndex.value == 4) {
+        cancelAnimationFrame(animationId)
+        if ((wayIndex.value == 0 && Main.playingList.length != 1)|| wayIndex.value == 4) {
             nextSongThor()
-        } else if (wayIndex.value == 1) {
+        } else if (wayIndex.value == 1 ||( wayIndex.value == 0 && Main.playingList.length == 1)) {
             AC = new AudioContext()
             gainNode = AC.createGain()
             analyser = AC.createAnalyser();
@@ -579,6 +582,8 @@ onMounted(async () => {
             bufferSource.connect(gainNode)
             gainNode.connect(AC.destination);
             gainNode.gain.setValueAtTime(-1, AC.currentTime)
+            drawIndex.value++
+            cancelAnimationFrame(animationId)
             draw()
             audio.play()
             stopOrPlayFlag.value = false
@@ -590,7 +595,8 @@ onMounted(async () => {
         } else if (wayIndex.value == 3) {
             if (playingindex.value == playingList.value.length) {
                 audio.pause();
-                stopOrPlayFlag.value = true
+                stopOrPlayFlag.value = false
+                changPlayStatus()
             } else {
                 playingindex.value++;
                 playingId.value = playingList.value[playingindex.value - 1].id
@@ -668,6 +674,8 @@ const audioPlayEnd = () => {
     bufferSource.connect(gainNode)
     gainNode.connect(AC.destination);
     gainNode.gain.setValueAtTime(-1, AC.currentTime)
+    drawIndex.value++
+    cancelAnimationFrame(animationId)
     draw()
     audioPlayFlag.value = false;
     suo.value = false
@@ -717,6 +725,8 @@ const clickAudioPlay = (e: MouseEvent) => {
             bufferSource.connect(gainNode)
             gainNode.connect(AC.destination);
             gainNode.gain.setValueAtTime(-1, AC.currentTime)
+            drawIndex.value++
+            cancelAnimationFrame(animationId)
             draw()
             // musicCanSee(SongUrl.value,currentTime,0)
         } else {
@@ -728,20 +738,26 @@ const clickAudioPlay = (e: MouseEvent) => {
 
 
 //点击播放按钮
+let wayIndex3Flag = false
 const stopOrPlay = () => {
     if (playingList.value.length !== 0) {
         stopOrPlayFlag.value = !stopOrPlayFlag.value
         if (audio.paused) {
             if (wayIndex.value == 3 && playingindex.value == playingList.value.length) {
+                if(!wayIndex3Flag){
+                    wayIndex3Flag = true
+                    return
+                }
                 playingindex.value = 1
                 playingId.value = playingList.value[playingindex.value - 1].id
+                wayIndex3Flag = false
             } else {
                 audio.play();
                 Main.playStatus = 'play'
                 if (AC && AC.state === "suspended") AC.resume();
                 window.electron.ipcRenderer.send('render-play')
             }
-        } else {
+        } else if(!audio.paused){
             audio.pause();
             Main.playStatus = 'stop'
             if (AC && AC.state === "running") AC.suspend();
@@ -1191,6 +1207,7 @@ const clearList = () => {
     AC = new AudioContext()
     gainNode = AC.createGain()
     analyser = AC.createAnalyser();
+    canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 //按键监视
@@ -1299,6 +1316,8 @@ const musicCanSee = (url: string, offset: number, timer: number) => {
                 gainNode.gain.setValueAtTime(-1, AC.currentTime)
                 // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
                 // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+                drawIndex.value++
+                cancelAnimationFrame(animationId)
                 draw()
                 resolve('ok')
                 const t = setTimeout(() => {
@@ -1310,11 +1329,12 @@ const musicCanSee = (url: string, offset: number, timer: number) => {
         })
     })
 }
-
+const drawIndex = ref(0)
 function draw() {
+    console.log(drawIndex.value);
     let oW = canvas.width;
     let oH = canvas.height;
-    requestAnimationFrame(draw)
+    animationId = requestAnimationFrame(draw)
     canvasCTX.clearRect(0, 0, oW, oH);
     let barHeight;
     canvasCTX.clearRect(0, 0, oW, oH);
@@ -1327,6 +1347,15 @@ function draw() {
         canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight / 4 + 30);
     }
 }
+watch(playStatus,()=>{
+    if(playStatus.value == 'stop'){
+        cancelAnimationFrame(animationId)
+    }else{
+        console.log(AC,gainNode,analyser);
+        if(AC && gainNode && analyser)draw()
+    }
+})
+
 //历史播放
 watch(SongUrl,()=>{
     if(playingList.value.length > 100)playingList.value.length = 100

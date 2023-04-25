@@ -2,15 +2,15 @@
     <div class="bk" @dblclick.stop  id="bkUserMessage" ref="bk">
         <div class="top">
             <div class="dongtai">
-                <div class="number">114</div>
+                <div class="number">{{ BasicApi.profile?.eventCount }}</div>
                 <div class="txt">动态</div>
             </div>
             <div class="guanzhu">
-                <div class="number">514</div>
+                <div class="number">{{ BasicApi.profile?.follows }}</div>
                 <div class="txt">关注</div>
             </div>
             <div class="fans">
-                <div class="number">810</div>
+                <div class="number">{{ BasicApi.profile?.followeds }}</div>
                 <div class="txt">粉丝</div>
             </div>
         </div>

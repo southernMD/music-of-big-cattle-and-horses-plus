@@ -3,7 +3,7 @@
         <div class="commentList" v-show="commentFlag">
             <div class="hot" v-show="nowPage == 1 && hotComments.length != 0">
             <div class="hot-title">
-                <span>最热评论({{total}})</span>
+                <span>最热评论({{hotComments.length}})</span>
             </div>
             <div class="hot-list">
                 <Comment v-for="(value,index) in hotComments.length" :key="value"
@@ -16,7 +16,7 @@
                 ></Comment>
             </div>
             </div>
-            <div class="more" v-show="hotComments.length != 0" @click="goMoreComment" :class="{opacity:!moreHot}">
+            <div class="more" v-show="hotComments.length != 0 && type!=6" @click="goMoreComment" :class="{opacity:!moreHot}">
             <div class="bk">
                 <span>更多精彩评论&nbsp;></span>
             </div>
@@ -62,13 +62,15 @@ defineProps<{
     comments:Array<any>
     total:number
     totalPage:number
-    id:number
+    id?:number
     type:number
+    threadId?:any
 }>()
 
 let nowPage = toRef($el.props,'nowPage') as Ref<number>
 let commentFlag = toRef($el.props,'commentFlag')
 let id = toRef($el.props,'id') as Ref<number>
+let threadId = toRef($el.props,'threadId') as Ref<any>
 let type = toRef($el.props,'type') as Ref<number>
 let comments = toRef($el.props,'comments') as Ref<Array<any>>
 const goMoreComment = () => {
@@ -83,11 +85,12 @@ const goMoreComment = () => {
     $router.push({
         name: 'moreComment',
         query: {
-        id:id.value, type: type.value,index,my
+          id:id.value, type: type.value,index,my
         }
     })
 }
 
+const $emait = defineEmits(['scroll'])
 //更多评论
 watch(nowPage, async () => {
     if(type.value == 0){
@@ -100,12 +103,18 @@ watch(nowPage, async () => {
         let result = (await Main.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
         comments.value = result.comments;
         commentFlag.value = true
+    }else if(type.value == 6){
+      commentFlag.value = false
+      let result = (await Main.reqMyEventComment(threadId.value, 20, (nowPage.value - 1) * 20))
+      comments.value = result.comments;
+      commentFlag.value = true
+      $emait('scroll')
     }
 
 })
 
 
-
+defineExpose({nowPage})
 </script>
 
 <style lang='less' scoped>
@@ -187,8 +196,8 @@ watch(nowPage, async () => {
     .pagination {
       display: flex;
       justify-content: center;
-      margin-bottom: 130px;
-
+      margin-bottom: 110px;
+      padding-bottom: 20px;
       :deep(.el-pagination) {
         --el-pagination-hover-color: @font-color;
 

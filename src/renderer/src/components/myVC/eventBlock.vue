@@ -8,7 +8,7 @@
         </div>
         <div class="msg2" v-show="ifZhuanfu" v-html="RegTxt(msg)" >
         </div>
-        <div class="base" :class="{zhuanfa:ifZhuanfu}" @click.self="ifZhuanfu?goZhuanFa():()=>{} ">
+        <div class="base" ref="base" :class="{zhuanfa:ifZhuanfu}" @click.self="ifZhuanfu?goZhuanFa():()=>{} ">
             <div class="msg2">
                 <span class="name" v-if="ifZhuanfu">@{{ props.val.event.user.nickname }}</span> 
                 <span v-if="ifZhuanfu">{{ `${typeMap.get(typeI)}：` }}</span>
@@ -58,7 +58,7 @@
                 <div class="icon">
                     <span @click="closeBig"><i class="iconfont icon-shangchuan"></i><span>收起</span></span>
                     <span @click="showFill"><i class="iconfont icon-youshangjiao"></i><span>查看原图</span></span>
-                    <span><i class="iconfont icon-xiazai1"></i><span>下载</span></span>
+                    <span @click="download"><i class="iconfont icon-xiazai1"></i><span>下载</span></span>
                 </div>
                 <div class="big" ref="bigImg">
                     <!-- originUrl -->
@@ -66,30 +66,35 @@
                 </div>
             </div>
             <div class="option">
-                <i class="iconfont icon-dianzan" v-if="false"><span>(1)</span></i>
-                <i class="iconfont icon-dianzan_kuai" v-else><span>(1)</span></i>
+                <i class="iconfont icon-dianzan" v-if="!infoI.liked"  @click="throttleDianzan(threadIdI,1,'I')"><span>{{ infoI.likedCount?`(${infoI.likedCount})`:'' }}</span></i>
+                <i class="iconfont icon-dianzan_kuai" v-else  @click="throttleDianzan(threadIdI,2,'I')"><span>{{ infoI.likedCount?`(${infoI.likedCount})`:'' }}</span></i>
                 <i class="line">|</i>
-                <i class="iconfont icon-fenxiang"><span>(1)</span></i>
+                <i class="iconfont icon-fenxiang" @click="!ifZhuanfu?zhuanfa('w'):zhuanfa('i') "><span>{{ infoI.shareCount?`(${infoI.shareCount})`:'' }}</span></i>
                 <i class="line">|</i>
-                <i class="iconfont icon-pinglun" @click="!ifZhuanfu?showPing():()=>{}"><span>(1)</span></i>
+                <i class="iconfont icon-pinglun" @click="!ifZhuanfu?showPing():()=>{}"><span>{{ infoI.commentCount?`(${infoI.commentCount})`:'' }}</span></i>
             </div>
         </div>
         <div class="option" v-if="ifZhuanfu">
-            <i class="iconfont icon-dianzan" v-if="false"><span>(1)</span></i>
-            <i class="iconfont icon-dianzan_kuai" v-else><span>(1)</span></i>
+            <i class="iconfont icon-dianzan" v-if="!infoW.liked" @click="throttleDianzan(threadId,1,'W')"><span>{{ infoW.likedCount?`(${infoW.likedCount})`:'' }}</span></i>
+            <i class="iconfont icon-dianzan_kuai" v-else @click="throttleDianzan(threadId,2,'W')"><span>{{ infoW.likedCount?`(${infoW.likedCount})`:'' }}</span></i>
             <i class="line">|</i>
-            <i class="iconfont icon-fenxiang"><span>(1)</span></i>
+            <i class="iconfont icon-fenxiang" @click="zhuanfa('w')"><span>{{ infoW.shareCount?`(${infoW.shareCount})`:'' }}</span></i>
             <i class="line">|</i>
-            <i class="iconfont icon-pinglun" @click="showPing()"><span>(1)</span></i>
+            <i class="iconfont icon-pinglun" @click="showPing()"><span>{{ infoW.commentCount?`(${infoW.commentCount})`:'' }}</span></i>
         </div>
-        <div class="comment-list" ref="commentlist" v-show="showPingLun">
+        <div ref="commentlist"></div>
+        <div class="comment-list"  v-if="showPingLun">
             <div class="wr-commit">
-                <WriteCommit @getText="getText"></WriteCommit>
+                <WriteCommit @getText="getText" ref="WriteCommitRef2"></WriteCommit>
                 <div class="submit" :class="{noDrag:!Main.dragMouse}" @click="subCommit">
                     <span>评论</span>
                 </div>
             </div>
-            <CommentList :commentFlag="true" :nowPage="1" :hotComments="[]" :moreHot="false" :comments="[]" :total="1" :totalPage="0" :id="-1" :type="3"> </CommentList>
+            <CommentList ref="CommentListRef" :commentFlag="commentFlag" :nowPage="nowPage"
+            :hotComments="hotComments" :moreHot="moreHot" :total="total"
+            :comments="comments" :totalPage="totalPage" :threadId="threadId" :type="6"
+            @scroll="scroll"
+            ></CommentList>
         </div>
     </div>
   </div>
@@ -100,35 +105,56 @@
         <Transition name="scl">
             <img :src="modeSrc" draggable="false" ref="imgModel" alt="" v-show="imgModelFlag">
         </Transition>
-        <div class="download" title="下载">
+        <div class="download" title="下载" @click="download">
             <i class="iconfont icon-xiazai1"  title="下载"></i>
         </div>
     </div>
   </Teleport>
+  <MyDialog :flag="zhuanfuFlag" @closeDialog="closeDialog" @confirm="confirm" @cancel="cancel">
+    <template #header>
+        <div>转发</div>
+    </template>
+    <template #midle>
+        <WriteCommit @getText="getZhuanfaText" :df="zhuanfadf" ref="WriteCommitRef"></WriteCommit>
+    </template>
+  </MyDialog>
 </template>
 
 <script setup lang="ts">
-import {Ref, ref, watch} from 'vue'
+import {ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, provide, ref, toRaw, watch} from 'vue'
 import {useMain,useGlobalVar} from '@renderer/store'
 import { Timeago2 } from '@renderer/utils/dayjs'
+import CommentList from './CommentList.vue'
+import MyDialog from './MyDialog.vue'
+import {throttle} from 'lodash'
 // import {regEmoji} from '@/utils/regEmoji'
-
+const fenxiang = ref(true)
+provide('fenxiang', fenxiang)
 const props = defineProps<{
     val:any
     pics:any[]
     type:number
     user:any
     time:number
+    info:any
+    threadId:any
+    id:number
 }>()
 const valI = ref()
 const msg = ref('')
 const picsI:Ref<any[]> = ref([])
 const typeI = ref()
+const infoI = ref()
+const infoW = ref()
+const threadIdI = ref()
 watch(()=>props,()=>{
     valI.value = props.val
     msg.value = props.val.msg
     picsI.value = props.pics
     typeI.value = props.type
+    infoI.value = Object.assign({}, props.info)
+    infoW.value = Object.assign({}, props.info)
+    threadIdI.value = props.threadId
 },{immediate:true,deep:true})
 
 const typeMap = new Map([
@@ -187,13 +213,14 @@ const typeChange = ()=>{
         console.log(valI.value);
         picsI.value = props.val.event.pics
         typeI.value = props.val.event.type
+        infoI.value = Object.assign({}, props.val.event.info) 
+        threadIdI.value = props.val.event.threadId
         typeChange()
     }else if(typeI.value== 28 || typeI.value==17){
         tagName.value = '电台'
         shareCover.value = valI.value.program.coverUrl
         shareTitle.value = valI.value.program.name
         smallMessage.value = [valI.value.program.radio.name]
-        
     }
 }
 
@@ -208,7 +235,38 @@ let commitMessage = ref('')
 const getText = (message:string)=>{
     commitMessage.value = message
 }
-const subCommit = ()=>{
+const WriteCommitRef2 = ref()
+const subCommit = async()=>{
+    if(commitMessage.value == ''){
+        globalVar.loadMessageDefaultType = 'error'
+        globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
+        globalVar.loadMessageDefaultFlag = true
+    }else{
+        let obj:comment.sendComment = {
+            t:1,
+            type:6,
+            threadId:props.threadId,
+            content:commitMessage.value
+        }
+        let result = (await Main.reqcomment(obj)).data;
+        if(result.code == 200){
+            globalVar.loadMessageDefault = '评论成功！'
+            globalVar.loadMessageDefaultFlag = true
+            WriteCommitRef2.value.textarea = ''
+        }else{
+            globalVar.loadMessageDefault = '评论失败！'
+            globalVar.loadMessageDefaultFlag = true
+        }
+        let addComment = result.comment
+        addComment['likedCount'] = 0;
+        addComment['liked'] = false;
+        addComment['timeStr'] = '刚刚'
+        addComment['beReplied'] = []
+        comments.value.unshift(addComment)
+        if(ifZhuanfu.value)infoW.value.commentCount++
+        else infoI.value.commentCount++
+        total.value ++;
+    }
 }
 
 const showPingLun = ref(false)
@@ -318,9 +376,45 @@ const observer = new IntersectionObserver((entries) => {
 //打开评论
 const showPing = ()=>{
     showPingLun.value = !showPingLun.value
-    observer.observe(commentlist.value!)
+    nextTick(()=>{
+        observer.observe(commentlist.value!)
+    })
 }
 
+const scrollVal = ref()
+watch(showPingLun,async()=>{
+    if(showPingLun.value){
+        loadComment()
+        console.log(globalVar.mainScroll);
+        scrollVal.value = globalVar.mainScroll
+    }
+})
+
+let commentFlag = ref(false)
+let hotComments: Ref<any[]> = ref([]);
+let comments: Ref<any[]> = ref([]);
+let total = ref(0)
+let totalPage = ref(0)
+let nowPage = ref(1);
+let moreHot = ref(false)
+const loadComment = async()=>{
+    commentFlag.value = false
+    let result = (await Main.reqMyEventComment(props.threadId,20,0))
+    hotComments.value = result.hotComments;
+    comments.value = result.comments;
+    total.value = result.total
+    totalPage.value = Math.ceil((total.value) / 20)
+    moreHot.value = result.moreHot
+    commentFlag.value = true
+    nowPage.value = 1;
+}
+
+const base = ref<InstanceType<typeof HTMLElement>>()
+const scroll = ()=>{
+    console.log(globalVar.mainScroll);
+    console.log(scrollVal.value);
+    globalVar.changeMainScroll = scrollVal.value - globalVar.mainScroll + base.value!.offsetHeight 
+}
 
 
 //处理文字
@@ -328,8 +422,8 @@ const RegTxt = (msg:string)=>{
     msg = msg.replace(/#.*?#/g, '');
     const linkRegex = /((http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?)/g;
     msg = msg.replace(linkRegex, '<a href="$1" target="_blank">链接地址</a>');
-    msg = msg.replace(/(@.+?)：/g, '<a href="javascript:;">$1</a>：');
     msg = msg.replace(/(@.+?) /g, '<a href="javascript:;">$1</a> ');
+    msg = msg.replace(/\/\/(@.+?)：/g, '//<a href="javascript:;">$1</a>：');
     msg = msg.replace(/\n/g, "<br>");
     return msg;
 }
@@ -354,7 +448,106 @@ const shareHandle = async()=>{
     }
 }
 const goZhuanFa = ()=>{
-    console.log('转发');
+    console.log('转发页');
+}
+//点赞
+const dianzan = async(id:string,t:1|2,T:'I'|'W')=>{
+    let info:any;
+    if(T== 'I')info = infoI
+    else info = infoW
+    if(await Main.reqLikeResource(id,6,t)){
+        if(t == 2)info.value.likedCount--
+        else info.value.likedCount++
+        info.value.liked = !info.value.liked
+    }else{
+        globalVar.loadMessageDefaultFlag = true
+        globalVar.loadMessageDefault = '点赞失败'
+    }
+}
+const throttleDianzan = throttle(dianzan,1000,{leading:true})
+
+//转发
+const zhuanfuFlag = ref(false)
+const WriteCommitRef = ref()
+const way = ref('')
+const zhuanfa = (str:string)=>{
+    way.value = str
+    if(str == 'w'){
+        if(props.type == 22){
+            zhuanfadf.value = '//@'+props.user.nickname+'：' + msg.value
+        }
+    }else{
+        zhuanfadf.value = ''
+    }
+    console.log(zhuanfadf.value);
+    zhuanfuFlag.value = true
+    nextTick(()=>{
+        WriteCommitRef.value?.getFocus()
+    })
+
+}
+
+const closeDialog = (done: () => void)=>{
+    WriteCommitRef.value.textarea = zhuanfadf.value
+    done()
+    zhuanfuFlag.value = false
+    zhuanfaMessage.value  = ''
+}
+
+const confirm = async()=>{
+    WriteCommitRef.value.textarea = zhuanfadf.value
+    zhuanfuFlag.value = false
+    globalVar.loadDefault = true
+    let result 
+    if(way.value == 'w')result =  await Main.reqEventForward(props.user.userId,props.id,zhuanfaMessage.value)
+    else result =  await Main.reqEventForward( props.val.event.user.userId, props.val.event.id,zhuanfaMessage.value)
+    globalVar.loadDefault = false
+    if(result.code == 200){
+        globalVar.loadMessageDefaultFlag = true
+        globalVar.loadMessageDefault = '转发成功'
+    }else{
+        globalVar.loadMessageDefaultFlag = true
+        globalVar.loadMessageDefault = '转发失败'
+    }
+    zhuanfaMessage.value  = ''
+}
+
+const cancel = ()=>{
+    WriteCommitRef.value.textarea = zhuanfadf.value
+    zhuanfuFlag.value = false
+    zhuanfaMessage.value  = ''
+}
+let zhuanfaMessage = ref('')
+const zhuanfadf = ref('')
+
+const getZhuanfaText = (message:string)=>{
+    zhuanfaMessage.value = message
+}
+//转发结束
+
+//下载图片
+const download = ()=>{
+    const lastDotIndex = bigUrl.value.lastIndexOf('.');
+    const ext = bigUrl.value.slice(lastDotIndex);
+    fetch(bigUrl.value)
+    .then(response => response.arrayBuffer())
+    .then(async(buffer) => {
+        let flag = await window.electron.ipcRenderer.invoke('save-image',{buffer,ext})
+        if(flag){
+            globalVar.loadMessageDefault = '保存成功'
+            globalVar.loadMessageDefaultFlag = true
+        }else{
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefault = '保存失败'
+            globalVar.loadMessageDefaultFlag = true
+        }
+        // 二进制数据处理
+    })
+    .catch(() => {
+        globalVar.loadMessageDefaultType = 'error'
+        globalVar.loadMessageDefault = '保存失败'
+        globalVar.loadMessageDefaultFlag = true
+    });
 }
 </script>
 <style scoped lang="less">
@@ -629,6 +822,9 @@ const goZhuanFa = ()=>{
                 }
                 :deep(.comment){
                     width: 100%;
+                    .commentList{
+                        width: 90%;
+                    }
                 }
                 :deep(.input-bk){
                     width: 100% !important;

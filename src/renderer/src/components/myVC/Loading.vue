@@ -18,9 +18,10 @@
 
 <script setup lang="ts">
 import { onMounted, getCurrentInstance, ComponentInternalInstance } from 'vue';
+import { useGlobalVar } from '@renderer/store';
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const $emit = defineEmits(['close'])
-
+const globalVar = useGlobalVar()
 defineProps<{
     message?: string
     width?: string
@@ -41,6 +42,7 @@ onMounted(() => {
     }
     if ($el.props.showTime) {
         let t = setTimeout(()=>{
+            globalVar.loadMessageDefaultType = ''
             $emit('close')
             clearTimeout(t)
         },$el.props.showTime as number)
@@ -121,6 +123,7 @@ onMounted(() => {
             }
         }
         .error{
+            padding-left: 20px;
             position: relative;
             left: -10px;
             width: 10px;

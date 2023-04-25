@@ -154,6 +154,7 @@ const close = ()=>{
                     display: flex;
                     justify-content: center;
                     align-items: center;
+                    user-select: none;
                     border: 1px solid rgba(1,1,1,0);
                     &:hover{
                         border: 1px solid rgb(61, 145, 236);

@@ -25,7 +25,7 @@
 
 <script lang='ts' setup>
 import {useRoute} from 'vue-router'
-import {onMounted, ref,toRef,watch,getCurrentInstance,ComponentInternalInstance } from 'vue'
+import {onMounted, ref,toRef,watch,getCurrentInstance,ComponentInternalInstance, onActivated } from 'vue'
 import {useMain,useGlobalVar} from '@renderer/store'
 import { ElInput } from 'element-plus'
 import Emoji from './emoji/index.vue'
@@ -39,12 +39,22 @@ let routeId = ref(routeQuery.value.id)
 watch(routeQuery,()=>{
     routeId.value = routeQuery.value.id
 })
-watch(routeId,()=>{
-    textarea.value = ''
+const props = defineProps({
+    df: {
+        type: String,
+        default: ''
+    },
 })
 let textarea = ref('')
+watch(()=>props.df,()=>{
+    textarea.value = props.df
+},{immediate:true})
+watch(routeId,()=>{
+    textarea.value = props.df
+})
 let emoji = ref(false)
 const ShowEmoji = ()=>{
+    reSizePositon()
     emoji.value = !emoji.value
 }
 let topValue = ref(0)
@@ -65,8 +75,17 @@ window.electron.ipcRenderer.on('to-changeFished-finshed',()=>{
     reSizePositon();
 })
 onMounted(()=>{
+    getFocus()
     reSizePositon();
 })
+
+const getFocus = ()=>{
+    const textarea = text.value!.$el.querySelector('textarea') as HTMLInputElement
+    setTimeout(()=>{
+        textarea.focus()
+    })
+    textarea.setSelectionRange(0,0)
+}
 
 //输入emoji
 const sendEmojiStr = (emojistr:string)=>{
@@ -87,6 +106,8 @@ watch(clearText,()=>{
         clearText.value = false
     }
 })
+
+defineExpose({textarea,getFocus})
 </script>
 
 <style lang='less' scoped>

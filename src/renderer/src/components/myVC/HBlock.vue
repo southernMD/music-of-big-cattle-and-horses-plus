@@ -24,7 +24,6 @@
 <script lang='ts' setup>
 import { useMain } from '@renderer/store';
 import {numberSimp} from '@renderer/utils/numberSimp'
-import { query } from 'express';
 import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()

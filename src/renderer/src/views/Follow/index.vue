@@ -2,7 +2,7 @@
     <div class="follow">
         <header>
             <div class="title">动态</div>
-            <div class="btn">
+            <div class="btn" @click="senddongtai">
                 <i class="iconfont icon-xiugaioryijian"></i>
                 <span>发动态</span>
             </div>
@@ -15,32 +15,34 @@
                 :type="otherList[index].type"
                 :user="otherList[index].user"
                 :time="otherList[index].showTime"
-                :ref="ref => { return listRefs[index] = ref as InstanceType<typeof eventBlock> }"
+                :info="otherList[index].info"
+                :threadId="otherList[index].threadId"
+                :id="otherList[index].id"
                 ></eventBlock>
                 <div v-show="valFlag">加载中</div>
             </div>
             <div class="right">
                 <div class="top">
                     <div class="message">
-                        <el-image src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg" fit="cover"></el-image>
+                        <el-image :src="BasicApi.profile?.avatarUrl" fit="cover"></el-image>
                         <div class="ms">
-                            <div class="name">难受香菇</div>
-                            <div class="des"><span>也许在遥远中我会看到另一个世界</span></div>
+                            <div class="name">{{BasicApi.profile?.nickname}}</div>
+                            <div class="des"><span>{{ BasicApi.profile?.signature }}</span></div>
                         </div>
                     </div>
                     <div class="numbers">
                         <div class="tip">
-                            <div class="number">12</div>
+                            <div class="number">{{ BasicApi.profile?.eventCount }}</div>
                             <div class="txt">动态</div>
                         </div>
                         <div class="line"></div>
                         <div class="tip">
-                            <div class="number">12</div>
+                            <div class="number">{{ BasicApi.profile?.follows }}</div>
                             <div class="txt">关注</div>
                         </div>
                         <div class="line"></div>
                         <div class="tip">
-                            <div class="number">12</div>
+                            <div class="number">{{ BasicApi.profile?.followeds }}</div>
                             <div class="txt">粉丝</div>
                         </div>
                     </div>
@@ -48,13 +50,29 @@
             </div>
         </main>
     </div>
-
+    <MyDialog :flag="senddongtaiFlag" @closeDialog="closeDialog" @confirm="confirm" @cancel="cancel" confirmName="分享">
+        <template #header>
+            <div>分享</div>
+        </template>
+        <template #midle>
+            <div class="writ">
+                <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
+            </div>
+            <div class="add">
+                <div class="img" >
+                    <i class="iconfont icon-yinle1"></i>
+                </div>
+                <div class="message">给动态配上音乐</div>
+            </div>
+        </template>
+    </MyDialog>
 </template>
 
 <script setup lang="ts">
 import {ref,Ref, watch,nextTick } from 'vue'
 import eventBlock from '@renderer/components/myVC/eventBlock.vue';
-import { useMain } from '@renderer/store';
+import { useMain,useBasicApi } from '@renderer/store';
+const BasicApi = useBasicApi()
 const Main = useMain()
 const valFlag = ref(true)
 const listFlag = ref(false)
@@ -93,7 +111,6 @@ watch(listFlag,()=>{
         valFlag.value = true;
     }
 })//
-const listRefs = ref<(InstanceType<typeof eventBlock>[])>([]);
 const observer = new IntersectionObserver((entries) => {
     console.log(entries);
     if (entries[0].isIntersecting) {
@@ -125,6 +142,29 @@ const observer = new IntersectionObserver((entries) => {
         console.log('元素还未出现在视口中');
     }
 });
+
+//发送动态
+const senddongtaiFlag = ref(false)
+const senddongtai = ()=>{
+    senddongtaiFlag.value = true
+}
+const closeDialog = (done:()=>void)=>{
+    done()
+    senddongtaiFlag.value = false
+}
+const confirm = ()=>{
+    senddongtaiFlag.value = false
+}
+const WriteCommitRef = ref()
+const cancel = ()=>{
+    WriteCommitRef.value.textarea = ''
+    senddongtaiFlag.value = false
+}
+let zhuanfaMessage = ref('')
+
+const getZhuanfaText = (message:string)=>{
+    zhuanfaMessage.value = message
+}
 </script>
 
 <style scoped lang="less">
@@ -255,6 +295,53 @@ const observer = new IntersectionObserver((entries) => {
             }
 
         }
+    }
+}
+.writ{
+    border: 1px solid @small-font-color;
+    border-radius: .2em;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-sizing: border-box;
+    :deep(.writeCommit){
+        .input-bk{
+            margin-left: 0;
+            margin-right: 2px;
+        }
+    }
+    :deep(.option){
+        margin-left: 10px;
+        margin-top: 0px;
+    }
+}
+.add{
+    height: 50px;
+    widows: 90%;
+    border: 1px solid @small-font-color;
+    border-top: none;
+    cursor: pointer;
+    &:hover{
+        background-color: @flow-hover-color;
+    }
+    display: flex;
+    align-items: center;
+    .img{
+        background-color: @primary-color;
+        height: 30px;
+        width: 30px;
+        margin-left: 10px;
+        margin-right: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: .2em;
+        i{
+            color: white;
+        }
+    }
+    .message{
+        user-select: none;
+        color: @font-color;
     }
 }
 </style>

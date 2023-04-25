@@ -555,7 +555,35 @@ export const createWindow = ():BrowserWindow=>{
         }
       })
     })
-    
+    //保存图片
+    ipcMain.handle('save-image', (event, { buffer, ext }) => {
+      return new Promise((resolve, reject) => {
+        dialog
+          .showSaveDialog(mainWindow, {
+            title: '另存为',
+            buttonLabel: '保存',
+            defaultPath: `${new Date().getTime()}${ext}`,
+          })
+          .then(({ filePath }) => {
+            if (filePath) {
+              fs.writeFile(filePath, Buffer.from(buffer), (err) => {
+                if (err) {
+                  console.error(err);
+                  resolve(false);
+                } else {
+                  resolve(true);
+                }
+              });
+            } else {
+              resolve(false);
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            resolve(false);
+          });
+      });
+    });
     return mainWindow
 }
 

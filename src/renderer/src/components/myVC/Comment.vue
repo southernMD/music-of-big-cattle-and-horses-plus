@@ -7,11 +7,16 @@
             </div>
             <div class="comment-txt">
                 <div class="user">
-                    <span class="user-comment"><span class="user-name">{{userNickname}}:&nbsp;</span><span v-html="regEmoji(content)"></span></span>
+                    <span class="user-comment">
+                        <span class="user-name">{{userNickname}}:&nbsp;</span>
+                        <span class="word" v-html="regEmoji(content)"></span>
+                    </span>
                 </div>
                 <div class="reply" v-if="beReplied.length != 0">
-                    <span class="user-comment"><span
-                            class="user-name">@{{beReplied[0]?.user?.nickname}}:&nbsp;</span><span v-html="regEmoji(beReplied[0]?.content)"></span></span>
+                    <span class="user-comment">
+                        <span class="user-name">@{{beReplied[0]?.user?.nickname}}:&nbsp;</span>
+                        <span class="word" v-html="regEmoji(beReplied[0]?.content)" ></span>
+                    </span>
                 </div>
                 <div class="option">
                     <span class="time">{{!timeStr.includes('-')?timeStr:fixTime}} </span>
@@ -19,8 +24,8 @@
                         <i class="iconfont icon-dianzan" v-if="!liked">&nbsp;<span style="font-size:11px" v-show="likedCount != 0">{{likedCount}}</span></i>
                         <i class="iconfont icon-dianzan_kuai" v-else>&nbsp;<span style="font-size:11px">{{likedCount}}</span></i>
                         <i class="iconfont icon-anjianfengexian"></i>
-                        <i class="iconfont icon-fenxiang"></i>
-                        <i class="iconfont icon-anjianfengexian"></i>
+                        <i class="iconfont icon-fenxiang" v-if="!fenxiang"></i>
+                        <i class="iconfont icon-anjianfengexian" v-if="!fenxiang"></i>
                         <i class="iconfont icon-pinglun"></i>
                     </span>
                 </div>
@@ -30,7 +35,7 @@
 </template>
 
 <script lang='ts' setup>
-import { computed, getCurrentInstance, ComponentInternalInstance } from 'vue'
+import { computed, getCurrentInstance, ComponentInternalInstance, inject } from 'vue'
 import { dayjsCN } from '@renderer/utils/dayjs'
 import {regEmoji} from '@renderer/utils/regEmoji'
 const $el = getCurrentInstance() as ComponentInternalInstance
@@ -46,6 +51,8 @@ defineProps<{
     likedCount: number
     commentId:number
 }>()
+
+const fenxiang = inject('fenxiang')
 
 const fixTime = computed<string>(() => {
     let str = dayjsCN($el.props.time as number);
@@ -116,6 +123,9 @@ const fixTime = computed<string>(() => {
                         &:hover {
                             color: @url-color-hover;
                         }
+                    }
+                    :deep(.word){
+                        word-break: break-word;
                     }
                 }
             }

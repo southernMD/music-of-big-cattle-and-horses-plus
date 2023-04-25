@@ -29,7 +29,7 @@
             </template>
         </MyDialog>
         <Loading :loading="true" message="" v-if="loadDefault" :width="20"></Loading>
-        <Loading :loading="false" :showTime="1000" :width="'180'" :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag" @close="globalVar.loadMessageDefaultFlag = false"></Loading>
+        <Loading :loading="false" :type="globalVar.loadMessageDefaultType" :showTime="1000" :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag" @close="globalVar.loadMessageDefaultFlag = false"></Loading>
     </div>
 </template>
 

@@ -8,7 +8,9 @@ import {
     playlistTracks, songOrderUpdate, playlistOrderUpdate, playmodeIntelligenceList, likeQ, commentPlaylist,
     comment, recommendSongs, recommendPlayList, programRecommend, djProgramToplist,
     personal_fm, fm_trash, userDj, startDj, SongDlUrl,Search, SearchSuggest, PlayListCreate,playlistTags,
-    updatePlayList,updatePlayListTags,updatePlayListdesc, uploadPlaylistPic,MyEvent
+    updatePlayList,updatePlayListTags,updatePlayListdesc, 
+    uploadPlaylistPic,MyEvent, MyEventComment, LikeResource,
+    eventForward
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -780,6 +782,45 @@ export const useMain = defineStore('Main', {
                 })
             }
         },
+        //动态评论
+        async reqMyEventComment(threadId:string,limit?:number,offset?:number,before?:number){
+            let result = await MyEventComment(threadId,limit,offset,before)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        //资源点赞
+        async reqLikeResource(id:string | number,type :number,t:1 | any){
+            let result = await LikeResource(id,type,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //转发动态
+        async reqEventForward(uid:number,evid:number,forwards:string){
+            let result = await eventForward(uid, evid, forwards)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -839,6 +880,7 @@ interface V {
     loadDefault: boolean
     loadMessageDefaultFlag:boolean //全局提示文本
     loadMessageDefault:string //全局提示文本
+    loadMessageDefaultType:'error' | '' //全局提示文本类型
     downloadId: number[]    //下载id
     loadingValue: Map<number, [number, number]> //下载值
     downLoadAll: number //全下指标
@@ -871,6 +913,7 @@ export const useGlobalVar = defineStore('globalVar', {
             loadDefault: false,
             loadMessageDefaultFlag:false,
             loadMessageDefault:'',
+            loadMessageDefaultType:'',
             downloadId: [],
             loadingValue: new Map(),
             downLoadAll: 0,
