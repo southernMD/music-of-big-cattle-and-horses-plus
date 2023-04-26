@@ -407,9 +407,9 @@ video {
     background-color: rgba(0, 0, 0, 0);
 }
 
-:deep(.downloadDialog) {
-    min-width: 380px;
+:deep(.el-dialog) {
     min-height: 270px;
+    width: 500px;
     background-color: @other-bk-color;
     border-radius: .2em;
     .el-dialog__headerbtn {

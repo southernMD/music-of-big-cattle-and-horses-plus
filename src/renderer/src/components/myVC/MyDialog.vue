@@ -58,6 +58,7 @@ const closeDialog = (done: () => void)=>{
 </script>
 
 <style scoped lang="less">
+
 :slotted(.title){
     font-weight: bolder;
 }

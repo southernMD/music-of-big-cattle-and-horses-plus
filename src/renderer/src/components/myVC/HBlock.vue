@@ -1,5 +1,5 @@
 <template>
-    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }" @click="goDetail">
+    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }">
         <div class="left">
             <el-image :src="url" style="width: 60px; height: 60px"></el-image>
             <div :class="{name:type =='DJ','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
@@ -14,9 +14,9 @@
             <div class="one h">{{ZhunaJi }}</div>
         </div>
         <div class="right playList" v-if="type == 'playList'">
-            <div class="number">{{ trackCount }}首</div>
+            <div class="number" v-if="trackCount">{{ trackCount }}首</div>
             <div class="author" @click.stop>by <span>{{ creator.nickname}}</span></div>
-            <div class="playCount">{{ numberSimp(playCount as number) }}</div>
+            <div class="playCount" v-if="playCount" >{{ numberSimp(playCount as number) }}</div>
         </div>
     </div>
 </template>
@@ -41,18 +41,6 @@ const props = defineProps<{
     type: 'singer' | 'DJ' | 'ZhuanJi' | 'playList'
 }>()
 
-const goDetail = ()=>{
-    if(props.type == 'playList'){
-        $router.push({
-            name:'songPlaylist',
-            query:{
-                id:props.id,
-                my:'false'
-            }
-        })
-    }
-
-}
 </script>
 
 <style lang='less' scoped>
@@ -73,7 +61,7 @@ const goDetail = ()=>{
             width: 380px;
             overflow-x: hidden;
             text-overflow: ellipsis;
-            margin-left: 10px;
+            padding-left: 10px;
             height: 80px;
             display: flex;
             align-items: center;

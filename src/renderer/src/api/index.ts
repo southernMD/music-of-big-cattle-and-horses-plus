@@ -567,3 +567,15 @@ export const eventForward = (uid:Number,evid:number,forwards:string)=>{
     })
 }
 
+export const shareResource = (id:number,type:string,msg:string)=>{
+    let url = ''
+    if(type == 'noresource')url = `/share/resource?type=${type}&msg=${msg}`
+    else url = `/share/resource?type=${type}&msg=${msg}&id=${id}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}

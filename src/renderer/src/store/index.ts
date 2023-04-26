@@ -10,7 +10,8 @@ import {
     personal_fm, fm_trash, userDj, startDj, SongDlUrl,Search, SearchSuggest, PlayListCreate,playlistTags,
     updatePlayList,updatePlayListTags,updatePlayListdesc, 
     uploadPlaylistPic,MyEvent, MyEventComment, LikeResource,
-    eventForward
+    eventForward,
+    shareResource
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -818,6 +819,19 @@ export const useMain = defineStore('Main', {
             }else{
                 return new Promise<any>((resolve, reject) => {
                     resolve({})
+                })
+            }
+        },
+        //分享
+        async reqShareResource(type:string,id:number,msg:string){
+            let result = await shareResource(id,type,msg)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
                 })
             }
         },

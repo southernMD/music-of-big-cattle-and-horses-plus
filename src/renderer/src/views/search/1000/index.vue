@@ -1,6 +1,6 @@
 <template>
   <!-- <div class="">1000{{ $route.query.key }}</div> -->
-  <HBlock type="playList" :id="val.id" :Name="val.name" :url="val.coverImgUrl" :trackCount="val.trackCount" :playCount="val.playCount" :creator="val.creator" v-for="val in list.get(nowPage)"></HBlock>
+  <HBlock type="playList" :id="val.id" :Name="val.name" :url="val.coverImgUrl" :trackCount="val.trackCount" :playCount="val.playCount" :creator="val.creator" v-for="val in list.get(nowPage)" @click="goDetail(val.id)"></HBlock>
   <div class="pagination">
       <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
           :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
@@ -9,11 +9,12 @@
 
 <script setup lang="ts">
 import {ref,Ref,watch,toRef} from 'vue'
-import { useRoute } from 'vue-router';
+import { useRoute,useRouter } from 'vue-router';
 import { useGlobalVar, useMain } from '@renderer/store'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
 const list: Ref<Map<number,any[]>> = ref(new Map())
 const $route = useRoute()
+const $router = useRouter()
 const Main = useMain()
 const globalVar = useGlobalVar()
 list.value.set(1,await Main.reqSearch($route.query.key as string, '1000', 20, 0))
@@ -38,6 +39,16 @@ watch(nowPage,async()=>{
         globalVar.scrollToTop = true
     }
 })
+
+const goDetail = (id)=>{
+    $router.push({
+        name:'songPlaylist',
+        query:{
+            id,
+            my:'false'
+        }
+    })
+}
 
 </script>
 

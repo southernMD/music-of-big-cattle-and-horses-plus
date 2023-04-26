@@ -9,15 +9,16 @@
         </header>
         <main>
             <div class="left" ref="leftRef">
-                <eventBlock v-for="item,index in list" 
-                :val="item" 
-                :pics="otherList[index].pics"
-                :type="otherList[index].type"
-                :user="otherList[index].user"
-                :time="otherList[index].showTime"
-                :info="otherList[index].info"
-                :threadId="otherList[index].threadId"
-                :id="otherList[index].id"
+                <eventBlock v-for="item,index in otherList" 
+                :val="list[index]" 
+                :pics="item.pics"
+                :type="item.type"
+                :user="item.user"
+                :time="item.showTime"
+                :info="item.info"
+                :threadId="item.threadId"
+                :id="item.id"
+                :key="item.id"
                 ></eventBlock>
                 <div v-show="valFlag">加载中</div>
             </div>
@@ -50,19 +51,82 @@
             </div>
         </main>
     </div>
-    <MyDialog :flag="senddongtaiFlag" @closeDialog="closeDialog" @confirm="confirm" @cancel="cancel" confirmName="分享">
+    <MyDialog :flag="senddongtaiFlag" @closeDialog="closeDialog" @confirm="confirm" @cancel="cancel" :confirmName="confirmName" :cancelName="cancelName">
         <template #header>
             <div>分享</div>
         </template>
         <template #midle>
-            <div class="writ">
-                <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
-            </div>
-            <div class="add">
-                <div class="img" >
-                    <i class="iconfont icon-yinle1"></i>
+            <div class="default" v-show="change">
+                <div class="writ">
+                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
                 </div>
-                <div class="message">给动态配上音乐</div>
+                <div class="add" @click="changeFn">
+                    <div class="img" ref="imgRef">
+                        <i class="iconfont icon-yinle1" v-show="choiceType == 'noresource'"></i>
+                    </div>
+                    <div class="message">{{choiceMessage}}</div>
+                    <i class="iconfont icon-guanbi_o" v-show="choiceType != 'noresource'" @click.stop="clearChoice"></i> 
+                </div>
+            </div>
+            <div class="search" v-show="!change">
+                <el-input placeholder="单曲/歌手/专辑/歌单"  v-model="input" @keydown.enter="goSearch(nowIndex)">
+                    <template #prefix>
+                        <i class="iconfont icon-search"></i>
+                    </template>
+                </el-input>
+                <div class="l" v-show="change2">
+                    <div class="T">最近播放：</div>
+                    <div class="f" v-for="it in Main.latelyPlay.filter(t=>t.id>0).slice(0,5)"  @click="choice('song',it.id,it.al.picUrl,it.name,it.ar.map(i=>i.name).join('/'))">
+                        <span class="name">{{ it.name }}</span>
+                        <span>-{{it.ar.map(i=>i.name).join('/') }}</span>
+                    </div> 
+                </div>
+                <div class="s" v-if="!change2">
+                    <div class="top">
+                        <div class="tagt"  v-for="it,index in messageList">
+                            <Tag @click="goSearch(index)" :message="it" :ifClick="FlagList[index]"></Tag>
+                        </div>
+                    </div>
+                    <el-scrollbar>
+                        <div class="bottom">
+                            <div v-if="FlagList[0]" class="search-line-list">
+                                <div class="item" v-for="it in listSearch" @click="choice('song',it.id,it.al.picUrl,it.name,it.ar.map(i=>i.name).join('/'))">
+                                    <span class="name">{{ it.name }}</span>
+                                    <span>-{{it.ar.map(i=>i.name).join('/') }}</span>
+                                </div>
+                            </div>
+                            <div v-if="FlagList[1]" class="singer">
+                                <HBlock type="singer"
+                                :id="val.id" 
+                                :Name="HName(val.name,val.alias)"
+                                :url="val.picUrl"
+                                v-for="val in listSearch"
+                                @click="choice('artist',val.id,val.picUrl,val.name,'')"
+                                ></HBlock>
+                            </div>
+                            <div v-if="FlagList[2] " class="ZhuanJi">
+                                <HBlock type="ZhuanJi" 
+                                :id="val.id" 
+                                :Name="HName(val.name,val.alias)" 
+                                :ZhunaJi="Hzhuan(val.artist)" 
+                                :arId="val.artist.id" :url="val.picUrl" 
+                                @click="choice('album',val.id,val.picUrl,val.name,Hzhuan(val.artist))"
+                                v-for="val in listSearch"></HBlock>
+                            </div>
+                            <div v-if="FlagList[3]" class="playList">
+                                <HBlock type="playList" 
+                                :id="val.id" 
+                                :Name="val.name" 
+                                :url="val.coverImgUrl"
+                                :creator="val.creator" 
+                                @click="choice('playlist',val.id,val.coverImgUrl,val.name,`by${val.creator.nickname}`)"
+                                @click.stop
+                                v-for="val in listSearch"></HBlock>
+                            </div>
+                            <div v-if="listSearch.length == 0">无结果</div>
+                        </div>
+                    </el-scrollbar>
+                </div>
             </div>
         </template>
     </MyDialog>
@@ -71,7 +135,8 @@
 <script setup lang="ts">
 import {ref,Ref, watch,nextTick } from 'vue'
 import eventBlock from '@renderer/components/myVC/eventBlock.vue';
-import { useMain,useBasicApi } from '@renderer/store';
+import Tag from '@renderer/components/myVC/Tag.vue';
+import { useMain,useBasicApi,useGlobalVar } from '@renderer/store';
 const BasicApi = useBasicApi()
 const Main = useMain()
 const valFlag = ref(true)
@@ -79,6 +144,8 @@ const listFlag = ref(false)
 const list:Ref<any[]> = ref([])
 const otherList:Ref<any[]> = ref([])
 const lasttime = ref(-1)
+const globalVar = useGlobalVar()
+//
 const leftRef = ref<(InstanceType<typeof HTMLElement>)>()
 Main.reqMyEvent().then(async(val)=>{
     const event:any[] = val.event
@@ -150,20 +217,137 @@ const senddongtai = ()=>{
 }
 const closeDialog = (done:()=>void)=>{
     done()
+    confirmName.value = '分享'
+    cancelName.value = '取消'
     senddongtaiFlag.value = false
+    init()
 }
-const confirm = ()=>{
-    senddongtaiFlag.value = false
+const confirm = async()=>{
+    if(change.value){
+        senddongtaiFlag.value = false
+        globalVar.loadDefault  = true
+        let result = await Main.reqShareResource(choiceType.value,choiceId.value,zhuanfaMessage.value)
+        globalVar.loadDefault  = false
+        if(result.code == 200){
+            globalVar.loadMessageDefault = '分享成功'
+            globalVar.loadMessageDefaultFlag = true
+            list.value.unshift(JSON.parse(result.event.json))
+            let t  = result.event
+            delete t['json']
+            otherList.value.unshift(t)
+        }else{
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefault = '分享失败'
+            globalVar.loadMessageDefaultFlag = true
+        }
+        zhuanfaMessage.value = ''
+    }else{
+        confirmName.value = '分享'
+        cancelName.value = '取消'
+        change.value = true
+    }
+    init()
 }
 const WriteCommitRef = ref()
 const cancel = ()=>{
-    WriteCommitRef.value.textarea = ''
-    senddongtaiFlag.value = false
+    if(change.value){
+        WriteCommitRef.value.textarea = ''
+        senddongtaiFlag.value = false
+    }else{
+        confirmName.value = '分享'
+        cancelName.value = '取消'
+        change.value = true
+    }
+    init()
 }
 let zhuanfaMessage = ref('')
 
 const getZhuanfaText = (message:string)=>{
     zhuanfaMessage.value = message
+}
+
+const change = ref(true)
+const change2 = ref(true)
+const confirmName = ref('分享')
+const cancelName = ref('取消')
+const input = ref('')
+const changeFn = ()=>{
+    change.value = false
+    confirmName.value = '返回'
+    cancelName.value = '返回'
+}
+const messageList = ['单曲','歌手','专辑','歌单']
+const messageType = ['1','100','10','1000']
+const FlagList = ref([false,false,false,false])
+const nowIndex = ref(0)
+const listSearch:Ref<any[]> = ref([])
+const goSearch = async(index:number)=>{
+    listSearch.value = []
+    if(input.value.trim().length ==0)return
+    nowIndex.value = index;
+    change2.value = false
+    FlagList.value.fill(false)
+    FlagList.value[index] = true
+    listSearch.value= await Main.reqSearch(input.value.trim(),messageType[index],30,0)
+    console.log(listSearch.value);
+}
+watch(input,()=>{
+    if(input.value.length == 0){
+        change2.value = true
+        listSearch.value = []
+    }
+})
+//song,playlist,mv,djradio,djprogram,artist,album
+//song,playlist,artist,album,noresource
+const choiceType=ref('noresource')
+const choiceMessage = ref('给动态配上音乐')
+const choiceId = ref(0)
+const imgUrl = ref('')
+const choice = (type:string,id:number,url:string,name:string,ar:string)=>{
+    if(type == 'song'){
+        choiceMessage.value = `单曲：${name}-${ar}`
+    }else if(type == 'artist'){
+        choiceMessage.value = `歌手：${name}`
+    }else if(type == 'album'){
+        choiceMessage.value = `专辑：${name}-${ar}`
+    }else if(type == 'playlist'){
+        choiceMessage.value = `歌单：${name}-${ar}`
+    }
+    choiceType.value = type
+    choiceId.value = id
+    imgUrl.value = url
+    imgRef.value!.style.backgroundImage = `url(${url})`
+    change.value = true
+    confirmName.value = '分享'
+    cancelName.value = '取消'
+}
+const imgRef = ref<InstanceType<typeof HTMLElement>>()
+const init = ()=>{
+    choiceType.value = 'noresource'
+    choiceMessage.value = '给动态配上音乐'
+    choiceId.value
+    imgUrl.value = ''
+    FlagList.value = [false,false,false,false]
+    nowIndex.value = 0
+    listSearch.value = []
+    input.value = ''
+    imgRef.value!.style.backgroundImage =''
+}//
+const HName = (name:string,alias:any[])=>{
+  if(alias.length == 0)return name
+  else return `${name} (${alias.join(',')}) `
+}
+
+const Hzhuan = (obj:any)=>{
+  if(obj.alias.length == 0)return obj.name
+  else return `${obj.name} (${obj.alias.join(',')}) `
+}
+const clearChoice = ()=>{
+    choiceType.value = 'noresource'
+    choiceId.value = 0
+    imgUrl.value = ''
+    choiceMessage.value = '给动态配上音乐'
+    imgRef.value!.style.backgroundImage = ''
 }
 </script>
 
@@ -297,7 +481,9 @@ const getZhuanfaText = (message:string)=>{
         }
     }
 }
-.writ{
+.default{
+    margin-top: -20px;
+    .writ{
     border: 1px solid @small-font-color;
     border-radius: .2em;
     border-bottom-left-radius: 0;
@@ -313,35 +499,198 @@ const getZhuanfaText = (message:string)=>{
         margin-left: 10px;
         margin-top: 0px;
     }
-}
-.add{
-    height: 50px;
-    widows: 90%;
-    border: 1px solid @small-font-color;
-    border-top: none;
-    cursor: pointer;
-    &:hover{
-        background-color: @flow-hover-color;
     }
-    display: flex;
-    align-items: center;
-    .img{
-        background-color: @primary-color;
-        height: 30px;
-        width: 30px;
-        margin-left: 10px;
-        margin-right: 10px;
+    .add{
+        height: 50px;
+        widows: 90%;
+        border: 1px solid @small-font-color;
+        border-top: none;
+        cursor: pointer;
+        &:hover{
+            background-color: @flow-hover-color;
+        }
         display: flex;
-        justify-content: center;
         align-items: center;
-        border-radius: .2em;
-        i{
-            color: white;
+        .img{
+            background-size: cover;
+            background-color: @primary-color;
+            height: 30px;
+            width: 30px;
+            margin-left: 10px;
+            margin-right: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: .2em;
+            i{
+                color: white;
+            }
+        }
+        .message{
+            width: 80%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space:nowrap;
+            user-select: none;
+            color: @font-color;
+        }
+        >i{
+            color: @font-color;
+            margin-left: 5px;
+            &:hover{
+                color: @font-color-hover;
+            }
         }
     }
-    .message{
-        user-select: none;
-        color: @font-color;
+}
+.search{
+    margin-top: -20px;
+    :deep(.el-input){
+        --el-input-hover-border-color: none; 
+        --el-input-focus-border-color: none;
+        width: 100%;
+        font-size: 12px;
+        border: 1px solid @small-font-color;
+        border-radius: 0.2em;
+        background-color: @other-bk-color;
+        padding-bottom: 5px;
+        padding-top: 5px;
+        .el-input__wrapper{
+            background-color: @other-bk-color;
+            box-shadow: none;
+            padding-bottom: 5px;
+            padding-top: 5px;
+            padding-right: 15px;
+            height: 10px;
+            &::-webkit-scrollbar{
+                height: 80%;
+            }
+            &::-webkit-scrollbar-button{
+                display: none;
+            }
+            &::-webkit-scrollbar{
+                width: 7px;
+                height: 90%;
+                background-color: @commit-block-scroll-line;
+            }
+            &::-webkit-scrollbar-thumb {
+                border-radius: 0.4em;
+                background: @commit-block-scroll-button;
+            }
+            ::placeholder{
+                color: @small-font-color;    
+            }
+            
+        }
+        input{
+            color: @font-color;
+        }
+    } 
+    .l{
+        height: 135px;
+        .T{
+            height: 30px;
+            line-height: 30px;
+            font-size: 12px;
+        }
+        .f{
+            line-height: 25px;
+            height: 25px;
+            user-select: none;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: .2em;
+            .name{
+                color: @font-color;
+                padding-left: 5px;
+            }
+            &:hover{
+                background-color: @commit-block-color;
+            }
+        }
+    }
+    .s{
+        height: 235px;
+        .top{
+            margin-top: 5px;
+            display: flex;
+            .tagt{
+                flex-basis: 25%;
+                :deep(>.tag){
+                    width: 20px;
+                }
+            }
+
+        }
+        .bottom{
+            .search-line-list{
+                .item{
+                    line-height: 25px;
+                    height: 25px;
+                    user-select: none;
+                    font-size: 12px;
+                    cursor: pointer;
+                    border-radius: .2em;
+                    .name{
+                        color: @font-color;
+                        padding-left: 5px;
+                    }
+                    &:hover{
+                        background-color: @commit-block-color;
+                    }
+                }
+            }
+            :deep(.singer){
+                .Hblock{
+                    .left{
+                        .name{
+                            width: auto;
+                        }
+                        .name-singer{
+                            width: auto;
+                            color: @font-color;
+                        }
+                    }
+                }
+            }
+            :deep(.ZhuanJi){
+                .Hblock{
+                    overflow: hidden;
+                    .left{
+                        .name{
+                            width: 100px;
+                            overflow: hidden;
+                        }
+                        .name-singer{
+                            margin-right: 5px;
+                            width: 150px;
+                            overflow: hidden;
+                            color: @font-color;
+                        }
+                    }
+                }
+            }
+            :deep(.playList){
+                .Hblock{
+                    overflow: hidden;
+                    .left{
+                        .name{
+                            width: 100px;
+                            overflow: hidden;
+                            color: @font-color;
+                        }
+                        .name-singer{
+                            margin-right: 5px;
+                            width: 150px;
+                            overflow: hidden;
+                            color: @font-color;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
+
 </style>
