@@ -17,6 +17,8 @@ declare module '@vue/runtime-core' {
     Comment: typeof import('./src/components/myVC/Comment.vue')['default']
     CommentList: typeof import('./src/components/myVC/CommentList.vue')['default']
     DetailSmallBlock: typeof import('./src/components/myVC/DetailSmallBlock.vue')['default']
+    DropDown: typeof import('./src/components/myVC/dropDown.vue')['default']
+    EditorPage: typeof import('./src/components/myVC/editorPage.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
     ElDialog: typeof import('element-plus/es')['ElDialog']

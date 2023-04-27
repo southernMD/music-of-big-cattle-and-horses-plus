@@ -17,7 +17,7 @@
         <el-divider />
         <div class="main">
             <div>
-                <div class="message">
+                <div class="message" @click="editorPersonal">
                     <i class="iconfont icon-gerenzhongxin-wodexinxi h"></i>
                     <span>个人信息设置</span>
                     <i class="iconfont icon-arrow-right-bold  f"></i>
@@ -139,7 +139,12 @@ const quitLogin = async()=>{
     //     });
     // }
 }
-
+const editorPersonal = ()=>{
+    $router.push({
+        name:'editPersonal'
+    })
+    destroyVC()
+}
 
 </script>
 

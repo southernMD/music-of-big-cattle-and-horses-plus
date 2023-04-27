@@ -579,3 +579,27 @@ export const shareResource = (id:number,type:string,msg:string)=>{
         }
     })
 }
+
+
+//更新用户信息
+export const userUpdate = ({gender,birthday,nickname,province,city,signature})=>{
+    return axios({
+        url:`/user/update?gender=${gender}&signature=${signature}&city=${city}&nickname=${nickname}&birthday=${birthday}&province=${province}&t=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+//上传头像
+export const UploadAvatar = (formData:FormData,imgSize:number,imgX:number,imgY:number)=>{
+    const url = `/avatar/upload?imgSize=${
+        imgSize
+      }&imgX=${imgX}&imgY=${imgY}&timestamp=${Date.now()}&cookie=${localStorage.getItem('cookieUser')}`
+    return axios({
+        url:url,
+        method:'POST',
+        data: formData,
+    })
+}

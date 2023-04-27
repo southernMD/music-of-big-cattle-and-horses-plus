@@ -5,8 +5,9 @@
     "src/preload/*",
     "src/main/*",
     "src/main/http/*",
-    "src/main/http/api/*"
+    "src/main/http/api/*",
   ],
+
   "compilerOptions": {
     "composite": true,
     "types": [

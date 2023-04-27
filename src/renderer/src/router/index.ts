@@ -156,6 +156,11 @@ const routes: Array<RouteRecordRaw> = [
                 component:()=>import('@renderer/views/editPlayList/index.vue')
             },
             {
+                path:'editPersonal',
+                name:'editPersonal',
+                component:()=>import('@renderer/views/editPersonal/index.vue')
+            },
+            {
                 path:'follow',
                 name:'follow',
                 component:()=>import('@renderer/views/Follow/index.vue')

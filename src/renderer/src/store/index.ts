@@ -11,7 +11,9 @@ import {
     updatePlayList,updatePlayListTags,updatePlayListdesc, 
     uploadPlaylistPic,MyEvent, MyEventComment, LikeResource,
     eventForward,
-    shareResource
+    shareResource,
+    userUpdate,
+    UploadAvatar
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -832,6 +834,43 @@ export const useMain = defineStore('Main', {
             }else{
                 return new Promise<any>((resolve, reject) => {
                     resolve(result.data)
+                })
+            }
+        },
+        //获取城市数据
+        async reqCitys(){
+            let result = await import('@renderer/assets/level.json');
+            console.log(result.default); // json数据
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.default)
+            })
+        },
+        //修改个人信息
+        async reqUserUpdate(form:any){
+            let result = await userUpdate(form)
+            if(result.data.code == 200){
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //头像上传
+        async reqUploadAvatar(formData:FormData,imgSize:number,imgX:number,imgY:number){
+            let result = await UploadAvatar(formData,imgSize,imgX,imgY)
+            console.log(result.data.data.url);
+            console.log(result.data.data);
+            console.log(result.data);
+            if(result.data.data.code == 200){
+                return new Promise<string>((resolve, reject) => {
+                    resolve(result.data.data.url)
+                })
+            }else{
+                return new Promise<string>((resolve, reject) => {
+                    resolve('')
                 })
             }
         },
