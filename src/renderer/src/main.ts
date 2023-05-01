@@ -4,6 +4,7 @@ import router from './router'
 import {createPinia } from 'pinia'
 import './assets/css/base.css'
 import './assets/iconfont.css'
+import 'animate.css';
 import { createPersistedState } from 'pinia-plugin-persistedstate'
 import MyDialogVue from './components/myVC/MyDialog.vue'
 const pinia = createPinia()

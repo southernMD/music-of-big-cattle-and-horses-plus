@@ -20,16 +20,13 @@
 
 <script lang='ts' setup>
 import { getCurrentInstance, ref, toRef, watch, ComponentInternalInstance, nextTick, onMounted,Ref } from 'vue'
-import { useRouter } from 'vue-router';
-import { useMain,useGlobalVar } from '@renderer/store'
+import { useMain } from '@renderer/store'
 const Main = useMain()
 const $el = getCurrentInstance() as ComponentInternalInstance
-const $router = useRouter()
-const globalVar = useGlobalVar()
 
 let playButtonFlag = ref(false)
 
-defineProps<{
+const props = defineProps<{
     url: string
     i: number
     num: number
@@ -61,37 +58,21 @@ const hidePlayButton = () => {
     playButtonFlag.value = false
 }
 
+const $emit = defineEmits(['go','playAll'])
 const go = ()=>{
-    $router.push({
-        name:'songPlaylist',
-        query:{
-            id:id.value,my:'false'
-        }
-    })
+    $emit('go',{id:id.value,index:props.i})
+
 }
 
 const playAll = async()=>{
-    let result = (await Main.reqPlaylistTrackAll(id.value)).data;
-    Main.playingList = result.songs
-    Main.playingPrivileges = result.privileges
-    Main.playingindex = 1
-    Main.playing = result.songs[0].id as number
-    Main.beforePlayListId = id.value
-    Main.playStatus = 'play'
-    let str = result.songs[0].name +' - ';
-    let singerArr = result.songs[0].ar as unknown as Array<any>
-    singerArr.forEach((element,index)=>{
-        str+=element.name
-        if(index != singerArr.length - 1)str+=' / '
-    })
-    window.electron.ipcRenderer.send('change-play-thum',str)
-    window.electron.ipcRenderer.send('render-play')
-    globalVar.closePointOutMessage = '已经开始播放'
-    globalVar.closePointOut = true
+    $emit('playAll',id.value)
 }
 </script>
 
 <style lang='less' scoped>
+.noDrag{
+    cursor: pointer;
+}
 .start {
     align-self: start;
 }
@@ -99,12 +80,10 @@ const playAll = async()=>{
 .imgae {
     flex: 0 0 16%;
     height: 0;
-    width: 16%;
     padding-bottom: 16%;
     background-size: cover;
     border-radius: 0.5em;
     position: relative;
-    background-image: url('https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg');
     margin-right: 2%;
     margin-left: 2%;
     margin-bottom: 60px;

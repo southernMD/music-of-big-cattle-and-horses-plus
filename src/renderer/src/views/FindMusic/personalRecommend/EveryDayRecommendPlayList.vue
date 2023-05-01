@@ -11,6 +11,8 @@
                     :i="index"
                     :num="Math.floor(playListRand.length / 5)*5"
                     :idr="playListRand[index].id"
+                    @go="go"
+                    @play-all="playAll"
                     >
                     <template #default>
                         <div class="message">
@@ -26,14 +28,45 @@
 
 <script lang='ts' setup>
 import { toRef,shallowRef } from 'vue'
-import { useMain, useBasicApi } from '@renderer/store'
+import { useMain, useBasicApi ,useGlobalVar} from '@renderer/store'
+import{useRouter} from 'vue-router'
 import {sampleSize} from 'lodash'
 import PlayListShow from '@renderer/components/myVC/PlayListShow.vue'
+const globalVar = useGlobalVar()
 const Main = useMain()
 const BasicApi = useBasicApi()
+const $router = useRouter()
+
 let playList = toRef(BasicApi,'everyDayPlayList') 
 let playListRand = shallowRef(sampleSize(playList.value,10))
+const playAll = async (id)=>{
+    let result = (await Main.reqPlaylistTrackAll(id.value)).data;
+    Main.playingList = result.songs
+    Main.playingPrivileges = result.privileges
+    Main.playingindex = 1
+    Main.playing = result.songs[0].id as number
+    Main.beforePlayListId = id.value
+    Main.playStatus = 'play'
+    let str = result.songs[0].name +' - ';
+    let singerArr = result.songs[0].ar as unknown as Array<any>
+    singerArr.forEach((element,index)=>{
+        str+=element.name
+        if(index != singerArr.length - 1)str+=' / '
+    })
+    window.electron.ipcRenderer.send('change-play-thum',str)
+    window.electron.ipcRenderer.send('render-play')
+    globalVar.closePointOutMessage = '已经开始播放'
+    globalVar.closePointOut = true
+}
 
+const go = (id)=>{
+    $router.push({
+        name:'songPlaylist',
+        query:{
+            id,my:'false'
+        }
+    })
+}
 </script>
 
 <style lang='less' scoped>

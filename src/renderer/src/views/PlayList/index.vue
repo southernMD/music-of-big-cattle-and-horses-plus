@@ -315,6 +315,7 @@ let routeQuery = toRef(route, 'query')
 watch(routeQuery, async () => {
     let Rn = route.name as string
     isMy.value = route.query.my as string || 'true'
+    console.log(route.query);
     console.log('^^^^^^^(((((((((((())))))))))))))');
     if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
         nextTick(() => {
@@ -334,6 +335,7 @@ watch(routeQuery, async () => {
 
         index.value = route.query.index
         id.value = route.query.id
+        console.log(route.query.id,route.query.index);
         //注入
         songNumber.value = playList.value[index.value].trackCount
         tags.value = playList.value[index.value].tags

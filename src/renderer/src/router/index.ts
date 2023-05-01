@@ -166,6 +166,11 @@ const routes: Array<RouteRecordRaw> = [
                 component:()=>import('@renderer/views/Follow/index.vue')
             },
             {
+                path:'PersonalCenter',
+                name:'PersonalCenter',
+                component:()=>import('@renderer/views/PersonalCenter/index.vue')
+            },
+            {
                 path: ':pathMatch(.*)',
                 component: ()=>import('@renderer/components/myVC/404.vue'),
             }

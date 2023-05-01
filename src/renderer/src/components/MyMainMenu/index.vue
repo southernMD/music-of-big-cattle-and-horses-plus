@@ -252,7 +252,12 @@ const loginOrPerson = async (e: any): Promise<any> => {
     if (!userMessage.value) { //无信息则扫码登陆
         flagLogin.value = true;
     } else if (arr.includes('el-image__inner')) {
-        console.log('个人中心页');
+        $router.push({
+            name:'PersonalCenter',
+            query:{
+                id:BasicApi.profile?.userId
+            }
+        })
     } else {
         flagMessage.value = !flagMessage.value
         flagSkin.value = false

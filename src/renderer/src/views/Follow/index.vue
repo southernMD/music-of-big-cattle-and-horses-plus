@@ -25,9 +25,9 @@
             <div class="right">
                 <div class="top">
                     <div class="message">
-                        <el-image :src="BasicApi.profile?.avatarUrl" fit="cover"></el-image>
+                        <el-image @click="goPersonal" :src="BasicApi.profile?.avatarUrl" fit="cover"></el-image>
                         <div class="ms">
-                            <div class="name">{{BasicApi.profile?.nickname}}</div>
+                            <div class="name" @click="goPersonal">{{BasicApi.profile?.nickname}}</div>
                             <div class="des"><span>{{ BasicApi.profile?.signature }}</span></div>
                         </div>
                     </div>
@@ -137,7 +137,9 @@ import {ref,Ref, watch,nextTick } from 'vue'
 import eventBlock from '@renderer/components/myVC/eventBlock.vue';
 import Tag from '@renderer/components/myVC/Tag.vue';
 import { useMain,useBasicApi,useGlobalVar } from '@renderer/store';
+import { useRouter } from 'vue-router';
 const BasicApi = useBasicApi()
+const $router = useRouter()
 const Main = useMain()
 const valFlag = ref(true)
 const listFlag = ref(false)
@@ -349,6 +351,15 @@ const clearChoice = ()=>{
     choiceMessage.value = '给动态配上音乐'
     imgRef.value!.style.backgroundImage = ''
 }
+
+const goPersonal = ()=>{
+    $router.push({
+        name:'PersonalCenter',
+        query:{
+            id:BasicApi.profile?.userId
+        }
+    })
+}
 </script>
 
 <style scoped lang="less">
@@ -419,6 +430,7 @@ const clearChoice = ()=>{
                         height: 50px;
                         border-radius: 50%;
                         margin-right: 10px;
+                        cursor: pointer;
                     }
                     .ms{
                         display: flex;
