@@ -11,7 +11,7 @@
         <div class="right">
             <div class="name">
                 <span>{{personalMessage.name }}</span>
-                <div class="btn">
+                <div class="btn" @click="editorPersonal">
                     <div>
                         <i class="iconfont icon-bianji"></i>
                         <span>编辑个人信息</span>
@@ -56,8 +56,8 @@
     <div class="bottom">
         <div class="option">
             <div class="tags">
-                <Tag message="创建的歌单" :ifClick="TagList[0]" :big="true" @click="changeTag(0)"></Tag>
-                <Tag message="收藏的歌单" :ifClick="TagList[1]" :big="true" @click="changeTag(1)"></Tag>
+                <Tag message="创建的歌单" :ifClick="TagList[0]" :big="true" @click="changeTag(0,true)"></Tag>
+                <Tag message="收藏的歌单" :ifClick="TagList[1]" :big="true" @click="changeTag(1,true)"></Tag>
             </div>
             <div class="way">
                 <div class="block b1" :class="{active:blockList[0]}" @click="changeBlock(0)">
@@ -72,9 +72,10 @@
             </div>
         </div>
         <div class="list" :class="{Wlist:MainMenu.width > 1020}">
-            <PlayListShow v-for="({},index) in personalMessage.MyplayList" 
+            <PlayListShow v-show="blockList[0]" v-for="({},index) in personalMessage.MyplayList" 
                 :url="personalMessage.MyplayList[index].coverImgUrl" 
                 :i="index"
+                :my-index="personalMessage.MyplayList[index].index"
                 :num="Math.floor(personalMessage.MyplayList.length / 4)*4"
                 :idr="personalMessage.MyplayList[index].id"
                 @go="go"
@@ -82,11 +83,34 @@
                 >
                 <template #default>
                     <div class="message">
-                        <span>{{personalMessage.MyplayList[index].name}}</span>
-                        <span class="num">{{personalMessage.MyplayList[index].trackCount}}首</span>
+                        <span class="txt">{{personalMessage.MyplayList[index].name}}</span>
+                        <span class="num" v-show="personalMessage.MyplayList[index].id!=-5">{{personalMessage.MyplayList[index].trackCount}}首</span>
                     </div>
                 </template>
             </PlayListShow>
+            <HBlock v-show="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
+            :url="personalMessage.MyplayList[index].coverImgUrl" 
+            :Name="personalMessage.MyplayList[index].name"
+            :id="personalMessage.MyplayList[index].id"
+            :playCount="personalMessage.MyplayList[index].playCount"
+            :trackCount="personalMessage.MyplayList[index].trackCount"
+            :creator="personalMessage.MyplayList[index].creator"
+            :startNumber="personalMessage.MyplayList[index].subscribedCount"
+            type="showPersonal"
+            @playAll="playAll"
+            @click="go({id:personalMessage.MyplayList[index].id,index:personalMessage.MyplayList[index].index,uid:+$route.query.id!})"
+            ></HBlock>
+            <HaveSongShow v-show="blockList[2]" v-for="({},index) in personalMessage.MyplayList"
+            :url="personalMessage.MyplayList[index].coverImgUrl" 
+            :title="personalMessage.MyplayList[index].name"
+            :id="personalMessage.MyplayList[index].id"
+            :index="personalMessage.MyplayList[index].index"
+            :uid="+$route.query.id!"
+            @playAll="playAll"
+            @go="go"
+            >
+
+            </HaveSongShow>    
         </div>
         <div class="pagination">
             <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
@@ -98,12 +122,14 @@
 </template>
 
 <script setup lang="ts">
-import {nextTick, reactive, ref,Ref, watch} from 'vue'
+import {nextTick, reactive, ref,Ref, watch, watchEffect} from 'vue'
 import { useRoute,useRouter } from 'vue-router';
 import { useBasicApi,useMain,useGlobalVar, useMainMenu } from '@renderer/store';
 import icon from '@renderer/assets/icon.png'
 import Tag from '@renderer/components/myVC/Tag.vue';
 import PlayListShow from '@renderer/components/myVC/PlayListShow.vue';
+import HBlock from '@renderer/components/myVC/HBlock.vue';
+import HaveSongShow from '@renderer/components/myVC/HaveSongShow.vue';
 const $route = useRoute()
 let openJiantou = ref(true);
 let openDescribeFlag = ref(true);
@@ -112,9 +138,32 @@ const Main = useMain()
 const globalVar = useGlobalVar()
 const MainMenu = useMainMenu()
 const $router = useRouter()
-const describe = ref()  
-const TagList = ref([true,false])
-const blockList = ref([true,false,false])
+const describe = ref()
+const TagList = ref()
+const blockList = ref()
+const nowPage = ref(1)
+if(sessionStorage.getItem('PersonalCenter') == null){
+    TagList.value = [true,false]
+    blockList.value = [true,false,false]
+    sessionStorage.setItem('PersonalCenter',JSON.stringify({
+        TagList:[true,false],
+        blockList:[true,false,false],
+        nowPage:1,
+    }))
+}else{
+    const obj = JSON.parse(sessionStorage.getItem('PersonalCenter')!)
+    TagList.value = obj.TagList
+    blockList.value = obj.blockList
+    nowPage.value = obj.nowPage
+}
+watchEffect(()=>{
+    sessionStorage.setItem('PersonalCenter',JSON.stringify({
+        TagList:TagList.value,
+        blockList:blockList.value,
+        nowPage:nowPage.value
+    }))
+})
+
 const openDescribe = () => {
     let description = describe.value as HTMLElement
     if (openDescribeFlag.value) {
@@ -147,65 +196,36 @@ const personalMessage = reactive<{
     follow:0,
     describe:''
 })
-const total = ref(0)
-const totalPage = ref(0)
-const nowPage = ref(1)
-const BaseList:Ref<any[]> = ref(Main.playList.slice(0,Main.createPlay + 1))
-if($route.query.id == BasicApi.profile!.userId){
-    personalMessage.MyplayList= BaseList.value.slice(0,20)
-    personalMessage.name = BasicApi.profile!.nickname
-    personalMessage.avatarUrl = BasicApi.profile!.avatarUrl
-    personalMessage.fans = BasicApi.profile!.followeds 
-    personalMessage.like = BasicApi.profile!.follows
-    personalMessage.follow = BasicApi.profile!.eventCount
-    personalMessage.describe = BasicApi.profile!.signature
-    total.value = Main.createPlay + 1
-    totalPage.value = Math.ceil(total.value / 20)
-}
-// Main.createPlay + 1
-watch(nowPage,()=>{
-    changePage()
-})
-const playAll = async (id)=>{
-    let result = (await Main.reqPlaylistTrackAll(id)).data;
-    Main.playingList = result.songs
-    Main.playingPrivileges = result.privileges
-    Main.playingindex = 1
-    Main.playing = result.songs[0].id as number
-    Main.beforePlayListId = id
-    Main.playStatus = 'play'
-    let str = result.songs[0].name +' - ';
-    let singerArr = result.songs[0].ar as unknown as Array<any>
-    singerArr.forEach((element,index)=>{
-        str+=element.name
-        if(index != singerArr.length - 1)str+=' / '
-    })
-    window.electron.ipcRenderer.send('change-play-thum',str)
-    window.electron.ipcRenderer.send('render-play')
-    globalVar.closePointOutMessage = '已经开始播放'
-    globalVar.closePointOut = true
-}
-const go = ({id,index})=>{
-    console.log(id,index);
-    $router.push({
-        name:'songPlaylist',
-        query:{
-            id,my:'true',index
-        }
-    })
-}
-
+const total = ref()
+const totalPage = ref()
+const BaseList:Ref<any[]> = ref([])
+let flag = false
 const changePage = ()=>{
-    let r = nowPage.value * 20 > total.value - 1?total.value:nowPage.value * 20
-    let l = (nowPage.value-1) * 20
+    let l = nowPage.value == 1?(nowPage.value-1) * 20:(nowPage.value-1) * 20-1
+    if(TagList.value[0] != true)l = (nowPage.value-1) * 20
+    let r = nowPage.value == 1 && TagList.value[0] == true?19:l+20
     personalMessage.MyplayList= BaseList.value.slice(l,r)
-    globalVar.changeMainScroll = -(globalVar.mainScroll - 220)
+    if(nowPage.value == 1 && $route.query.id == BasicApi.profile!.userId && TagList.value[0] == true){
+        personalMessage.MyplayList.unshift({
+            coverImgUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305041345401.png',
+            id:-5,
+            name:'我的听歌排行',
+            creator:{
+                id:$route.query.id,
+                name:BasicApi.profile!.nickname
+            }
+        })
+    }
+    if(flag){
+        globalVar.changeMainScroll = -(globalVar.mainScroll - 220)
+    }else{
+        flag = true
+    }
 }
-
-
-const changeTag = (index:number)=>{
+const changeTag = (index:number,flag:boolean)=>{
     TagList.value.fill(false)
     TagList.value[index] = true
+    if(flag)nowPage.value = 1
     if(index == 0){
         total.value = Main.createPlay + 1
         BaseList.value = Main.playList.slice(0,Main.createPlay + 1)
@@ -214,16 +234,113 @@ const changeTag = (index:number)=>{
         BaseList.value = Main.playList.slice(Main.createPlay + 1)
     }
     totalPage.value = Math.ceil(total.value / 20)
-    if(nowPage.value == 1){
-        changePage()
+    changePage()
+
+}
+for(let i = 0 ;i<TagList.value.length;i++){
+    if(TagList.value[i]==true)changeTag(i,false)
+}
+
+if($route.query.id == BasicApi.profile!.userId){
+    // personalMessage.MyplayList= BaseList.value.slice(0,19)
+    // personalMessage.MyplayList.unshift({
+    //     coverImgUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305041345401.png',
+    //     id:-5,
+    //     name:'我的听歌排行',
+    //     creator:{
+    //         id:$route.query.id,
+    //         name:BasicApi.profile!.nickname
+    //     }
+    // })
+    personalMessage.name = BasicApi.profile!.nickname
+    personalMessage.avatarUrl = BasicApi.profile!.avatarUrl
+    personalMessage.fans = BasicApi.profile!.followeds 
+    personalMessage.like = BasicApi.profile!.follows
+    personalMessage.follow = BasicApi.profile!.eventCount
+    personalMessage.describe = BasicApi.profile!.signature
+    // total.value = Main.createPlay + 1
+    // totalPage.value = Math.ceil(total.value / 20)
+}
+// Main.createPlay + 1
+watch(nowPage,()=>{
+    changePage()
+})
+const playAll = async (id)=>{
+    if(id == -5){
+        const result = await Main.reqUserRecord(BasicApi.profile!.userId,1);
+        console.log(result);
+        const songList = result.map(item=>item.song)
+        console.log(result,songList);
+        Main.playingList = songList
+        Main.playingPrivileges = songList.map(item=>item.privilege)
+        Main.playingindex = 1
+        Main.playing = songList[0].id as number
+        Main.beforePlayListId = -5
+        Main.playStatus = 'play'
+        let str = songList[0].name +' - ';
+        let singerArr = songList[0].ar as unknown as Array<any>
+        singerArr.forEach((element,index)=>{
+            str+=element.name
+            if(index != singerArr.length - 1)str+=' / '
+        })
+        window.electron.ipcRenderer.send('change-play-thum',str)
+        window.electron.ipcRenderer.send('render-play')
+        globalVar.closePointOutMessage = '已经开始播放'
+        globalVar.closePointOut = true
     }else{
-        nowPage.value = 1
+        let result = (await Main.reqPlaylistTrackAll(id)).data;
+        Main.playingList = result.songs
+        Main.playingPrivileges = result.privileges
+        Main.playingindex = 1
+        Main.playing = result.songs[0].id as number
+        Main.beforePlayListId = id
+        Main.playStatus = 'play'
+        let str = result.songs[0].name +' - ';
+        let singerArr = result.songs[0].ar as unknown as Array<any>
+        singerArr.forEach((element,index)=>{
+            str+=element.name
+            if(index != singerArr.length - 1)str+=' / '
+        })
+        window.electron.ipcRenderer.send('change-play-thum',str)
+        window.electron.ipcRenderer.send('render-play')
+        globalVar.closePointOutMessage = '已经开始播放'
+        globalVar.closePointOut = true
     }
 }
+const go = ({id,index,uid})=>{
+    console.log(id,index);
+    if(id != -5){
+        if(uid == BasicApi.profile!.userId){
+            $router.push({
+                name:'songPlaylist',
+                query:{
+                    id,my:'true',index
+                }
+            })
+        }else{
+
+        }
+    }else{
+        $router.push({
+            name:'PersonalRecord',
+            query:{
+                id:$route.query.id
+            }
+        })
+    }
+}
+
+
 
 const changeBlock = (index:number)=>{
     blockList.value.fill(false)
     blockList.value[index] = true
+}
+
+const editorPersonal = ()=>{
+    $router.push({
+        name:'editPersonal'
+    })
 }
 
 </script>
@@ -313,7 +430,7 @@ const changeBlock = (index:number)=>{
             }
             .Message{
                 >div{
-                    margin-top: 5px;
+                    margin-top: 15px;
                     >.title{
                         color: @font-color;
                         font-size: 13px;
@@ -347,8 +464,8 @@ const changeBlock = (index:number)=>{
                         height: auto;
                         width: 500px;
                         color: @small-font-color;
-                        line-height: 18px;
-                        margin-top: -1px;
+                        line-height:20px;
+                        margin-top: -4px;
                         // transform: translateY(-5px);
                     }
 
@@ -363,7 +480,8 @@ const changeBlock = (index:number)=>{
 
                     .open-jiantou {
                         position: absolute;
-                        right: 10px;
+                        right: 0px;
+                        top: -3px;
                         cursor: pointer;
                     }
                 }
@@ -444,9 +562,28 @@ const changeBlock = (index:number)=>{
             .message{
                 display: flex;
                 flex-direction: column;
+                .txt{
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    display: block;
+                }
                 .num{
                     color: @small-font-color;
                 }
+            }
+            :deep(.Hblock){
+                .left{
+                    .name{
+                        width: 300px;
+                    }
+                }
+                .right{
+                    margin-right: 0;
+                }
+            }
+            :deep(.HaveSongShow){
+                margin-bottom: 30px;
             }
         }
         .Wlist{

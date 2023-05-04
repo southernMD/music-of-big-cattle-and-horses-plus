@@ -2,7 +2,7 @@
     <div class="Hblock" :class="{ noDrag: !Main.dragMouse }">
         <div class="left">
             <el-image :src="url" style="width: 60px; height: 60px"></el-image>
-            <div :class="{name:type =='DJ','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
+            <div :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
                 <span>{{ Name }}</span>
             </div>
         </div>
@@ -16,7 +16,19 @@
         <div class="right playList" v-if="type == 'playList'">
             <div class="number" v-if="trackCount">{{ trackCount }}首</div>
             <div class="author" @click.stop>by <span>{{ creator.nickname}}</span></div>
-            <div class="playCount" v-if="playCount" >{{ numberSimp(playCount as number) }}</div>
+            <div class="playCount" v-if="playCount" >
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount as number) }}
+            </div>
+        </div>
+        <div class="right showPersonal" v-if="type == 'showPersonal' && id!=-5">
+            <div class="number">歌曲：{{ trackCount }}首</div>
+            <div class="author" @click.stop> <span>by {{ creator.nickname}}</span></div>
+            <div class="start">收藏：{{ numberSimp(startNumber!)}}</div>
+            <div class="play" @click.stop="playAll">
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount!) }}
+            </div>
         </div>
     </div>
 </template>
@@ -38,9 +50,12 @@ const props = defineProps<{
     trackCount?:number
     creator?:any
     playCount?:number
-    type: 'singer' | 'DJ' | 'ZhuanJi' | 'playList'
+    type: 'singer' | 'DJ' | 'ZhuanJi' | 'playList' | 'showPersonal'
 }>()
-
+const $emit = defineEmits(['playAll'])
+const playAll = ()=>{
+    $emit('playAll',props.id)
+}
 </script>
 
 <style lang='less' scoped>
@@ -119,7 +134,7 @@ const props = defineProps<{
             user-select: none;
         }
         .h{
-            width: 200px;
+            width: 180px;
             text-overflow: ellipsis;
             overflow: hidden;
         }
@@ -154,6 +169,50 @@ const props = defineProps<{
         }
         .playCount{
             flex:1;
+            i{
+                font-size: 10px;
+                border: 1px solid @small-font-color;
+                border-radius: 50%;
+                padding: 3px;
+                margin-right: 2px;
+            }
+        }
+    }
+    .showPersonal{
+        flex: 1;
+        font-size: 13px;
+        color: @small-font-color;
+        display: flex;
+        >div{
+            flex-basis: 25%;
+        }
+        .author{
+            margin-right: 5px;
+            >span{
+                width: 100px;
+                display: inline-block;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                &:hover{
+                    color:@small-font-color-hover
+                }
+            }
+        }
+        .play{
+            i{
+                font-size: 10px;
+                border: 1px solid @small-font-color;
+                border-radius: 50%;
+                padding: 3px;
+                margin-right: 2px;
+            }
+            &:hover{
+                color: @small-font-color-hover;
+                i{
+                    border: 1px solid @small-font-color-hover;
+                }
+            }
         }
     }
 

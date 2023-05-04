@@ -1,0 +1,202 @@
+<template>
+  <div class="HaveSongShow">
+    <div class="left">
+        <el-image @click="go" draggable="false" :src="url" style="width: 150px; height: 150px"></el-image>
+    </div>
+    <div class="right">
+        <div class="title">
+            <span @click.stop="go">{{ title }}</span>
+            <i class="iconfont icon-gf-play" @click.stop="playAll"></i>
+        </div>
+        <div class="list record-list" id="record-list" v-if="id == -5">
+            <LineMusic v-for="(value, index) in list" :index="index + 1"
+                :title="list[index]?.name || ''" 
+                :singer="list[index]?.ar || ['']"
+                :id="list[index]?.id || 0" :tns="list[index]?.tns" :alia="list[index]?.alia"
+                :key="list[index]?.id" :show-index="true" :length="10" :oneselfColor="true"
+                :record="true"
+                :count="listCount[index]"
+                @recordPlay="recordPlay"
+                >
+            </LineMusic>
+            <!-- @recordPlay="recordPlay" -->
+        </div>
+        <div class="list short-play-list" id="short-play-list" v-else>
+            <LineMusic v-for="(value, index) in list" :index="index + 1"
+                :title="list[index]?.name || ''" 
+                :singer="list[index]?.ar || ['']"
+                :time="list[index]?.dt || 0"
+                :id="list[index]?.id || 0" :tns="list[index]?.tns" :alia="list[index]?.alia"
+                :key="list[index]?.id" :show-index="true" :length="10" :oneselfColor="true"
+                :onlyTime="true"
+                @shorPlayList="shorPlayList"
+                >
+            </LineMusic>
+        </div>
+        <div class="bt" v-if="Num > 10">
+            <div @click.stop="go">查看全部{{Num}}首></div>
+        </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import {Ref,onMounted,ref, watch,computed } from 'vue'
+import LineMusic from '@renderer/components/myVC/LineMusic/index.vue';
+import { useMain,useBasicApi } from '@renderer/store';
+const Main = useMain()
+const BasicApi = useBasicApi()
+onMounted(async()=>{
+    if(props.id != -5){
+        const result = (await Main.reqPlaylistTrackAll(props.id,10)).data
+        console.log(result);
+        list.value = result.songs
+    }else{
+        const result = await Main.reqUserRecord(props.uid,1);
+        list.value = result.map(item=>item.song).splice(0,10)
+        listCount.value = result.map(item=>item.playCount).splice(0,10)
+    }
+})
+const props = defineProps<{
+    url:string
+    title:string
+    id:number
+    uid:number
+    index:number
+}>()
+watch(()=>props.id,async()=>{
+    list.value = []
+    if(props.id != -5){
+        const result = (await Main.reqPlaylistTrackAll(props.id,10)).data
+        console.log(result);
+        list.value = result.songs
+    }else{
+        const result = await Main.reqUserRecord(props.uid,1);
+        list.value = result.map(item=>item.song).splice(0,10)
+        listCount.value = result.map(item=>item.playCount).splice(0,10)
+    }
+})
+const list:Ref<any[]> = ref([])
+const listCount:Ref<any[]> = ref([])
+const Num = computed(()=>{
+    if(props.uid == BasicApi.profile!.userId){
+        if(props.index == undefined)return 100
+        else{
+            let num = Main.playList[props.index].trackCount
+            return num
+        }
+    }else{
+
+    }
+})
+const $emit = defineEmits(['playAll','go'])
+const playAll = ()=>{
+    $emit('playAll',props.id)
+}
+const go = ()=>{
+    $emit('go',{id:props.id,index:props.index,uid:props.uid})
+}
+const recordPlay = ({index,id})=>{
+    Main.playingList = list.value
+    Main.playingPrivileges = list.value.map(item=>item.privilege)
+    Main.playingindex = index
+    Main.playStatus = 'play'
+    Main.songType = 'song'
+    Main.playing = id
+    Main.beforePlayListId = -5
+}
+const shorPlayList = async({index,id})=>{
+    const result = (await Main.reqPlaylistTrackAll(props.id)).data
+    Main.playingList = result.songs
+    Main.playingPrivileges = result.privileges
+    Main.playingindex = index
+    Main.playing = id
+    Main.beforePlayListId = props.id
+    Main.playStatus = 'play'
+    Main.songType = 'song'
+
+}
+</script>
+
+<style scoped lang="less">
+.HaveSongShow{
+    width: 100%;
+    user-select: none;
+    display: flex;
+    .left{
+        width: 210px;
+        height: auto;
+        :deep(.el-image){
+            user-select: none;
+            border-radius: .2em;
+            cursor: pointer;
+        }
+    }
+    .right{
+        // background-color: red;
+        width: calc(100% - 210px);
+        .title{
+            width: 100%;
+            height: 30px;
+            font-size: 16px;
+            font-weight: bolder;
+            span{
+                display: inline-block;
+                text-overflow: ellipsis;
+                max-width: 90%;
+                white-space: nowrap;
+                overflow: hidden;
+                cursor: pointer;
+                &:hover{
+                    color: @font-color-hover;
+                }
+            }
+            i{
+                color: @small-font-color;
+                cursor: pointer;
+                font-size: 10px;
+                border: 1px solid @small-font-color;
+                border-radius: 2em;
+                padding: 4px;
+                margin-left: 35px;
+                position: relative;
+                top: -5px;
+                &:hover{
+                    color: @small-font-color-hover;
+                    border: 1px solid @small-font-color-hover;
+                }
+            }
+        }
+        .list{
+            :deep(.line-music){
+                width: 100%;
+                .song-name{
+                    width: 80%;
+                }
+                .time{
+                    margin-right:10px;
+                }
+                .count{
+                    min-width: 50px;
+                }
+            }
+        }
+        .bt{
+            height: 30px;
+            font-size: 12px;
+            color: @small-font-color;
+            background-color: @commit-block-color;
+            display: flex;
+            align-items: center;
+            justify-content: end;
+            >div{
+                cursor: pointer;
+                margin-right: 5px;
+                &:hover{
+                    color:@small-font-color-hover;
+                }
+            }
+        }
+    }
+}
+</style>

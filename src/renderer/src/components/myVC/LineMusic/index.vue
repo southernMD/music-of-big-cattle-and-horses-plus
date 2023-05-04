@@ -39,16 +39,16 @@
                     <span class="small" v-else-if="alia?.length" v-html="`&nbsp;(${alia[0]})`"></span>
                 </div>
             </div>
-            <div class="song-hand" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
+            <div class="song-hand" v-if="!record && !onlyTime" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
                 <div class="limit" :class="{ noDrag: !Main.dragMouse }">
-                    <span v-if="singer[0]?.name" class="span-singer" v-for="({}, index) in singer"
-                        :data-singerId="singer[index]?.id">
-                        <Singer :name="singer[index]?.name" :index="index" :singerLen="singer.length - 1"></Singer>
+                    <span v-if="singer![0]?.name" class="span-singer" v-for="({}, index) in singer"
+                        :data-singerId="singer![index]?.id">
+                        <Singer :name="singer![index]?.name" :index="index" :singerLen="singer.length - 1"></Singer>
                     </span>
                     <span v-else style="padding-left: 5px;">未知艺人</span>
                 </div>
             </div>
-            <div class="zhuanji" :class="{ 'zhuanji-oneself': globalVar.oneself && oneselfColor }" v-if="zhuanji">
+            <div class="zhuanji" v-if="!record && zhuanji && !onlyTime" :class="{ 'zhuanji-oneself': globalVar.oneself && oneselfColor }" >
                 <div class="limit" :class="{ noDrag: !Main.dragMouse }">
                     <span v-if="zhuanji.name" class="span-zhuanji" :data-singerId="zhuanji?.id">
                         <ZhuanJi :name="zhuanji.name" :tns="zhuanji.tns?.[0]" :Len="zhuanji?.tns?.length"></ZhuanJi>
@@ -56,16 +56,19 @@
                     <span v-else style="padding-left: 5px;">未知专辑</span>
                 </div>
             </div>
-            <div v-if="!local && !lately" class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{
-                dayjsMMSS(time) }}</span>
+            <div v-if="!local && !lately && !record" class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{
+                dayjsMMSS(+time!) }}</span>
             </div>
             <div v-if="lately" class="time" :class="{ 'time-oneself': globalVar.oneself && oneselfColor }"><span>{{
-                Timeago(time) }}</span>
+                Timeago(+time!) }}</span>
             </div>
             <div class="hot" v-if="hot">
                 <div class="bk">
                     <div class="fill" ref="fill"></div>
                 </div>
+            </div>
+            <div class="count" v-if="record">
+                <div>{{ count }}次</div>
             </div>
         </div>
 
@@ -112,7 +115,10 @@ const props = defineProps<{
     local?: boolean // 是否本地歌曲
     path?: string //本地歌曲路径
     privilegeAndListSearchOnly?: any//搜索专属音质传递
-    lately?:boolean
+    lately?:boolean//是否最近播放
+    record?:boolean //是否听歌排行
+    count?:number
+    onlyTime?:boolean//只要时间
 }>()
 //leftblock传过来的id，限自己的歌单的id
 let playListid = inject<Ref<number>>('playListId') as Ref<number>
@@ -120,10 +126,11 @@ let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 const ifDownload = ref(false)
 let name = ''
 props.singer.forEach((el, index) => {
-    name += el.name
-    if (index != props.singer.length - 1) name += ','
+name += el.name
+    if (index != props.singer!.length - 1) name += ','
 })
 name = name + ' - ' + props.title
+
 const cleanFileName = name.replace(/[\\/:\*\?"<>\|]/g, "");
 watch(downloadList, () => {
     if (downloadList.value.includes(cleanFileName)) {
@@ -200,7 +207,7 @@ const replaceLocationed = () => {
 
 let addLoading = ref(false)
 let addLoadingMessage = ref(false)
-const $emit = defineEmits(['warpPlace', 'localPlay'])
+const $emit = defineEmits(['warpPlace', 'localPlay','recordPlay','shorPlayList'])
 const fnMouseDrag = async (e: any) => {
     for (let i = 0; i < e.path.length; i++) {
         if (e.path[i].classList != undefined && e.path[i].classList.contains('dragMouseStyleAdd')) {
@@ -274,10 +281,9 @@ const pseudoDragBeginn = () => {
     console.log('拖动元素');
 }
 
-let domFather: HTMLElement
-
-function searchFather(d: HTMLElement): HTMLElement {
-    if (d.classList.contains('line-music')) {
+function searchFather(d: HTMLElement | undefined): HTMLElement | undefined{
+    if(d == undefined) return undefined
+    if (d?.classList.contains('line-music')) {
         return d;
     } else {
         d = d?.parentNode as HTMLElement
@@ -287,22 +293,22 @@ function searchFather(d: HTMLElement): HTMLElement {
 const ifLike = () => {
     return Main.likes.includes(props.id)
 }
-
-const changColor = (e: MouseEvent) => {
-    let dom = e.target as HTMLElement;
-    if (dom) {
-        domFather = searchFather(dom);
-        if (!domFather) return
-        let arr = document.querySelectorAll('.line-music') as unknown as Array<HTMLElement>
-        for (let i = 0; i < arr.length; i++) {
-            if ((i + 1) % 2 == 0) {
-                if (!globalVar.oneself) arr[i].style.backgroundColor = 'var(--lineColorEven)'
-                else arr[i].style.backgroundColor = 'rgba(43,43,43,.6)'
-            } else {
-                if (!globalVar.oneself) arr[i].style.backgroundColor = 'var(--lineColorOdd)'
-                else arr[i].style.backgroundColor = 'rgba(46,46,46,.4)'
-            }
+onMounted(()=>{
+    changColor()
+})
+const changColor = () => {
+    let arr = document.querySelectorAll('.line-music') as unknown as Array<HTMLElement>
+    for (let i = 0; i < arr.length; i++) {
+        if ((i + 1) % 2 == 0) {
+            if (!globalVar.oneself) arr[i].style.backgroundColor = 'var(--lineColorEven)'
+            else arr[i].style.backgroundColor = 'rgba(43,43,43,.6)'
+        } else {
+            if (!globalVar.oneself) arr[i].style.backgroundColor = 'var(--lineColorOdd)'
+            else arr[i].style.backgroundColor = 'rgba(46,46,46,.4)'
         }
+    }
+    const domFather = searchFather($el.refs['line-music'] as HTMLElement ?? undefined)
+    if(domFather){
         if (!globalVar.oneself) domFather.style.backgroundColor = 'var(--lineColorClick)'
         else domFather.style.backgroundColor = 'rgba(65, 65, 65,.9)'
     }
@@ -420,6 +426,10 @@ const gotoPlay = (e: MouseEvent) => {
                 Main.playingindex = props.index as number
                 Main.playing =  props.id
                 Main.playStatus = 'play'
+            }else if(father.getAttribute('id') === 'record-list'){
+                $emit('recordPlay',{index:props.index,id:props.id})
+            }else if(father.getAttribute('id') === 'short-play-list'){
+                $emit('shorPlayList',{index:props.index,id:props.id})
             }
             //通知主进程修改播放图片以及文字
             // $el.props.title
@@ -846,6 +856,11 @@ watch(downLoadAll, async () => {
                     background-color: @hot-fill;
                     z-index: 4;
                 }
+            }
+        }
+        .count{
+            div{
+                font-size: 13px;
             }
         }
 

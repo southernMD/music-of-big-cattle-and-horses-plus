@@ -37,6 +37,7 @@ declare module '@vue/runtime-core' {
     EventBlock: typeof import('./src/components/myVC/eventBlock.vue')['default']
     FixRoute: typeof import('./src/components/myVC/FixRoute.vue')['default']
     FloatTag: typeof import('./src/components/myVC/FloatTag.vue')['default']
+    HaveSongShow: typeof import('./src/components/myVC/HaveSongShow.vue')['default']
     HBlock: typeof import('./src/components/myVC/HBlock.vue')['default']
     LeftBlock: typeof import('./src/components/myVC/LeftBlock.vue')['default']
     LineMusic: typeof import('./src/components/myVC/LineMusic/index.vue')['default']

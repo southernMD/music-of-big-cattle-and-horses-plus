@@ -120,7 +120,7 @@
                     <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="收藏者"
                         :ifClick="flagList[2]" :big="true" @click="goRoute('whoStartPlaylist'); changeTag(2)"></Tag>
                 </div>
-                <div class="search">
+                <div class="search" v-show="$route.name == 'songPlaylist' ">
                     <input type="text" v-model="searchKey" placeholder="搜索歌单内音乐" :class="{
                         noDragInput: !Main.dragMouse,
                         dragMouseStyleNo: Main.dragMouse

@@ -120,7 +120,7 @@ const goTotime = (time: number) => {
 const changePlaying = () => {
     Main.playingindex = FMindex.value + 1 as number
     playingId.value = Main.FMList[FMindex.value]?.id as number
-    Main.beforePlayListId = -2
+    Main.beforePlayListId = 4
     Main.playStatus = 'play'
     let str = playingList.value[Main.playingindex - 1]?.name + ' - ';
     let singerArr = playingList.value[Main.playingindex - 1]?.ar as unknown as Array<any>

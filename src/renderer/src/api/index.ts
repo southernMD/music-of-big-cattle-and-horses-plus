@@ -603,3 +603,15 @@ export const UploadAvatar = (formData:FormData,imgSize:number,imgX:number,imgY:n
         data: formData,
     })
 }
+
+//获取播放排行
+export const UserRecord = (uid:number,type:0|1)=>{
+    const url = `/user/record?uid=${uid}&type=${type}`
+    return axios({
+        url:url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}

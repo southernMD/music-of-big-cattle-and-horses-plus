@@ -47,12 +47,13 @@ const clearList = ()=>{
     Main.wayIndex = 0
     Main.heartJump = false
     Main.playStatus = 'stop'
+    Main.detailStatus = 'close'
     $emit('stopPlay')
 }
 
 
 let deleteDilog: any
-useClickElsewhereToClose(deleteDilog, $emit, 'playlistIcon')
+useClickElsewhereToClose(deleteDilog, $emit, "playlistIcon")
 </script>
 
 <style lang="less" scoped>

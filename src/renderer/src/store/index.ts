@@ -13,7 +13,8 @@ import {
     eventForward,
     shareResource,
     userUpdate,
-    UploadAvatar
+    UploadAvatar,
+    UserRecord
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -261,6 +262,7 @@ interface T {
     playing: number          //正在播放的歌id
     playingindex: number     //正在播放的歌在列表中的下标 + 1
     beforePlayListId: number //上一个播放的歌单id(限自己的歌单暂时)，在开始播放后会变成正在播放的歌单
+    //0已下载 -2本地  -3最近 -4私人FM -5个人排行
     playStatus: string
     detailStatus: string
     isMy: string     //是否是我的歌单
@@ -381,7 +383,10 @@ export const useMain = defineStore('Main', {
         async reqUserPlaylist(uid: string) {
             let result = await UserPlaylist(uid);
             if (result.data.code == 200) {
-                this.playList = result.data.playlist
+                this.playList = result.data.playlist.map((item,index)=>{
+                    item['index'] = index
+                    return item 
+                })
                 this.playList.forEach((element) => {
                     this.playListId.push(element.id)
                 })
@@ -871,6 +876,19 @@ export const useMain = defineStore('Main', {
             }else{
                 return new Promise<string>((resolve, reject) => {
                     resolve('')
+                })
+            }
+        },
+        //
+        async reqUserRecord(uid:number,type:1 | 0){
+            let result = await UserRecord(uid,type)
+            if(result.data.code != 200){
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve([])
+                })
+            }else{
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve(result.data.allData ?? result.data.weekData)
                 })
             }
         },

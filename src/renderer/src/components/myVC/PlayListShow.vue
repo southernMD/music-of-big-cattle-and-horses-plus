@@ -31,6 +31,7 @@ const props = defineProps<{
     i: number
     num: number
     idr:number
+    myIndex?:number
 }>()
 let url = toRef($el.props, 'url')
 let id = toRef($el.props, 'idr') as Ref<number>
@@ -60,7 +61,7 @@ const hidePlayButton = () => {
 
 const $emit = defineEmits(['go','playAll'])
 const go = ()=>{
-    $emit('go',{id:id.value,index:props.i})
+    $emit('go',{id:id.value,index:props.myIndex})
 
 }
 

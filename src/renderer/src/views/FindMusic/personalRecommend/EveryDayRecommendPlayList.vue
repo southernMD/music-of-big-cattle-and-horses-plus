@@ -59,7 +59,7 @@ const playAll = async (id)=>{
     globalVar.closePointOut = true
 }
 
-const go = (id)=>{
+const go = ({id})=>{
     $router.push({
         name:'songPlaylist',
         query:{
