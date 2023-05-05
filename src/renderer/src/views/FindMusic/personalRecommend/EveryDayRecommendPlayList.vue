@@ -11,6 +11,7 @@
                     :i="index"
                     :num="Math.floor(playListRand.length / 5)*5"
                     :idr="playListRand[index].id"
+                    type="playList"
                     @go="go"
                     @play-all="playAll"
                     >
@@ -63,7 +64,7 @@ const go = ({id})=>{
     $router.push({
         name:'songPlaylist',
         query:{
-            id,my:'false'
+            id,my:'false',type:'歌单'
         }
     })
 }

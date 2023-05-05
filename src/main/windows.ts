@@ -343,7 +343,7 @@ export const createWindow = ():BrowserWindow=>{
           "value":id3.ids[0]
         },{
           "description":"al id",
-          "value":id3.ids[0]
+          "value":id3.ids[1]
         },{
           "description":"ar ids",
           "value":id3.ids.slice(2).join(',')

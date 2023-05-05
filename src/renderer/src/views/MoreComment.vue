@@ -23,20 +23,17 @@ const Main = useMain();
 
 let id = toRef($route.query, 'id') as unknown as Ref<string>
 let type = toRef($route.query, 'type') as unknown as Ref<string>
-let page = ref(1)
+let page = ref(0)
 let hotComments = ref(new Array())
-onMounted(async () => {
-    let result = (await Main.reqCommentHot(Number(id.value), Number(type.value), 20, (page.value - 1) * 20)).data
-    let arr = result.hotComments as Array<any>
-    hotComments.value.push(...arr)
-
-})
-
+let more = ref(true)
 const load = async()=>{
-    page.value++;
-    let result = (await Main.reqCommentHot(Number(id.value), Number(type.value), 20, (page.value - 1) * 20)).data
-    let arr = result.hotComments as Array<any>
-    hotComments.value.push(...arr)
+    if(more.value){
+        page.value++;
+        let result = (await Main.reqCommentHot(Number(id.value), Number(type.value), 20, (page.value - 1) * 20)).data
+        let arr = result.hotComments as Array<any>
+        hotComments.value.push(...arr)
+        more.value = result.hasMore
+    }
 }
 </script>
 

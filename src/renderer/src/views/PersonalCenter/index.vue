@@ -78,6 +78,8 @@
                 :my-index="personalMessage.MyplayList[index].index"
                 :num="Math.floor(personalMessage.MyplayList.length / 4)*4"
                 :idr="personalMessage.MyplayList[index].id"
+                :uid="+$route.query.id!"
+                type="playList"
                 @go="go"
                 @playAll="playAll"
                 >
@@ -108,8 +110,8 @@
             :uid="+$route.query.id!"
             @playAll="playAll"
             @go="go"
+            type="playList"
             >
-
             </HaveSongShow>    
         </div>
         <div class="pagination">
@@ -308,13 +310,13 @@ const playAll = async (id)=>{
     }
 }
 const go = ({id,index,uid})=>{
-    console.log(id,index);
+    console.log(id,index,uid,BasicApi.profile!.userId);
     if(id != -5){
         if(uid == BasicApi.profile!.userId){
             $router.push({
                 name:'songPlaylist',
                 query:{
-                    id,my:'true',index
+                    id,my:'true',index,type:'歌单'
                 }
             })
         }else{

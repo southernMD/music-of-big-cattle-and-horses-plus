@@ -32,6 +32,8 @@ const props = defineProps<{
     num: number
     idr:number
     myIndex?:number
+    uid?:number
+    type:'playList' | 'al'
 }>()
 let url = toRef($el.props, 'url')
 let id = toRef($el.props, 'idr') as Ref<number>
@@ -61,7 +63,7 @@ const hidePlayButton = () => {
 
 const $emit = defineEmits(['go','playAll'])
 const go = ()=>{
-    $emit('go',{id:id.value,index:props.myIndex})
+    $emit('go',{id:id.value,index:props.myIndex,uid:props.uid})
 
 }
 

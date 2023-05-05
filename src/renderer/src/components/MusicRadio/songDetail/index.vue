@@ -47,8 +47,9 @@
               <span v-else style="padding-left: 5px">未知艺人</span>
               <span>-</span>
               <span v-if="playingList[playingindex - 1]?.al?.name" class="span-zhuanji"
-                :data-singerId="playingList[playingindex - 1]?.al?.id">
-                <ZhuanJi :name="playingList[playingindex - 1]?.al?.name" :tns="playingList[playingindex - 1]?.al?.tns[0]"
+                :data-singerId="playingList[playingindex - 1]?.al?.id"
+                >
+                <ZhuanJi  @click="goZhuanji(playingList[playingindex - 1]?.al!.id)" :name="playingList[playingindex - 1]?.al?.name" :tns="playingList[playingindex - 1]?.al?.tns?.[0]"
                   :Len="playingList[playingindex - 1]?.al?.tns?.length">
                 </ZhuanJi>
               </span>
@@ -150,6 +151,8 @@ import Vibrant from 'node-vibrant';
 import { ElScrollbar } from "element-plus";
 import { useRouter } from 'vue-router'
 import MyMainMenu from '@renderer/components/MyMainMenu/index.vue'
+import ZhuanJi from '@renderer/components/myVC/LineMusic/ZhuanJi/index.vue'
+import Singer from '@renderer/components/myVC/LineMusic/Singer/index.vue'
 const Main = useMain();
 const MainMenu = useMainMenu();
 const $el = getCurrentInstance() as ComponentInternalInstance;
@@ -437,6 +440,17 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
     h.style.backgroundImage = 'url(' + newUrl + ')'
   };
 })
+
+const goZhuanji = (id)=>{
+  detailStatus.value = 'close'
+  $router.push({
+        name:'songPlaylist',
+        query:{
+          id,type:"专辑",my:'false'
+        }
+    })
+
+}
 </script>
 
 <style lang="less" scoped>
@@ -545,7 +559,8 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
         text-align: center;
         color: @small-font-color;
         margin-top: 5px;
-
+        z-index: 1;
+        position: relative;
         &>span {
           display: inline;
           max-width: 300px;
@@ -568,7 +583,22 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
             background-color: @select-color;
           }
         }
+        .span-singer{
+          cursor: pointer;
+          user-select: none;
+          &:hover{
+            color: @small-font-color-hover;
+          }
+        }
+        .span-zhuanji{
+          cursor: pointer;
+          user-select: none;
+          &:hover{
+            color: @small-font-color-hover;
+          }
+        }
       }
+
     }
   }
 

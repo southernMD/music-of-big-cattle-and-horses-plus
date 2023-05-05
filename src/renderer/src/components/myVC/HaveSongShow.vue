@@ -46,16 +46,31 @@ import LineMusic from '@renderer/components/myVC/LineMusic/index.vue';
 import { useMain,useBasicApi } from '@renderer/store';
 const Main = useMain()
 const BasicApi = useBasicApi()
-onMounted(async()=>{
-    if(props.id != -5){
-        const result = (await Main.reqPlaylistTrackAll(props.id,10)).data
-        console.log(result);
-        list.value = result.songs
-    }else{
+const size = ref(0)
+const $emit = defineEmits(['playAll','go'])
+const change = async()=>{
+    if(props.id == -5){
         const result = await Main.reqUserRecord(props.uid,1);
         list.value = result.map(item=>item.song).splice(0,10)
         listCount.value = result.map(item=>item.playCount).splice(0,10)
+    }else if(props.id == -6){
+        list.value = props.list_6!.slice(0,10)
+        size.value = props.list_6!.length
+    }else {
+        let result
+        if(props.type == 'playList'){
+            result = (await Main.reqPlaylistTrackAll(props.id,10)).data
+            list.value = result.songs
+        }
+        else if(props.type == 'songHand'){
+            result = (await Main.reqAlbumTrackAll(props.id)).data
+            list.value = result.songs.slice(0,10)
+            size.value = result.songs.length
+        }
     }
+}
+onMounted(async()=>{
+    change()
 })
 const props = defineProps<{
     url:string
@@ -63,33 +78,30 @@ const props = defineProps<{
     id:number
     uid:number
     index:number
+    type:'songHand' | 'playList'
+    list_6?:any[]
 }>()
 watch(()=>props.id,async()=>{
-    list.value = []
-    if(props.id != -5){
-        const result = (await Main.reqPlaylistTrackAll(props.id,10)).data
-        console.log(result);
-        list.value = result.songs
-    }else{
-        const result = await Main.reqUserRecord(props.uid,1);
-        list.value = result.map(item=>item.song).splice(0,10)
-        listCount.value = result.map(item=>item.playCount).splice(0,10)
-    }
+    change()
 })
 const list:Ref<any[]> = ref([])
 const listCount:Ref<any[]> = ref([])
 const Num = computed(()=>{
-    if(props.uid == BasicApi.profile!.userId){
-        if(props.index == undefined)return 100
-        else{
-            let num = Main.playList[props.index].trackCount
-            return num
-        }
-    }else{
+    if(props.type == 'playList'){
+        if(props.uid == BasicApi.profile!.userId){
+            if(props.index == undefined)return 100
+            else{
+                let num = Main.playList[props.index].trackCount
+                return num
+            }
+        }else{
 
+        }
+    }else if(props.type == 'songHand'){
+        return size.value
     }
+
 })
-const $emit = defineEmits(['playAll','go'])
 const playAll = ()=>{
     $emit('playAll',props.id)
 }
@@ -114,7 +126,6 @@ const shorPlayList = async({index,id})=>{
     Main.beforePlayListId = props.id
     Main.playStatus = 'play'
     Main.songType = 'song'
-
 }
 </script>
 

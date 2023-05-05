@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, Ref, watch, ref, shallowRef, toRef,Directive } from 'vue'
+import { inject, Ref, watch, ref, shallowRef, toRef,Directive, nextTick } from 'vue'
 import { useRoute } from 'vue-router';
 import { useMain, useGlobalVar } from '@renderer/store'
 import { throttle } from 'lodash'
@@ -107,10 +107,10 @@ function searchKeyFn() {
             let songTns = (element.tns && element.tns?.length !== 0) ? element.tns[0] : ''
             let songAlia = (element.alia.length !== 0 && songTns == '') ? element.alia[0] : ''
             let songAlName = element.al?.name ? element.al?.name : '未知专辑'
-            let songAlTns = element.al?.tns.length !== 0 ? element.al?.tns[0] : ''
+            let songAlTns = (element.al?.tns?.length ?? 0) !== 0 ? element.al?.tns?.[0] : ''
             let songAr = element.ar
-            // console.log(songName,'****',songTns,'****',songAlia,'****'
-            // ,songAlName,'****',songAlTns,'****',songAr);
+            console.log(songName,'****',songTns,'****',songAlia,'****'
+            ,songAlName,'****',songAlTns,'****',songAr);
 
             if (songName.toLowerCase().includes(searchKey.value.toLowerCase()) ||
                 songTns.toLowerCase().includes(searchKey.value.toLowerCase()) ||
@@ -133,7 +133,7 @@ function searchKeyFn() {
             let songTns = (currentValue.tns && currentValue.tns?.length !== 0) ? currentValue.tns[0] : ''
             let songAlia = (currentValue.alia.length !== 0 && songTns == '') ? currentValue.alia[0] : ''
             let songAlName = (currentValue.al?.name) ? (currentValue.al?.name) : '未知专辑'
-            let songAlTns = currentValue.al?.tns.length !== 0 ? currentValue.al?.tns[0] : ''
+            let songAlTns = (currentValue.al?.tns?.length ?? 0) !== 0 ? currentValue.al?.tns?.[0] : ''
             let songAr = currentValue.ar
 
             let t = 0
@@ -180,25 +180,58 @@ let routeId = ref(routeQuery.value.id)
 watch(routeQuery, () => {
     routeId.value = routeQuery.value.id
 })
+let alsongs = inject<Ref<any[]>>('alsongs')!
+
 watch(routeId, async () => {
+    console.log(routeQuery.value,'PPPPPPPP{}}}');
     if (route.fullPath.startsWith('/app/playlist/song')) {
+        if(routeQuery.value.type == '歌单'){
+            loadingFlag.value = true
+            id.value = route.query.id as string
+            list.value = (await Main.reqPlaylistTrackAll(id.value,500,0)).data.songs
+            let arr: [any] | [] = []
+            list.value.forEach((element): void => {
+                arr.push(element.id as never);
+            })
+            Main.openPlayListId = arr
+            listCopy.value = []
+            loadingFlag.value = false
+        }else if(routeQuery.value.type == '专辑'){
+            // loadingFlag.value = true
+            // list.value = alsongs.value
+            // let arr: [any] | [] = []
+            // list.value.forEach((element): void => {
+            //     arr.push(element.id as never);
+            // })
+            // Main.openPlayListId = arr
+            // listCopy.value = []
+            // loadingFlag.value = false
+            // console.log(alsongs,'{}}}OOKKK');
+        }
+    }
+}, { immediate: true })
+
+watch(alsongs,()=>{
+    if(routeQuery.value.type == '专辑'){
         loadingFlag.value = true
-        id.value = route.query.id as string
-        list.value = (await Main.reqPlaylistTrackAll(id.value,500,0)).data.songs
+        list.value = alsongs.value
         let arr: [any] | [] = []
         list.value.forEach((element): void => {
             arr.push(element.id as never);
         })
         Main.openPlayListId = arr
-        if (songNumber.value <= 500) {
-            forLength.value = songNumber.value
-        } else {
-            forLength.value = 500
-        }
         listCopy.value = []
         loadingFlag.value = false
     }
-}, { immediate: true })
+})
+
+watch(songNumber,()=>{
+    if (songNumber.value <= 500) {
+        forLength.value = songNumber.value
+    } else {
+        forLength.value = 500
+    }
+},{immediate:true})
 
 const vLoad: Directive = (el: HTMLElement) => {
     const observer = new IntersectionObserver(([{ isIntersecting }]) => {

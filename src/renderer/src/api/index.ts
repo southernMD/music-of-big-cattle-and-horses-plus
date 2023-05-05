@@ -615,3 +615,58 @@ export const UserRecord = (uid:number,type:0|1)=>{
         }
     })
 }
+
+//专辑动态信息 
+export const AlbumDetailDynamic = (id:number)=>{
+    const url = `/album/detail/dynamic?id=${id}`
+    return axios({
+        url:url,
+        method:'POST',
+    })
+}
+
+//专辑
+export const Album = (id:number)=>{
+    const url = `/album?id=${id}`
+    return axios({
+        url:url,
+        method:'POST',
+    })
+}
+
+//获取专辑全部歌曲
+export const AlbumTrackAll= (id:string | number)=>{
+    return axios({
+        url:`/album/track/all?id=${id}&time=${new Date().getTime()}`,
+        method:'POST',
+    })
+}
+
+//专辑评论
+export const commentAlbum= (id:number,limit?:number,offset?:number,before?:number)=>{
+    let t:any = {id}
+    if(limit)t['limit'] = limit
+    if(offset)t['offset'] = offset
+    if(before)t['before'] = before
+    t['cookie'] = localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
+    return axios({
+        url:`/comment/album?time=${new Date().getTime()}`,
+        method:'POST',
+        data:t
+    })
+}
+
+//歌手
+export const artists = (id)=>{
+    return axios({
+        url:`/artists?id=${id}`,
+        method:'POST',
+    })
+}
+//歌手专辑
+export const artistAlbum = (id:number,limit:number,offset:number)=>{
+    return axios({
+        url:`/artist/album?id=${id}&limit=${limit}&offset=${offset}`,
+        method:'POST'
+    })
+}

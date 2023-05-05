@@ -30,6 +30,10 @@
                 {{ numberSimp(playCount!) }}
             </div>
         </div>
+        <div class="songHand" v-if="type == 'songHand'">
+            <div class="number">{{ trackCount }}首</div>
+            <div class="time">发行时间：{{time}}</div>
+        </div>
     </div>
 </template>
 
@@ -50,7 +54,8 @@ const props = defineProps<{
     trackCount?:number
     creator?:any
     playCount?:number
-    type: 'singer' | 'DJ' | 'ZhuanJi' | 'playList' | 'showPersonal'
+    type: 'singer' | 'DJ' | 'ZhuanJi' | 'playList' | 'showPersonal' | 'songHand'
+    time?:string
 }>()
 const $emit = defineEmits(['playAll'])
 const playAll = ()=>{

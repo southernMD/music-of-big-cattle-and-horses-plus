@@ -48,9 +48,9 @@
                     <span v-else style="padding-left: 5px;">未知艺人</span>
                 </div>
             </div>
-            <div class="zhuanji" v-if="!record && zhuanji && !onlyTime" :class="{ 'zhuanji-oneself': globalVar.oneself && oneselfColor }" >
-                <div class="limit" :class="{ noDrag: !Main.dragMouse }">
-                    <span v-if="zhuanji.name" class="span-zhuanji" :data-singerId="zhuanji?.id">
+            <div class="zhuanji"  v-if="!record && zhuanji && !onlyTime" :class="{ 'zhuanji-oneself': globalVar.oneself && oneselfColor }" >
+                <div class="limit"  :class="{ noDrag: !Main.dragMouse }">
+                    <span @click="goZhuanji(zhuanji.id)" v-if="zhuanji.name" class="span-zhuanji" :data-singerId="zhuanji?.id">
                         <ZhuanJi :name="zhuanji.name" :tns="zhuanji.tns?.[0]" :Len="zhuanji?.tns?.length"></ZhuanJi>
                     </span>
                     <span v-else style="padding-left: 5px;">未知专辑</span>
@@ -88,6 +88,7 @@
 <script lang="ts" setup>
 import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef } from 'vue';
 import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
+import { useRouter,useRoute } from 'vue-router';
 import { useMain, useBasicApi, useGlobalVar } from '@renderer/store';
 import Singer from './Singer/index.vue'
 import ZhuanJi from './ZhuanJi/index.vue'
@@ -95,6 +96,8 @@ import ZhuanJi from './ZhuanJi/index.vue'
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const BasicApi = useBasicApi();
+const $router = useRouter();
+const $route = useRoute();
 const globalVar = useGlobalVar()
 const props = defineProps<{
     index?: number,
@@ -369,25 +372,37 @@ const gotoPlay = (e: MouseEvent) => {
         }
         nextTick(async () => {
             if (father.getAttribute('id') === 'song-sheet') {
-                console.log('添加到播放列表');
-                if (Main.beforePlayListId == playListid.value) {
-                    Main.playing = props.id as number
+                console.log('添加到播放列表',$route.query.type);
+                if($route.query.type == '歌单'){
+                    if (Main.beforePlayListId == playListid.value) {
+                        Main.playing = props.id as number
+                        Main.playingindex = props.index as number
+                        Main.playStatus = 'play'
+                        Main.songType = 'song'
+                        heartJust()
+                        return;
+                    }
+                    let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                    Main.playingList = result.songs
+                    Main.playingPrivileges = result.privileges
                     Main.playingindex = props.index as number
+                    Main.playing = props.id as number
+                    Main.beforePlayListId = playListid.value
                     Main.playStatus = 'play'
                     Main.songType = 'song'
+                    console.log(Main.beforePlayListId, Main.playListId[0]);
                     heartJust()
-                    return;
+                }else if($route.query.type == '专辑'){
+                    let result = (await Main.reqAlbumTrackAll(playListid.value)).data;
+                    Main.playingList = result.songs
+                    Main.playingPrivileges = result.songs.map(item=>item.privilege)
+                    Main.playingindex = props.index as number
+                    Main.playing = props.id as number
+                    Main.beforePlayListId = playListid.value
+                    Main.playStatus = 'play'
+                    Main.songType = 'song'
                 }
-                let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
-                Main.playingList = result.songs
-                Main.playingPrivileges = result.privileges
-                Main.playingindex = props.index as number
-                Main.playing = props.id as number
-                Main.beforePlayListId = playListid.value
-                Main.playStatus = 'play'
-                Main.songType = 'song'
-                console.log(Main.beforePlayListId, Main.playListId[0]);
-                heartJust()
+
             } else if (father.getAttribute('id') == 'play-list-Panel-bottom') {
                 Main.playing = props.id as number
                 Main.playingindex = props.index as number + 1
@@ -570,7 +585,15 @@ watch(downLoadAll, async () => {
 //         .catch(error => console.error(error))
 // }
 
-
+const goZhuanji = (id)=>{
+    $router.push({
+        name:'songPlaylist',
+        query:{
+            id,type:"专辑",my:'false'
+        }
+    })
+    console.log(id);
+}
 </script>
 
 <style lang="less" scoped>

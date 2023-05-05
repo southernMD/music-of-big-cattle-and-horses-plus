@@ -59,6 +59,7 @@ const gotoDetail = async()=>{
         playingList.value.splice(playingindex.value,0,result.songs[0])
         playingPrivileges.value.splice(playingindex.value,0,result.privileges[0])
         playingindex.value++;
+        Main.beforePlayListId = -1
         Main.playStatus = 'play'
         let str = result.songs[0].name +' - ';
         let singerArr = result.songs[0].ar as unknown as Array<any>
@@ -79,7 +80,7 @@ const gotoDetail = async()=>{
         $router.push({
             name:'songPlaylist',
             query:{
-                id:$el.props.id as number,my:'false'
+                id:$el.props.id as number,my:'false',type:'歌单'
             }
         })
     }

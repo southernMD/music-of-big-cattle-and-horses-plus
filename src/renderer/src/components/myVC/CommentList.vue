@@ -109,6 +109,11 @@ watch(nowPage, async () => {
       comments.value = result.comments;
       commentFlag.value = true
       $emait('scroll')
+    }else if(type.value == 3){
+      commentFlag.value = false
+      let result = (await Main.reqCommentAlbum(id.value, 20, (nowPage.value - 1) * 20)).data
+      comments.value = result.comments;
+      commentFlag.value = true
     }
 
 })

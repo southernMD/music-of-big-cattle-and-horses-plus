@@ -9,7 +9,7 @@
         <!-- <CommentList :id="routeId"></CommentList> -->
         <CommentList :commentFlag="commentFlag" :nowPage="nowPage"
         :hotComments="hotComments" :moreHot="moreHot" :total="total"
-        :comments="comments" :totalPage="totalPage" :id="Number(routeId)" :type="2"
+        :comments="comments" :totalPage="totalPage" :id="Number(routeId)" :type="CPtype"
         ></CommentList>
         <Teleport to="body" v-if="errorFlag">
             <Loading :type="typeError" :message="errorMassage" :width="loadingWidth"
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref,toRef,watch,Ref,onMounted,getCurrentInstance,ComponentInternalInstance} from 'vue'
+import {ref,toRef,watch,Ref,onMounted,getCurrentInstance,ComponentInternalInstance, computed} from 'vue'
 import {useRoute} from 'vue-router'
 import {useMain} from '@renderer/store'
 // import {regEmoji} from '@/utils/regEmoji'
@@ -94,7 +94,9 @@ let nowPage = ref(1);
 let moreHot = ref(false)
 const loadComment = async()=>{
     commentFlag.value = false
-    let result = (await Main.reqCommentPlaylist(Number(routeId.value),20,0)).data
+    let result
+    if($route.query.type == '歌单') result = (await Main.reqCommentPlaylist(Number(routeId.value),20,0)).data
+    else if($route.query.type == '专辑') result = (await Main.reqCommentAlbum(Number(routeId.value),20,0)).data
     hotComments.value = result.hotComments;
     comments.value = result.comments;
     total.value = result.total
@@ -118,6 +120,12 @@ watch(Rn,async()=>{
         reload.value = false
         loadComment()
     }
+})
+
+const CPtype = computed(()=>{
+    if($route.query.type == '歌单') return 2
+    else if($route.query.type == '专辑') return 3
+    else return 0
 })
 
 </script>

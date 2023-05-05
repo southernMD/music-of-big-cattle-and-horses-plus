@@ -274,7 +274,7 @@ const confirm = async () => {
         globalVar.loadMessageDefaultFlag = true
     } catch (error) {
         globalVar.loadDefault = false
-        globalVar.loadMessageDefault = '保存成功!'
+        globalVar.loadMessageDefault = '保存失败!'
         globalVar.loadMessageDefaultFlag = true
         globalVar.loadMessageDefaultType ='error'
     }

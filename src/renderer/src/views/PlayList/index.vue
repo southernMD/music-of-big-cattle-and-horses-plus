@@ -2,19 +2,19 @@
     <div class="play-list">
         <div class="top">
             <el-image draggable="false" style="width: 185px; height: 185px" fit="cover"
-                :src="playList[index]?.coverImgUrl"></el-image>
+                :src="playList[index]?.coverImgUrl ?? playList[index]?.picUrl"></el-image>
             <div class="main">
                 <div class="title">
-                    <div class="Btag">歌单</div>
+                    <div class="Btag">{{ $route.query.type }}</div>
                     <span>{{ playList[index]?.name }}</span>
-                    <i class="iconfont icon-xiugaioryijian" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
+                    <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true'" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
                 </div>
-                <div class="author">
-                    <el-image fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator.avatarUrl">
+                <div class="author" v-if="route.query.type == '歌单'">
+                    <el-image fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl">
                     </el-image>
                     <span class="author-name"
                         :class="{ noDrag: !Main.dragMouse, 'author-name-oneself': globalVar.oneself == 1 }">{{
-                            playList[index]?.creator.nickname }}</span>
+                            playList[index]?.creator?.nickname }}</span>
                     <span class="createtime" :class="{ 'createtime-oneself': globalVar.oneself == 1 }">{{
                         dayjsStamp(playList[index]?.createTime) }}创建</span>
                 </div>
@@ -47,8 +47,8 @@
                             noDrag: !Main.dragMouse,
                             noClick: isStartStyle()
                         }">
-                            <span v-if="dynamic?.subscribed">已</span>
-                            <span>收藏({{ numberSimp(dynamic?.bookedCount) }})</span>
+                            <span v-if="dynamic?.subscribed ?? dynamic?.isSub">已</span>
+                            <span>收藏({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span>
                         </div>
                     </div>
                     <div class="fengxiang h" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
@@ -72,7 +72,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="small">
+                <div class="small" v-if="route.query.type == '歌单'">
                     <div class="tags" v-show="index!=0">
                         <span class="title">标签&nbsp;:&nbsp;</span>
                         <span class="add" v-if="tags.length === 0 && isMy == 'true'"
@@ -103,6 +103,22 @@
                             <i class="iconfont icon-xiajiantou" v-if="openDescribeFlag" @click="openDescribe"></i>
                             <i class="iconfont icon-shangjiantou" v-else @click="openDescribe"></i>
                         </div>
+                    </div>
+                </div>
+                <div class="small" v-else-if="route.query.type == '专辑'">
+                    <div class="number">
+                        <span class="title">歌手&nbsp;:&nbsp;</span>
+                        <span v-for="(value, i) in playList[index]?.artists" :key="value" class="add"
+                            :class="{ noDrag: !Main.dragMouse }">
+                            {{ value.name }}
+                            <span v-if="i !== playList[index]?.artists?.length - 1">/</span>
+                        </span>
+                    </div>
+                    <div class="number">
+                        <span class="title">时间&nbsp;:&nbsp;</span>
+                        <span class="num" :class="{ 'num-oneself': globalVar.oneself == 1 }">{{
+                            dayjsStamp(playList[index]?.publishTime)
+                        }}</span>
                     </div>
                 </div>
             </div>
@@ -196,12 +212,22 @@ const goRoute = (name: string) => {
 
 //播放全部按钮
 const playAll = async () => {
-    let result = (await Main.reqPlaylistTrackAll(id.value)).data;
-    Main.playingList = result.songs
-    Main.playingPrivileges = result.privileges
-    Main.playingindex = 1
-    Main.playing = result.songs[0].id as number
-    Main.beforePlayListId = id.value
+    let result 
+    if(route.query.type == '歌单'){
+        result = (await Main.reqPlaylistTrackAll(id.value)).data;
+        Main.playingList = result.songs
+        Main.playingPrivileges = result.privileges
+        Main.playingindex = 1
+        Main.playing = result.songs[0].id as number
+        Main.beforePlayListId = id.value
+    }else if(route.query.type == '专辑'){
+        result = (await Main.reqAlbumTrackAll(id.value)).data;
+        Main.playingList = result.songs
+        Main.playingPrivileges = result.songs.map(item=>item.privilege)
+        Main.playingindex = 1
+        Main.playing = result.songs[0].id
+        Main.beforePlayListId = id.value
+    }
     Main.playStatus = 'play'
     let str = result.songs[0].name + ' - ';
     let singerArr = result.songs[0].ar as unknown as Array<any>
@@ -220,17 +246,21 @@ const addAll = async () => {
     if (Main.playingList.length == 0) {
         playAll()
     } else {
-        let result = (await Main.reqPlaylistTrackAll(id.value)).data;
+        let result
+        if(route.query.type == '歌单'){
+            result = (await Main.reqPlaylistTrackAll(id.value)).data;
+        }else if(route.query.type == '专辑'){
+            result = (await Main.reqAlbumTrackAll(id.value)).data;
+        }
         result.songs.forEach((element: any, index: number) => {
             if (Main.playingList.every((base) => base.id != element.id)) {
                 Main.playingList.push(element)
                 Main.playingPrivileges.push(result.privileges[index])
             }
         });
+        globalVar.closePointOutMessage = '已添加到播放列表'
+        globalVar.closePointOut = true
     }
-    globalVar.closePointOutMessage = '已添加到播放列表'
-    globalVar.closePointOut = true
-
 }
 
 
@@ -274,11 +304,17 @@ let dynamic = ref({
     followed: 0,
     gradeStatus: 0,
     remixVideo: null,
-    code: 0
+    code: 0,
+    onSale: false,
+    albumGameInfo: null,
+    likedCount: 0,
+    isSub: false,
+    subTime: 0,
+    subCount: 729,
 })
 
 const isStartStyle = () => {
-    return playList.value[index.value]?.creator.userId == BasicApi.account?.id
+    return route.query.type == '歌单' && playList.value[index.value]?.creator.userId == BasicApi.account?.id
 }
 
 // const startStyle = () => {
@@ -311,12 +347,10 @@ const isStartStyle = () => {
 // }
 
 let routeQuery = toRef(route, 'query')
-
+const alsongs = ref([])
 watch(routeQuery, async () => {
     let Rn = route.name as string
     isMy.value = route.query.my as string || 'true'
-    console.log(route.query);
-    console.log('^^^^^^^(((((((((((())))))))))))))');
     if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
         nextTick(() => {
             //样式修改
@@ -365,16 +399,30 @@ watch(routeQuery, async () => {
         // }
 
     } else if (route.name == 'songPlaylist' && route.query.my as string != 'true') {
-        dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
-        Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
-        index.value = 0
-        playList.value = Main.searchList
-        songNumber.value = playList.value[index.value].trackCount
-        tags.value = playList.value[index.value].tags
-        id.value = route.query.id
+        if(route.query.type == '歌单'){
+            dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
+            Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+            index.value = 0
+            playList.value = Main.searchList
+            songNumber.value = playList.value[index.value].trackCount
+            tags.value = playList.value[index.value].tags
+            id.value = route.query.id
+        }else if(route.query.type == '专辑'){
+            dynamic.value = (await Main.reqAlbumDetailDynamic(route.query.id as unknown as number)).data
+            let result = (await Main.reqAlbum(route.query.id as unknown as number)).data
+            Main.searchList = [result?.album]
+            alsongs.value = result?.songs
+            index.value = 0
+            playList.value = Main.searchList
+            songNumber.value = playList.value[index.value]?.size
+            tags.value = []
+            id.value = route.query.id
+        }
+
     }
 
 }, { immediate: true })
+provide('alsongs', alsongs)
 
 // watch(mainColor, () => {
 //     startStyle();
@@ -679,7 +727,7 @@ const addDetail = ()=>{
                 font-size: 13px;
                 user-select: none;
                 margin-top: 15px;
-                margin-bottom: 15px;
+                margin-bottom: 5px;
                 font-weight: 500;
 
                 :deep(.el-image) {
@@ -716,6 +764,7 @@ const addDetail = ()=>{
             .button {
                 user-select: none;
                 display: flex;
+                margin-top: 10px;
 
                 .h:hover {
                     background-color: @span-color-hover !important;

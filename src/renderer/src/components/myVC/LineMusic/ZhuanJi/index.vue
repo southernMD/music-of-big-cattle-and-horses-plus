@@ -1,6 +1,9 @@
 <template>
-    <div v-html="name"></div>
-    <span v-if="Len" v-html="`(${tns})`"></span>
+    <div>
+        <div v-html="name"></div>
+        <span v-if="Len" v-html="`(${tns})`"></span>
+    </div>
+
 </template>
 
 <script setup lang="ts">

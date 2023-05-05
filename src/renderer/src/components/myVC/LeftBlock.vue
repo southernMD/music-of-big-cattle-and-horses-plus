@@ -134,7 +134,7 @@ const go = async () => {
         $router.push({
             name:'songPlaylist',
             query:{
-                id,index:$el.props.index as number,my:'true'
+                id,index:$el.props.index as number,my:'true',type:'歌单'
             }
         })
         console.log($el.props.index);

@@ -14,7 +14,13 @@ import {
     shareResource,
     userUpdate,
     UploadAvatar,
-    UserRecord
+    UserRecord,
+    AlbumDetailDynamic,
+    Album,
+    AlbumTrackAll,
+    commentAlbum,
+    artists,
+    artistAlbum
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -890,6 +896,65 @@ export const useMain = defineStore('Main', {
                 return new Promise<any[]>((resolve, reject) => {
                     resolve(result.data.allData ?? result.data.weekData)
                 })
+            }
+        },
+        async reqAlbumDetailDynamic(id:number){
+            let result = await AlbumDetailDynamic(id)
+            return new Promise<any>((resolve) => {
+                resolve(result)
+            })
+        },
+        async reqAlbum(id:number){
+            let result = await Album(id)
+            return new Promise<any>((resolve) => {
+                resolve(result)
+            })
+        },
+        //详细音乐
+        async reqAlbumTrackAll(id: number | string): Promise<any> {
+            console.log(id);
+            let result = await AlbumTrackAll(id);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                alert('error');
+            }
+        },
+        //获取专辑评论
+        async reqCommentAlbum(id: number, limit?: number, offset?: number, before?: number): Promise<any> {
+            let result = await commentAlbum(id, limit, offset, before);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                alert('error')
+                console.log(result);
+            }
+        },
+        //歌手及其热门歌曲
+        async reqArtists(id:number){
+            let result = await artists(id)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                alert('error')
+                console.log(result);
+            }
+        },
+        async reqartistAlbum(id:number,limit:number,offset:number){
+            let result = await artistAlbum(id,limit,offset)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                alert('error')
+                console.log(result);
             }
         },
         init() {

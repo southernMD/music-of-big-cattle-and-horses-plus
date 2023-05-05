@@ -43,7 +43,7 @@
                 <i class="iconfont icon-changpian"></i>
               </template>
             </LeftBlock>
-            <LeftBlock v-if="false" message="我的收藏" :big="false" name="myStart">
+            <LeftBlock message="我的收藏" :big="false" name="myStart">
               <template #default>
                 <i class="iconfont icon-wodeshoucang"></i>
               </template>
@@ -132,7 +132,12 @@
         <!-- <router-view></router-view> -->
         <router-view v-slot="{ Component }">
           <keep-alive>
-            <component v-if="$route.meta.keepAlive" :is="Component" />
+            <Suspense>
+              <component v-if="$route.meta.keepAlive" :is="Component" />
+              <template #fallback>
+                <div>加载中</div>
+              </template>
+            </Suspense>
           </keep-alive>
         </router-view>
         <router-view v-if="!$route.meta.keepAlive" />
@@ -156,7 +161,7 @@
 <script setup lang="ts">
   import { ElScrollbar } from 'element-plus'
 //   import zhCn from 'element-plus/lib/locale/lang/zh-cn'
-import { toRef, ref, watch,nextTick, Ref } from 'vue';
+import { toRef, ref, watch,nextTick, Ref, Suspense } from 'vue';
 import { useMainMenu, useMain,useGlobalVar } from '../store'
 import { useRoute, useRouter } from 'vue-router';
 

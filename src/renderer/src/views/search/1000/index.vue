@@ -45,7 +45,8 @@ const goDetail = (id)=>{
         name:'songPlaylist',
         query:{
             id,
-            my:'false'
+            my:'false',
+            type:'歌单'
         }
     })
 }
