@@ -43,15 +43,16 @@
                         <div class="author">
                             <div class="al">
                                 <span class="name">专辑：</span>
-                                <span class="t" :class="{ noDrag: !Main.dragMouse }">{{ Main.FMList[FMindex]?.al?.name
-                                }}</span>
+                                <span class="t" @click="goZhuanji(Main.FMList[FMindex]?.al?.id)" :class="{ noDrag: !Main.dragMouse }">
+                                    {{ Main.FMList[FMindex]?.al?.name}}
+                                </span>
                             </div>
                             <div class="ar">
                                 <span class="name">歌手：</span>
                                 <span class="t">
                                     <span v-if="Main.FMList[FMindex].ar[0]?.name" class="span-singer"
                                         v-for="(value, index) in Main.FMList[FMindex]?.ar" :data-singerId="value.id" :key="value.id">
-                                        <span :class="{ noDrag: !Main.dragMouse }" class="name">{{ value.name }}</span>
+                                        <span :class="{ noDrag: !Main.dragMouse }" class="name" @click="goSongHand(value.id)">{{ value.name }}</span>
                                         <span v-if="index !== Main.FMList[FMindex]?.ar.length - 1" class="gang">/</span>
                                     </span>
                                     <span v-else style="padding-left: 5px;">未知艺人</span>
@@ -91,7 +92,9 @@
 import { onActivated, ref, Ref, getCurrentInstance, ComponentInternalInstance, nextTick, watch, toRef } from 'vue'
 import { useMain, useGlobalVar } from '@renderer/store'
 import { throttle } from 'lodash'
+import { useRouter } from 'vue-router'
 const Main = useMain()
+const $router = useRouter()
 const globalVar = useGlobalVar()
 const $el = getCurrentInstance() as ComponentInternalInstance
 let FMplayFlag = ref(false)
@@ -331,6 +334,27 @@ const rubbish = async () => {
         }
         changePlaying()
     }
+}
+
+const goZhuanji = (id)=>{
+    $router.push({
+        name:'songPlaylist',
+        query:{
+        id,type:"专辑",my:'false'
+        }
+    })
+}
+
+const goSongHand = (id)=>{
+    if(id !=0 ){
+        $router.push({
+            name:'SongHand',
+            query:{
+                id
+            }
+        })
+    }
+
 }
 
 </script>

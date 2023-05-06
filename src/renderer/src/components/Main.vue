@@ -132,12 +132,7 @@
         <!-- <router-view></router-view> -->
         <router-view v-slot="{ Component }">
           <keep-alive>
-            <Suspense>
               <component v-if="$route.meta.keepAlive" :is="Component" />
-              <template #fallback>
-                <div>加载中</div>
-              </template>
-            </Suspense>
           </keep-alive>
         </router-view>
         <router-view v-if="!$route.meta.keepAlive" />

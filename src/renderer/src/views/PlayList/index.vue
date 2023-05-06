@@ -108,7 +108,7 @@
                 <div class="small" v-else-if="route.query.type == '专辑'">
                     <div class="number">
                         <span class="title">歌手&nbsp;:&nbsp;</span>
-                        <span v-for="(value, i) in playList[index]?.artists" :key="value" class="add"
+                        <span v-for="(value, i) in playList[index]?.artists" @click="goSongHand(value.id)" :key="value" class="add"
                             :class="{ noDrag: !Main.dragMouse }">
                             {{ value.name }}
                             <span v-if="i !== playList[index]?.artists?.length - 1">/</span>
@@ -137,7 +137,7 @@
                         :ifClick="flagList[2]" :big="true" @click="goRoute('whoStartPlaylist'); changeTag(2)"></Tag>
                 </div>
                 <div class="search" v-show="$route.name == 'songPlaylist' ">
-                    <input type="text" v-model="searchKey" placeholder="搜索歌单内音乐" :class="{
+                    <input type="text" v-model="searchKey" :placeholder="`搜索${$route.query.type}内音乐`" :class="{
                         noDragInput: !Main.dragMouse,
                         dragMouseStyleNo: Main.dragMouse
                     }" @keydown.stop>
@@ -648,6 +648,17 @@ const confirm = async(tag)=>{
 
 const addDetail = ()=>{
     gotoUpdatePlayList()
+}
+const goSongHand = (id)=>{
+    if(id != 0){
+        router.push({
+            name:'SongHand',
+            query:{
+                id
+            }
+        })
+    }
+
 }
 </script>
 

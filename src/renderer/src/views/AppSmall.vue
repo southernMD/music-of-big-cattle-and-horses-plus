@@ -169,6 +169,7 @@ const p3 = BasicApi.reqDjProgramToplist(10)
 const p4 = BasicApi.reqPlayListTags()
 await Promise.allSettled([p1, p2, p3,p4])
 MainPinia.reqPersonal_fm()
+BasicApi.reqartistSublist()
 
 let flagC = toRef(MainMenu, 'colorBlock')
 flagC.value = localStorage.getItem('colorBlock') as string

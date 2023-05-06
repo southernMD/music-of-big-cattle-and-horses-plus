@@ -40,7 +40,7 @@
               <span @dragstart="prevenDrag" v-if="playingList[playingindex - 1]?.ar[0]?.name" class="span-singer"
                 v-for="(value, index) in playingList[playingindex - 1]?.ar"
                 :data-singerId="playingList[playingindex - 1]?.ar[index]?.id">
-                <Singer :name="playingList[playingindex - 1]?.ar[index]?.name" :index="index"
+                <Singer :id="playingList[playingindex - 1]?.ar[index]?.id" :name="playingList[playingindex - 1]?.ar[index]?.name" :index="index"
                   :singerLen="playingList[playingindex - 1]?.ar.length - 1">
                 </Singer>
               </span>

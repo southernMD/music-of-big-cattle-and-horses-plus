@@ -33,7 +33,9 @@
       <i class="iconfont icon-paixu"></i>
     </div>
   </div>
-  <LocalSongList :list="list" :searchKey="searchKey" ref="LocalSongListRef"></LocalSongList>
+  <div class="music-list">
+    <LocalSongList :list="list" :searchKey="searchKey" ref="LocalSongListRef"></LocalSongList>
+  </div>
   <MyDialog :flag="flagC" @confirm="confirm" @cancel="addDir" @closeDialog="closeDialog" cancel-name="添加文件夹">
     <template #header>
       <div class="header">选择本地音乐文件夹</div>
@@ -323,7 +325,9 @@ confirm()
   }
 
 }
-
+.music-list{
+  padding-bottom: 100px;
+}
 .header {
   font-weight: bolder;
 }

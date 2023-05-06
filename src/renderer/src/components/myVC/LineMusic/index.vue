@@ -39,11 +39,11 @@
                     <span class="small" v-else-if="alia?.length" v-html="`&nbsp;(${alia[0]})`"></span>
                 </div>
             </div>
-            <div class="song-hand" v-if="!record && !onlyTime" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
+            <div class="song-hand"  v-if="!record && !onlyTime" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
                 <div class="limit" :class="{ noDrag: !Main.dragMouse }">
-                    <span v-if="singer![0]?.name" class="span-singer" v-for="({}, index) in singer"
+                    <span  v-if="singer![0]?.name"  class="span-singer" v-for="({}, index) in singer"
                         :data-singerId="singer![index]?.id">
-                        <Singer :name="singer![index]?.name" :index="index" :singerLen="singer.length - 1"></Singer>
+                        <Singer :id="singer![index]?.id"  :name="singer![index]?.name" :index="index" :singerLen="singer.length - 1"></Singer>
                     </span>
                     <span v-else style="padding-left: 5px;">未知艺人</span>
                 </div>
@@ -128,14 +128,18 @@ let playListid = inject<Ref<number>>('playListId') as Ref<number>
 let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 const ifDownload = ref(false)
 let name = ''
+console.log(props.singer,'PPIIIIJJJ');
+
 props.singer.forEach((el, index) => {
 name += el.name
     if (index != props.singer!.length - 1) name += ','
 })
 name = name + ' - ' + props.title
 
-const cleanFileName = name.replace(/[\\/:\*\?"<>\|]/g, "");
+
+const cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
 watch(downloadList, () => {
+    console.log(name);
     if (downloadList.value.includes(cleanFileName)) {
         ifDownload.value = true
     } else {

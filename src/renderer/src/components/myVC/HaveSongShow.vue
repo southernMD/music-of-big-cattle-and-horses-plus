@@ -2,6 +2,7 @@
   <div class="HaveSongShow">
     <div class="left">
         <el-image @click="go" draggable="false" :src="url" style="width: 150px; height: 150px"></el-image>
+        <div v-if="time && type == 'songHand' ">{{dayjsStamp(time!)}}</div>
     </div>
     <div class="right">
         <div class="title">
@@ -33,7 +34,7 @@
                 >
             </LineMusic>
         </div>
-        <div class="bt" v-if="Num > 10">
+        <div class="bt" v-if="Num > 10 && flag">
             <div @click.stop="go">查看全部{{Num}}首></div>
         </div>
     </div>
@@ -43,11 +44,13 @@
 <script setup lang="ts">
 import {Ref,onMounted,ref, watch,computed } from 'vue'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue';
+import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useMain,useBasicApi } from '@renderer/store';
 const Main = useMain()
 const BasicApi = useBasicApi()
 const size = ref(0)
 const $emit = defineEmits(['playAll','go'])
+const flag = ref(true)
 const change = async()=>{
     if(props.id == -5){
         const result = await Main.reqUserRecord(props.uid,1);
@@ -78,6 +81,7 @@ const props = defineProps<{
     id:number
     uid:number
     index:number
+    time?:number
     type:'songHand' | 'playList'
     list_6?:any[]
 }>()
@@ -106,8 +110,18 @@ const playAll = ()=>{
     $emit('playAll',props.id)
 }
 const go = ()=>{
-    $emit('go',{id:props.id,index:props.index,uid:props.uid})
+    if(props.id != -6){
+        $emit('go',{id:props.id,index:props.index,uid:props.uid})
+    }else{
+        list.value = props.list_6!
+        flag.value = false
+    }
 }
+
+watch(()=>props.list_6!,()=>{
+    list.value = props.list_6!.slice(0,10)
+})
+
 const recordPlay = ({index,id})=>{
     Main.playingList = list.value
     Main.playingPrivileges = list.value.map(item=>item.privilege)
@@ -118,9 +132,20 @@ const recordPlay = ({index,id})=>{
     Main.beforePlayListId = -5
 }
 const shorPlayList = async({index,id})=>{
-    const result = (await Main.reqPlaylistTrackAll(props.id)).data
-    Main.playingList = result.songs
-    Main.playingPrivileges = result.privileges
+    if(props.id == -6){
+        Main.playingList = props.list_6!
+        Main.playingPrivileges = props.list_6!.map(item=>item.privilege)
+    }else{
+        let result
+        if(props.type == 'playList'){
+            result = (await Main.reqPlaylistTrackAll(props.id)).data
+            Main.playingPrivileges = result.privileges
+        }else if(props.type == 'songHand'){
+            result = (await Main.reqAlbumTrackAll(props.id)).data
+            Main.playingPrivileges = result.songs.map(item=>item.privilege)
+        }
+        Main.playingList = result.songs
+    }
     Main.playingindex = index
     Main.playing = id
     Main.beforePlayListId = props.id
@@ -141,6 +166,11 @@ const shorPlayList = async({index,id})=>{
             user-select: none;
             border-radius: .2em;
             cursor: pointer;
+        }
+        >div{
+            color: @small-font-color;
+            font-size: 11px;
+            margin-top: 5px;
         }
     }
     .right{

@@ -670,3 +670,26 @@ export const artistAlbum = (id:number,limit:number,offset:number)=>{
         method:'POST'
     })
 }
+//歌手描述
+export const artistDesc = (id:number)=>{
+    return axios({
+        url:`/artist/desc?id=${id}`,
+        method:'POST'
+    })
+}
+export const artistSublist = ()=>{
+    return axios({
+        url:`/artist/sublist`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+export const simiartist = (id:number)=>{
+    return axios({
+        url:`/simi/artist?id=${id}`,
+        method:'POST',
+    })
+}

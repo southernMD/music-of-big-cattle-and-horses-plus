@@ -20,7 +20,10 @@ import {
     AlbumTrackAll,
     commentAlbum,
     artists,
-    artistAlbum
+    artistAlbum,
+    artistDesc,
+    artistSublist,
+    simiartist
 } from '../api/index';
 interface E {
     ifToCloseWindow: boolean,
@@ -78,6 +81,7 @@ interface S {
     hotDjProgram: Array<any>
     startDjArr: Array<any>
     createDjArr: Array<any>
+    startSongHand: Array<any>
     tagsDetail:{
         sub:any[],
         categories:any[]
@@ -95,6 +99,7 @@ export const useBasicApi = defineStore('BaseApi', {
             hotDjProgram: [],
             startDjArr: [],
             createDjArr: [],
+            startSongHand:[],
             tagsDetail:{
                 sub:[],
                 categories:[]
@@ -244,6 +249,11 @@ export const useBasicApi = defineStore('BaseApi', {
                     })
                 })
             }
+        },
+        //我的收藏
+        async reqartistSublist(){
+            let result = await artistSublist()
+            this.startSongHand = result.data.data
         }
     }
 })
@@ -268,7 +278,7 @@ interface T {
     playing: number          //正在播放的歌id
     playingindex: number     //正在播放的歌在列表中的下标 + 1
     beforePlayListId: number //上一个播放的歌单id(限自己的歌单暂时)，在开始播放后会变成正在播放的歌单
-    //0已下载 -2本地  -3最近 -4私人FM -5个人排行
+    //0已下载 -1默认状态 -2本地  -3最近 -4私人FM -5个人排行 -6 top50
     playStatus: string
     detailStatus: string
     isMy: string     //是否是我的歌单
@@ -948,6 +958,30 @@ export const useMain = defineStore('Main', {
         },
         async reqartistAlbum(id:number,limit:number,offset:number){
             let result = await artistAlbum(id,limit,offset)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                alert('error')
+                console.log(result);
+            }
+        },
+        //歌手描述
+        async reqartistDesc(id:number){
+            let result = await artistDesc(id)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                alert('error')
+                console.log(result);
+            }
+        },
+        //相似歌手
+        async reqsimiartist(id:number){
+            let result = await simiartist(id)
             if (result.data.code == 200) {
                 return new Promise<any>((resolve) => {
                     resolve(result.data)

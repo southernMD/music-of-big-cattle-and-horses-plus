@@ -145,6 +145,8 @@ const pushPlayList = async(flag:1 | undefined)=>{
 }
 
 const localPlay = async({index,id})=>{
+    Main.playingList = []
+    Main.playingPrivileges = []
     await pushPlayList(undefined)   //替换
     console.log(playingList);
     console.log(playingPrivileges);

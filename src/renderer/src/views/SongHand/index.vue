@@ -10,10 +10,10 @@
         </div>
         <div class="right">
             <div class="name">
-                <span>ZUN</span>
+                <span>{{ artilseMessage.name }}</span>
             </div>
-            <div class="nickname">
-                <span>ずん； 太田順也</span>
+            <div class="nickname" v-show="artilseMessage.trans.length != 0 || artilseMessage.alias.length!=0">
+                <span>{{ artilseMessage.trans }}{{artilseMessage.alias.join(';')}}</span>
             </div>
             <div class="start h" id="startSelf" :class="
                 {
@@ -22,20 +22,20 @@
                 }">
                 <div class="icon" :class="{ noDrag: !Main.dragMouse }">
                     <i class="iconfont icon-wenjian">
-                        <i class="iconfont icon-gou" v-if="true"></i>
+                        <i class="iconfont icon-gou" v-if="BasicApi.startSongHand.some(it=>it.id == $route.query.id)"></i>
                         <i class="iconfont icon-jiahao_o" v-else></i>
                     </i>
                 </div>
                 <div class="txt" :class="{
                     noDrag: !Main.dragMouse,
                 }">
-                    <span v-if="true">已</span>
+                    <span v-if="BasicApi.startSongHand.some(it=>it.id == $route.query.id)">已</span>
                     <span>收藏</span>
                 </div>
             </div>
             <div class="Message" >
-                <div>单曲数:114</div>
-                <div>专辑数:514</div>
+                <div>单曲数:{{ artilseMessage.musicSize }}</div>
+                <div>专辑数:{{artilseMessage.albumSize }}</div>
             </div>
         </div>
     </div>
@@ -66,9 +66,10 @@
                 :num="Math.floor(artilseMessage.alList.length / 4)*4"
                 :idr="artilseMessage.alList[index].id"
                 :uid="+$route.query.id!"
+                type="al"
+                @playAll="playAll"
+                @go="go"
                 >
-                <!-- @go="go"
-                @playAll="playAll" -->
                 <template #default>
                     <div class="message">
                         <span class="txt">{{artilseMessage.alList[index].name}}</span>
@@ -82,26 +83,52 @@
             :Name="artilseMessage.alList[index].name"
             :id="artilseMessage.alList[index].id"
             :trackCount="artilseMessage.alList[index].size"
+            :time="artilseMessage.alList[index].publishTime"
             type="songHand"
+            @playAll="playAll"
+            @click="go({id:artilseMessage.alList[index].id})"
             ></HBlock>
-             <!-- @playAll="playAll"
-            @click="go({id:artilseMessage.alList[index].id,index:artilseMessage.alList[index].index,uid:+$route.query.id!})" -->
-            <HaveSongShow v-show="blockList[2]" v-for="({},index) in artilseMessage.alList"
+            <HaveSongShow :class="{first:artilseMessage.alList[index].id == -6}" v-show="blockList[2]" v-for="({},index) in artilseMessage.alList"
             :url="artilseMessage.alList[index].picUrl" 
             :title="artilseMessage.alList[index].name"
             :id="artilseMessage.alList[index].id"
             :index="index"
             :uid="+$route.query.id!"
             :list_6="hotSong"
+            :time="artilseMessage.alList[index].publishTime"
             type="songHand"
+            @playAll="playAll"
+            @go="go"
             >
-            <!--             @playAll="playAll"
-            @go="go" -->
             </HaveSongShow>  
             <div class="pagination">
                 <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
                     :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
             </div>  
+        </div>
+        <div class="detail" v-if="TagList[1]">
+            <div class="dec" v-show="artilseMessage.dec.length!=0">
+                <div class="title">{{ artilseMessage.name+'的简介' }}</div>
+                <div class="mes">
+                    {{ artilseMessage.dec }}
+                </div>
+            </div>
+            <div class="intruction" v-for="val in artilseMessage.introduction">
+                <div class="title">{{ val.ti }}</div>
+                <div class="mes" v-html="val.txt.replaceAll(/\n/g, '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')">
+                </div>
+            </div>
+            <div class="nill" v-show="artilseMessage.dec.length==0 && artilseMessage.introduction.length == 0">暂无介绍</div>
+        </div>
+        <div class="simi" v-if="TagList[2]">
+            <div v-for="val in artilseMessage.simi" @click="goHandSong(val.id)">
+                <el-image draggable="false"  :src="val.img1v1Url">
+                    <template #error>
+                        <el-image draggable="false" :src="icon" style="width: 180px; height: 180px"></el-image>
+                    </template>
+                </el-image>
+                <div class="txt"> {{ val.name }}</div>
+            </div>
         </div>
     </div>
     <!-- {{$route.query.id}} -->
@@ -113,12 +140,15 @@
 import icon from '@renderer/assets/icon.png'
 import {toRef,ref, watchEffect,Ref, reactive, watch} from 'vue'
 import { useMain,useMainMenu,useGlobalVar } from '@renderer/store';
-import { useRoute } from 'vue-router';
+import { useRoute,useRouter } from 'vue-router';
 import { dayjsStamp } from '@renderer/utils/dayjs';
+import { useBasicApi } from '@renderer/store';
 const Main = useMain()
 const $route = useRoute()
+const $router = useRouter()
 const MainMenu = useMainMenu()
 const globalVar = useGlobalVar()
+const BasicApi = useBasicApi()
 let mainColor = toRef(MainMenu, 'colorBlock')
 const TagList = ref()
 const blockList = ref()
@@ -133,7 +163,13 @@ const artilseMessage = reactive<{
     fans:number
     like:number
     follow:number
-    describe:string
+    trans:string
+    alias:string[]
+    albumSize:number
+    musicSize:number
+    dec:string
+    introduction:any[]
+    simi:any[]
 }>({
     alList:ref([]),
     name:undefined,
@@ -141,10 +177,15 @@ const artilseMessage = reactive<{
     fans:0,
     like:0,
     follow:0,
-    describe:''
+    trans:'',
+    alias:[],
+    albumSize:0,
+    musicSize:0,
+    dec:'',
+    introduction:[],
+    simi:[]
 })
 
-console.log(hotSong.value,alList.value);
 if(sessionStorage.getItem('SongHand') == null){
     TagList.value = [true,false,false]
     blockList.value = [false,false,true]
@@ -166,11 +207,7 @@ watchEffect(()=>{
         nowPage:nowPage.value
     }))
 })
-
-const result = await Main.reqArtists(+$route.query.id!)
-hotSong.value = result.hotSongs
-artilseMessage.avatarUrl = result.artist.img1v1Url
-let flag = false
+let result
 const changePage = async(num?:number)=>{
     let result = await Main.reqartistAlbum(+$route.query.id!,20,(nowPage.value - 1)*20)
     artilseMessage.alList = result.hotAlbums
@@ -188,32 +225,40 @@ const changePage = async(num?:number)=>{
     }else{
         flag = true
     }
-
-    // let l = nowPage.value == 1?(nowPage.value-1) * 20:(nowPage.value-1) * 20-1
-    // if(TagList.value[0] != true)l = (nowPage.value-1) * 20
-    // let r = nowPage.value == 1 && TagList.value[0] == true?19:l+20
-    // artilseMessage.alList= BaseList.value.slice(l,r)
-    // if(nowPage.value == 1 && $route.query.id == BasicApi.profile!.userId && TagList.value[0] == true){
-    //     artilseMessage.alList.unshift({
-    //         coverImgUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305041345401.png',
-    //         id:-5,
-    //         name:'我的听歌排行',
-    //         creator:{
-    //             id:$route.query.id,
-    //             name:BasicApi.profile!.nickname
-    //         }
-    //     })
-    // }
-    // if(flag){
-    //     globalVar.changeMainScroll = -(globalVar.mainScroll - 220)
-    // }else{
-    //     flag = true
-    // }
 }
-changePage()
-
-
-
+let flag = false
+const total = ref()
+const totalPage = ref()
+const init = async (id,num?:number)=>{
+    const p1 = Main.reqArtists(id!)
+    const p2 = Main.reqartistDesc(id!)
+    const p3 = Main.reqsimiartist(id!)
+    const results = await Promise.all([p1,p2,p3])
+    result = results[0]
+    const mesg = results[1]
+    artilseMessage.simi = results[2].artists
+    hotSong.value = result.hotSongs
+    artilseMessage.avatarUrl = result.artist.img1v1Url
+    artilseMessage.name =  result.artist.name
+    artilseMessage.trans = result.artist.trans ?? ''
+    if(artilseMessage.trans.length != 0)artilseMessage.trans +=';'
+    artilseMessage.albumSize =  result.artist.albumSize
+    artilseMessage.musicSize =  result.artist.musicSize
+    artilseMessage.alias = result.artist.alias ?? []
+    artilseMessage.introduction = mesg.introduction
+    artilseMessage.dec =  mesg.briefDesc
+    changePage(num)
+    total.value = result.artist.albumSize
+    totalPage.value = Math.ceil(total.value / 20)
+}
+try {
+    await init($route.query.id)
+} catch (error) {
+    console.log(error);
+    $router.replace({
+        name:'404'
+    })
+}
 
 const changeTag = (index:number,flag:boolean)=>{
     TagList.value.fill(false)
@@ -231,8 +276,7 @@ const changeTag = (index:number,flag:boolean)=>{
     // changePage()
 
 }
-const total = ref(result.artist.albumSize)
-const totalPage = ref(Math.ceil(total.value / 20))
+
 
 watch(nowPage,()=>{
     changePage()
@@ -252,6 +296,77 @@ const changeBlock = (index:number)=>{
     }
 }
 
+const playAll = async (id)=>{
+    if(id == -6){
+        const songList = hotSong.value
+        console.log(result,songList);
+        Main.playingList = songList
+        Main.playingPrivileges = songList.map(item=>item.privilege)
+        Main.playingindex = 1
+        Main.playing = songList[0].id as number
+        Main.beforePlayListId = -6
+        Main.playStatus = 'play'
+        let str = songList[0].name +' - ';
+        let singerArr = songList[0].ar as unknown as Array<any>
+        singerArr.forEach((element,index)=>{
+            str+=element.name
+            if(index != singerArr.length - 1)str+=' / '
+        })
+        window.electron.ipcRenderer.send('change-play-thum',str)
+        window.electron.ipcRenderer.send('render-play')
+        globalVar.closePointOutMessage = '已经开始播放'
+        globalVar.closePointOut = true
+    }else{
+        let result = (await Main.reqAlbumTrackAll(id)).data;
+        Main.playingList = result.songs
+        Main.playingPrivileges = result.songs.map(item=>item.privilege)
+        Main.playingindex = 1
+        Main.playing = result.songs[0].id as number
+        Main.beforePlayListId = id
+        Main.playStatus = 'play'
+        let str = result.songs[0].name +' - ';
+        let singerArr = result.songs[0].ar as unknown as Array<any>
+        singerArr.forEach((element,index)=>{
+            str+=element.name
+            if(index != singerArr.length - 1)str+=' / '
+        })
+        window.electron.ipcRenderer.send('change-play-thum',str)
+        window.electron.ipcRenderer.send('render-play')
+        globalVar.closePointOutMessage = '已经开始播放'
+        globalVar.closePointOut = true
+    }
+}
+
+const go = ({id})=>{
+    if(id != -6){
+        $router.push({
+            name:'songPlaylist',
+            query:{
+                id,my:'false',type:'专辑'
+            }
+        })
+    }
+}
+const goHandSong = async(id)=>{
+    // await init(id,1)
+    $router.push({
+        name:'SongHand',
+        query:{
+            id
+        }
+    })
+    // changeTag(0,true)
+    // globalVar.scrollToTop = true
+    // const path = location.href.substring(0, location.href.indexOf('?'));
+    // window.location.href = path +`?id=${id}`
+}
+$router.afterEach(async(to, from, failure) => {
+    if(to.query.id != from.query.id && to.name == from.name){
+        await init(to.query.id,1)
+        changeTag(0,true)
+        globalVar.scrollToTop = true
+    }
+})
 </script>
 
 <style scoped lang="less">
@@ -340,7 +455,7 @@ const changeBlock = (index:number)=>{
                     padding-left: 5px;
                     display: flex;
                     max-width: 150px;
-
+                    
                     >span:nth-child(2) {
                         display: block;
                         word-wrap: normal;
@@ -502,11 +617,77 @@ const changeBlock = (index:number)=>{
                     }
                 }
             }
+            .first{
+                :deep(.right){
+                    .title{
+                        >span{
+                            cursor: default !important;
+                        }
+                    }
+                }
+                :deep(.left){
+                    .el-image{
+                        cursor: default !important;
+                    }
+                }
+
+            }
         }
         .Wlist{
             :deep(.imgae){
                 flex: 0 0 12%;
                 padding-bottom:12%;
+            }
+        }
+        .detail{
+            >div{
+                margin-top: 20px;
+                >.title{
+                    margin-bottom: 10px
+                }
+                >.mes{
+                    text-indent:2em;
+                    color: @small-font-color;
+                    line-height: 30px;
+                    font-size: 14px;
+                }
+            }
+            .nill{
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: @small-font-color;
+            }
+        }
+        .simi{
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            >div{
+                flex-basis: 18.4%;
+                width: 18.4%;
+                margin-bottom: 20px;
+                >.el-image{
+                    border-radius: .4em;
+                    cursor: pointer;
+                }
+                >.txt{
+                    font-size: 13px;
+                    height: 30px;
+                    line-height: 30px;
+                    user-select: none;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    width: 100%;
+                    &:hover{
+                        color: @font-color-hover;
+                        cursor: pointer;
+                    }
+                }
+            }
+            >div:not(:nth-child(5n)){
+                margin-right: 2%;
             }
         }
     }

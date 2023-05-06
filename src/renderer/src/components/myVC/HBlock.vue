@@ -30,9 +30,9 @@
                 {{ numberSimp(playCount!) }}
             </div>
         </div>
-        <div class="songHand" v-if="type == 'songHand'">
+        <div class="right songHand" v-if="type == 'songHand'">
             <div class="number">{{ trackCount }}首</div>
-            <div class="time">发行时间：{{time}}</div>
+            <div class="time">发行时间：{{dayjsStamp(time!)}}</div>
         </div>
     </div>
 </template>
@@ -40,6 +40,7 @@
 <script lang='ts' setup>
 import { useMain } from '@renderer/store';
 import {numberSimp} from '@renderer/utils/numberSimp'
+import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()
@@ -55,7 +56,7 @@ const props = defineProps<{
     creator?:any
     playCount?:number
     type: 'singer' | 'DJ' | 'ZhuanJi' | 'playList' | 'showPersonal' | 'songHand'
-    time?:string
+    time?:number
 }>()
 const $emit = defineEmits(['playAll'])
 const playAll = ()=>{
@@ -218,6 +219,13 @@ const playAll = ()=>{
                     border: 1px solid @small-font-color-hover;
                 }
             }
+        }
+    }
+    .songHand{
+        color: @small-font-color;
+        font-size: 12px;
+        >div{
+            margin-left: 100px;
         }
     }
 

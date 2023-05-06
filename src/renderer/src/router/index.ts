@@ -181,8 +181,13 @@ const routes: Array<RouteRecordRaw> = [
                 component:()=>import('@renderer/views/SongHand/index.vue')
             },
             {
-                path: ':pathMatch(.*)',
+                path: '/404',
+                name:'404',
                 component: ()=>import('@renderer/components/myVC/404.vue'),
+            },
+            {
+                path:'*',
+                redirect: '/404'
             }
         ]
     },

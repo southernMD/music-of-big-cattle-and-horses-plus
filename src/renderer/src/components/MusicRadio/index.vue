@@ -14,7 +14,7 @@
                     </div>
                     <div class="txt" :class="{ 'txt-oneself': globalVar.oneself }">
                         <div class="t">
-                            <div class="name" @mouseover="rushName('nameTxt')">
+                            <div class="name" @mouseover="rushName('nameTxt')" @click="showDetail">
                                 <div class="name-txt" id="nameTxt">{{ playingList[playingindex - 1]?.name }}
                                     <span class="small" v-if="playingList[playingindex - 1]?.tns?.length">&nbsp;({{
                                         playingList[playingindex - 1]?.tns[0]
@@ -27,17 +27,17 @@
                             <i v-if="likeFlag" class="iconfont icon-aixin" @click="likeOrDislike"></i>
                             <i v-else class="iconfont icon-aixin_fill" @click="likeOrDislike"></i>
                         </div>
-                        <div class="singer" @mouseover="rushSinger('singerTxt')">
-                            <span id="singerTxt">
+                        <div class="singer" @mouseover="rushSinger('singerTxt')" @click="goHandSong">
+                            <span id="singerTxt" >
                                 <span v-for="({}, index) in playingList[playingindex - 1]?.ar"
-                                    :key="playingList[playingindex - 1]?.ar[index]?.id"
-                                    :id="playingList[playingindex - 1]?.ar[index]?.id">
-                                    {{ playingList[playingindex - 1]?.ar[index].name }}
-                                    <span v-if="index != playingList[playingindex - 1]?.ar.length - 1" style="transform: rotate(-10deg) translateY(-2px);
-                                                display: inline-block;
-                                                font-size: 10px;
-                                                padding-right: 3px;
-                                                ">/</span>
+                                    :key="playingList[playingindex - 1]?.ar[index]?.id">
+                                    <span :data-id="playingList[playingindex - 1]?.ar[index]?.id">{{ playingList[playingindex - 1]?.ar[index].name }}</span>
+                                    <span v-if="index != playingList[playingindex - 1]?.ar.length - 1" 
+                                    style="transform: rotate(-10deg) translateY(-2px);
+                                    display: inline-block;
+                                    font-size: 10px;
+                                    padding-right: 3px;
+                                    ">/</span>
                                 </span>
                             </span>
                         </div>
@@ -1369,7 +1369,19 @@ watch(SongUrl,()=>{
     })
     Main.latelyPlay.unshift(t)
 })
-
+const goHandSong = (e:MouseEvent)=>{
+    const dom = e.target as HTMLElement
+    console.log(dom.getAttribute('data-id'));
+    const id = dom.getAttribute('data-id')
+    if(id){
+        $router.push({
+            name:'SongHand',
+            query:{
+                id
+            }
+        })
+    }
+}
 </script>
 
 <style lang="less" scoped>
