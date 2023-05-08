@@ -128,7 +128,6 @@ let playListid = inject<Ref<number>>('playListId') as Ref<number>
 let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 const ifDownload = ref(false)
 let name = ''
-console.log(props.singer,'PPIIIIJJJ');
 
 props.singer.forEach((el, index) => {
 name += el.name
@@ -139,7 +138,6 @@ name = name + ' - ' + props.title
 
 const cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
 watch(downloadList, () => {
-    console.log(name);
     if (downloadList.value.includes(cleanFileName)) {
         ifDownload.value = true
     } else {

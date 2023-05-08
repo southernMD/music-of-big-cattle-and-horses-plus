@@ -1,6 +1,6 @@
 <template>
   <div class="PersonalRecord">
-    <div class="title">我的听歌排行</div>
+    <div class="title">{{$route.query.id == BasicApi.profile!.userId?'我':$route.query.name}}的听歌排行</div>
     <div class="tips">
         <div class="tip" :class="{active:flag}" @click="flag = true">最近一周</div>
         <div class="tip" :class="{active:!flag}" @click="flag = false">所有时间</div>
@@ -17,8 +17,11 @@
             >
         </LineMusic>
     </div>
-    <div class="record-list" v-show="listLength==0">
+    <div class="message" v-show="listLength==0 && !flagError">
         加载中
+    </div>
+    <div class="message" v-show="flagError">
+        该用户未公开内容或无内容
     </div>
     <!-- {{ $route.query.id }} -->
   </div>
@@ -26,33 +29,47 @@
 
 <script setup lang="ts">
 import {useRoute} from 'vue-router'
-import { useMain } from '@renderer/store'
+import { useMain,useBasicApi } from '@renderer/store'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import {ref,Ref,onMounted,watch} from 'vue'
 const $route = useRoute()
 const Main = useMain()
+const BasicApi = useBasicApi()
 const flag = ref(true)
 const list:Ref<any[]> = ref([])
 const listCount:Ref<any[]> = ref([])
 const listLength = ref(0)
+const flagError = ref(false)
 onMounted(async()=>{
-    const result = await Main.reqUserRecord(Number(+$route.query.id!),1);
-    list.value = result.map(item=>item.song)
-    listCount.value = result.map(item=>item.playCount)
-    listLength.value = list.value.length
+    try {
+        flagError.value = false
+        const result = await Main.reqUserRecord(Number(+$route.query.id!),1);
+        list.value = result.map(item=>item.song)
+        listCount.value = result.map(item=>item.playCount)
+        listLength.value = list.value.length  
+    } catch (error) {
+        flagError.value = true
+    }
+
 })
 watch(flag,async()=>{
-    let result
-    listCount.value =[]
-    listLength.value = 0
-    if(flag.value){
-        result = await Main.reqUserRecord(Number(+$route.query.id!),1);
-    }else{
-        result = await Main.reqUserRecord(Number(+$route.query.id!),0);
+    try {
+        let result
+        listCount.value =[]
+        listLength.value = 0
+        flagError.value = false
+        if(flag.value){
+            result = await Main.reqUserRecord(Number(+$route.query.id!),1);
+        }else{
+            result = await Main.reqUserRecord(Number(+$route.query.id!),0);
+        }
+        list.value = result.map(item=>item.song)
+        listCount.value = result.map(item=>item.playCount)
+        listLength.value = list.value.length  
+    } catch (error) {
+        flagError.value = true
     }
-    list.value = result.map(item=>item.song)
-    listCount.value = result.map(item=>item.playCount)
-    listLength.value = list.value.length
+
 })
 const recordPlay = ({index,id})=>{
     Main.playingList = list.value
@@ -95,6 +112,14 @@ const recordPlay = ({index,id})=>{
                 }
             }
         }
+    }
+    .message{
+        font-size: 13px;
+        font-weight: bolder;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 300px;
     }
 }
 </style>

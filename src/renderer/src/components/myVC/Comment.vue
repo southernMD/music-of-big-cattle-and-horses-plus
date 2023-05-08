@@ -8,13 +8,13 @@
             <div class="comment-txt">
                 <div class="user">
                     <span class="user-comment">
-                        <span class="user-name">{{userNickname}}:&nbsp;</span>
+                        <span class="user-name" @click="go(userId)">{{userNickname}}:&nbsp;</span>
                         <span class="word" v-html="regEmoji(content)"></span>
                     </span>
                 </div>
                 <div class="reply" v-if="beReplied.length != 0">
                     <span class="user-comment">
-                        <span class="user-name">@{{beReplied[0]?.user?.nickname}}:&nbsp;</span>
+                        <span class="user-name" @click="go(beReplied[0]?.user?.userId)">@{{beReplied[0]?.user?.nickname}}:&nbsp;</span>
                         <span class="word" v-html="regEmoji(beReplied[0]?.content)" ></span>
                     </span>
                 </div>
@@ -38,6 +38,9 @@
 import { computed, getCurrentInstance, ComponentInternalInstance, inject } from 'vue'
 import { dayjsCN } from '@renderer/utils/dayjs'
 import {regEmoji} from '@renderer/utils/regEmoji'
+import { useRouter } from 'vue-router'
+import { useMain } from '@renderer/store'
+const $router = useRouter()
 const $el = getCurrentInstance() as ComponentInternalInstance
 defineProps<{
     userUrl: string
@@ -60,6 +63,16 @@ const fixTime = computed<string>(() => {
     if (str.startsWith(year)) return str.substring(5)
     else return str
 })
+
+const go = (id)=>{
+    useMain().detailStatus = 'close'
+    $router.push({
+        name:'PersonalCenter',
+        query:{
+            id
+        }
+    })
+}
 
 </script>
 

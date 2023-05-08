@@ -10,7 +10,7 @@
             <i class="iconfont icon-gf-play" @click.stop="playAll"></i>
         </div>
         <div class="list record-list" id="record-list" v-if="id == -5">
-            <LineMusic v-for="(value, index) in list" :index="index + 1"
+            <LineMusic v-if="!Recorderror" v-for="(value, index) in list" :index="index + 1"
                 :title="list[index]?.name || ''" 
                 :singer="list[index]?.ar || ['']"
                 :id="list[index]?.id || 0" :tns="list[index]?.tns" :alia="list[index]?.alia"
@@ -20,6 +20,7 @@
                 @recordPlay="recordPlay"
                 >
             </LineMusic>
+            <div class="message" v-else>该用户未公开内容或无内容</div>
             <!-- @recordPlay="recordPlay" -->
         </div>
         <div class="list short-play-list" id="short-play-list" v-else>
@@ -53,12 +54,18 @@ const $emit = defineEmits(['playAll','go'])
 const flag = ref(true)
 const change = async()=>{
     if(props.id == -5){
-        const result = await Main.reqUserRecord(props.uid,1);
-        list.value = result.map(item=>item.song).splice(0,10)
-        listCount.value = result.map(item=>item.playCount).splice(0,10)
+        try {
+            Recorderror.value = false
+            const result = await Main.reqUserRecord(props.uid,1);
+            list.value = result.map(item=>item.song).splice(0,10)
+            listCount.value = result.map(item=>item.playCount).splice(0,10)
+        } catch (error) {
+            Recorderror.value = true
+        }
     }else if(props.id == -6){
         list.value = props.list_6!.slice(0,10)
         size.value = props.list_6!.length
+        flag.value = true
     }else {
         let result
         if(props.type == 'playList'){
@@ -82,6 +89,7 @@ const props = defineProps<{
     uid:number
     index:number
     time?:number
+    num?:number
     type:'songHand' | 'playList'
     list_6?:any[]
 }>()
@@ -99,7 +107,7 @@ const Num = computed(()=>{
                 return num
             }
         }else{
-
+            return props.num
         }
     }else if(props.type == 'songHand'){
         return size.value
@@ -120,6 +128,19 @@ const go = ()=>{
 
 watch(()=>props.list_6!,()=>{
     list.value = props.list_6!.slice(0,10)
+})
+const Recorderror = ref(false)
+watch(()=>props.uid,async()=>{
+    if(props.id == -5){
+        try {
+            Recorderror.value = false
+            const result = await Main.reqUserRecord(props.uid,1);
+            list.value = result.map(item=>item.song).splice(0,10)
+            listCount.value = result.map(item=>item.playCount).splice(0,10)
+        } catch (error) {
+            Recorderror.value = true
+        }
+    }
 })
 
 const recordPlay = ({index,id})=>{
@@ -152,6 +173,7 @@ const shorPlayList = async({index,id})=>{
     Main.playStatus = 'play'
     Main.songType = 'song'
 }
+
 </script>
 
 <style scoped lang="less">
@@ -221,7 +243,12 @@ const shorPlayList = async({index,id})=>{
                     min-width: 50px;
                 }
             }
+            .message{
+                font-size: 13px;
+                font-weight: bolder;
+            }
         }
+
         .bt{
             height: 30px;
             font-size: 12px;

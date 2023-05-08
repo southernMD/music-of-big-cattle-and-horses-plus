@@ -106,6 +106,16 @@ const routes: Array<RouteRecordRaw> = [
 
             },
             {
+                path: 'myStart',
+                name: 'myStart',
+                redirect: '/app/myStart/startAl', // 设置重定向
+                component: () => import('@renderer/views/myStart/index.vue'),
+                children: [
+                    { path: 'startAl', name: 'startAl', component: () => import('@renderer/views/myStart/StZhuanJi/index.vue') },
+                    { path: 'startHS', name: 'startHS', component: () => import('@renderer/views/myStart/StHandSong/index.vue') }
+                ]
+            },
+            {
                 path:`search`,
                 name:'search',
                 component:()=>import('@renderer/views/search/index.vue'),

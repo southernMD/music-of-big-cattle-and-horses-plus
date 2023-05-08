@@ -3,7 +3,7 @@
         <div class="left">
             <el-image :src="url" style="width: 60px; height: 60px"></el-image>
             <div :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
-                <span>{{ Name }}</span>
+                <span v-html="Name"></span>
             </div>
         </div>
         <div class="right" v-if="type == 'DJ'">
@@ -34,6 +34,18 @@
             <div class="number">{{ trackCount }}首</div>
             <div class="time">发行时间：{{dayjsStamp(time!)}}</div>
         </div>
+        <div class="right startal" v-if="type == 'startal'">
+            <div class="author">
+                <div class="ar" v-for="val,index in creators">
+                    <span class="author-name" @click.stop="goAr(val.id)" v-html="val.name"></span>
+                    <span class="author-separator" v-if="index + 1!= creators!.length">/</span>
+                </div>
+            </div>
+            <div class="number">{{ trackCount }}首</div>
+        </div>
+        <div class="right startSongHand" v-if="type == 'startSongHand'">
+            <div>专辑：{{trackCount}}</div>
+        </div>
     </div>
 </template>
 
@@ -44,6 +56,7 @@ import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()
+
 const props = defineProps<{
     url: string
     Name: string
@@ -55,12 +68,24 @@ const props = defineProps<{
     trackCount?:number
     creator?:any
     playCount?:number
-    type: 'singer' | 'DJ' | 'ZhuanJi' | 'playList' | 'showPersonal' | 'songHand'
+    type: 'singer' |
+    'DJ' | 
+    'ZhuanJi' | 
+    'playList' |
+    'showPersonal' | 
+    'songHand' |
+    'start' | 
+    'startal' |
+    'startSongHand'
     time?:number
+    creators?:any[]
 }>()
-const $emit = defineEmits(['playAll'])
+const $emit = defineEmits(['playAll','goAr'])
 const playAll = ()=>{
     $emit('playAll',props.id)
+}
+const goAr = (id)=>{
+    $emit('goAr',id)
 }
 </script>
 
@@ -227,6 +252,40 @@ const playAll = ()=>{
         >div{
             margin-left: 100px;
         }
+    }
+    .startal{
+        color: @small-font-color;
+        font-size: 12px;
+        >div{
+            margin-left: 100px;
+        }
+        .author {
+            width: 100px;
+            display: flex;
+            overflow: hidden;
+            white-space: nowrap;
+            margin-left: 20px;
+        }
+
+        .ar {
+            display: flex;
+            span:first-child {
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                &:hover{
+                    color: @small-font-color-hover;
+                }
+            }
+        }
+        .number{
+            width: 50px;
+        }
+    }
+
+    .startSongHand{
+        font-size: 12px;
+        width: 100px;
     }
 
     &:hover {

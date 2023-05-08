@@ -693,3 +693,14 @@ export const simiartist = (id:number)=>{
         method:'POST',
     })
 }
+
+export const albumSublist=()=>{
+    return axios({
+        url:`/album/sublist?limit=999999`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+    
+}

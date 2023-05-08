@@ -11,10 +11,21 @@
         <div class="right">
             <div class="name">
                 <span>{{personalMessage.name }}</span>
-                <div class="btn" @click="editorPersonal">
+                <div class="btn" @click="editorPersonal" v-if="$route.query.id == BasicApi.profile!.userId">
                     <div>
                         <i class="iconfont icon-bianji"></i>
                         <span>编辑个人信息</span>
+                    </div>
+                </div>
+                <div class="btns">
+                    <div>
+                        <i class="iconfont icon-xinfeng"></i>
+                        <span>发私信</span>
+                    </div>
+                    <div>
+                        <i class="iconfont icon-big-gou" v-if="true"></i>
+                        <i class="iconfont icon-jiahao_o" v-else></i>
+                        <span>{{true?'已':''}}关注</span>
                     </div>
                 </div>
             </div>
@@ -108,6 +119,7 @@
             :id="personalMessage.MyplayList[index].id"
             :index="personalMessage.MyplayList[index].index"
             :uid="+$route.query.id!"
+            :num="personalMessage.MyplayList[index].trackCount"
             @playAll="playAll"
             @go="go"
             type="playList"
@@ -201,20 +213,22 @@ const personalMessage = reactive<{
 const total = ref()
 const totalPage = ref()
 const BaseList:Ref<any[]> = ref([])
+const createPlay = ref()
+const playList:Ref<any[]> = ref([])
 let flag = false
 const changePage = ()=>{
     let l = nowPage.value == 1?(nowPage.value-1) * 20:(nowPage.value-1) * 20-1
     if(TagList.value[0] != true)l = (nowPage.value-1) * 20
     let r = nowPage.value == 1 && TagList.value[0] == true?19:l+20
     personalMessage.MyplayList= BaseList.value.slice(l,r)
-    if(nowPage.value == 1 && $route.query.id == BasicApi.profile!.userId && TagList.value[0] == true){
+    if(nowPage.value == 1 && TagList.value[0] == true){
         personalMessage.MyplayList.unshift({
             coverImgUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305041345401.png',
             id:-5,
-            name:'我的听歌排行',
+            name:`${$route.query.id == BasicApi.profile!.userId?'我': personalMessage.name}的听歌排行`,
             creator:{
                 id:$route.query.id,
-                name:BasicApi.profile!.nickname
+                name:personalMessage.name
             }
         })
     }
@@ -229,47 +243,56 @@ const changeTag = (index:number,flag:boolean)=>{
     TagList.value[index] = true
     if(flag)nowPage.value = 1
     if(index == 0){
-        total.value = Main.createPlay + 1
-        BaseList.value = Main.playList.slice(0,Main.createPlay + 1)
+        total.value = createPlay.value + 1
+        BaseList.value = playList.value.slice(0,createPlay.value + 1)
     }else if(index == 1){
         total.value = Main.startPlay + 1
-        BaseList.value = Main.playList.slice(Main.createPlay + 1)
+        BaseList.value = playList.value.slice(createPlay.value + 1)
     }
     totalPage.value = Math.ceil(total.value / 20)
     changePage()
 
 }
+const init = async() =>{
+    if($route.query.id == BasicApi.profile!.userId){
+        personalMessage.name = BasicApi.profile!.nickname
+        personalMessage.avatarUrl = BasicApi.profile!.avatarUrl
+        personalMessage.fans = BasicApi.profile!.followeds 
+        personalMessage.like = BasicApi.profile!.follows
+        personalMessage.follow = BasicApi.profile!.eventCount
+        personalMessage.describe = BasicApi.profile!.signature
+        createPlay.value = Main.createPlay
+        playList.value = Main.playList
+    }else{
+        const p1 = BasicApi.reqDetail($route.query.id!)
+        const p2 = Main.reqUserPlaylist($route.query.id!+'')
+        let results = await Promise.all([p1,p2])
+        personalMessage.name = results[0].data.profile!.nickname
+        personalMessage.avatarUrl = results[0].data.profile!.avatarUrl
+        personalMessage.fans = results[0].data.profile!.followeds 
+        personalMessage.like = results[0].data.profile!.follows
+        personalMessage.follow = results[0].data.profile!.eventCount
+        personalMessage.describe = results[0].data.profile!.signature
+        createPlay.value = results[0].data.profile!.playlistCount  - 1
+        playList.value = results[1].data.playlist
+        console.log(playList.value);
+    }
+}
+await init()
+
+
+
 for(let i = 0 ;i<TagList.value.length;i++){
     if(TagList.value[i]==true)changeTag(i,false)
 }
 
-if($route.query.id == BasicApi.profile!.userId){
-    // personalMessage.MyplayList= BaseList.value.slice(0,19)
-    // personalMessage.MyplayList.unshift({
-    //     coverImgUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305041345401.png',
-    //     id:-5,
-    //     name:'我的听歌排行',
-    //     creator:{
-    //         id:$route.query.id,
-    //         name:BasicApi.profile!.nickname
-    //     }
-    // })
-    personalMessage.name = BasicApi.profile!.nickname
-    personalMessage.avatarUrl = BasicApi.profile!.avatarUrl
-    personalMessage.fans = BasicApi.profile!.followeds 
-    personalMessage.like = BasicApi.profile!.follows
-    personalMessage.follow = BasicApi.profile!.eventCount
-    personalMessage.describe = BasicApi.profile!.signature
-    // total.value = Main.createPlay + 1
-    // totalPage.value = Math.ceil(total.value / 20)
-}
 // Main.createPlay + 1
 watch(nowPage,()=>{
     changePage()
 })
 const playAll = async (id)=>{
     if(id == -5){
-        const result = await Main.reqUserRecord(BasicApi.profile!.userId,1);
+        const result = await Main.reqUserRecord(+$route.query.id!,1);
         console.log(result);
         const songList = result.map(item=>item.song)
         console.log(result,songList);
@@ -320,13 +343,19 @@ const go = ({id,index,uid})=>{
                 }
             })
         }else{
-
+            $router.push({
+                name:'songPlaylist',
+                query:{
+                    id,my:'false',index,type:'歌单'
+                }
+            })
         }
     }else{
         $router.push({
             name:'PersonalRecord',
             query:{
-                id:$route.query.id
+                id:$route.query.id,
+                name:personalMessage.name
             }
         })
     }
@@ -344,6 +373,14 @@ const editorPersonal = ()=>{
         name:'editPersonal'
     })
 }
+
+$router.afterEach(async(to, from, failure) => {
+    if(to.query.id != from.query.id && to.name == from.name){
+        await init()
+        changeTag(0,true)
+        globalVar.scrollToTop = true
+    }
+})
 
 </script>
 
@@ -396,6 +433,28 @@ const editorPersonal = ()=>{
                     &:hover{
                         color: @font-color-hover;
                         background-color:@left-click-color;
+                    }
+                }
+                .btns{
+                    height: 30px;
+                    display: flex;
+                    user-select: none;
+                    >div{
+                        border: 1px solid @split-line-color;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 2em;
+                        padding: 10px;
+                        margin-right: 10px;
+                        cursor: pointer;
+                        i{
+                            padding-right: 5px;
+                        }
+                        &:hover{
+                            color: @font-color-hover;
+                            background-color:@left-click-color;
+                        }
                     }
                 }
             }

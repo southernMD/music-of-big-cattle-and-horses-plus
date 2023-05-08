@@ -31,7 +31,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useMain,useGlobalVar } from '@renderer/store'
+import { useMain,useGlobalVar, useBasicApi } from '@renderer/store'
+import Main from 'electron/main';
 import { toRef, watch, ref, getCurrentInstance,ComponentInternalInstance } from 'vue';
 // import $route from '@/router'
 import { useRouter,useRoute } from 'vue-router';
@@ -39,8 +40,7 @@ const $router = useRouter();
 const $route = useRoute();
 const MainPinia = useMain();
 const globalVar = useGlobalVar();
-const $el = getCurrentInstance() as ComponentInternalInstance;
-defineProps<{
+const props = defineProps<{
     message: string   //标题信息
     big:boolean         //点击是否放大
     privacy?:number     //0 或 10 10为隐私歌单
@@ -57,8 +57,8 @@ let bottomColorFlag = ref(false)
 
 const overMouse = (e:MouseEvent)=>{
     if(MainPinia.dragMouse == true && MainPinia.dragType.startsWith('playList') 
-    && $el.props.name == undefined && $el.props.index != 0 && MainPinia.dragIndex != $el.props.index
-    && (MainPinia.dragIndex <= MainPinia.createPlay? Number($el.props.index) <=MainPinia.createPlay: Number($el.props.index) >MainPinia.createPlay)
+    && props.name == undefined && props.index != 0 && MainPinia.dragIndex != props.index
+    && (MainPinia.dragIndex <= MainPinia.createPlay? Number(props.index) <=MainPinia.createPlay: Number(props.index) >MainPinia.createPlay)
     ){
         if(e.offsetY >=20){
         bottomColorFlag.value = true
@@ -77,20 +77,20 @@ const outMouse = (e:MouseEvent)=>{
 }
 
 const moveingPlayList = (e:MouseEvent)=>{
-    if(Number($el.props.index) <= MainPinia.createPlay){
+    if(Number(props.index) <= MainPinia.createPlay){
         MainPinia.dragMouse = true
         MainPinia.dragType = 'playListMy'
-        MainPinia.dragIndex = Number($el.props.index)
+        MainPinia.dragIndex = Number(props.index)
         MainPinia.pageY = e.pageY
-        MainPinia.dragMessage = $el.props.message as string
-        dragId.value = $el.props.id as number
+        MainPinia.dragMessage = props.message as string
+        dragId.value = props.id as number
     }else{
         MainPinia.dragMouse = true
         MainPinia.dragType = 'playList'
-        MainPinia.dragIndex = Number($el.props.index)
+        MainPinia.dragIndex = Number(props.index)
         MainPinia.pageY = e.pageY
-        MainPinia.dragMessage = $el.props.message as string
-        dragId.value = $el.props.id as number
+        MainPinia.dragMessage = props.message as string
+        dragId.value = props.id as number
     }
 }
 
@@ -124,36 +124,40 @@ const movePlayListBegin = ()=>{
 let clickFlag = ref(false)
 const go = async () => {
     console.log('触发go事件');
-    console.log($el.props.name,'&^$&*%^(*&)*(&*&*^&%&*())');
+    console.log(props.name,'&^$&*%^(*&)*(&*&*^&%&*())');
     clickFlag.value = true;
-    if(!localStorage.getItem('cookieUser') && !$el.props.name){
+    if(!localStorage.getItem('cookieUser') && !props.name){
         globalVar.flagLogin = true
     }
-    if($el.props.id){
-        let id = $el.props.id as number
+    if(props.id){
+        let id = props.id as number
         $router.push({
             name:'songPlaylist',
             query:{
-                id,index:$el.props.index as number,my:'true',type:'歌单'
+                id,
+                index:props.index as number,
+                my:MainPinia.playList[props.index!].creator.userId 
+                == useBasicApi().profile!.userId?'true':'false',
+                type:'歌单'
             }
         })
-        console.log($el.props.index);
+        console.log(props.index);
         
-        if(Number($el.props.index) <= MainPinia.createPlay) MainPinia.isMyCreate = true
+        if(Number(props.index) <= MainPinia.createPlay) MainPinia.isMyCreate = true
         else MainPinia.isMyCreate = false
-    }else if($el.props.name){
-        if($el.props.name == 'findMusic'){
+    }else if(props.name){
+        if(props.name == 'findMusic'){
             $router.push({
-                path:`/app/${$el.props.name}/find1`,
+                path:`/app/${props.name}/find1`,
                 query:{
-                    name:`${$el.props.name}`
+                    name:`${props.name}`
                 }
             })
         }else{
             $router.push({
-                name:`${$el.props.name}`,
+                name:`${props.name}`,
                 query:{
-                    name:`${$el.props.name}`
+                    name:`${props.name}`
                 }
             })
         }

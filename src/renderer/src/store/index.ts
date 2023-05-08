@@ -23,8 +23,11 @@ import {
     artistAlbum,
     artistDesc,
     artistSublist,
-    simiartist
+    simiartist,
+    albumSublist
 } from '../api/index';
+import { AxiosResponse } from 'axios';
+import {cloneDeep} from 'lodash'
 interface E {
     ifToCloseWindow: boolean,
     lrcArry: any
@@ -82,6 +85,7 @@ interface S {
     startDjArr: Array<any>
     createDjArr: Array<any>
     startSongHand: Array<any>
+    startalbum:Array<any>
     tagsDetail:{
         sub:any[],
         categories:any[]
@@ -100,6 +104,7 @@ export const useBasicApi = defineStore('BaseApi', {
             startDjArr: [],
             createDjArr: [],
             startSongHand:[],
+            startalbum:[],
             tagsDetail:{
                 sub:[],
                 categories:[]
@@ -132,16 +137,16 @@ export const useBasicApi = defineStore('BaseApi', {
         async reqLogin(cookie: string) {
             let result = await Login(cookie as string);
             this.account = result.data.data.account
-            let result2: any = await this.reqDetail()
+            let result2: any = await this.reqDetail(this.account?.id)
             this.profile = result2.data.profile
             return new Promise((resolve) => {
                 resolve(this.account)
             })
         },
         //获取详细信息
-        async reqDetail() {
-            let result = await getDetail(this.account?.id);
-            return new Promise((resolve) => {
+        async reqDetail(id) {
+            let result = await getDetail(id);
+            return new Promise<AxiosResponse>((resolve) => {
                 resolve(result)
             })
         },
@@ -250,10 +255,15 @@ export const useBasicApi = defineStore('BaseApi', {
                 })
             }
         },
-        //我的收藏
+        //我的收藏歌手
         async reqartistSublist(){
             let result = await artistSublist()
             this.startSongHand = result.data.data
+        },
+        //我的收藏专辑
+        async reqalbumSublist(){
+            let result = await albumSublist()
+            this.startalbum = result.data.data
         }
     }
 })
@@ -398,7 +408,7 @@ export const useMain = defineStore('Main', {
         //获取用户创建歌单以及用户收藏歌单
         async reqUserPlaylist(uid: string) {
             let result = await UserPlaylist(uid);
-            if (result.data.code == 200) {
+            if (result.data.code == 200 && uid == useBasicApi()!.profile!.userId) {
                 this.playList = result.data.playlist.map((item,index)=>{
                     item['index'] = index
                     return item 
@@ -407,7 +417,7 @@ export const useMain = defineStore('Main', {
                     this.playListId.push(element.id)
                 })
             }
-            return new Promise((resolve) => {
+            return new Promise<AxiosResponse>((resolve) => {
                 resolve(result)
             })
         },
@@ -418,11 +428,34 @@ export const useMain = defineStore('Main', {
                 resolve(result)
             })
         },
+        async reqRecursion(id, limit, offset, res) {
+            let result = await playlistTrackAll(id, limit, offset);
+            console.log(res, limit, offset);
+            if (result.data.code === 200) {
+              res.data.songs.push(...result.data.songs);
+              res.data.privileges.push(...result.data.privileges);
+              offset += limit;
+              if (result.data.songs.length != 0) {
+                return await this.reqRecursion(id, limit, offset, cloneDeep(res));
+              } else {
+                console.log(res);
+                return res;
+              }
+            } else {
+              console.log(res);
+              return res;
+            }
+        },
         //获取歌单全部的歌曲
         async reqPlaylistTrackAll(id: number | string, limit?: string | number, offset?: string | number): Promise<any> {
             console.log(id, limit, offset);
-            let result = await playlistTrackAll(id, limit, offset);
-            console.log(result);
+            let result
+            if(limit == undefined && offset == undefined){
+                result = await this.reqRecursion(id, 1000, 0, {data:{songs:[],privileges:[],code:200}})
+                console.log(result);
+            }else{
+                result = await playlistTrackAll(id, limit, offset);
+            }
 
             if (result.data.code == 200) {
                 return new Promise((resolve) => {
@@ -904,7 +937,7 @@ export const useMain = defineStore('Main', {
                 })
             }else{
                 return new Promise<any[]>((resolve, reject) => {
-                    resolve(result.data.allData ?? result.data.weekData)
+                    resolve(result.data.allData ?? result.data.weekData ?? [])
                 })
             }
         },

@@ -10,9 +10,9 @@
                     <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true'" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
                 </div>
                 <div class="author" v-if="route.query.type == '歌单'">
-                    <el-image fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl">
+                    <el-image @click="goPersonal" fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl">
                     </el-image>
-                    <span class="author-name"
+                    <span @click="goPersonal" class="author-name"
                         :class="{ noDrag: !Main.dragMouse, 'author-name-oneself': globalVar.oneself == 1 }">{{
                             playList[index]?.creator?.nickname }}</span>
                     <span class="createtime" :class="{ 'createtime-oneself': globalVar.oneself == 1 }">{{
@@ -73,7 +73,7 @@
                     </div>
                 </div>
                 <div class="small" v-if="route.query.type == '歌单'">
-                    <div class="tags" v-show="index!=0">
+                    <div class="tags" v-show="index!=0" >
                         <span class="title">标签&nbsp;:&nbsp;</span>
                         <span class="add" v-if="tags.length === 0 && isMy == 'true'"
                             :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }" @click="add">添加标签</span>
@@ -351,6 +351,7 @@ const alsongs = ref([])
 watch(routeQuery, async () => {
     let Rn = route.name as string
     isMy.value = route.query.my as string || 'true'
+    console.log(isMy.value);
     if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
         nextTick(() => {
             //样式修改
@@ -660,6 +661,15 @@ const goSongHand = (id)=>{
     }
 
 }
+
+const goPersonal = ()=>{
+    router.push({
+        name:'PersonalCenter',
+        query:{
+            id:playList.value[index.value]?.creator?.userId
+        }
+    })
+}
 </script>
 
 <style lang="less" scoped>
@@ -744,6 +754,7 @@ const goSongHand = (id)=>{
                 :deep(.el-image) {
                     border-radius: 50%;
                     margin-right: 10px;
+                    cursor: pointer;
                 }
 
                 .author-name {

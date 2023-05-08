@@ -1358,7 +1358,7 @@ watch(playStatus,()=>{
 
 //历史播放
 watch(SongUrl,()=>{
-    if(playingList.value.length > 100)playingList.value.length = 100
+    if(Main.latelyPlay.length > 100)Main.latelyPlay.length = 100
     const t = playingList.value[playingindex.value - 1]
     t['privilege'] = Main.playingPrivileges[playingindex.value - 1]
     if(!t['privilege'])t['privilege'] = playingList.value[playingindex.value - 1].privilege
