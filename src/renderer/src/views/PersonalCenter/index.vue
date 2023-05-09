@@ -17,7 +17,7 @@
                         <span>编辑个人信息</span>
                     </div>
                 </div>
-                <div class="btns">
+                <div class="btns" v-if="$route.query.id != BasicApi.profile!.userId">
                     <div>
                         <i class="iconfont icon-xinfeng"></i>
                         <span>发私信</span>
@@ -30,17 +30,17 @@
                 </div>
             </div>
             <div class="numbers">
-                <div class="tip">
+                <div class="tip" @click="goEvents">
                     <div class="number">{{personalMessage.follow}}</div>
                     <div class="txt">动态</div>
                 </div>
                 <div class="line"></div>
-                <div class="tip">
+                <div class="tip" @click="goLike">
                     <div class="number">{{ personalMessage.like }}</div>
                     <div class="txt">关注</div>
                 </div>
                 <div class="line"></div>
-                <div class="tip">
+                <div class="tip" @click="goFans">
                     <div class="number">{{ personalMessage.fans }}</div>
                     <div class="txt">粉丝</div>
                 </div>
@@ -381,6 +381,36 @@ $router.afterEach(async(to, from, failure) => {
         globalVar.scrollToTop = true
     }
 })
+
+const goEvents = ()=>{
+    $router.push({
+        name:'SomeoneEvent',
+        query:{
+            id:$route.query.id,
+            name:personalMessage.name
+        }
+    })
+}
+const goLike = ()=>{
+    $router.push({
+        name:'SomeoneLike',
+        query:{
+            id:$route.query.id,
+            name:personalMessage.name
+        }
+    })
+    
+}
+const goFans = ()=>{
+    $router.push({
+        name:'SomeoneFans',
+        query:{
+            id:$route.query.id,
+            name:personalMessage.name
+        }
+    })
+    
+}
 
 </script>
 

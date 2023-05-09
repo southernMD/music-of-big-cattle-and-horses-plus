@@ -704,3 +704,35 @@ export const albumSublist=()=>{
     })
     
 }
+
+export const userEvents=(id:number,lasttime?:number)=>{
+    const url = lasttime?`/user/event?uid=${id}&lasttime=${lasttime}`:`/user/event?uid=${id}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+    
+}
+
+export const userFollows = (id,limit=30,offset=0)=>{
+    return axios({
+        url:`/user/follows?uid=${id}&limit=${limit}&offset=${offset}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+export const userFolloweds = (id,limit=30,offset=0)=>{
+    return axios({
+        url:`/user/followeds?uid=${id}&limit=${limit}&offset=${offset}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}

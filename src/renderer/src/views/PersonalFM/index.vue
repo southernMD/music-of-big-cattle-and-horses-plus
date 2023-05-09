@@ -287,6 +287,7 @@ let totalPage = ref(0)
 let nowPage = ref(1);
 let moreHot = ref(false)
 watch(playingId, async () => {
+    if(playingId.value == -1)return 
     commentFlag.value = false
     let result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
     console.log(result, '******&&&&&&&&');

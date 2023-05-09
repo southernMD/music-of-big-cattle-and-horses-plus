@@ -34,7 +34,7 @@ export const Timeago2 = (timestamp:number)=>{
     return format(targetTime.valueOf(), 'zh_CN');
   } else if (now.isSame(targetTime.add(1, 'day'), 'day')) {
     return targetTime.format('昨天 HH:mm');
-  } else if(now.diff(targetTime, 'year') < 1){
+  } else if(now.year() === targetTime.year()){
     return targetTime.format('MM月DD日 HH:mm');
   }else{
     return targetTime.format('YYYY年MM月DD日 HH:mm');

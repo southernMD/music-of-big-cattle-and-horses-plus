@@ -32,17 +32,17 @@
                         </div>
                     </div>
                     <div class="numbers">
-                        <div class="tip">
+                        <div class="tip" @click="goEvents">
                             <div class="number">{{ BasicApi.profile?.eventCount }}</div>
                             <div class="txt">动态</div>
                         </div>
                         <div class="line"></div>
-                        <div class="tip">
+                        <div class="tip" @click="goLike">
                             <div class="number">{{ BasicApi.profile?.follows }}</div>
                             <div class="txt">关注</div>
                         </div>
                         <div class="line"></div>
-                        <div class="tip">
+                        <div class="tip" @click="goFans">
                             <div class="number">{{ BasicApi.profile?.followeds }}</div>
                             <div class="txt">粉丝</div>
                         </div>
@@ -360,6 +360,35 @@ const goPersonal = ()=>{
         }
     })
 }
+const goEvents = ()=>{
+    $router.push({
+        name:'SomeoneEvent',
+        query:{
+            id:BasicApi.profile!.userId,
+            name:BasicApi.profile!.nickname
+        }
+    })
+}
+const goLike = ()=>{
+    $router.push({
+        name:'SomeoneLike',
+        query:{
+            id:BasicApi.profile!.userId,
+            name:BasicApi.profile!.nickname
+        }
+    })
+    
+}
+const goFans = ()=>{
+    $router.push({
+        name:'SomeoneFans',
+        query:{
+            id:BasicApi.profile!.userId,
+            name:BasicApi.profile!.nickname
+        }
+    })
+}
+
 </script>
 
 <style scoped lang="less">

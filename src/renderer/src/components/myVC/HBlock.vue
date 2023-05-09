@@ -1,8 +1,8 @@
 <template>
     <div class="Hblock" :class="{ noDrag: !Main.dragMouse }">
-        <div class="left">
-            <el-image :src="url" style="width: 60px; height: 60px"></el-image>
-            <div :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
+        <div class="left" :class="{ruName:type == 'searchUser'}">
+            <el-image :class="{ru:type == 'searchUser'}" :src="url" style="width: 60px; height: 60px"></el-image>
+            <div class="n" :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
                 <span v-html="Name"></span>
             </div>
         </div>
@@ -46,6 +46,9 @@
         <div class="right startSongHand" v-if="type == 'startSongHand'">
             <div>专辑：{{trackCount}}</div>
         </div>
+        <div class="signature"  v-if="type == 'searchUser'">
+            <div> {{ signature }}</div>
+        </div>
     </div>
 </template>
 
@@ -76,9 +79,11 @@ const props = defineProps<{
     'songHand' |
     'start' | 
     'startal' |
-    'startSongHand'
+    'startSongHand'|
+    'searchUser'
     time?:number
     creators?:any[]
+    signature?:string
 }>()
 const $emit = defineEmits(['playAll','goAr'])
 const playAll = ()=>{
@@ -148,6 +153,17 @@ const goAr = (id)=>{
                 transform: translate(15px, 1px);
             }
 
+        }
+        .ru{
+            :deep(img){
+                border-radius: 50%;
+            }
+        }
+    }
+    .ruName{
+        .n{
+            width: auto;
+            margin-right: 20px;
         }
     }
 
@@ -287,7 +303,21 @@ const goAr = (id)=>{
         font-size: 12px;
         width: 100px;
     }
-
+    .signature{
+        width: 100%;
+        padding-right: 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        font-size: 12px;
+        color: @small-font-color;
+        margin-right: auto;
+        >div{
+            overflow: hidden;
+            text-overflow: ellipsis;
+            align-self: flex-end;
+            text-align:right;
+        }
+    }
     &:hover {
         background-color: @line-color-hover !important;
     }

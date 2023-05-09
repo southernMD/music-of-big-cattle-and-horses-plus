@@ -51,7 +51,7 @@
                             <span>收藏({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span>
                         </div>
                     </div>
-                    <div class="fengxiang h" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
+                    <div class="fengxiang h" v-if="!suoFlag" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
                         <i class="iconfont icon-fenxiang"></i>
                         <div class="txt">
                             <span>分享({{ numberSimp(dynamic?.shareCount) }})</span>
@@ -73,7 +73,7 @@
                     </div>
                 </div>
                 <div class="small" v-if="route.query.type == '歌单'">
-                    <div class="tags" v-show="index!=0" >
+                    <div class="tags" v-show="!(index==0 && isMy == 'true' ) && !(tags.length === 0 && isMy != 'true')" >
                         <span class="title">标签&nbsp;:&nbsp;</span>
                         <span class="add" v-if="tags.length === 0 && isMy == 'true'"
                             :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }" @click="add">添加标签</span>
@@ -92,7 +92,7 @@
                             numberSimp(dynamic?.playCount)
                         }}</span>
                     </div>
-                    <div class="describe" v-show="index!=0">
+                    <div class="describe" v-show="!(index==0 && isMy == 'true')">
                         <span class="title">简介&nbsp;:&nbsp;</span>
                         <span class="add" v-if="!playList[index]?.description && isMy == 'true'"
                             :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }" @click="addDetail">添加简介</span>

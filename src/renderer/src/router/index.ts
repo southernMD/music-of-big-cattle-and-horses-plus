@@ -173,7 +173,7 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path:'follow',
                 name:'follow',
-                component:()=>import('@renderer/views/Follow/index.vue')
+                component:()=>import('@renderer/views/Follow/index.vue'),
             },
             {
                 path:'PersonalCenter',
@@ -189,6 +189,21 @@ const routes: Array<RouteRecordRaw> = [
                 path:'SongHand',
                 name:'SongHand',
                 component:()=>import('@renderer/views/SongHand/index.vue')
+            },
+            {
+                path:'SomeoneEvent',
+                name:'SomeoneEvent',
+                component:()=>import('@renderer/views/SomeoneEvent/index.vue'),
+            },
+            {
+                path:'SomeoneLike',
+                name:'SomeoneLike',
+                component:()=>import('@renderer/views/SomeoneLike/index.vue'),
+            },
+            {
+                path:'SomeoneFans',
+                name:'SomeoneFans',
+                component:()=>import('@renderer/views/SomeoneFans/index.vue'),
             },
             {
                 path: '/404',

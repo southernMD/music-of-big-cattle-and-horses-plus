@@ -24,7 +24,10 @@ import {
     artistDesc,
     artistSublist,
     simiartist,
-    albumSublist
+    albumSublist,
+    userEvents,
+    userFollows,
+    userFolloweds
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
@@ -724,6 +727,7 @@ export const useMain = defineStore('Main', {
             if(type=='10')this.searchNumber = result.data.result.albumCount
             if(type=='1000')this.searchNumber = result.data.result.playlistCount
             if(type=='1006')this.searchNumber = result.data.result.songCount
+            if(type=='1002')this.searchNumber = result.data.result.userprofileCount
             if(this.searchNumber != 0){
                 return new Promise<any>((resolve, reject) => {
                     if(type=='1')resolve(result.data.result.songs)
@@ -731,6 +735,7 @@ export const useMain = defineStore('Main', {
                     if(type=='10')resolve(result.data.result.albums)
                     if(type=='1000')resolve(result.data.result.playlists)
                     if(type=='1006')resolve(result.data.result.songs)
+                    if(type=='1002')resolve(result.data.result.userprofiles)
                 })
             }else{
                 return new Promise<any>((resolve, reject) => {
@@ -1022,6 +1027,45 @@ export const useMain = defineStore('Main', {
             } else {
                 alert('error')
                 console.log(result);
+            }
+        },
+        //用户动态
+        async requserEvents(id:number,lasttime?:number){
+            let result = await userEvents(id,lasttime)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve([])
+                })
+            }
+        },
+        //用户关注
+        async requserFollows(id,limit,offser){
+            let result = await userFollows(id,limit,offser)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve([])
+                })
+            }
+        },
+        //用户粉丝
+        async requserFolloweds(id,limit,offser){
+            let result = await userFolloweds(id,limit,offser)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve([])
+                })
             }
         },
         init() {

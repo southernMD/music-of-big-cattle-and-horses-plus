@@ -46,6 +46,7 @@ declare module '@vue/runtime-core' {
     LocationSong: typeof import('./src/components/myVC/LocationSong.vue')['default']
     LoginPage: typeof import('./src/components/LoginPage.vue')['default']
     Main: typeof import('./src/components/Main.vue')['default']
+    MessageCard: typeof import('./src/components/myVC/messageCard.vue')['default']
     MusicRadio: typeof import('./src/components/MusicRadio/index.vue')['default']
     MyDialog: typeof import('./src/components/myVC/MyDialog.vue')['default']
     MyMainMenu: typeof import('./src/components/MyMainMenu/index.vue')['default']

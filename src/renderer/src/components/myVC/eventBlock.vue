@@ -1,18 +1,18 @@
 <template>
   <div class="eventBlock" ref="eventBlock">
-    <img  :src="user.avatarUrl" alt="" fill="cover">
+    <img :src="user.avatarUrl" alt="" fill="cover" @click="goPersonal(user.userId)">
     <div class="msg">
         <div class="top">
-            <div class="name"><span>{{ user.nickname }}</span> <span>{{ typeMap.get(type) }}</span></div>
+            <div class="name" @click="goPersonal(user.userId)"><span>{{ user.nickname }}</span> <span>{{ typeMap.get(type) }}</span></div>
             <div class="time">{{ Timeago2(time) }}</div>
         </div>
-        <div class="msg2" v-show="ifZhuanfu" v-html="RegTxt(msg)" >
+        <div class="msg2" v-show="ifZhuanfu" v-html="RegTxt(msg)" @click="goPersonalX">
         </div>
         <div class="base" ref="base" :class="{zhuanfa:ifZhuanfu}" @click.self="ifZhuanfu?goZhuanFa():()=>{} ">
             <div class="msg2">
-                <span class="name" v-if="ifZhuanfu">@{{ props.val.event.user.nickname }}</span> 
+                <span class="name" @click="goPersonal(val.event.user.userId)" v-if="ifZhuanfu">@{{ props.val.event.user.nickname }}</span> 
                 <span v-if="ifZhuanfu">{{ `${typeMap.get(typeI)}：` }}</span>
-                <span class="txt" v-html="!ifZhuanfu?RegTxt(msg):RegTxt(valI.msg)"></span>
+                <span class="txt" v-html="!ifZhuanfu?RegTxt(msg):RegTxt(valI.msg)" @click="goPersonalX"></span>
             </div>
             <div class="share" @click="shareHandle" v-if="Object.keys(valI).length != 1 && typeI != 35">
                 <div class="bk">
@@ -127,6 +127,7 @@ import { Timeago2 } from '@renderer/utils/dayjs'
 import CommentList from './CommentList.vue'
 import MyDialog from './MyDialog.vue'
 import {throttle} from 'lodash'
+import { useRouter } from 'vue-router'
 // import {regEmoji} from '@/utils/regEmoji'
 const fenxiang = ref(true)
 provide('fenxiang', fenxiang)
@@ -178,23 +179,26 @@ const shareCover = ref('')
 const smallMessage:Ref<string[]> = ref([])
 //是不是转发
 const ifZhuanfu = ref(false)
-
+const shareId = ref()
 const typeChange = ()=>{
     if(typeI.value == 18){
         tagName.value = '歌曲'
         shareTitle.value = valI.value.song.name
         otherMessage.value =valI.value.song.alias.length == 0?'':'('+ valI.value.song.alias.join('、') + ')'
         shareCover.value = valI.value.song.album.picUrl
+        shareId.value = valI.value.song.id
         smallMessage.value = valI.value.song.artists.map(it=>it.name)
     }else if(typeI.value == 13){
         tagName.value = '歌单'
         shareTitle.value = valI.value.playlist.name
         shareCover.value = valI.value.playlist.coverImgUrl
+        shareId.value = valI.value.playlist.id
         smallMessage.value = [`by ${valI.value.playlist.creator.nickname}`]
     }else if(typeI.value == 19){
         tagName.value = '专辑'
         shareCover.value = valI.value.album.picUrl
         shareTitle.value = valI.value.album.name
+        shareId.value = valI.value.album.id
         smallMessage.value = valI.value.album.artists.map(it=>it.name)
     }else if(typeI.value== 56){
         tagName.value = '手机活动'
@@ -218,9 +222,10 @@ const typeChange = ()=>{
         typeChange()
     }else if(typeI.value== 28 || typeI.value==17){
         tagName.value = '电台'
-        shareCover.value = valI.value.program.coverUrl
-        shareTitle.value = valI.value.program.name
-        smallMessage.value = [valI.value.program.radio.name]
+        console.log(msg.value);
+        shareCover.value = valI.value.program?.coverUrl
+        shareTitle.value = valI.value.program?.name
+        smallMessage.value = [valI.value.program?.radio?.name]
     }
 }
 
@@ -438,13 +443,25 @@ const shareHandle = async()=>{
         Main.playingList.splice(index, 0, result.songs[0])
         Main.playingPrivileges.splice(index, 0, result.privileges[0])
         Main.playingindex = index + 1
-        Main.playing =  valI.value.song.id
+        Main.playing =  shareId.value
         Main.playStatus = 'play'
         Main.songType = 'song'
     }else if(typeI.value == 19){
-        console.log('props');
+        useRouter().push({
+            name:'songPlaylist',
+            query:{
+                id:shareId.value,type:"专辑",my:'false'
+            }
+        })
     }else if(typeI.value == 56){
         window.open(valI.value.resource.webviewUrl, '_blank')
+    }else if(typeI.value == 13){
+        useRouter().push({
+            name:'songPlaylist',
+            query:{
+                id:shareId.value,type:"歌单",my:'false'
+            }
+        })
     }
 }
 const goZhuanFa = ()=>{
@@ -549,6 +566,34 @@ const download = ()=>{
         globalVar.loadMessageDefaultFlag = true
     });
 }
+
+const goPersonal = (id)=>{
+    useRouter().push({
+        name:'PersonalCenter',
+        query:{
+            id
+        }
+    })
+}
+
+const goPersonalX = async(e)=>{
+    if(e.target.tagName === 'A' && e.target.innerText.startsWith('@')){
+        const nickname = (e.target.innerText + '').slice(1)
+        console.log(nickname);
+        try {
+            const userId = (await Main.reqSearch(nickname, '1002', 1, 0))[0].userId
+            console.log(userId);
+            useRouter().push({
+                name:'PersonalCenter',
+                query:{
+                    id:userId
+                }
+            }) 
+        } catch (error) {
+
+        }
+    }
+}
 </script>
 <style scoped lang="less">
     .noDrag{
@@ -567,6 +612,7 @@ const download = ()=>{
             height: 45px;
             border-radius: 50%;
             position: static;
+            cursor: pointer;
         }
         >.msg{
             padding-left: 10px;
@@ -580,6 +626,8 @@ const download = ()=>{
                 .name{
                     display: flex;
                     align-items: center;
+                    cursor: pointer;
+                    user-select: none;
                     &>:first-child{
                         color: @url-color;
                         &:hover{
@@ -683,11 +731,11 @@ const download = ()=>{
 
                 >.imgs{
                     display: flex;
-                    width: 100%;
                     flex-wrap: wrap;
+                    width: 450px;
                     .bk{
-                        width: 120px;
                         height:120px;
+                        width: 120px;
                         margin-right: 15px;
                         margin-bottom: 10px;
                         border-radius: .2em;

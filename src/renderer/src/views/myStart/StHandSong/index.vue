@@ -1,9 +1,9 @@
 <template>
     <div class="StZhuanJi">
         <div class="top">
-            <div class="title">收藏的专辑<span>({{ BasicApi.startalbum.length }})</span></div>
+            <div class="title">收藏的歌手<span>({{ BasicApi.startSongHand.length }})</span></div>
             <div class="search">
-                <input type="text" v-model="searchKey" :placeholder="`搜索收藏专辑`" @keydown.stop>
+                <input type="text" v-model="searchKey" :placeholder="`搜索收藏歌手`" @keydown.stop>
                 <i class="iconfont icon-search" v-if="!searchKey"></i>
                 <i class="iconfont icon-guanbi_o" v-else @click="clearSearch" :class="{ noDrag: !Main.dragMouse }"></i>
             </div>

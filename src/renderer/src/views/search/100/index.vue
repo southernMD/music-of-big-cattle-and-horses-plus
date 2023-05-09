@@ -31,7 +31,7 @@ const total = toRef(Main, 'searchNumber')
 const totalPage = ref(Math.ceil(total.value / 20))
 const nowPage = ref(1)
 watch(total,()=>{
-    totalPage.value = Math.ceil(total.value / 30)
+    totalPage.value = Math.ceil(total.value / 20)
 })
 watch(nowPage,async()=>{
     if(!list.value.has(nowPage.value)){

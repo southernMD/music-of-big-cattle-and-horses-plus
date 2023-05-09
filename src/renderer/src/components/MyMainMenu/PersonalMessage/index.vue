@@ -1,15 +1,15 @@
 <template>
     <div class="bk" @dblclick.stop  id="bkUserMessage" ref="bk">
         <div class="top">
-            <div class="dongtai">
+            <div class="dongtai" @click="goEvents">
                 <div class="number">{{ BasicApi.profile?.eventCount }}</div>
                 <div class="txt">动态</div>
             </div>
-            <div class="guanzhu">
+            <div class="guanzhu" @click="goLike">
                 <div class="number">{{ BasicApi.profile?.follows }}</div>
                 <div class="txt">关注</div>
             </div>
-            <div class="fans">
+            <div class="fans" @click="goFans">
                 <div class="number">{{ BasicApi.profile?.followeds }}</div>
                 <div class="txt">粉丝</div>
             </div>
@@ -142,6 +142,38 @@ const quitLogin = async()=>{
 const editorPersonal = ()=>{
     $router.push({
         name:'editPersonal'
+    })
+    destroyVC()
+}
+
+const goEvents = ()=>{
+    $router.push({
+        name:'SomeoneEvent',
+        query:{
+            id:BasicApi.profile!.userId,
+            name:BasicApi.profile!.nickname
+        }
+    })
+    destroyVC()
+}
+const goLike = ()=>{
+    $router.push({
+        name:'SomeoneLike',
+        query:{
+            id:BasicApi.profile!.userId,
+            name:BasicApi.profile!.nickname
+        }
+    })
+    destroyVC()
+    
+}
+const goFans = ()=>{
+    $router.push({
+        name:'SomeoneFans',
+        query:{
+            id:BasicApi.profile!.userId,
+            name:BasicApi.profile!.nickname
+        }
     })
     destroyVC()
 }
