@@ -23,7 +23,10 @@
                         </template>
                     </el-image >
                     <div class="t">
-                        <div class="title"><span class="tag">{{ tagName }}</span>{{shareTitle}}<span>{{ otherMessage }}</span></div>
+                        <div class="title">
+                            <span class="tag">{{ tagName }}</span>
+                            {{shareTitle}}
+                            <span class="otherms">{{ otherMessage }}</span></div>
                         <div class="other">
                             <span v-for="it,index in smallMessage">
                                 {{ it }}
@@ -692,18 +695,29 @@ const goPersonalX = async(e)=>{
                             width: 40px;
                             height: 40px;
                             :deep(img){
+                                width: 40px;
+                                height: 40px;
                                 border-radius: .2em;
                             }
                         }
                     }
                     .t{
+                        width: calc(100% - 60px);
                         display: flex;
                         justify-content: center;
                         flex-direction: column;
+                        flex-wrap: nowrap;
                         .title{
                             font-size: 13px;
                             >span{
                                 color: @small-font-color;
+                                display: inline-block;
+                            }
+                            .otherms{
+                                width: 50%;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
                             }
                             >.tag{
                                 color: @primary-color;
