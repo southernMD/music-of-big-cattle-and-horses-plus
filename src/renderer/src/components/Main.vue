@@ -306,7 +306,7 @@ const showPlay = () => {
   playlistFlag.value = !playlistFlag.value
 }
 
-const addPlayFlag = ref(false)
+const addPlayFlag = toRef(globalVar,'addPlayFlag')
 const yinsi = ref(false)
 const playListName = ref('')
 const addPlay = () => {
@@ -319,10 +319,22 @@ const createPlayList = async()=>{
   addPlayFlag.value = false
   const result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
   if(result.id){
-    globalVar.loadDefault = false
-    globalVar.loadMessageDefault = '创建歌单成功'
-    globalVar.loadMessageDefaultFlag = true
+    if(globalVar.addPlayId == -1){
+      globalVar.loadDefault = false
+      globalVar.loadMessageDefault = '创建歌单成功'
+      globalVar.loadMessageDefaultFlag = true
+    }
     Main.playList.splice(1,0,result)
+    if(globalVar.addPlayId != -1){
+        let result2 = (await Main.reqPlaylistTracks('add',result.id,Main.playing)).data
+        globalVar.loadDefault = false
+        if (result2.body.code == 200) {
+          globalVar.loadMessageDefault = '已收藏到歌单'
+          globalVar.loadMessageDefaultFlag = true 
+          Main.playList[1].trackCount += 1
+        }
+      globalVar.addPlayId = -1
+    }
   }else{
     globalVar.loadDefault = false
     globalVar.loadMessageDefaultFlag = true
@@ -388,7 +400,7 @@ watch(()=>globalVar.changeMainScroll,()=>{
 
 <style lang="less" scoped>
 .red-line{
-  border-top: 2px solid #b72525;
+  border-top: 2px solid #b72525 !important;
 }
 .noDrag {
   cursor: pointer;
@@ -406,7 +418,7 @@ watch(()=>globalVar.changeMainScroll,()=>{
   left: 0px;
   display: flex;
   color: @font-color;
-
+  border-top: 2px solid transparent;
   aside {
     width: 200px;
     min-height: calc(100vh - 60px - 70px);

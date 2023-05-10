@@ -387,6 +387,7 @@ watchEffect(()=>{
     }
 })
 const gotoDowload = ()=>{
+    Main.detailStatus = 'close'
     if(downloadId.value.length != 0 && loadingIcon.value == true){  //在下
         console.log('zai');
         $router.push({

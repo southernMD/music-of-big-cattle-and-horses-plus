@@ -5,7 +5,7 @@
             <slot name="header"></slot>
         </template>
         <slot name="midle"></slot>
-        <template #footer>
+        <template #footer v-if="button">
             <el-button @click="confirm" class="go">{{ confirmName }}</el-button>
             <el-button type="primary" @click="cancel" class="fa">{{ cancelName }}</el-button>
         </template>
@@ -30,6 +30,10 @@ const props = defineProps({
     destroy:{
         type: Boolean,
         default:false
+    },
+    button:{
+        type: Boolean,
+        default:true
     }
 })
 

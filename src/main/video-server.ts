@@ -19,10 +19,10 @@ export default async(window:BrowserWindow) =>{
             pathSrc = '../../../app.asar.unpacked/resources/background.mp4'
             ffmpeg.setFfmpegPath(join(__dirname,'../../../app.asar.unpacked/node_modules/@ffmpeg-installer/win32-x64/ffmpeg.exe'));
           }
-        if (ffmpegCommand !== null) {
-            ffmpegCommand.kill();
-            ffmpegCommand = null;
-        }
+        // if (ffmpegCommand !== null) {
+        //     ffmpegCommand.kill();
+        //     ffmpegCommand = null;
+        // }
         let total = '0'
         ffmpegCommand = ffmpeg(join(__dirname,pathSrc))
             .input(join(__dirname,pathSrc))
@@ -56,6 +56,9 @@ export default async(window:BrowserWindow) =>{
     const port = await portfinder.getPortPromise({
         port: 2233
     })
+    ipcMain.on('vedio-server-port', (event) => {
+        event.returnValue = port;
+    });
     app.listen(port, () => {
         console.log(`http open in ${port}`);
     })

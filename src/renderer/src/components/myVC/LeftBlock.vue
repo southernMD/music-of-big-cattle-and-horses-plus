@@ -24,15 +24,11 @@
         <slot></slot>
         <div>{{ message }}</div>
         <slot name="jump"></slot>
-        <Teleport to="body">
-            <Loading :loading="true" v-if="replaceLoading" width="20" tra="10"></Loading>
-        </Teleport>
     </div>
 </template>
 
 <script lang="ts" setup>
 import { useMain,useGlobalVar, useBasicApi } from '@renderer/store'
-import Main from 'electron/main';
 import { toRef, watch, ref, getCurrentInstance,ComponentInternalInstance } from 'vue';
 // import $route from '@/router'
 import { useRouter,useRoute } from 'vue-router';
@@ -94,26 +90,39 @@ const moveingPlayList = (e:MouseEvent)=>{
     }
 }
 
-let replaceLoading = ref(false)
 const moveingPlayListEnd = async()=>{
+    MainPinia.dragMouse = false
+    window.removeEventListener('mouseup',moveingPlayListEnd)
+    window.removeEventListener('mousemove',moveingPlayList)
     let dom = document.querySelector('.topColor')
     if(!dom) dom = document.querySelector('.bottomColor')
     if(dom){
+        const copyPlayList = Array.from(MainPinia.playList)
         let addInde = Number(dom.getAttribute('data-index'))
         let del = MainPinia.playListId.splice(MainPinia.dragIndex,1)
         MainPinia.playListId.splice(addInde,0,del[0])
-        del = MainPinia.playList.splice(MainPinia.dragIndex,1)
-        MainPinia.playList.splice(addInde,0,del[0])
-        replaceLoading.value = true
+        del = copyPlayList.splice(MainPinia.dragIndex,1)
+        copyPlayList.splice(addInde,0,del[0])
+        globalVar.loadDefault = true
         await MainPinia.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
-        replaceLoading.value = false
-        go()
+        globalVar.loadDefault = false
+        MainPinia.playList = copyPlayList
+        //你现在浏览的是要拖动的        
+        if($route.query.id == del[0].id){
+            $router.push({
+                name:'songPlaylist',
+                query:{
+                    id:del[0].id,
+                    index:addInde as number,
+                    my:MainPinia.playList[props.index!].creator.userId 
+                    == useBasicApi().profile!.userId?'true':'false',
+                    type:'歌单'
+                }
+            })
+        }
     }
     
-    MainPinia.dragMouse = false
     dragId.value = -1
-    window.removeEventListener('mouseup',moveingPlayListEnd)
-    window.removeEventListener('mousemove',moveingPlayList)
 }
 
 const movePlayListBegin = ()=>{

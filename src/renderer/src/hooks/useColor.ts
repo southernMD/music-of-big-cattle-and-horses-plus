@@ -82,6 +82,8 @@ export default function (): any {
             document.documentElement.style.setProperty('--smallChoiceBlockColorDefault', `rgb(52, 52, 52)`);
             document.documentElement.style.setProperty('--smallChoiceBlockColorHover', `rgb(61, 61, 61)`);
             document.documentElement.style.setProperty('--smallChoiceBlockColorClick', `rgb(95, 95, 95)`);
+            document.documentElement.style.setProperty('--myDialogBk', `rgb(54, 54, 54)`);
+            
             primaryColor.value = `rgb(236,65,65)`
             MainMenu.iconSrc = "/src/assets/icon.png"
             // document.documentElement.style.setProperty('--fontColorHover',`rgb(255,255,255)`);
@@ -155,6 +157,7 @@ export default function (): any {
             document.documentElement.style.setProperty('--smallChoiceBlockColorDefault', `rgb(242, 242, 242)`);
             document.documentElement.style.setProperty('--smallChoiceBlockColorHover', `rgb(231, 231, 231)`);
             document.documentElement.style.setProperty('--smallChoiceBlockColorClick', `rgb(191, 191, 191)`);
+            document.documentElement.style.setProperty('--myDialogBk', `rgb(255, 255, 255)`);
         }
         if (newValue === 'NMred') {
             MainMenu.iconSrc = "/src/assets/icon.png"

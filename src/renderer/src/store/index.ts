@@ -1136,6 +1136,8 @@ interface V {
     musicPick:Map<number,Uint8Array[]>
     searchKey:string
     changeMainScroll:number //修改主右滚动条
+    addPlayFlag:boolean
+    addPlayId:number
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1168,7 +1170,9 @@ export const useGlobalVar = defineStore('globalVar', {
             initDownloadButton: false,
             musicPick:new Map(),
             searchKey:'',
-            changeMainScroll:0
+            changeMainScroll:0,
+            addPlayFlag:false,
+            addPlayId:-1
         }
     },
     actions:{

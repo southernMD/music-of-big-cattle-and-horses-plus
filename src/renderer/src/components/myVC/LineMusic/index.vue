@@ -71,14 +71,6 @@
                 <div>{{ count }}次</div>
             </div>
         </div>
-
-        <Loading :loading="true" v-if="addLoading" width="50" tra="10"></Loading>
-        <Loading :loading="false" v-if="addLoadingMessage" size="16" width="140" @close="addLoadingMessage = false"
-            :showTime="1500" :message="'已收藏到歌单'"></Loading>
-        <Teleport to="body">
-            <Loading :loading="false" v-if="loadingFlag" @close="loadingFlag = false" :showTime="1500"
-                :message="likeMessage"></Loading>
-        </Teleport>
         <div class="lrc">
             <slot name="lrc"></slot>
         </div>
@@ -157,7 +149,6 @@ window.electron.ipcRenderer.on('save-music-finished', ({ }, which) => {
 
 //喜欢和取消喜欢
 let likeMessage = ref('')
-let loadingFlag = ref(false)
 const likeOrDislike = async () => {
     let likeIndex = Main.likes.indexOf(props.id)
     if (likeIndex != -1) {
@@ -165,10 +156,12 @@ const likeOrDislike = async () => {
         let code = (await Main.reqLike(Number(props.id), false)).data.code
         if (code == 405) {
             likeMessage.value = '操作繁忙，请稍后再试'
-            loadingFlag.value = true
+            globalVar.loadMessageDefault = likeMessage.value
+            globalVar.loadMessageDefaultFlag = true
         } else {
             likeMessage.value = '取消喜欢成功'
-            loadingFlag.value = true
+            globalVar.loadMessageDefault = likeMessage.value
+            globalVar.loadMessageDefaultFlag = true
             Main.likes.splice(likeIndex, 1)
             Main.likeChange = `${props.id},false`
         }
@@ -177,10 +170,12 @@ const likeOrDislike = async () => {
         let code = (await Main.reqLike(Number(props.id), true)).data.code
         if (code == 405) {
             likeMessage.value = '操作繁忙，请稍后再试'
-            loadingFlag.value = true
+            globalVar.loadMessageDefault = likeMessage.value
+            globalVar.loadMessageDefaultFlag = true
         } else {
             likeMessage.value = '已添加到我喜欢的音乐'
-            loadingFlag.value = true
+            globalVar.loadMessageDefault = likeMessage.value
+            globalVar.loadMessageDefaultFlag = true
             Main.likes.unshift(props.id)
             Main.likeChange = `${props.id},true`
         }
@@ -210,22 +205,40 @@ const replaceLocationed = () => {
     }
 }
 
-let addLoading = ref(false)
-let addLoadingMessage = ref(false)
 const $emit = defineEmits(['warpPlace', 'localPlay','recordPlay','shorPlayList'])
 const fnMouseDrag = async (e: any) => {
+    Main.dragMouse = false
+    window.removeEventListener('mouseup', fnMouseDrag)
+    window.removeEventListener('mousemove', fnMouseDragMoving)
     for (let i = 0; i < e.path.length; i++) {
         if (e.path[i].classList != undefined && e.path[i].classList.contains('dragMouseStyleAdd')) {
             let dom = e.path[i] as HTMLElement
             if (String(playListid.value) != String(dom.getAttribute('data-id')) && Number(dom.getAttribute('data-index')) <= Main.createPlay) {
-                addLoading.value = true
-                Main.dragMouse = false
-                let result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), Number(props.id))).data
-                addLoading.value = false
-                if (result.body.code == 200) {
-                    addLoadingMessage.value = true
-                    let index = Number(dom.getAttribute('data-index'))
-                    Main.playList[index].trackCount += 1
+                if(Number(dom.getAttribute('data-index')) == 0){
+                    Main.dragMouse = false
+                    let code = (await Main.reqLike(Number(props.id), true)).data.code
+                    if (code == 405) {
+                        likeMessage.value = '操作繁忙，请稍后再试'
+                        globalVar.loadMessageDefault = likeMessage.value
+                        globalVar.loadMessageDefaultFlag = true
+                    } else {
+                        likeMessage.value = '已添加到我喜欢的音乐'
+                        globalVar.loadMessageDefault = likeMessage.value
+                        globalVar.loadMessageDefaultFlag = true
+                        Main.likes.unshift(props.id)
+                        Main.likeChange = `${props.id},true`
+                    }
+                }else{
+                    Main.dragMouse = false
+                    globalVar.loadDefault = true
+                    let result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), Number(props.id))).data
+                    globalVar.loadDefault = false
+                    if (result.body.code == 200) {
+                        globalVar.loadMessageDefault = '已收藏到歌单'
+                        globalVar.loadMessageDefaultFlag = true 
+                        let index = Number(dom.getAttribute('data-index'))
+                        Main.playList[index].trackCount += 1
+                    }
                 }
             }
             break;
@@ -257,11 +270,9 @@ const fnMouseDrag = async (e: any) => {
 
     }
 
-    Main.dragMouse = false
     topColorid.value = -1
     dragId.value = -1
-    window.removeEventListener('mouseup', fnMouseDrag)
-    window.removeEventListener('mousemove', fnMouseDragMoving)
+
 }
 
 let dragId = ref(-1)

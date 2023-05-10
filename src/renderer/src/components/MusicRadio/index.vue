@@ -55,7 +55,7 @@
                             <i v-if="likeFlag" class="iconfont icon-aixin"></i>
                             <i v-else class="iconfont icon-aixin_fill"></i>
                         </div>
-                        <div class="todo" v-for="({}, index) in 3" :class="{ noDrag: !Main.dragMouse }">
+                        <div class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
                             <i class="iconfont" :class="[leftIcon[index + 1]]"></i>
                         </div>
                     </div>
@@ -154,10 +154,48 @@
         <SongDetail :currentTime="currentTime" :lyricOffset="lyricOffset" :simiSong="simiSong" :simiPlaylist="simiPlaylist"
             @goTotime="goTotime"></SongDetail>
     </transition>
-    <Teleport to="body">
-        <Loading :loading="false" v-if="loadingFlag" @close="loadingFlag = false" :showTime="1500" :message="likeMessage">
-        </Loading>
-    </Teleport>
+    <div class="MyDialog">
+        <MyDialog :button="false" :flag="startDialogFlag" @closeDialog="closeDialog">
+            <template #header>
+                <div class="title">
+                    收藏到歌单
+                </div>
+            </template>
+            <template #midle>
+                <div class="add" @click="create">
+                    <div class="pic">
+                        <i class="iconfont icon-jiahao_o"></i>
+                    </div>
+                    <div class="msg">新建歌单</div>
+                </div>
+                <el-scrollbar>
+                    <div class="list">
+                        <div class="item" @click="addIn(it.id,index)" v-for="it,index in Main.playList.slice(0, Main.createPlay + 1)">
+                            <el-image :src="it.coverImgUrl"></el-image>
+                            <div class="msg">{{ it.name }}</div>
+                        </div>
+                    </div>
+                </el-scrollbar>
+            </template>
+        </MyDialog>
+    </div>
+    <MyDialog :flag="senddongtaiFlag" @closeDialog="closeDialog" @confirm="confirm" @cancel="cancel" confirmName="分享" cancelName="取消">
+        <template #header>
+            <div class="title">分享到动态</div>
+        </template>
+        <template #midle>
+            <div class="default">
+                <div class="writ">
+                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
+                </div>
+                <div class="show">
+                    <div class="img" ref="imgRef">
+                    </div>
+                    <div class="message">{{choiceMessage}}</div>
+                </div>
+            </div>
+        </template>
+    </MyDialog>
 </template>
 
 <script lang="ts" setup>
@@ -169,15 +207,17 @@ import { dayjsSMMSS } from '@renderer/utils/dayjs';
 import { before, throttle } from 'lodash'
 import { useMain, useGlobalVar, useMainMenu } from '@renderer/store';
 import { rand } from '@renderer/utils/rand';
-import { useRouter } from 'vue-router';
+import { useRouter,useRoute } from 'vue-router';
 import { useElectronToApp } from '@renderer/store/index'
 import PlayListPanel from './playListPanel/index.vue';
 import SongDetail from './songDetail/index.vue';
+import MyDialog from '../myVC/MyDialog.vue';
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const globalVar = useGlobalVar();
 const ElectronToApp = useElectronToApp()
 const $router = useRouter();
+const $route = useRoute();
 let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbofang', 'icon-shunxubofang'])
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
@@ -189,7 +229,6 @@ let playingPrivileges = toRef(Main, 'playingPrivileges')
 let playingId = toRef(Main, 'playing')
 let playingindex = toRef(Main, 'playingindex')
 let likes = toRef(Main, 'likes');
-let likesLength = toRef(Main.likes, 'length')
 let randQueue: Array<number> = [];
 let randIndex = ref(-1);
 
@@ -214,13 +253,13 @@ let playListId = toRef(Main, 'beforePlayListId')
 //喜欢和取消喜欢
 let likeFlag = ref(false)
 //true 是爱心 false 是填充爱心
-watch(likesLength, () => {
+watch(likes, () => {
     if (likes.value.includes(playingId.value)) {
         likeFlag.value = false
     } else {
         likeFlag.value = true
     }
-})
+},{deep:true})
 
 watch(playingId, () => {
     if (likes.value.includes(playingId.value)) {
@@ -230,8 +269,6 @@ watch(playingId, () => {
     }
 })
 
-let likeMessage = ref('')
-let loadingFlag = ref(false)
 const likeOrDislike = () => {
     if(Main.playing < 0) return
     let likeIndex = likes.value.indexOf(playingId.value)
@@ -239,15 +276,15 @@ const likeOrDislike = () => {
         //取消喜欢
         Main.reqLike(Number(playingId.value), false)
         likes.value.splice(likeIndex, 1)
-        likeMessage.value = '取消喜欢成功'
-        loadingFlag.value = true
+        globalVar.loadMessageDefault = '取消喜欢成功'
+        globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},false`
     } else {
         Main.reqLike(Number(playingId.value), true)
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
-        likeMessage.value = '已添加到我喜欢的音乐'
-        loadingFlag.value = true
+        globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
+        globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},true`
     }
 
@@ -1382,6 +1419,123 @@ const goHandSong = (e:MouseEvent)=>{
         })
     }
 }
+
+//操作
+const startDialogFlag = ref(false)
+const imgUrl = ref('')
+const imgRef = ref<InstanceType<typeof HTMLElement>>()
+const todoHandle = (index)=>{
+    if(index == 0){
+        startDialogFlag.value = true
+    }else if(index == 1){
+        download(Main.playing)
+    }else if(index == 2){
+        const ar = Main.playingList[Main.playingindex - 1].ar.map(it=>it.name).join('/')
+        choiceMessage.value = `单曲：${Main.playingList[Main.playingindex - 1].name}-${ar}`
+        imgUrl.value = Main.playingList[Main.playingindex - 1].al.picUrl
+        senddongtaiFlag.value = true
+        nextTick(()=>{
+            imgRef.value!.style.backgroundImage = `url(${imgUrl.value})`
+        })
+    }
+}
+const closeDialog = (done: () => void)=>{
+    done()
+    startDialogFlag.value = false
+}
+
+const addIn = async(id,index)=>{
+    if(index == 0){
+        Main.reqLike(Number(playingId.value), true)
+        console.log(playingId.value);
+        likes.value.unshift(playingId.value)
+        globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
+        globalVar.loadMessageDefaultFlag = true
+        Main.likeChange = `${playingId.value},true`
+    }else{
+        globalVar.loadDefault = true
+        let result = (await Main.reqPlaylistTracks('add',id,Main.playing)).data
+        globalVar.loadDefault = false
+        if (result.body.code == 200) {
+            globalVar.loadMessageDefault = '已收藏到歌单'
+            globalVar.loadMessageDefaultFlag = true 
+            Main.playList[index].trackCount += 1
+            if($route.name == 'songPlaylist' && $route.query.id == id){
+                Main.likeChange = `${id},true`
+            }
+        }
+    }
+    startDialogFlag.value = false
+}
+
+const create = ()=>{
+    globalVar.addPlayFlag = true
+    globalVar.addPlayId = Main.playing
+}
+
+watch(()=>globalVar.addPlayId,()=>{
+    if(globalVar.addPlayId == -1){
+        startDialogFlag.value = false
+    }
+})
+
+const download = async (id: number) => {
+    globalVar.loadDefault = true
+    const result = await Main.reqSongDetail([id])
+    globalVar.loadDefault = false
+    let songName = ''
+    const arList = result.data.songs[0].ar as any[]
+    arList.forEach((el, index) => {
+        songName = songName + el.name
+        if (index != arList.length - 1) songName = songName + ','
+    })
+    songName = songName + ' - ' + result.data.songs[0].name
+    const dl = result.data.privileges[0].dlLevel
+    const pl = result.data.privileges[0].plLevel
+    if (dl == 'none' && pl == 'none') {
+        ElMessage({
+            type: 'error',
+            message: '无可下载资源',
+            duration: 1000
+        })
+    } else {
+        globalVar.downloadFlag = true
+        globalVar.downloadLevel = {
+            play: pl,
+            download: dl,
+            songName,
+            id
+        }
+    }
+}
+
+let zhuanfaMessage = ref('')
+
+const getZhuanfaText = (message:string)=>{
+    zhuanfaMessage.value = message
+}
+const senddongtaiFlag = ref(false)
+const choiceMessage = ref('')
+const confirm = async()=>{
+    senddongtaiFlag.value = false
+    globalVar.loadDefault  = true
+    let result = await Main.reqShareResource('song',Main.playing,zhuanfaMessage.value)
+    globalVar.loadDefault  = false
+    if(result.code == 200){
+        globalVar.loadMessageDefault = '分享成功'
+        globalVar.loadMessageDefaultFlag = true
+    }else{
+        globalVar.loadMessageDefaultType = 'error'
+        globalVar.loadMessageDefault = '分享失败'
+        globalVar.loadMessageDefaultFlag = true
+    }
+    zhuanfaMessage.value = ''
+}
+const WriteCommitRef = ref()
+const cancel = ()=>{
+    senddongtaiFlag.value = false
+    WriteCommitRef.value.textarea = ''
+}
 </script>
 
 <style lang="less" scoped>
@@ -1991,4 +2145,143 @@ const goHandSong = (e:MouseEvent)=>{
 .songDetail-leave-from {
     transform: translateY(0);
 }
+.add{
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    .pic{
+        width: 60px;
+        height: 60px;
+        background-color: @other-bk-color;
+        margin: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        i{
+            font-size: 40px;
+            color: @primary-color;
+        }
+    }
+    .msg{
+        width: calc(100% - 80px - 30px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        user-select: none;
+        color: @font-color;
+        user-select: none;
+    }
+}
+
+.el-scrollbar{
+    width: 100%;
+    padding-right:0 ;    
+    .el-scrollbar__wrap {
+        width: 100%;
+        padding-left: 0;
+        .el-scrollbar__view{
+            width: 100%;
+            padding-left: 0;
+            .list{
+                height:calc(80px * 4) ;
+                width: 100%;
+                padding-left: 0;
+                margin-left: 0;
+                .item{
+                    width: 100%;
+                    height: 80px;
+                    padding-left: 0;
+                    display: flex;
+                    align-items: center;
+                    &:hover{
+                        background-color: @span-color-hover;
+                    }
+                    .el-image{
+                        width: 60px;
+                        height: 60px;
+                        margin: 10px;
+                        border-radius: .2em;
+                        img{
+                            width: 60px;
+                            height: 60px;
+                            border-radius: .2em;
+                        }
+                    }
+                    .msg{
+                        width: calc(100% - 80px - 30px);
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        user-select: none;
+                        color: @font-color;
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+.default{
+    margin-top: -20px;
+    .writ{
+    border: 1px solid @small-font-color;
+    border-radius: .2em;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-sizing: border-box;
+    :deep(.writeCommit){
+        .input-bk{
+            margin-left: 0;
+            margin-right: 2px;
+        }
+    }
+    :deep(.option){
+        margin-left: 10px;
+        margin-top: 0px;
+    }
+    }
+    .show{
+        height: 50px;
+        widows: 90%;
+        border: 1px solid @small-font-color;
+        border-top: none;
+        &:hover{
+            background-color: @flow-hover-color;
+        }
+        display: flex;
+        align-items: center;
+        .img{
+            background-size: cover;
+            height: 30px;
+            width: 30px;
+            margin-left: 10px;
+            margin-right: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: .2em;
+            i{
+                color: white;
+            }
+        }
+        .message{
+            width: 80%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space:nowrap;
+            user-select: none;
+            color: @font-color;
+        }
+        >i{
+            color: @font-color;
+            margin-left: 5px;
+            &:hover{
+                color: @font-color-hover;
+            }
+        }
+    }
+}
+
 </style>

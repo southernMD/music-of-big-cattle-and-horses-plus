@@ -45,10 +45,13 @@ let playListId = toRef(Main, 'playListId')
 
 watch(likeChange, async (newValue, oldValue) => {
     console.log(list.value);
-
+    console.log('likeChange激活');
+    
     if (newValue != ' , ') {
+        let arr = newValue.split(',')
+        console.log(arr[0] == id.value,'231294u0xzzzzzzzzzzzzz');
+        
         if (id.value == playListId.value[0]) {
-            let arr = newValue.split(',')
             //true是增加
             if (arr[1] == 'false') {
                 for (let i = 0; i < list.value.length; i++) {
@@ -62,7 +65,12 @@ watch(likeChange, async (newValue, oldValue) => {
                 }
                 console.log(list.value);
             }
-        } else {
+        } else if(route.name == 'songPlaylist' && arr[0] == id.value) {
+            let song = (await Main.reqSongDetail([+Main.playing])).data.songs[0]
+            list.value.unshift(song)
+            forLength.value++
+            likeChange.value = ' , '
+        }else{
             likeChange.value = ' , '
         }
     }

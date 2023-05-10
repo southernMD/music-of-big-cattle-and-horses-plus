@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage, globalShortcut, Menu} from 'electron'
 import { join,extname, parse, resolve } from 'path'
 import fs from 'fs'
+import exfs from 'fs-extra'
 import os from 'os'
 import icon from '../../build/favicon.ico?asset'
 import prevIcon from '../../build/prev.png?asset'
@@ -60,20 +61,23 @@ export const createWindow = ():BrowserWindow=>{
         let ext = ''
         if(err)console.log(err);
         else{
+          list.forEach((item)=>{
+            if(item.startsWith('background')){
+              console.log(item,ext);
+              if(ext == '' || ext != '' && item.split('.')[1]!='mp4'){
+                ext = item.split('.')[1]
+              }
+            }
+          })
           if(list.some((item)=>{
-            if(item.startsWith('background')) ext = item.split('.')[1]
             return item.startsWith('background')
           })){
             fs.readFile(join(__dirname,basePath,`background.${ext}`),(err,data)=>{
               if(!err){
                 if(!ext.endsWith('mp4')){
-                  setTimeout(()=>{
-                    mainWindow.webContents.send('memory-background',{buffer:data,extname:ext})
-                  },2000)
+                  mainWindow.webContents.send('memory-background',{buffer:data,extname:ext})
                 }else{
-                  setTimeout(()=>{
-                    mainWindow.webContents.send('mp4-ready',{flag:true})
-                  },2000)
+                  mainWindow.webContents.send('mp4-ready',{flag:true})
                 }
               }
             })
@@ -267,23 +271,19 @@ export const createWindow = ():BrowserWindow=>{
             basePath = '../../../app.asar.unpacked/resources'
           }
           const path = join(__dirname,basePath,`background${extname(filePath)}`)
-          let fsL:any[] = []
           const p1 = new Promise((resolve, reject)=>{
             fs.readdir(join(__dirname,basePath),(err,list)=>{
               resolve(list)
             })
           }).then((list:any)=>{
             for(let i=0 ;i<list.length;i++){
+              console.log(list);
               if(list[i].startsWith('background')){
-                fsL.push(new Promise((resolve, reject) => {
-                  fs.unlink(join(__dirname,basePath,list[i]),()=>{
-                    resolve('ok')
-                  })
-                }))
+                exfs.removeSync(join(__dirname,basePath,list[i]))
               }
             }
           })
-          Promise.all([p1,...fsL]).then((value)=>{
+          Promise.all([p1]).then((value)=>{
             let readStream = fs.createReadStream(filePath)
             let writeStream = fs.createWriteStream(path)
             readStream.pipe(writeStream)
