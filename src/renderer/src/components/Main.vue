@@ -121,7 +121,7 @@
         </div>
       </aside>
     </el-scrollbar>
-    <main @mouseover="rightOver" >
+    <main @mouseover="rightOver" id="mainWindow">
       <div class="stopS" v-if="route.path.includes('findMusic') || route.path.includes('download')">
         <header>
           <Tag :class="{'tag-oneself':globalVar.oneself == 1}" v-for="(value,index) in messageList" :message="value" :big="true" :size="16" :ifClick="clickFlag[index]" :name="routeName[index]"
@@ -236,7 +236,6 @@ watch(scrollToTop,()=>{
     })
   }
 })
-
 //滚动到当前播放歌曲
 const scroolToSong = () => {
   let step = 130 + 35 * Main.playingindex

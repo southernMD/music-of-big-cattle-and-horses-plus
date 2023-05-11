@@ -79,12 +79,12 @@ onMounted(()=>{
     reSizePositon();
 })
 
-const getFocus = ()=>{
+const getFocus = (x = 0)=>{
     const textarea = text.value!.$el.querySelector('textarea') as HTMLInputElement
     setTimeout(()=>{
+        textarea.selectionStart = textarea.selectionEnd = x;
         textarea.focus()
     })
-    textarea.setSelectionRange(0,0)
 }
 
 //输入emoji

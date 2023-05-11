@@ -264,18 +264,25 @@ const init = async() =>{
         createPlay.value = Main.createPlay
         playList.value = Main.playList
     }else{
-        const p1 = BasicApi.reqDetail($route.query.id!)
-        const p2 = Main.reqUserPlaylist($route.query.id!+'')
-        let results = await Promise.all([p1,p2])
-        personalMessage.name = results[0].data.profile!.nickname
-        personalMessage.avatarUrl = results[0].data.profile!.avatarUrl
-        personalMessage.fans = results[0].data.profile!.followeds 
-        personalMessage.like = results[0].data.profile!.follows
-        personalMessage.follow = results[0].data.profile!.eventCount
-        personalMessage.describe = results[0].data.profile!.signature
-        createPlay.value = results[0].data.profile!.playlistCount  - 1
-        playList.value = results[1].data.playlist
-        console.log(playList.value);
+        try {
+            const p1 = BasicApi.reqDetail($route.query.id!)
+            const p2 = Main.reqUserPlaylist($route.query.id!+'')
+            let results = await Promise.all([p1,p2])
+            personalMessage.name = results[0].data.profile!.nickname
+            personalMessage.avatarUrl = results[0].data.profile!.avatarUrl
+            personalMessage.fans = results[0].data.profile!.followeds 
+            personalMessage.like = results[0].data.profile!.follows
+            personalMessage.follow = results[0].data.profile!.eventCount
+            personalMessage.describe = results[0].data.profile!.signature
+            createPlay.value = results[0].data.profile!.playlistCount  - 1
+            playList.value = results[1].data.playlist
+            console.log(playList.value);
+        } catch (error) {
+            $router.replace({
+                name:'404'
+            })
+        }
+
     }
 }
 await init()

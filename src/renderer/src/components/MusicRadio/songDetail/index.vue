@@ -305,11 +305,11 @@ watch(playingindex, () => {
       vibrant.getPalette().then((palette) => {
         console.log(palette);
         for (let key of Object.keys(palette)) {
-          if (palette[key].population > maxPopulation) {
-            maxPopulation = palette[key].population
-            hc[0] = palette[key].hsl[0] * 360
-            hc[1] = palette[key].hsl[1] * 100
-            hc[2] = palette[key].hsl[2] * 100
+          if (palette[key]!.population > maxPopulation) {
+            maxPopulation = palette[key]!.population
+            hc[0] = palette[key]!.hsl[0] * 360
+            hc[1] = palette[key]!.hsl[1] * 100
+            hc[2] = palette[key]!.hsl[2] * 100
           }
         }
         console.log(maxPopulation);
@@ -351,11 +351,11 @@ watch(() => MainMenu.colorBlock, () => {
     vibrant.getPalette().then((palette) => {
       console.log(palette);
       for (let key of Object.keys(palette)) {
-        if (palette[key].population > maxPopulation) {
-          maxPopulation = palette[key].population
-          hc[0] = palette[key].hsl[0] * 360
-          hc[1] = palette[key].hsl[1] * 100
-          hc[2] = palette[key].hsl[2] * 100
+        if (palette[key]!.population > maxPopulation) {
+          maxPopulation = palette[key]!.population
+          hc[0] = palette[key]!.hsl[0] * 360
+          hc[1] = palette[key]!.hsl[1] * 100
+          hc[2] = palette[key]!.hsl[2] * 100
         }
       }
       console.log(maxPopulation);

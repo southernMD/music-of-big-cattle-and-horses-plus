@@ -179,7 +179,7 @@
             </template>
         </MyDialog>
     </div>
-    <MyDialog :flag="senddongtaiFlag" @closeDialog="closeDialog" @confirm="confirm" @cancel="cancel" confirmName="分享" cancelName="取消">
+    <MyDialog :flag="senddongtaiFlag" @closeDialog="closeShareDialog" @confirm="confirm" @cancel="cancel" confirmName="分享" cancelName="取消">
         <template #header>
             <div class="title">分享到动态</div>
         </template>
@@ -189,9 +189,9 @@
                     <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
                 </div>
                 <div class="show">
-                    <div class="img" ref="imgRef">
-                    </div>
-                    <div class="message">{{choiceMessage}}</div>
+                    <div class="img" ref="imgRef" v-show="globalVar.share.imgUrl.length != 0"></div>
+                    <div class="name" v-if="globalVar.share.type == 'comment'">{{ globalVar.share.name}}</div>
+                    <div class="message">：{{globalVar.share.message }}</div>
                 </div>
             </div>
         </template>
@@ -1422,7 +1422,6 @@ const goHandSong = (e:MouseEvent)=>{
 
 //操作
 const startDialogFlag = ref(false)
-const imgUrl = ref('')
 const imgRef = ref<InstanceType<typeof HTMLElement>>()
 const todoHandle = (index)=>{
     if(index == 0){
@@ -1431,17 +1430,32 @@ const todoHandle = (index)=>{
         download(Main.playing)
     }else if(index == 2){
         const ar = Main.playingList[Main.playingindex - 1].ar.map(it=>it.name).join('/')
-        choiceMessage.value = `单曲：${Main.playingList[Main.playingindex - 1].name}-${ar}`
-        imgUrl.value = Main.playingList[Main.playingindex - 1].al.picUrl
+        globalVar.share.message = `单曲：${Main.playingList[Main.playingindex - 1].name}-${ar}`
+        globalVar.share.imgUrl = Main.playingList[Main.playingindex - 1].al.picUrl
+        globalVar.share.id = Main.playing
+        globalVar.share.type = 'song'
         senddongtaiFlag.value = true
         nextTick(()=>{
-            imgRef.value!.style.backgroundImage = `url(${imgUrl.value})`
+            imgRef.value!.style.backgroundImage = `url(${globalVar.share.imgUrl})`
         })
     }
 }
 const closeDialog = (done: () => void)=>{
     done()
     startDialogFlag.value = false
+}
+
+const closeShareDialog = (done :()=>void)=>{
+    done()
+    senddongtaiFlag.value = false
+    WriteCommitRef.value.textarea = ''
+    globalVar.share = {
+        imgUrl:'',
+        message:'',
+        type:'noresource',
+        id:-1,
+        txt:''
+    }
 }
 
 const addIn = async(id,index)=>{
@@ -1509,32 +1523,47 @@ const download = async (id: number) => {
     }
 }
 
-let zhuanfaMessage = ref('')
 
 const getZhuanfaText = (message:string)=>{
-    zhuanfaMessage.value = message
+    globalVar.share.txt = message
 }
-const senddongtaiFlag = ref(false)
-const choiceMessage = ref('')
+const senddongtaiFlag = toRef(globalVar,'shareDialogFlag')
 const confirm = async()=>{
-    senddongtaiFlag.value = false
-    globalVar.loadDefault  = true
-    let result = await Main.reqShareResource('song',Main.playing,zhuanfaMessage.value)
-    globalVar.loadDefault  = false
-    if(result.code == 200){
-        globalVar.loadMessageDefault = '分享成功'
-        globalVar.loadMessageDefaultFlag = true
-    }else{
+    try {
+        senddongtaiFlag.value = false
+        globalVar.loadDefault  = true
+        let result = await Main.reqShareResource(globalVar.share.type,globalVar.share.id,globalVar.share.txt)
+        // let result = await Main.reqShareResource(globalVar.share.type,Main.playing,zhuanfaMessage.value)
+        globalVar.loadDefault  = false
+        if(result.code == 200){
+            globalVar.loadMessageDefault = '分享成功'
+            globalVar.loadMessageDefaultFlag = true
+        }else{
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefault = '分享失败'
+            globalVar.loadMessageDefaultFlag = true
+        }
+        globalVar.share.txt = ''
+    } catch (error) {
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefault = '分享失败'
         globalVar.loadMessageDefaultFlag = true
+        globalVar.loadDefault  = false
+        globalVar.share.txt = ''
     }
-    zhuanfaMessage.value = ''
+
 }
 const WriteCommitRef = ref()
 const cancel = ()=>{
     senddongtaiFlag.value = false
     WriteCommitRef.value.textarea = ''
+    globalVar.share = {
+        imgUrl:'',
+        message:'',
+        type:'noresource',
+        id:-1,
+        txt:''
+    }
 }
 </script>
 
@@ -2280,6 +2309,15 @@ const cancel = ()=>{
             &:hover{
                 color: @font-color-hover;
             }
+        }
+        .name{
+            color: @url-color;
+            padding-left: 10px;
+            max-width: 100px;
+            width: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 }

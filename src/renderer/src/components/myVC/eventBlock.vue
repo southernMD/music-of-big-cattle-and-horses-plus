@@ -15,7 +15,7 @@
                 <span class="txt" v-html="!ifZhuanfu?RegTxt(msg):RegTxt(valI.msg)" @click="goPersonalX"></span>
             </div>
             <div class="share" @click="shareHandle" v-if="Object.keys(valI).length != 1 && typeI != 35">
-                <div class="bk">
+                <div class="bk" v-if="typeI != 31">
                     <el-image draggable="false"  :src="shareCover" alt="" fill="cover">
                         <template #error>
                             <div class="image-slot">
@@ -26,13 +26,26 @@
                         <div class="title">
                             <span class="tag">{{ tagName }}</span>
                             {{shareTitle}}
-                            <span class="otherms">{{ otherMessage }}</span></div>
+                            <span class="otherms" v-if="otherMessage.length != 0">{{ otherMessage }}</span></div>
                         <div class="other">
                             <span v-for="it,index in smallMessage">
                                 {{ it }}
                                 <span class="_" v-if="index+1!=smallMessage.length">/</span>
                             </span>
                         </div>
+                    </div>
+                </div>
+                <div class="bk shareSong" v-else>
+                    <div class="b" @click.stop="goSongComments(valI.resource.commentId,valI.resource.resourceJson)">
+                        <i class="iconfont icon-shuangyinhaozuo"></i>
+                        <a href="javascript:;" @click.stop="goPersonal(valI.resource.user.userId)" > {{ ' @'+valI.resource.user.nickname }}</a>
+                        <span v-html="regEmoji(`：${valI.resource.content}`)"></span>
+                        <div class="reply" v-if="valI.resource.beReplied.length != 0">
+                            <i class="iconfont icon-anjianfengexian"></i>
+                            <a href="javascript:;" @click.stop="goPersonal(valI.resource.beReplied[0].user.userId)" > {{ ' @'+valI.resource.beReplied[0].user.nickname }}</a>
+                            <span v-html="regEmoji(`：${valI.resource.beReplied[0].content}`)"></span>
+                        </div>
+                        <div class="content">{{ valI.resource.resourceName }}</div>
                     </div>
                 </div>
             </div>
@@ -130,6 +143,7 @@ import { Timeago2 } from '@renderer/utils/dayjs'
 import CommentList from './CommentList.vue'
 import MyDialog from './MyDialog.vue'
 import {throttle} from 'lodash'
+import {regEmoji} from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
 // import {regEmoji} from '@/utils/regEmoji'
 const fenxiang = ref(true)
@@ -172,7 +186,8 @@ const typeMap = new Map([
 [24,'分享专栏文章'],
 [41, '分享视频'],
 [21,'分享视频'],
-[56,'发布动态']
+[56,'发布动态'],
+[31,'分享评论']
 ])
 
 const tagName = ref('')
@@ -229,6 +244,8 @@ const typeChange = ()=>{
         shareCover.value = valI.value.program?.coverUrl
         shareTitle.value = valI.value.program?.name
         smallMessage.value = [valI.value.program?.radio?.name]
+    }else if(typeI.value == 31){
+
     }
 }
 
@@ -553,10 +570,11 @@ const download = ()=>{
     .then(response => response.arrayBuffer())
     .then(async(buffer) => {
         let flag = await window.electron.ipcRenderer.invoke('save-image',{buffer,ext})
-        if(flag){
+        console.log(flag);
+        if(flag == true){
             globalVar.loadMessageDefault = '保存成功'
             globalVar.loadMessageDefaultFlag = true
-        }else{
+        }else if(flag == false && flag != ''){
             globalVar.loadMessageDefaultType = 'error'
             globalVar.loadMessageDefault = '保存失败'
             globalVar.loadMessageDefaultFlag = true
@@ -596,6 +614,17 @@ const goPersonalX = async(e)=>{
 
         }
     }
+}
+
+const goSongComments = (cid,sonJSON)=>{
+    const sid = JSON.parse(sonJSON).id
+    useRouter().push({
+        name:'SongComments',
+        query:{
+            cid,id:sid,type:'歌曲'
+        }
+    })
+    console.log(cid,sid);
 }
 </script>
 <style scoped lang="less">
@@ -684,6 +713,9 @@ const goPersonalX = async(e)=>{
                         border-radius: .5em;
                         background-color: @left-click-color;
                         cursor: pointer;
+                        width: 100%;
+                        height: 50px;
+                        
                         &:hover{
                             background-color: @span-color-hover;
                         }
@@ -738,6 +770,41 @@ const goPersonalX = async(e)=>{
                                 font-size: 10px;
                                 margin-right: 5px;
                                 transform: rotate(-5deg);
+                            }
+                        }
+                    }
+                    .shareSong{
+                        min-height: 80px;
+                        height: auto;
+                        display: flex;
+                        flex-direction: column;
+                        .b{
+                            padding: 15px;
+                            i{
+                                color: @small-font-color;
+                            }
+                            a{
+                                color: @url-color;
+                                font-size: 14px;
+                                &:hover{
+                                    color: @url-color-hover;
+                                }
+                            }
+                            >span{
+                                font-size: 13px;
+                                line-height: 20px;
+                            }
+                            .content{
+                                margin-top: 10px;
+                                font-size: 12px;
+                                color: @small-font-color;
+                            }
+                            .reply{
+                                margin-top: 10px;
+                                margin-bottom: 10px;
+                                i{
+                                    font-size: 20px;
+                                }
                             }
                         }
                     }

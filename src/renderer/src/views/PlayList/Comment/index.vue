@@ -1,7 +1,7 @@
 <template>
     <div class="commit" >
         <div class="wr-commit">
-            <WriteCommit @getText="getText"></WriteCommit>
+            <WriteCommit ref="WriteCommitRef" @getText="getText"></WriteCommit>
             <div class="submit" :class="{noDrag:!Main.dragMouse}" @click="subCommit">
                 <span>评论</span>
             </div>
@@ -9,7 +9,8 @@
         <!-- <CommentList :id="routeId"></CommentList> -->
         <CommentList :commentFlag="commentFlag" :nowPage="nowPage"
         :hotComments="hotComments" :moreHot="moreHot" :total="total"
-        :comments="comments" :totalPage="totalPage" :id="Number(routeId)" :type="CPtype"
+        :comments="comments" :totalPage="totalPage" :id="Number(routeId)"
+        :type="CPtype"
         ></CommentList>
         <Teleport to="body" v-if="errorFlag">
             <Loading :type="typeError" :message="errorMassage" :width="loadingWidth"
@@ -22,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref,toRef,watch,Ref,onMounted,getCurrentInstance,ComponentInternalInstance, computed} from 'vue'
+import {ref,toRef,watch,Ref,onMounted,getCurrentInstance,ComponentInternalInstance, computed, provide} from 'vue'
 import {useRoute} from 'vue-router'
 import {useMain} from '@renderer/store'
 // import {regEmoji} from '@/utils/regEmoji'
@@ -40,42 +41,84 @@ let errorMassage = ref('')
 let typeError = ref('')
 let loadingWidth = ref('')
 const subCommit = async()=>{
-    if(commitMessage.value == ''){
-        typeError.value = 'error'
-        errorFlag.value = true;
-        errorMassage.value = '写点东西吧，内容不能为空哦！'
-        loadingWidth.value = '300'
-    }else{
-        let obj:comment.sendComment = {
-            t:1,
-            type:2,
-            id:Number(routeId.value),
-            content:commitMessage.value
-        }
-        let result = (await Main.reqcomment(obj)).data;
-        if(result.code == 200){
-            typeError.value = ''
-            errorFlag.value = true;
-            errorMassage.value = '评论成功！'
-            loadingWidth.value = '150'
-            Main.clearText = true
-        }else{
+
+    if(postByreplay.value){
+        if(commitMessage.value.split(`回复${replayName.value}:`)[1].length == 0){
             typeError.value = 'error'
             errorFlag.value = true;
-            errorMassage.value = '评论失败！'
-            loadingWidth.value = '150'
+            errorMassage.value = '写点东西吧，内容不能为空哦！'
+            loadingWidth.value = '300'
+        }else{
+            let obj:comment.sendComment = {
+                t:2,
+                type:$route.query.type == '歌单'?2:3,
+                id:Number(routeId.value),
+                content:commitMessage.value,
+                commentId:replayId.value
+            }
+            console.log(obj);
+            let result = (await Main.reqcomment(obj)).data;
+            console.log(result);
+            if(result.code == 200){
+                typeError.value = ''
+                errorFlag.value = true;
+                errorMassage.value = '回复成功！'
+                loadingWidth.value = '150'
+                Main.clearText = true
+            }else{
+                typeError.value = 'error'
+                errorFlag.value = true;
+                errorMassage.value = '回复失败！'
+                loadingWidth.value = '150'
+            }
+            let addComment = result.comment
+            addComment['likedCount'] = 0;
+            addComment['liked'] = false;
+            addComment['timeStr'] = '刚刚'
+            addComment['beReplied'] = [{
+                user:{
+                    userId:replayId.value,
+                    nickname:replayName.value
+                },
+                content:replayContent.value
+            }]
+            comments.value.unshift(addComment)
         }
-        let addComment = result.comment
-        addComment['likedCount'] = 0;
-        addComment['liked'] = false;
-        addComment['timeStr'] = '刚刚'
-        addComment['beReplied'] = []
-        comments.value.unshift(addComment)
+        
+    }else{
+        if(commitMessage.value == ''){
+            typeError.value = 'error'
+            errorFlag.value = true;
+            errorMassage.value = '写点东西吧，内容不能为空哦！'
+            loadingWidth.value = '300'
+        }else{
+            let obj:comment.sendComment = {
+                t:1,
+                type:$route.query.type == '歌单'?2:3,
+                id:Number(routeId.value),
+                content:commitMessage.value
+            }
+            let result = (await Main.reqcomment(obj)).data;
+            if(result.code == 200){
+                typeError.value = ''
+                errorFlag.value = true;
+                errorMassage.value = '评论成功！'
+                loadingWidth.value = '150'
+                Main.clearText = true
+            }else{
+                typeError.value = 'error'
+                errorFlag.value = true;
+                errorMassage.value = '评论失败！'
+                loadingWidth.value = '150'
+            }
+            let addComment = result.comment
+            addComment['likedCount'] = 0;
+            addComment['liked'] = false;
+            addComment['timeStr'] = '刚刚'
+            addComment['beReplied'] = []
+            comments.value.unshift(addComment)
+        }
     }
-    //匹配emoji
-
-
-    // console.log(regEmoji(commitMessage.value));
 }
 
 
@@ -97,6 +140,7 @@ const loadComment = async()=>{
     let result
     if($route.query.type == '歌单') result = (await Main.reqCommentPlaylist(Number(routeId.value),20,0)).data
     else if($route.query.type == '专辑') result = (await Main.reqCommentAlbum(Number(routeId.value),20,0)).data
+    else if($route.query.type == '歌曲') result = (await Main.reqCommentMusic(Number(routeId.value),20,0)).data
     hotComments.value = result.hotComments;
     comments.value = result.comments;
     total.value = result.total
@@ -126,6 +170,31 @@ const CPtype = computed(()=>{
     if($route.query.type == '歌单') return 2
     else if($route.query.type == '专辑') return 3
     else return 0
+})
+
+const replayFlag = ref(false)
+const replayId = ref(0)
+const replayName = ref('')
+const postByreplay = ref(false)
+const replayContent = ref('')
+provide('replayFlag',replayFlag)
+provide('replayId',replayId)
+provide('replayName',replayName)
+provide('replayContent',replayContent)
+const WriteCommitRef = ref()
+watch(replayFlag,()=>{
+    if(replayFlag.value == true){
+        postByreplay.value = true
+        WriteCommitRef.value!.textarea = `回复${replayName.value}:`
+        WriteCommitRef.value!.getFocus(WriteCommitRef.value!.textarea.length)
+        replayFlag.value = false
+    }
+})
+
+watch(commitMessage,()=>{
+    if(postByreplay.value && !commitMessage.value.startsWith(`回复${replayName.value}:`)){
+        postByreplay.value = false
+    }
 })
 
 </script>

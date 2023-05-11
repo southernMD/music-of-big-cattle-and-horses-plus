@@ -564,7 +564,11 @@ export const createWindow = ():BrowserWindow=>{
             buttonLabel: '保存',
             defaultPath: `${new Date().getTime()}${ext}`,
           })
-          .then(({ filePath }) => {
+          .then(({ filePath,canceled  }) => {
+            if(canceled){
+              resolve('');
+              return
+            }
             if (filePath) {
               fs.writeFile(filePath, Buffer.from(buffer), (err) => {
                 if (err) {

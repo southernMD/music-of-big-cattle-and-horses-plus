@@ -21,12 +21,12 @@
                 <div class="option">
                     <span class="time">{{!timeStr.includes('-')?timeStr:fixTime}} </span>
                     <span class="icon">
-                        <i class="iconfont icon-dianzan" v-if="!liked">&nbsp;<span style="font-size:11px" v-show="likedCount != 0">{{likedCount}}</span></i>
-                        <i class="iconfont icon-dianzan_kuai" v-else>&nbsp;<span style="font-size:11px">{{likedCount}}</span></i>
+                        <i class="iconfont icon-dianzan" @click="throttleDianzan" v-if="!liked2">&nbsp;<span style="font-size:11px" v-show="likedCount2 != 0">{{likedCount2}}</span></i>
+                        <i class="iconfont icon-dianzan_kuai" @click="throttleDianzan" v-else>&nbsp;<span style="font-size:11px">{{likedCount2}}</span></i>
                         <i class="iconfont icon-anjianfengexian"></i>
-                        <i class="iconfont icon-fenxiang" v-if="!fenxiang"></i>
+                        <i class="iconfont icon-fenxiang" v-if="!fenxiang" @click="fenxaing"></i>
                         <i class="iconfont icon-anjianfengexian" v-if="!fenxiang"></i>
-                        <i class="iconfont icon-pinglun"></i>
+                        <i class="iconfont icon-pinglun" @click="reply"></i>
                     </span>
                 </div>
             </div>
@@ -35,14 +35,17 @@
 </template>
 
 <script lang='ts' setup>
-import { computed, getCurrentInstance, ComponentInternalInstance, inject } from 'vue'
+import { computed, getCurrentInstance, ComponentInternalInstance, inject, toRef,ref, watchEffect, Ref } from 'vue'
 import { dayjsCN } from '@renderer/utils/dayjs'
-import {regEmoji} from '@renderer/utils/regEmoji'
+import { regEmoji } from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
-import { useMain } from '@renderer/store'
+import { useMain ,useGlobalVar} from '@renderer/store'
+import  {throttle} from 'lodash'
+const Main = useMain()
+const globalVar = useGlobalVar()
 const $router = useRouter()
 const $el = getCurrentInstance() as ComponentInternalInstance
-defineProps<{
+const props = defineProps<{
     userUrl: string
     userNickname: string
     userId: number
@@ -53,10 +56,18 @@ defineProps<{
     beReplied: any
     likedCount: number
     commentId:number
+    type : 0 | 1 | 2 | 3 |4 | 5 | 6 | 7
+    resourceId:number | string
 }>()
 
-const fenxiang = inject('fenxiang')
+const fenxiang = inject('fenxiang',false)
 
+const liked2 = ref(props.liked)
+const likedCount2 =  ref(props.likedCount)
+watchEffect(()=>{
+    liked2.value = props.liked
+    likedCount2.value = props.likedCount
+})
 const fixTime = computed<string>(() => {
     let str = dayjsCN($el.props.time as number);
     let year = String(new Date().getFullYear());
@@ -74,6 +85,57 @@ const go = (id)=>{
     })
 }
 
+const dianzan = async()=>{
+    let t = {}
+    if(props.type == 6 ){
+        t = {threadId:props.resourceId}
+    }else{
+        t = {id:props.resourceId}
+    }
+    if(!liked2.value){
+        //去点赞
+        let code = await Main.reqcommentLike(props.commentId,t,1,props.type)
+        if(code == 200){
+            likedCount2.value++ 
+            liked2.value = !liked2.value
+        }
+        else {
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefault = '点赞失败'
+            globalVar.loadMessageDefaultFlag = true
+        }
+    }else{
+        let code = await Main.reqcommentLike(props.commentId,t,0,props.type)
+        if(code == 200){
+            likedCount2.value--
+            liked2.value = !liked2.value
+        }else{
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefault = '点赞失败'
+            globalVar.loadMessageDefaultFlag = true
+        }
+    }
+}
+const fenxaing = async()=>{
+    globalVar.share.name = props.userNickname
+    globalVar.share.message = props.content
+    globalVar.share.type = 'comment'
+    globalVar.share.id = props.commentId
+    globalVar.shareDialogFlag = true
+}
+const throttleDianzan = throttle(dianzan,1000)
+
+const replayFlag:Ref<boolean> = inject('replayFlag')!
+const replayName:Ref<string> = inject('replayName')!
+const replayId:Ref<number> = inject('replayId')!
+const replayContent:Ref<string> = inject('replayContent')!
+
+const reply = ()=>{
+    replayName.value = props.userNickname
+    replayId.value = props.commentId
+    replayContent.value = props.content
+    replayFlag.value = true
+}
 </script>
 
 <style lang='less' scoped>
@@ -170,6 +232,7 @@ const go = (id)=>{
                 width: 90%;
                 margin-left: auto;
                 margin-right: auto;
+                user-select: none;
                 >.time {
                     font-size: 11px;
                     color: @small-font-color;

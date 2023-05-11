@@ -1,5 +1,5 @@
 <template>
-    <div class="comment">
+    <div class="comment" ref="offsetVal">
         <div class="commentList" v-show="commentFlag">
             <div class="hot" v-show="nowPage == 1 && hotComments.length != 0">
             <div class="hot-title">
@@ -13,6 +13,8 @@
                 :liked="hotComments[index]?.liked" :beReplied="hotComments[index]?.beReplied"
                 :likedCount="hotComments[index]?.likedCount"
                 :commentId="hotComments[index]?.commentId"
+                :resourceId="threadId ?? id"
+                :type="type"
                 ></Comment>
             </div>
             </div>
@@ -22,18 +24,20 @@
             </div>
             </div>
             <div class="new">
-            <div class="new-title">
-                <span>最新评论({{total}})</span>
-            </div>
-            <div class="new-list">
-                <Comment v-for="(value,index) in comments.length" :key="value" :userUrl="comments[index]?.user?.avatarUrl"
-                :userNickname="comments[index]?.user?.nickname" :userId="comments[index]?.user?.userId"
-                :content="comments[index]?.content" :time="comments[index]?.time" :timeStr="comments[index]?.timeStr"
-                :liked="comments[index]?.liked" :beReplied="comments[index]?.beReplied"
-                :likedCount="comments[index]?.likedCount"
-                :commentId="comments[index]?.commentId"
-                ></Comment>
-            </div>
+              <div class="new-title" >
+                  <span>最新评论({{total}})</span>
+              </div>
+              <div class="new-list">
+                  <Comment v-for="(value,index) in comments.length" :key="value" :userUrl="comments[index]?.user?.avatarUrl"
+                  :userNickname="comments[index]?.user?.nickname" :userId="comments[index]?.user?.userId"
+                  :content="comments[index]?.content" :time="comments[index]?.time" :timeStr="comments[index]?.timeStr"
+                  :liked="comments[index]?.liked" :beReplied="comments[index]?.beReplied"
+                  :likedCount="comments[index]?.likedCount"
+                  :commentId="comments[index]?.commentId"
+                  :resourceId="threadId ?? id"
+                  :type="type"
+                  ></Comment>
+              </div>
             </div>
             <div class="pagination">
             <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
@@ -49,9 +53,11 @@
 <script lang='ts' setup>
 import {useMain} from '@renderer/store'
 import {useRouter,useRoute} from 'vue-router';
-import {getCurrentInstance, watch,ComponentInternalInstance,toRef,Ref,ref } from 'vue'
+import { useGlobalVar } from '@renderer/store';
+import {getCurrentInstance, watch,ComponentInternalInstance,toRef,Ref,ref, onMounted, nextTick } from 'vue'
 const $el = getCurrentInstance() as ComponentInternalInstance 
 const $router = useRouter()
+const globalVar = useGlobalVar()
 const $route = useRoute()
 const Main = useMain()
 defineProps<{
@@ -91,13 +97,34 @@ const goMoreComment = () => {
 }
 
 const $emait = defineEmits(['scroll'])
+const offsetVal = ref<InstanceType<typeof HTMLElement>>()
+
+
 //更多评论
+
+// function searchFather(d: HTMLElement | undefined): HTMLElement | undefined{
+//     if(d == undefined) return undefined
+//     console.log(d,d.offsetParent,d.offsetTop);
+//     console.log(d);
+    
+//     if (d!.id == 'mainWindow') {
+//         return d;
+//     } else {
+//         d = d?.parentNode as HTMLElement
+//         return searchFather(d);
+//     }
+// }
 watch(nowPage, async () => {
     if(type.value == 0){
         commentFlag.value = false
         let result = (await Main.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
         comments.value = result.comments;
         commentFlag.value = true
+        if(nowPage.value == 1){
+          globalVar.scrollToTop = true
+        }else{
+          globalVar.changeMainScroll = -(globalVar.mainScroll - offsetVal.value!.offsetTop)
+        }
     }else if(type.value == 2){
         commentFlag.value = false
         let result = (await Main.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
@@ -115,7 +142,6 @@ watch(nowPage, async () => {
       comments.value = result.comments;
       commentFlag.value = true
     }
-
 })
 
 

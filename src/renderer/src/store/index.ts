@@ -27,7 +27,9 @@ import {
     albumSublist,
     userEvents,
     userFollows,
-    userFolloweds
+    userFolloweds,
+    commentLike,
+    CommentFloor
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
@@ -315,6 +317,7 @@ interface T {
     // immheart:boolean
     searchHistory:string[]
     latelyPlay:any[]
+
 }
 export const useMain = defineStore('Main', {
     state: (): T => {
@@ -1068,6 +1071,40 @@ export const useMain = defineStore('Main', {
                 })
             }
         },
+        //点赞
+        async reqcommentLike (cid:number,options: { id?: number; threadId?: string; },t:1 | 0,type:0|1|2|3|4|5|6|7){
+            let result = await commentLike(cid,options,t,type)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(200)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve(400)
+                })
+            }
+        },
+        //楼层评论
+        async reqCommentFloor(parentCommentId:number,id:number,type:number){
+            let result = await CommentFloor(parentCommentId,id,type)
+            if(result.data.code == 200){
+                return new Promise<{fa:any,time:number,ch:any[]}>((resolve, reject) => {
+                    resolve({
+                        fa:result.data.data.ownerComment,
+                        ch:result.data.data.comments,
+                        time:result.data.data.time
+                    })
+                })
+            }else{
+                return new Promise<{fa:any,time:number,ch:any[]}>((resolve, reject) => {
+                    resolve({
+                        fa:{},
+                        ch:[],
+                        time:0
+                    })
+                })
+            }
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -1137,7 +1174,16 @@ interface V {
     searchKey:string
     changeMainScroll:number //修改主右滚动条
     addPlayFlag:boolean
-    addPlayId:number
+    shareDialogFlag:boolean,
+    addPlayId:number //添加歌曲到新歌单
+    share:{
+        imgUrl:string
+        message:string
+        type:'song' | 'playlist' | 'mv' | 'djradio' | 'djprogram' | 'artist'| 'noresource' | 'album' | 'comment',
+        id:number,
+        txt:string,
+        name:string
+    }
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1172,7 +1218,16 @@ export const useGlobalVar = defineStore('globalVar', {
             searchKey:'',
             changeMainScroll:0,
             addPlayFlag:false,
-            addPlayId:-1
+            addPlayId:-1,
+            shareDialogFlag:false,
+            share:{
+                imgUrl:'',
+                message:'',
+                type:'noresource',
+                id:-1,
+                txt:'',
+                name:''
+            }
         }
     },
     actions:{

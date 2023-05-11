@@ -313,13 +313,33 @@ export const likeQ = (id:number,like:boolean)=>{
 //评论和删除评论
 export const comment = (obj:comment.delComment|comment.sendComment)=>{
     let {t,type,id,content,threadId} = obj;
-    return axios({
-        url:`/comment?time=${new Date().getTime()}`,
-        method:'POST',
-        data:{
+    let data 
+    if(t == 2){
+        if( type == 6){
+            data={
+                cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie'),
+                // @ts-ignore
+                t,type,threadId,content,commentId:obj.commentId
+            }
+        }else{
+            data={
+                cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie'),
+                // @ts-ignore
+                t,type,id,content,commentId:obj.commentId
+            }
+            console.log(data);
+        }
+
+    }else{
+        data={
             cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie'),
             t,type,id,content,threadId
         }
+    }
+    return axios({
+        url:`/comment?time=${new Date().getTime()}`,
+        method:'POST',
+        data
     })
 }
 
@@ -706,7 +726,7 @@ export const albumSublist=()=>{
 }
 
 export const userEvents=(id:number,lasttime?:number)=>{
-    const url = lasttime?`/user/event?uid=${id}&lasttime=${lasttime}`:`/user/event?uid=${id}`
+    const url = lasttime?`/user/event?uid=${id}&lasttime=${lasttime}&t=${new Date().getTime()}`:`/user/event?uid=${id}&t=${new Date().getTime()}`
     return axios({
         url,
         method:'POST',
@@ -736,3 +756,29 @@ export const userFolloweds = (id,limit=30,offset=0)=>{
         }
     })
 }
+
+//点赞评论
+export const commentLike = (cid:number,options: { id?: number; threadId?: string; },t:1 | 0,type:0|1|2|3|4|5|6|7)=>{
+    const { id, threadId } = options;
+    let url = `/comment/like?cid=${cid}&t=${t}&type=${type}&time=${new Date().getTime()}`
+    if(id){
+        url+=`&id=${id}`
+    }else{
+        url+=`&threadId=${threadId}`
+    }
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+} 
+
+export const CommentFloor = (parentCommentId:number,id:number,type:number)=>{
+    const url = `/comment/floor?parentCommentId=${parentCommentId}&id=${id}&type=${type}`
+    return axios({
+        url,
+        method:'POST',
+    })
+} 
