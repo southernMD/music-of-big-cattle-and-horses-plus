@@ -2,6 +2,7 @@
     <div class="writeCommit">
         <div class="input-bk">
             <el-input
+            :placeholder="placeholder"
             v-model="textarea"
             :rows="3"
             type="textarea"
@@ -44,6 +45,10 @@ const props = defineProps({
         type: String,
         default: ''
     },
+    placeholder:{
+        type:String,
+        default: ''
+    }
 })
 let textarea = ref('')
 watch(()=>props.df,()=>{

@@ -29,10 +29,14 @@ import {
     userFollows,
     userFolloweds,
     commentLike,
-    CommentFloor
+    CommentFloor,
+    playlistSubscribers,
+    PlaylistSubscribe,
+    albumSub
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
+
 interface E {
     ifToCloseWindow: boolean,
     lrcArry: any
@@ -263,12 +267,12 @@ export const useBasicApi = defineStore('BaseApi', {
         //我的收藏歌手
         async reqartistSublist(){
             let result = await artistSublist()
-            this.startSongHand = result.data.data
+            this.startSongHand.unshift(...result.data.data)
         },
         //我的收藏专辑
-        async reqalbumSublist(){
-            let result = await albumSublist()
-            this.startalbum = result.data.data
+        async reqalbumSublist(limit?:number){
+            let result = await albumSublist(limit)
+            this.startalbum.unshift(...result.data.data)
         }
     }
 })
@@ -419,6 +423,7 @@ export const useMain = defineStore('Main', {
                     item['index'] = index
                     return item 
                 })
+                this.playListId = []
                 this.playList.forEach((element) => {
                     this.playListId.push(element.id)
                 })
@@ -1102,6 +1107,51 @@ export const useMain = defineStore('Main', {
                         ch:[],
                         time:0
                     })
+                })
+            }
+        },
+        //歌单收藏者
+        async reqPlaylistSubscribers(id,limit,offset){
+            let result = await playlistSubscribers(id,limit,offset)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve({
+                        more:result.data.more,
+                        list:result.data.subscribers
+                    })
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({
+                        more:false,
+                        list:[]
+                    })
+                })
+            }
+        },
+        //收藏取消收藏歌单
+        async reqPlaylistSubscribe(t:1|2,id:number){
+            let result = await PlaylistSubscribe(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //收藏专辑
+        async reqAlbumSub(t:1|2,id:number){
+            let result = await albumSub(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
                 })
             }
         },

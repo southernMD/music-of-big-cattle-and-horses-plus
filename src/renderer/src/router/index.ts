@@ -55,11 +55,7 @@ const routes: Array<RouteRecordRaw> = [
                         path:'comment',
                         name:'commentPlaylist',
                         component:()=>import('@renderer/views/PlayList/Comment/index.vue'),
-                    }, {
-                        path:'whoStart',
-                        name:'whoStartPlaylist',
-                        component:()=>import('@renderer/views/PlayList/WhoStart/index.vue'),
-                    },
+                    }
                 ],
             },
             {

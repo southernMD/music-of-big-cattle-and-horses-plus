@@ -103,7 +103,7 @@
         <CommentList :commentFlag="commentFlag" :nowPage="nowPage" :hotComments="hotComments" :moreHot="moreHot"
           :total="total" :comments="comments" :totalPage="totalPage" :id="playingId" :type="0"></CommentList>
         <transition-group name="showWrite">
-          <FloatTag :key="1" v-show="showSroll" :align="'center'" :bottom="'80px'" :size="'12px'" :width="'150px'"
+          <FloatTag @click="openCommentDialog" :key="1" v-show="showSroll" :align="'center'" :bottom="'80px'" :size="'12px'" :width="'150px'"
             :height="'30px'" :option="'write'" @write="write">
             <template #default>
               <div>
@@ -111,7 +111,7 @@
               </div>
             </template>
           </FloatTag>
-          <FloatTag :key="2" v-show="!showSroll" :width="'90px'" :size="'12px'" :right="'15%'" :bottom="'80px'"
+          <FloatTag @click="openCommentDialog"  :key="2" v-show="!showSroll" :width="'90px'" :size="'12px'" :right="'15%'" :bottom="'80px'"
             :height="'30px'" :option="'write'" @write="write">
             <template #default>
               <div>
@@ -242,7 +242,13 @@ watch(playingId, async () => {
 
 })
 
-
+const addc:Ref<any> = inject('addc')!
+watch(addc,()=>{
+    if(addc.value != null){
+      comments.value.unshift(addc.value)
+      addc.value == null
+    }
+})
 
 let ifShowRight = ref(true)
 
@@ -251,7 +257,7 @@ const showRight = () => {
 }
 
 
-const $emit = defineEmits(['goTotime'])
+const $emit = defineEmits(['goTotime','openCommentDialog'])
 //点击跳转播放
 const gotoPlay = (val: number) => {
   $emit('goTotime', val)
@@ -449,8 +455,12 @@ const goZhuanji = (id)=>{
           id,type:"专辑",my:'false'
         }
     })
-
 }
+
+const openCommentDialog = ()=>{
+  $emit('openCommentDialog')
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -509,10 +519,12 @@ const goZhuanji = (id)=>{
     height: 100vh;
     background-color: @other-bk-color-op;
   }
-
-  :deep(header) {
-    background-color: @other-bk-color;
+  >.bk{
+    :deep(header) {
+      background-color: @other-bk-color;
+    }
   }
+
 
   :deep(.title-main) {
     // margin-top: 5vh;
@@ -802,15 +814,14 @@ const goZhuanji = (id)=>{
 
   // color: #d19550;
   // color: rgb(32, 171, 223);
-  color: hsl(28, 50%, 88%);
-  color: hsl(27, 36%, 85%);
-  color: hsl(23, 27%, 85%);
-  color: hsl(0, 2%, 82%);
-  color: hsl(198, 36%, 86%);
-  color: hsl(16, 18%, 88%);
-  color: hsl(4, 14%, 79%);
-  color: hsl(209, 34%, 88%);
-  color: hsl(42, 30%, 80%);
-  color: hsl(0, 0%, 83%);
+  // color: hsl(28, 50%, 88%);
+  // color: hsl(27, 36%, 85%);
+  // color: hsl(23, 27%, 85%);
+  // color: hsl(0, 2%, 82%);
+  // color: hsl(198, 36%, 86%);
+  // color: hsl(16, 18%, 88%);
+  // color: hsl(4, 14%, 79%);
+  // color: hsl(209, 34%, 88%);
+  // color: hsl(42, 30%, 80%);
 }
 </style>

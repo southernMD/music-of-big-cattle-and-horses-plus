@@ -152,7 +152,7 @@
     </div>
     <transition name="songDetail">
         <SongDetail :currentTime="currentTime" :lyricOffset="lyricOffset" :simiSong="simiSong" :simiPlaylist="simiPlaylist"
-            @goTotime="goTotime"></SongDetail>
+            @goTotime="goTotime" @openCommentDialog="openCommentDialog"></SongDetail>
     </transition>
     <div class="MyDialog">
         <MyDialog :button="false" :flag="startDialogFlag" @closeDialog="closeDialog">
@@ -196,12 +196,20 @@
             </div>
         </template>
     </MyDialog>
+    <MyDialog :flag="commentDioalogFlag" @closeDialog="closeCommentDialog" @confirm="confirmComment" @cancel="cancelComment" confirmName="评论" cancelName="取消">
+        <template #header>
+            <div class="title">歌曲：{{ playingList[playingindex - 1]?.name }}</div>
+        </template>
+        <template #midle>
+            <WriteCommit :placeholder="replaypPaceholder" ref="WriteCommitRef2" @getText="getText"></WriteCommit>
+        </template>
+    </MyDialog>
 </template>
 
 <script lang="ts" setup>
 import {
     ref, onMounted, getCurrentInstance, ComponentInternalInstance,
-    Ref, nextTick, toRef, watch, shallowRef
+    Ref, nextTick, toRef, watch, shallowRef, provide
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
 import { before, throttle } from 'lodash'
@@ -1435,11 +1443,15 @@ const todoHandle = (index)=>{
         globalVar.share.id = Main.playing
         globalVar.share.type = 'song'
         senddongtaiFlag.value = true
-        nextTick(()=>{
-            imgRef.value!.style.backgroundImage = `url(${globalVar.share.imgUrl})`
-        })
     }
 }
+
+watch(()=>globalVar.share.imgUrl,()=>{
+    nextTick(()=>{
+        imgRef.value!.style.backgroundImage = `url(${globalVar.share.imgUrl})`
+    })
+})
+
 const closeDialog = (done: () => void)=>{
     done()
     startDialogFlag.value = false
@@ -1450,6 +1462,7 @@ const closeShareDialog = (done :()=>void)=>{
     senddongtaiFlag.value = false
     WriteCommitRef.value.textarea = ''
     globalVar.share = {
+        name:'',
         imgUrl:'',
         message:'',
         type:'noresource',
@@ -1558,12 +1571,132 @@ const cancel = ()=>{
     senddongtaiFlag.value = false
     WriteCommitRef.value.textarea = ''
     globalVar.share = {
+        name:'',
         imgUrl:'',
         message:'',
         type:'noresource',
         id:-1,
         txt:''
     }
+}
+
+const commentDioalogFlag = ref(false)
+const closeCommentDialog = (done : ()=>void)=>{
+    WriteCommitRef2.value.textarea = ''
+    done()
+    postByreplay.value = false 
+    replaypPaceholder.value = ''
+    commentDioalogFlag.value = false
+}
+
+const addc = ref(null)
+const replayFlag = ref(false)
+const replayName = ref('')
+const replayId = ref(0)
+const replayContent = ref('')
+const replaypPaceholder = ref('')
+const postByreplay = ref(false)
+provide('addc',addc)
+provide('replayFlag',replayFlag)
+provide('replayName',replayName)
+provide('replayId',replayId)
+provide('replayContent',replayContent)
+const confirmComment = async()=>{
+    if(postByreplay.value){
+        if(commitMessage.value == ''){
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefaultFlag = true;
+            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
+        }else{
+            let result = (await Main.reqcomment({
+                t:2,
+                type:0,
+                id:Main.playing,
+                content:commitMessage.value,
+                commentId:replayId.value
+            })).data
+            if(result.code == 200){
+                globalVar.loadMessageDefaultFlag = true;
+                globalVar.loadMessageDefault = '回复成功！'
+                WriteCommitRef2.value!.textarea = ''
+                commentDioalogFlag.value = false
+                let addComment = result.comment
+                addComment['likedCount'] = 0;
+                addComment['liked'] = false;
+                addComment['timeStr'] = '刚刚'
+                addComment['beReplied'] = [{
+                    user:{
+                        userId:replayId.value,
+                        nickname:replayName.value
+                    },
+                    content:replayContent.value
+                }]
+                addc.value = addComment
+            }else{
+                globalVar.loadMessageDefaultType = 'error'
+                globalVar.loadMessageDefaultFlag = true;
+                globalVar.loadMessageDefault = '回复失败！'
+            }
+        }
+    }else{
+        if(commitMessage.value == ''){
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefaultFlag = true;
+            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
+        }else{
+            let result = (await Main.reqcomment({
+                t:1,
+                type:0,
+                id:Main.playing,
+                content:commitMessage.value,
+            })).data
+            if(result.code == 200){
+                globalVar.loadMessageDefaultFlag = true;
+                globalVar.loadMessageDefault = '评论成功！'
+                WriteCommitRef2.value!.textarea = ''
+                commentDioalogFlag.value = false
+                let addComment = result.comment
+                addComment['likedCount'] = 0;
+                addComment['liked'] = false;
+                addComment['timeStr'] = '刚刚'
+                addComment['beReplied'] = []
+                addc.value = addComment
+            }else{
+                globalVar.loadMessageDefaultType = 'error'
+                globalVar.loadMessageDefaultFlag = true;
+                globalVar.loadMessageDefault = '评论失败！'
+            }
+        }
+    }
+
+
+}
+
+watch(replayFlag,()=>{
+    if(replayFlag.value == true){
+        postByreplay.value = true
+        commentDioalogFlag.value = true
+        replaypPaceholder.value = `回复${replayName.value}:`
+        replayFlag.value = false
+    }
+})
+
+const cancelComment = ()=>{
+    WriteCommitRef2.value.textarea = ''
+    postByreplay.value = false 
+    replaypPaceholder.value = ''
+    commentDioalogFlag.value = false
+}
+
+const openCommentDialog = ()=>{
+  commentDioalogFlag.value = true
+  WriteCommitRef2.value.getFocus()
+}
+
+const WriteCommitRef2 = ref()
+let commitMessage = ref('')
+const getText = (message:string)=>{
+    commitMessage.value = message
 }
 </script>
 

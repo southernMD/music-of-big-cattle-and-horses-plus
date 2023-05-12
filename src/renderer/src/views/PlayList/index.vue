@@ -28,7 +28,7 @@
                             <i class="iconfont icon-jiahao_o"></i>
                         </div>
                     </div>
-                    <div class="start" id="startSelf" v-if="!suoFlag" :class="
+                    <div class="start" id="startSelf" v-if="!suoFlag" @click="start" :class="
                         {
                             h: !isStartStyle(),
                             'start-color-black-stop': isStartStyle() && mainColor == 'NMblack',
@@ -37,9 +37,11 @@
                             'start-color-red': !isStartStyle() && mainColor != 'NMblack',
                             'h-oneself': globalVar.oneself == 1 && !isStartStyle()
                         }">
-                        <div class="icon" :class="{ noDrag: !Main.dragMouse }">
+                        <div class="icon" :class="{ 
+                            noDrag: !Main.dragMouse && !isStartStyle() 
+                            ,noClick:!Main.dragMouse && isStartStyle() }">
                             <i class="iconfont icon-wenjian">
-                                <i class="iconfont icon-gou" v-if="dynamic?.subscribed"></i>
+                                <i class="iconfont icon-gou" v-if="(dynamic?.subscribed ?? dynamic?.isSub)"></i>
                                 <i class="iconfont icon-jiahao_o" v-else></i>
                             </i>
                         </div>
@@ -47,11 +49,11 @@
                             noDrag: !Main.dragMouse,
                             noClick: isStartStyle()
                         }">
-                            <span v-if="dynamic?.subscribed ?? dynamic?.isSub">已</span>
+                            <span v-if="(dynamic?.subscribed ?? dynamic?.isSub)">已</span>
                             <span>收藏({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span>
                         </div>
                     </div>
-                    <div class="fengxiang h" v-if="!suoFlag" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
+                    <div @click="sharePlayList" class="fengxiang h" v-if="!suoFlag" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
                         <i class="iconfont icon-fenxiang"></i>
                         <div class="txt">
                             <span>分享({{ numberSimp(dynamic?.shareCount) }})</span>
@@ -133,8 +135,10 @@
                         :message="`评论(${dynamic?.commentCount})`" :ifClick="flagList[1]" :big="true"
                         @click="goRoute('commentPlaylist'); changeTag(1)">
                     </Tag>
-                    <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="收藏者"
+                    <Tag class="tag-play" v-if="$route.query.type == '歌单'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="收藏者"
                         :ifClick="flagList[2]" :big="true" @click="goRoute('whoStartPlaylist'); changeTag(2)"></Tag>
+                    <Tag class="tag-play" v-if="$route.query.type == '专辑'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="专辑详情"
+                    :ifClick="flagList[2]" :big="true" @click="goRoute('ZhuanJiDetail',playList[index].description); changeTag(2)"></Tag>
                 </div>
                 <div class="search" v-show="$route.name == 'songPlaylist' ">
                     <input type="text" v-model="searchKey" :placeholder="`搜索${$route.query.type}内音乐`" :class="{
@@ -194,21 +198,48 @@ watch(Rn, () => {
         changeTag(0)
     } else if (route.name == 'commentPlaylist') {
         changeTag(1)
-    } else if (route.name == 'whoStartPlaylist') {
+    } else if (route.name == 'whoStartPlaylist' || route.name == 'ZhuanJiDetail') {
         changeTag(2)
     }
 }, { immediate: true })
 
 
 
-const goRoute = (name: string) => {
+const goRoute = (name: string,message?:string) => {
     console.log(route.query);
+    if(name == 'whoStartPlaylist'){
+        router.addRoute('playlist',{
+            name,
+            path:'whoStart',
+            component:()=>import('@renderer/views/PlayList/WhoStart/index.vue'),
+        })
+        if(router.hasRoute('ZhuanJiDetail')){
+            router.removeRoute('ZhuanJiDetail')
+        }
+    }else if(name == 'ZhuanJiDetail'){
+        router.addRoute('playlist',{
+            name,
+            path:'ZhuanJiDetail',
+            component:()=>import('@renderer/views/PlayList/ZhuanJiDetail/index.vue'),
+            meta:{
+                detail:message
+            }
+        })
+        if(router.hasRoute('whoStartPlaylist')){
+            router.removeRoute('whoStartPlaylist')
+        }
+    }
+    if(name == 'ZhuanJiDetail'){
+        router.replace({
+            name, query: route.query
+        })
+    }else{
+        router.replace({
+            name, query: route.query
+        })
+    }
 
-    router.replace({
-        name, query: route.query
-    })
 }
-
 
 //播放全部按钮
 const playAll = async () => {
@@ -410,6 +441,7 @@ watch(routeQuery, async () => {
             id.value = route.query.id
         }else if(route.query.type == '专辑'){
             dynamic.value = (await Main.reqAlbumDetailDynamic(route.query.id as unknown as number)).data
+            console.log(dynamic.value );
             let result = (await Main.reqAlbum(route.query.id as unknown as number)).data
             Main.searchList = [result?.album]
             alsongs.value = result?.songs
@@ -670,6 +702,96 @@ const goPersonal = ()=>{
         }
     })
 }
+
+const sharePlayList = ()=>{
+    globalVar.shareDialogFlag = true
+    globalVar.share.id = id.value
+    globalVar.share.type = route.query.type=='歌单'? 'playlist':'album'
+    if(route.query.type == '歌单')globalVar.share.message = `${route.query.type}：${playList.value[index.value].name} by ${playList.value[index.value].creator.nickname}`
+    else if(route.query.type == '专辑'){
+        const ar = playList.value[index.value]?.artists.map(item=>item.name).join('/')
+        globalVar.share.message = `${route.query.type}：${playList.value[index.value].name} - ${ar}`
+    }
+    globalVar.share.imgUrl = playList.value[index.value]?.coverImgUrl ?? playList.value[index.value]?.picUrl
+}
+
+const start = async()=>{
+    console.log(dynamic);
+    if(isStartStyle())return
+    else{
+        if(dynamic.value?.subscribed ?? dynamic.value?.isSub){
+            //取消收藏
+            console.log(dynamic.value?.subscribed); //歌单
+            console.log(dynamic.value?.isSub); //专辑
+            try {
+                globalVar.loadDefault = true
+                let flag = false
+                if(dynamic.value?.subscribed != undefined)flag =  await Main.reqPlaylistSubscribe(2,id.value)
+                else flag = await Main.reqAlbumSub(2,id.value)
+                console.log(flag);
+                globalVar.loadDefault = false
+                if(flag){
+                    globalVar.loadMessageDefault = '取消收藏成功'
+                    globalVar.loadMessageDefaultFlag = true
+                    if(dynamic.value?.subscribed != undefined){
+                        dynamic.value.bookedCount--
+                        dynamic.value!.subscribed = false
+                        Main.reqUserPlaylist(BasicApi.profile!.userId)
+                    }else{
+                        dynamic.value.subCount--
+                        dynamic.value!.isSub = false
+                        BasicApi.startalbum = BasicApi.startalbum.filter((it)=>{
+                            return it.id != id.value
+                        })
+                    }
+                }else{
+                    globalVar.loadMessageDefault = '取消收藏失败'
+                    globalVar.loadMessageDefaultType = 'error'
+                    globalVar.loadMessageDefaultFlag = true
+                } 
+            } catch (error) {
+                globalVar.loadDefault = false
+                globalVar.loadMessageDefault = '取消收藏失败'
+                globalVar.loadMessageDefaultType = 'error'
+                globalVar.loadMessageDefaultFlag = true
+            }
+        }else{
+            //收藏
+            console.log(dynamic.value?.subscribed); //歌单
+            console.log(dynamic.value?.isSub); //专辑
+            try {
+                globalVar.loadDefault = true
+                let flag = false
+                if(dynamic.value?.subscribed != undefined)flag =  await Main.reqPlaylistSubscribe(1,id.value)
+                else flag = await Main.reqAlbumSub(1,id.value)
+                console.log(flag);
+                globalVar.loadDefault = false
+                if(flag){
+                    globalVar.loadMessageDefault = '收藏成功'
+                    globalVar.loadMessageDefaultFlag = true
+                    if(dynamic.value?.subscribed != undefined){
+                        dynamic.value.bookedCount++
+                        dynamic.value!.subscribed = true
+                        Main.reqUserPlaylist(BasicApi.profile!.userId)
+                    }else{
+                        dynamic.value.subCount++
+                        dynamic.value!.isSub = true
+                        await BasicApi.reqalbumSublist(1)
+                    }
+                }else{
+                    globalVar.loadMessageDefault = '收藏失败'
+                    globalVar.loadMessageDefaultType = 'error'
+                    globalVar.loadMessageDefaultFlag = true
+                } 
+            } catch (error) {
+                globalVar.loadDefault = false
+                globalVar.loadMessageDefault = '收藏失败'
+                globalVar.loadMessageDefaultType = 'error'
+                globalVar.loadMessageDefaultFlag = true
+            }
+        }
+    }
+}
 </script>
 
 <style lang="less" scoped>
@@ -853,6 +975,7 @@ const goPersonal = ()=>{
                 .start-color-red-stop {
                     background-color: @none-button !important;
                     color: @none-font !important;
+                    cursor: default;
                 }
 
                 .start-color-black {
@@ -863,6 +986,7 @@ const goPersonal = ()=>{
                 .start-color-black-stop {
                     background-color: @none-button !important;
                     color: @none-font !important;
+                    cursor: default;
                 }
 
                 .start {

@@ -382,7 +382,9 @@ const editorPersonal = ()=>{
 }
 
 $router.afterEach(async(to, from, failure) => {
-    if(to.query.id != from.query.id && to.name == from.name){
+    console.log(to.name, from.name);
+    
+    if(to.query.id != from.query.id && to.name == from.name && to.name == 'PersonalCenter'){
         await init()
         changeTag(0,true)
         globalVar.scrollToTop = true

@@ -6,12 +6,12 @@
     <div class="mesaage">
         <div class="name" @click="go">{{ name }}</div>
         <div class="des">{{ des }}</div>
-        <div class="num">
+        <div class="num" v-if=" type != 'other'">
             <div>歌单：{{ numberSimp(playlistnum) }}</div>
             <div>粉丝：{{ numberSimp(fans) }}</div>
         </div>
     </div>
-    <div class="btn">
+    <div class="btn" v-if="type != 'other'">
         <div @click.stop="" class="bk h" v-if="$route.query.id == BasicApi.profile!.userId && type == 'like'">
             <i class="iconfont icon-xinfeng"></i>
             <span>私信</span>
@@ -37,12 +37,12 @@ const $router = useRouter()
 const props = defineProps<{
     name:string
     des:string
-    playlistnum:number
-    fans:number
+    playlistnum?:number
+    fans?:number
     id:number
-    followed:boolean
+    followed?:boolean
     src:string
-    type:'fan' | 'like'
+    type:'fan' | 'like' | 'other'
 }>()
 
 const go = ()=>{

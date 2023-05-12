@@ -1,0 +1,77 @@
+:deep(.el-overlay) {
+  background-color: rgba(0, 0, 0, 0);
+}
+:deep(.el-dialog) {
+  min-height: 270px;
+  width: 500px;
+  background-color: var(--myDialogBk, #363636);
+  border-radius: 0.2em;
+}
+:deep(.el-dialog) .el-dialog__headerbtn {
+  color: var(--fontColor, #000000) !important;
+  width: auto;
+  height: auto;
+  text-shadow: none;
+  right: 5px;
+}
+:deep(.el-dialog) .el-dialog__headerbtn .el-dialog__close {
+  font-size: 25px;
+}
+:deep(.el-dialog) .el-dialog__headerbtn .el-dialog__close:hover {
+  color: var(--fontColor, #000000) !important;
+}
+:deep(.el-dialog) .el-dialog__headerbtn .el-dialog__close :not(:hover) {
+  color: var(--fontColor, #000000) !important;
+}
+:deep(.el-dialog) header {
+  text-align: center;
+}
+:deep(.el-dialog) .title {
+  color: var(--fontColor, #000000);
+  font-weight: bolder;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+:deep(.el-dialog) .list {
+  margin-left: 40px;
+  flex-direction: column;
+  align-items: start;
+}
+:deep(.el-dialog) label {
+  height: 25px;
+}
+:deep(.el-dialog) label .el-radio__label {
+  font-size: 13px;
+  color: var(--fontColor, #000000);
+}
+:deep(.el-dialog) .is-checked .el-radio__inner {
+  border-color: var(--primaryColor, #ec4141);
+  background-color: var(--primaryColor, #ec4141);
+}
+:deep(.el-dialog) .is-checked .el-radio__label {
+  color: var(--primaryColor, #ec4141);
+}
+:deep(.el-dialog) footer {
+  text-align: center;
+}
+:deep(.el-dialog) .go {
+  background-color: var(--primaryColor, #ec4141);
+  border: none;
+  color: #fff;
+  border-radius: 2em;
+  width: 100px;
+}
+:deep(.el-dialog) .go:hover {
+  background-color: var(--playAllButtonHover, #cc3232);
+}
+:deep(.el-dialog) .fa {
+  background-color: rgba(0, 0, 0, 0);
+  border: var(--splitLineColor, #e0e0e0) 1px solid;
+  width: 100px;
+  border-radius: 2em;
+}
+:deep(.el-dialog) .fa:hover {
+  background-color: var(--spanColorHover, #f1f2f3) !important;
+}

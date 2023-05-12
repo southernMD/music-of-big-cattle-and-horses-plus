@@ -53,7 +53,7 @@ const subCommit = async()=>{
                 t:2,
                 type:$route.query.type == '歌单'?2:3,
                 id:Number(routeId.value),
-                content:commitMessage.value,
+                content:commitMessage.value.split(`回复${replayName.value}:`)[1],
                 commentId:replayId.value
             }
             console.log(obj);
@@ -64,7 +64,7 @@ const subCommit = async()=>{
                 errorFlag.value = true;
                 errorMassage.value = '回复成功！'
                 loadingWidth.value = '150'
-                Main.clearText = true
+                WriteCommitRef.value!.textarea = ''
             }else{
                 typeError.value = 'error'
                 errorFlag.value = true;
@@ -104,7 +104,7 @@ const subCommit = async()=>{
                 errorFlag.value = true;
                 errorMassage.value = '评论成功！'
                 loadingWidth.value = '150'
-                Main.clearText = true
+                WriteCommitRef.value!.textarea = ''
             }else{
                 typeError.value = 'error'
                 errorFlag.value = true;

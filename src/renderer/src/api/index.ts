@@ -638,10 +638,13 @@ export const UserRecord = (uid:number,type:0|1)=>{
 
 //专辑动态信息 
 export const AlbumDetailDynamic = (id:number)=>{
-    const url = `/album/detail/dynamic?id=${id}`
+    const url = `/album/detail/dynamic?id=${id}&t=${new Date().getTime()}`
     return axios({
         url:url,
         method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
     })
 }
 
@@ -714,9 +717,9 @@ export const simiartist = (id:number)=>{
     })
 }
 
-export const albumSublist=()=>{
+export const albumSublist=(limit = 999999)=>{
     return axios({
-        url:`/album/sublist?limit=999999`,
+        url:`/album/sublist?limit=${limit}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser')
@@ -782,3 +785,37 @@ export const CommentFloor = (parentCommentId:number,id:number,type:number)=>{
         method:'POST',
     })
 } 
+
+//歌单收藏者
+export const playlistSubscribers = (id,limit = 20,offset = 0)=>{
+    const url = `/playlist/subscribers?id=${id}&limit=${limit}&offset=${offset}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//收藏歌单
+export const PlaylistSubscribe = (id,t)=>{
+    const url = `/playlist/subscribe?id=${id}&t=${t}&time=${new Date().getTime()}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//收藏专辑
+export const albumSub = (id,t)=>{
+    const url = `/album/sub?id=${id}&t=${t}&time=${new Date().getTime()}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
