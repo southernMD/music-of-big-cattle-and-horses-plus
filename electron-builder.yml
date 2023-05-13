@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: '2'
+productName: 'bingNMmusic'
 directories:
   buildResources: build
 files:
@@ -12,7 +12,8 @@ asarUnpack:
   - resources/*
 afterSign: build/notarize.js
 win:
-  executableName: '2'
+  executableName: 'bingNMmusic'
+  icon: build/faviconB.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

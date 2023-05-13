@@ -199,11 +199,13 @@ export const createWindow = ():BrowserWindow=>{
         shell.openExternal(message);
     })
     ipcMain.on('to-close', () => {
-      mainWindow.close();
+      mainWindow.hide();
+      // mainWindow.close();
     })
     mainWindow.on('close', (e) => {
       // e.preventDefault()
-      app.quit();
+      // app.quit();
+      mainWindow.hide();
       //点击关闭按钮向渲染进程请求页面
       //选择退出模式
       // let giveWayToMain = (event: Electron.IpcMainEvent, message?: string) => {
