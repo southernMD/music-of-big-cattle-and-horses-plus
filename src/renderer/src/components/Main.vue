@@ -43,7 +43,7 @@
                 <i class="iconfont icon-changpian"></i>
               </template>
             </LeftBlock>
-            <LeftBlock message="我的收藏" :big="false" name="myStart">
+            <LeftBlock v-if="BasicApi?.profile?.userId" message="我的收藏" :big="false" name="myStart">
               <template #default>
                 <i class="iconfont icon-wodeshoucang"></i>
               </template>
@@ -157,7 +157,7 @@
   import { ElScrollbar } from 'element-plus'
 //   import zhCn from 'element-plus/lib/locale/lang/zh-cn'
 import { toRef, ref, watch,nextTick, Ref, Suspense } from 'vue';
-import { useMainMenu, useMain,useGlobalVar } from '../store'
+import { useMainMenu, useMain,useGlobalVar,useBasicApi } from '../store'
 import { useRoute, useRouter } from 'vue-router';
 
 import LeftBlock from './myVC/LeftBlock.vue';
@@ -168,6 +168,7 @@ const Main = useMain();
 const route = useRoute();
 const globalVar = useGlobalVar()
 const $router = useRouter();
+const BasicApi = useBasicApi();
 
 const messageList:Ref<any[]> = ref([])
 const routeName:Ref<any[]> = ref([])
@@ -318,21 +319,21 @@ const createPlayList = async()=>{
   addPlayFlag.value = false
   const result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
   if(result.id){
-    if(globalVar.addPlayId == -1){
+    if(globalVar.addPlayId.length == 0){
       globalVar.loadDefault = false
       globalVar.loadMessageDefault = '创建歌单成功'
       globalVar.loadMessageDefaultFlag = true
     }
     Main.playList.splice(1,0,result)
-    if(globalVar.addPlayId != -1){
-        let result2 = (await Main.reqPlaylistTracks('add',result.id,Main.playing)).data
+    if(globalVar.addPlayId.length != 0){
+        let result2 = (await Main.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
         globalVar.loadDefault = false
         if (result2.body.code == 200) {
           globalVar.loadMessageDefault = '已收藏到歌单'
           globalVar.loadMessageDefaultFlag = true 
-          Main.playList[1].trackCount += 1
+          Main.playList[1].trackCount += globalVar.addPlayId.length
         }
-      globalVar.addPlayId = -1
+      globalVar.addPlayId = []
     }
   }else{
     globalVar.loadDefault = false

@@ -21,7 +21,25 @@
                 </div>
             </div>
         </div>
-        <Comment></Comment>
+        <Comment>
+            <template #now>
+                <div class="now-comment">
+                    <div class="bk">
+                        <div class="title">当前评论</div>
+                        <CommentLine 
+                        :userUrl="nowComment?.user?.avatarUrl"
+                        :userNickname="nowComment?.user?.nickname" :userId="nowComment?.user?.userId"
+                        :content="nowComment?.content" :time="nowComment?.time" :timeStr="nowComment?.timeStr"
+                        :liked="nowComment?.liked" :beReplied="nowComment?.beReplied"
+                        :likedCount="nowComment?.likedCount"
+                        :commentId="nowComment?.commentId"
+                        :resourceId="sid"
+                        :type="0"
+                        ></CommentLine>
+                    </div>
+                </div>
+            </template>
+        </Comment>
         <!-- {{ $route.query }} -->
     </div>
 </template>
@@ -30,6 +48,7 @@
 import {reactive, ref} from 'vue'
 import {useRouter,useRoute} from 'vue-router'
 import Comment from '@renderer/views/PlayList/Comment/index.vue'
+import CommentLine from '@renderer/components/myVC/Comment.vue'
 import { useMain } from '@renderer/store'
 const Main = useMain()
 const $router = useRouter()
@@ -47,6 +66,8 @@ const songMessage = reactive<{
     al:{},
     ar:[{}]
 })
+
+const nowComment = ref()
 let songDetail 
 try {
     const p1 = Main.reqSongDetail([sid.value])
@@ -55,6 +76,7 @@ try {
         console.log(p1,p2);
         songDetail = results[0]
         const song = results[0].data.songs[0]
+        nowComment.value = results[1].fa
         songMessage.url = song.al.picUrl
         songMessage.name = song.name
         songMessage.al = song.al
@@ -172,6 +194,21 @@ const goPersonal = (id)=>{
                 }
             }
         }
+    }
+    .now-comment{
+        width: 100%;
+        .bk{
+            width: 90%;
+            margin: 0 auto;
+            .title{
+                margin-bottom: 20px;
+                user-select: none;
+                color: @font-color;
+                font-size: 15px;
+                font-weight: bolder;
+            }
+        }
+
     }
 }
 </style>

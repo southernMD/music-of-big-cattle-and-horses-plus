@@ -61,7 +61,7 @@
                         </div>
                     </div>
                     <div class="lrc">
-                        <ScroolLrc :currentTime="currentTime" :lyricOffset="lyricOffset" @goTotime="goTotime">
+                        <ScroolLrc :currentTime="currentTime" :lyricOffset="lyricOffset" @goTotime="goTotime" type="FM">
                         </ScroolLrc>
                     </div>
                 </div>
@@ -115,9 +115,15 @@ watch(playStatus, () => {
 })
 
 const goTotime = (time: number) => {
-    //子组件修改时间
-    globalVar.changeTimeFlag = true
-    globalVar.timeValue = time
+    if(Main.songType == 'FM'){
+        //子组件修改时间
+        globalVar.timeValue = time
+        globalVar.changeTimeFlag = true
+    }else{
+        globalVar.timeValue = time
+        play()
+    }
+
 }
 
 const changePlaying = () => {
@@ -144,7 +150,7 @@ let one = ref(false)
 onActivated(() => {
     globalVar.scrollToTop = true;
     Main.beforePlayListId = -4
-    if (Main.playStatus == 'stop') {
+    if (Main.playStatus == 'stop' && Main.songType != 'FM') {
         Main.songType = 'FM'
         playStatus.value = 'play'
         FMplayFlag.value = true
@@ -175,10 +181,16 @@ onActivated(() => {
 const prev = () => {
     if (FMindex.value > 0) {
         FMindex.value--;
+        if(Main.songType !='FM'){
+            play()
+        }
     }
 }
 const next = () => {
     FMindex.value++;
+    if(Main.songType !='FM'){
+        play()
+    }
 }
 const throPrev = throttle(prev, 1000, { leading: true })
 const throNext = throttle(next, 1000, { leading: true })

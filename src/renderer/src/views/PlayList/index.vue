@@ -66,7 +66,7 @@
                             <span>下载全部</span>
                         </div>
                     </div>
-                    <div class="suo h" v-if="suoFlag"
+                    <div class="suo h" v-if="suoFlag" @click="HandlePrivacy"
                         :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
                         <i class="iconfont icon-suoding_o"></i>
                         <div class="txt">
@@ -157,6 +157,14 @@
         </router-view>
     </div>
     <AddTipDialog ref="AddTipDialogRef" @confirm="confirm" :index="+index"></AddTipDialog>
+    <MyDialog :flag="PrivacyFlag" @closeDialog="closePrivacy" @confirm="confirmPrivacy" @cancel="canclePrivacy" confirmName="公开">
+        <template #header>
+            <div class="title">公开歌单</div>
+        </template>
+        <template #midle>
+            <div class="center">公开后将无法重新设为隐私歌单，你确定要将此歌单设为公开?</div>
+        </template>
+    </MyDialog>
 </template>
 
 <script lang="ts" setup>
@@ -171,6 +179,7 @@ import { useMain, useBasicApi, useMainMenu, useGlobalVar } from '@renderer/store
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
+import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 const BasicApi = useBasicApi();
 const Main = useMain()
 const route = useRoute();
@@ -792,6 +801,31 @@ const start = async()=>{
         }
     }
 }
+const HandlePrivacy = ()=>{
+    PrivacyFlag.value = true
+}
+
+const PrivacyFlag = ref(false)
+const closePrivacy = (done : ()=>void)=>{
+    PrivacyFlag.value = false
+    done()
+}
+const confirmPrivacy = async()=>{
+    globalVar.loadDefault = true
+    let flag = await  Main.reqPlaylistPrivacy(id.value)
+    globalVar.loadDefault = false
+    if(flag){
+        globalVar.loadMessageDefault = '歌单已公开'
+        globalVar.loadMessageDefaultFlag = true
+        suoFlag.value = false
+        playList.value[index.value].privacy = 1
+    }
+    PrivacyFlag.value = false
+}
+
+const canclePrivacy = ()=>{
+    PrivacyFlag.value = false
+}
 </script>
 
 <style lang="less" scoped>
@@ -1253,5 +1287,10 @@ const start = async()=>{
         }
     }
 
+}
+.center{
+    width: 100%;
+    text-align: center;
+    color: @font-color;
 }
 </style>

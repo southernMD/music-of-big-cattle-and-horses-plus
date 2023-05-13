@@ -15,21 +15,21 @@
             <div class="nickname" v-show="artilseMessage.trans.length != 0 || artilseMessage.alias.length!=0">
                 <span>{{ artilseMessage.trans }}{{artilseMessage.alias.join(';')}}</span>
             </div>
-            <div class="start h" id="startSelf" :class="
+            <div class="start h" id="startSelf" @click="subSonger" :class="
                 {
                     'start-color-black': mainColor == 'NMblack',
                     'start-color-red': mainColor != 'NMblack',
                 }">
                 <div class="icon" :class="{ noDrag: !Main.dragMouse }">
                     <i class="iconfont icon-wenjian">
-                        <i class="iconfont icon-gou" v-if="BasicApi.startSongHand.some(it=>it.id == $route.query.id)"></i>
+                        <i class="iconfont icon-gou" v-if="isSub"></i>
                         <i class="iconfont icon-jiahao_o" v-else></i>
                     </i>
                 </div>
                 <div class="txt" :class="{
                     noDrag: !Main.dragMouse,
                 }">
-                    <span v-if="BasicApi.startSongHand.some(it=>it.id == $route.query.id)">已</span>
+                    <span v-if="isSub">已</span>
                     <span>收藏</span>
                 </div>
             </div>
@@ -155,7 +155,7 @@ const blockList = ref()
 const nowPage = ref(1)
 const hotSong:Ref<any[]> = ref([])
 const alList:Ref<any[]> = ref([])
-
+const isSub = ref(BasicApi.startSongHand.some(it=>it.id == $route.query.id))
 const artilseMessage = reactive<{
     alList:Ref<any[]>
     name:string | undefined
@@ -367,6 +367,38 @@ $router.afterEach(async(to, from, failure) => {
         globalVar.scrollToTop = true
     }
 })
+
+const subSonger = async()=>{
+    try {
+        let flag
+        //取关
+        if(isSub.value)flag  = await Main.reqArtistSub($route.query.id,2)
+        else flag = await Main.reqArtistSub($route.query.id,1)
+        if(flag){
+            if(isSub.value){
+                globalVar.loadMessageDefault = '取消收藏成功'
+                BasicApi.startSongHand = BasicApi.startSongHand.filter(item=>item.id != $route.query.id)
+            }
+            else{
+                globalVar.loadMessageDefault = '收藏成功'
+                BasicApi.followsId.push(+$route.query.id!)
+                BasicApi.reqartistSublist()
+            }
+            isSub.value =!isSub.value
+        }else{
+            globalVar.loadMessageDefaultType = 'error'
+            if(isSub.value)globalVar.loadMessageDefault = '取消收藏失败'
+            else globalVar.loadMessageDefault = '收藏失败'
+        }
+        globalVar.loadMessageDefaultFlag = true
+    } catch (error) {
+        globalVar.loadMessageDefaultType = 'error'
+        if(isSub.value)globalVar.loadMessageDefault = '取消收藏失败'
+        else globalVar.loadMessageDefault = '收藏失败'
+        globalVar.loadMessageDefaultFlag = true
+    }
+}
+
 </script>
 
 <style scoped lang="less">

@@ -1,9 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage, globalShortcut, Menu} from 'electron'
+import { app, shell, BrowserWindow, ipcMain,screen, dialog,session ,nativeImage, globalShortcut, Menu, Tray} from 'electron'
 import { join,extname, parse, resolve } from 'path'
 import fs from 'fs'
 import exfs from 'fs-extra'
 import os from 'os'
 import icon from '../../build/favicon.ico?asset'
+import iconW from '../../build/faviconW.ico?asset'
 import prevIcon from '../../build/prev.png?asset'
 import playIcon from '../../build/play.png?asset'
 import stopIcon from '../../build/stop.png?asset'
@@ -30,7 +31,7 @@ export const createWindow = ():BrowserWindow=>{
       maxHeight: 670,
       title: '大牛马音乐',
       // autoHideMenuBar: true,
-      icon:icon,
+      icon:iconW,
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
         sandbox: false
@@ -49,6 +50,25 @@ export const createWindow = ():BrowserWindow=>{
       shell.openExternal(details.url)
       return { action: 'deny' }
     })
+    //托盘事件
+    let appIcon = new Tray(iconW)
+    appIcon.on('double-click', () => {
+      mainWindow.show()
+    })
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: '退出', type: 'normal', click: () => {
+          app.quit()
+        }
+      },
+      {
+        label: '显示主页面', type: 'normal', click: () => {
+          mainWindow.show();
+        }
+      }
+    ])
+    appIcon.setContextMenu(contextMenu)
+    //托盘事件结束
     //记忆背景
     ipcMain.on('renderer-ready',()=>{
       let basePath = ''

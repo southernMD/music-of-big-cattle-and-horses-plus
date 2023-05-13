@@ -5,7 +5,7 @@
                 <div class="title">当前播放</div>
                 <div class="number">总{{ list.length }}首</div>
                 <div class="right">
-                    <div class="start">
+                    <div class="start" @click="startAll">
                         <i class="iconfont icon-wenjian">
                             <i class="iconfont icon-jiahao_o"></i>
                         </i>
@@ -33,7 +33,7 @@ import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
 import { getCurrentInstance, ComponentInternalInstance, toRef } from 'vue';
 import { useMain } from '@renderer/store';
 const $el = getCurrentInstance() as ComponentInternalInstance
-const $emit = defineEmits(['close','stopPlay'])
+const $emit = defineEmits(['close','stopPlay','startAll'])
 const Main = useMain();
 
 let list = toRef(Main, 'playingList')
@@ -54,6 +54,10 @@ const clearList = ()=>{
 
 let deleteDilog: any
 useClickElsewhereToClose(deleteDilog, $emit, "playlistIcon")
+
+const startAll = ()=>{
+    $emit('startAll')
+}
 </script>
 
 <style lang="less" scoped>

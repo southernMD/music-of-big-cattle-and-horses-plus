@@ -68,7 +68,7 @@
           </div>
           <div class="middle">
             <ScroolLrc :currentTime="currentTime" :lyricOffset="lyricOffset" @goTotime="gotoPlay"
-              @scrollEvent="scrollEvent"></ScroolLrc>
+              @scrollEvent="scrollEvent" type="song"></ScroolLrc>
           </div>
           <div class="right" v-show="ifShowRight">
             <el-scrollbar height="40%">

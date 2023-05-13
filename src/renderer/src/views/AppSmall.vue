@@ -184,7 +184,13 @@ const p4 = BasicApi.reqPlayListTags()
 await Promise.allSettled([p1, p2, p3, p4])
 MainPinia.reqPersonal_fm()
 BasicApi.reqartistSublist()
-BasicApi.reqalbumSublist()
+try {
+    BasicApi.reqalbumSublist()
+    BasicApi.requserFollows(BasicApi.account!.id)
+} catch (error) {
+    
+}
+
 
 let flagC = toRef(MainMenu, 'colorBlock')
 flagC.value = localStorage.getItem('colorBlock') as string

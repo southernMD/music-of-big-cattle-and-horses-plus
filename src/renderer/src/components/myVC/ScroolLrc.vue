@@ -70,9 +70,10 @@ const $el = getCurrentInstance() as ComponentInternalInstance;
 const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>();
 const globalVar = useGlobalVar()
 
-defineProps<{
+const props = defineProps<{
   currentTime: number;
   lyricOffset?: number;
+  type:'FM' | 'song'
 }>();
 
 let showLineFlag = ref(false)
@@ -81,8 +82,8 @@ let flag = ref(true)
 let scroolTime = ref(0)
 let scrollLrc = ref(0);
 
-let playingTime = toRef($el.props, "currentTime") as Ref<number>;
-let eqi = toRef($el.props, "lyricOffset") as Ref<number>;
+let playingTime = toRef(props, "currentTime") as Ref<number>;
+let eqi = toRef(props, "lyricOffset") as Ref<number>;
 
 let detailStatus = toRef(Main, "detailStatus");
 let mainColor = toRef(MainMenu, "colorBlock");
@@ -105,10 +106,12 @@ let romalrc = ref<lrcType>([{ lyric: "", time: 0 }]);
 let tlyric = ref<lrcType>([{ lyric: "", time: 0 }]);
 //歌词
 window.electron.ipcRenderer.on("resolved-lrc", ({}, objArr: any) => {
-    const lrcObj = JSON.parse(objArr)
-    lrc.value = lrcObj.lrc;
-    romalrc.value = lrcObj.romalrc;
-    tlyric.value = lrcObj.tlyric;
+    if(props.type == Main.songType){
+      const lrcObj = JSON.parse(objArr)
+      lrc.value = lrcObj.lrc;
+      romalrc.value = lrcObj.romalrc;
+      tlyric.value = lrcObj.tlyric;
+    }
 });
 
 const barScroll = (obj: any) => {
@@ -181,10 +184,14 @@ const hideLine = () => {
 }
 
 const isPlaying = (time: number, time2: number) => {
+  if(props.type == Main.songType){
     return (
         ((playingTime.value + eqi.value) * 1000 >= time && (playingTime.value + eqi.value) * 1000 < time2) ||
         ((playingTime.value + eqi.value) * 1000 >= time && time2 == undefined)
     );
+  }else{
+    return false
+  }
 };
 
 const isNMColor = () => {
@@ -230,38 +237,40 @@ let beforeOffset = ref(0);
 let suoFlag = toRef(globalVar,'lrcScrollSuo');
 
 watch(playingTime, () => {
-  if(playingTime.value == 0 && suoFlag.value){
-    scrollbarRef.value!.scrollTo({
-      top: 0,
-    });
-    suoFlag.value = false
-  }else{
-    
-    let t = playingTime.value + eqi.value
-    if (t >= 0 && t <= 1) {
+  if(props.type == Main.songType){
+    if(playingTime.value == 0 && suoFlag.value){
       scrollbarRef.value!.scrollTo({
         top: 0,
-        behavior: "smooth"
       });
-    }
-    nextTick(()=>{
-      let dom = document.querySelector(".playingColor") as HTMLElement;
-      let line = $el.refs.line as HTMLElement;
-      if (dom && line) {
-        let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight / 2;
-        if(suoFlag.value && flag.value){
-          scrollbarRef.value!.scrollTo({
-            top: newOffset
-          });
-          suoFlag.value = false
-        }else if(flag.value){
-          scrollbarRef.value!.scrollTo({
-            top: newOffset,
-            behavior: "smooth"
-          });
-        }
+      suoFlag.value = false
+    }else{
+      
+      let t = playingTime.value + eqi.value
+      if (t >= 0 && t <= 1) {
+        scrollbarRef.value!.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
       }
-    })
+      nextTick(()=>{
+        let dom = document.querySelector(".playingColor") as HTMLElement;
+        let line = $el.refs.line as HTMLElement;
+        if (dom && line) {
+          let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight / 2;
+          if(suoFlag.value && flag.value){
+            scrollbarRef.value!.scrollTo({
+              top: newOffset
+            });
+            suoFlag.value = false
+          }else if(flag.value){
+            scrollbarRef.value!.scrollTo({
+              top: newOffset,
+              behavior: "smooth"
+            });
+          }
+        }
+      })
+    }
   }
 });
 

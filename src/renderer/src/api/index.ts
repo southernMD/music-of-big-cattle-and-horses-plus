@@ -250,9 +250,9 @@ export const commentNew = (id:number,type:number,pageNo?:number,pageSize?:number
     })
 }
 
-export const playlistTracks = (op:'add' | 'del',pid:number,tracks:number)=>{
+export const playlistTracks = (op:'add' | 'del',pid:number,tracks:number[])=>{
     return axios({
-        url:`/playlist/tracks?op=${op}&pid=${pid}&tracks=${tracks}`,
+        url:`/playlist/tracks?op=${op}&pid=${pid}&tracks=${tracks.join(',')}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
@@ -702,7 +702,7 @@ export const artistDesc = (id:number)=>{
 }
 export const artistSublist = ()=>{
     return axios({
-        url:`/artist/sublist`,
+        url:`/artist/sublist?t=${new Date().getTime()}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser')
@@ -811,6 +811,39 @@ export const PlaylistSubscribe = (id,t)=>{
 //收藏专辑
 export const albumSub = (id,t)=>{
     const url = `/album/sub?id=${id}&t=${t}&time=${new Date().getTime()}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//关注取关用户
+export const follow = (id,t)=>{
+    const url = `/follow?id=${id}&t=${t}&time=${new Date().getTime()}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//收藏歌手
+export const artistSub = (id,t)=>{
+    const url = `/artist/sub?id=${id}&t=${t}&time=${new Date().getTime()}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//公开隐私歌单
+export const playlistPrivacy =(id)=>{
+    const url = `/playlist/privacy?id=${id}`
     return axios({
         url,
         method:'POST',

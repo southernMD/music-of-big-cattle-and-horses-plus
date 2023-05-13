@@ -30,10 +30,15 @@
       <div class="music-list" :class="{ 'music-list-oneself': globalVar.oneself == 1 }">
         <LoadingLineMusic
           :ref="ref => { return loadingLineMusicRefs[index] = ref as InstanceType<typeof LoadingLineMusic> }"
-          v-for="(val, index) in globalVar.downloadList" :index="index" :val="val" :key="val.id">
+          v-show="index >=(nowPage-1)*20 && index < nowPage*20"
+          v-for="(val, index) in globalVar.downloadList" :index="index" :val="val" :key="val.id"
+          >
         </LoadingLineMusic>
       </div>
-
+      <div class="pagination">
+        <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
+            :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
+        </div>
     </div>
   </div>
 </template>
@@ -245,6 +250,17 @@ const getUrl = async (id, name) => {
     })
 }
 
+const total = ref(globalVar.downloadList.length)
+const totalPage = ref(Math.ceil(total.value / 20))
+const nowPage = ref(1)
+watch(total,()=>{
+    totalPage.value = Math.ceil(total.value / 20)
+})
+
+watch(globalVar.downloadList,()=>{
+  total.value = globalVar.downloadList.length
+})
+
 </script>
 
 <style scoped lang="less">
@@ -323,6 +339,52 @@ const getUrl = async (id, name) => {
       align-items: center;
     }
   }
+  .pagination {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 110px;
+      padding-bottom: 20px;
+      :deep(.el-pagination) {
+        --el-pagination-hover-color: @font-color;
+
+        li,
+        .btn-prev,
+        .btn-next {
+          box-sizing: border-box;
+          border-radius: 3px !important;
+          background-color: rgba(0, 0, 0, 0);
+          border: 1px solid @split-line-color;
+          font-weight: normal;
+          margin: 2px;
+          width: 25px;
+          height: 25px;
+          color: @pagin-font;
+        }
+
+        .btn-prev,
+        .btn-next {
+          background-color: @pagin-bk-btn-color !important;
+          font-weight: bold;
+
+        }
+
+        li:not(.is-disabled).is-active {
+          background-color: @primary-color !important;
+          color: rgb(255, 255, 255) !important;
+        }
+
+        li:hover,
+        .btn-prev:not(:disabled):hover,
+        .btn-next:not(:disabled):hover {
+          background-color: @pagin-bk-hover-color !important;
+        }
+
+        button:disabled {
+          cursor: default !important;
+          color: @pagin-disable-font-color !important;
+        }
+      }
+    }
 }
 
 .music-list {

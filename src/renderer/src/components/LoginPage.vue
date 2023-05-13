@@ -190,7 +190,17 @@ const login = async () => {
                 resolve('ok')
             })  
         })
-        Promise.all([p1,p2,p3,p4,p5,p6]).then(()=>{
+        const p7 = new Promise<string>((resolve) => {
+            BasicApi.reqalbumSublist().then(()=>{
+                resolve('ok')
+            })
+        })
+        const p8 = new Promise<string>((resolve) => {
+            BasicApi.requserFollows(BasicApi.account!.id).then(()=>{
+                resolve('ok')
+            })
+        })
+        Promise.all([p1,p2,p3,p4,p5,p6,p7,p8]).then(()=>{
             LoadingFlag.value = false
             destroyVC();
             $router.replace({

@@ -69,4 +69,5 @@ const closeDialog = (done: () => void)=>{
 :slotted(:deep(.main-slot)){
     height: 200px;
 }
+
 </style>

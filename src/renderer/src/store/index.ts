@@ -32,7 +32,10 @@ import {
     CommentFloor,
     playlistSubscribers,
     PlaylistSubscribe,
-    albumSub
+    albumSub,
+    follow,
+    artistSub,
+    playlistPrivacy
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
@@ -98,7 +101,8 @@ interface S {
     tagsDetail:{
         sub:any[],
         categories:any[]
-    }
+    },
+    followsId:Array<number>
 }
 
 export const useBasicApi = defineStore('BaseApi', {
@@ -117,7 +121,8 @@ export const useBasicApi = defineStore('BaseApi', {
             tagsDetail:{
                 sub:[],
                 categories:[]
-            }
+            },
+            followsId:[]
         }
     },
     actions: {
@@ -272,8 +277,18 @@ export const useBasicApi = defineStore('BaseApi', {
         //我的收藏专辑
         async reqalbumSublist(limit?:number){
             let result = await albumSublist(limit)
-            this.startalbum.unshift(...result.data.data)
-        }
+            if(result.data.code == 200){
+                this.startalbum.unshift(...result.data.data)
+            }
+        },
+        //我的关注列表
+        async requserFollows(id){
+            let result = await userFollows(id,99999999,0)
+            console.log(result);
+            if (result.data.code == 200) {
+                this.followsId = result.data.follow.map(item=>item.userId)
+            }
+        },
     }
 })
 interface T {
@@ -595,7 +610,7 @@ export const useMain = defineStore('Main', {
             }
         },
         //对歌单添加或删除歌曲
-        async reqPlaylistTracks(op: 'add' | 'del', pid: number, tracks: number): Promise<any> {
+        async reqPlaylistTracks(op: 'add' | 'del', pid: number, tracks: number[]): Promise<any> {
             let result = await playlistTracks(op, pid, tracks);
             if (result.data.body.code == 200 || result.data.body.code == 502) {
                 return new Promise((resolve) => {
@@ -1155,6 +1170,45 @@ export const useMain = defineStore('Main', {
                 })
             }
         },
+        //关注取关用户
+        async reqFollow(id,t){
+            let result = await follow(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //收藏歌手
+        async reqArtistSub(id,t){
+            let result = await artistSub(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //公开隐私歌单
+        async reqPlaylistPrivacy (id){
+            let result = await playlistPrivacy(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -1225,7 +1279,7 @@ interface V {
     changeMainScroll:number //修改主右滚动条
     addPlayFlag:boolean
     shareDialogFlag:boolean,
-    addPlayId:number //添加歌曲到新歌单
+    addPlayId:number[] //添加歌曲到新歌单
     share:{
         imgUrl:string
         message:string
@@ -1268,7 +1322,7 @@ export const useGlobalVar = defineStore('globalVar', {
             searchKey:'',
             changeMainScroll:0,
             addPlayFlag:false,
-            addPlayId:-1,
+            addPlayId:[],
             shareDialogFlag:false,
             share:{
                 imgUrl:'',

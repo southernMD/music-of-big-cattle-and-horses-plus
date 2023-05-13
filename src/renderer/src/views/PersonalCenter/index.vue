@@ -22,10 +22,10 @@
                         <i class="iconfont icon-xinfeng"></i>
                         <span>发私信</span>
                     </div>
-                    <div>
-                        <i class="iconfont icon-big-gou" v-if="true"></i>
+                    <div @click="followUser">
+                        <i class="iconfont icon-big-gou" v-if="personalMessage.followed"></i>
                         <i class="iconfont icon-jiahao_o" v-else></i>
-                        <span>{{true?'已':''}}关注</span>
+                        <span>{{personalMessage.followed?'已':''}}关注</span>
                     </div>
                 </div>
             </div>
@@ -201,6 +201,7 @@ const personalMessage = reactive<{
     like:number
     follow:number
     describe:string
+    followed:boolean
 }>({
     MyplayList:ref([]),
     name:undefined,
@@ -208,7 +209,8 @@ const personalMessage = reactive<{
     fans:0,
     like:0,
     follow:0,
-    describe:''
+    describe:'',
+    followed:false
 })
 const total = ref()
 const totalPage = ref()
@@ -274,6 +276,8 @@ const init = async() =>{
             personalMessage.like = results[0].data.profile!.follows
             personalMessage.follow = results[0].data.profile!.eventCount
             personalMessage.describe = results[0].data.profile!.signature
+            console.log(BasicApi.followsId,results[0].data.profile!.userId);
+            personalMessage.followed = BasicApi.followsId.includes(results[0].data.profile!.userId)
             createPlay.value = results[0].data.profile!.playlistCount  - 1
             playList.value = results[1].data.playlist
             console.log(playList.value);
@@ -419,6 +423,36 @@ const goFans = ()=>{
         }
     })
     
+}
+
+const followUser = async()=>{
+    try {
+        let flag
+        //取关
+        if(personalMessage.followed)flag  = await Main.reqFollow($route.query.id,2)
+        else flag = await Main.reqFollow($route.query.id,1)
+        if(flag){
+            if(personalMessage.followed){
+                globalVar.loadMessageDefault = '取关成功'
+                BasicApi.followsId = BasicApi.followsId.filter(it=>it != +$route.query.id!)
+            }
+            else{
+                globalVar.loadMessageDefault = '关注成功'
+                BasicApi.followsId.push(+$route.query.id!)
+            }
+            personalMessage.followed =!personalMessage.followed
+        }else{
+            globalVar.loadMessageDefaultType = 'error'
+            if(personalMessage.followed)globalVar.loadMessageDefault = '取关失败'
+            else globalVar.loadMessageDefault = '关注失败'
+        }
+        globalVar.loadMessageDefaultFlag = true
+    } catch (error) {
+        globalVar.loadMessageDefaultType = 'error'
+        if(personalMessage.followed)globalVar.loadMessageDefault = '取关失败'
+        else globalVar.loadMessageDefault = '关注失败'
+        globalVar.loadMessageDefaultFlag = true
+    }
 }
 
 </script>

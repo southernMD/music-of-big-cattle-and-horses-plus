@@ -6,6 +6,7 @@
                 <span>评论</span>
             </div>
         </div>
+        <slot name="now"></slot>
         <!-- <CommentList :id="routeId"></CommentList> -->
         <CommentList :commentFlag="commentFlag" :nowPage="nowPage"
         :hotComments="hotComments" :moreHot="moreHot" :total="total"

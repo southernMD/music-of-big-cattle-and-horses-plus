@@ -231,7 +231,7 @@ const fnMouseDrag = async (e: any) => {
                 }else{
                     Main.dragMouse = false
                     globalVar.loadDefault = true
-                    let result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), Number(props.id))).data
+                    let result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
                     globalVar.loadDefault = false
                     if (result.body.code == 200) {
                         globalVar.loadMessageDefault = '已收藏到歌单'

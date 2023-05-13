@@ -137,7 +137,7 @@
             <div class="playList" id="playlistIcon" v-show="Main.songType != 'FM'">
                 <i class="iconfont icon-24gf-playlist" @click="showPlayListPanel"></i>
                 <div v-show="PlayListPanelFlag">
-                    <PlayListPanel @close="PlayListPanelFlag = false" @stopPlay="clearList"></PlayListPanel>
+                    <PlayListPanel @startAll="startAll" @close="PlayListPanelFlag = false" @stopPlay="clearList"></PlayListPanel>
                 </div>
             </div>
         </div>
@@ -375,6 +375,7 @@ watch(changeTimeFlag, () => {
     if (changeTimeFlag.value == true) {
         goTotime(globalVar.timeValue)
         changeTimeFlag.value = false
+        globalVar.timeValue = 0
     }
 })
 
@@ -566,13 +567,39 @@ onMounted(async () => {
     playLine = $el.refs['line-play'] as HTMLElement
     playBall = $el.refs['block'] as HTMLElement
     line = $el.refs['audio-line'] as HTMLElement
+    let timeValueFlag = true
+    audio.addEventListener('timeupdate', () => {
+        if (audio.currentTime >= 1 && timeValueFlag) {
+            timeValueFlag = false
+            if(globalVar.timeValue!=0){
+                audio.currentTime = globalVar.timeValue / 1000
+                const currentTime = AC.currentTime;
+                AC = new AudioContext()
+                gainNode = AC.createGain()
+                analyser = AC.createAnalyser();
+                bufferSource.stop(currentTime);
+                bufferSource.disconnect()
+                bufferSource = AC.createBufferSource()
+                bufferSource.buffer = musicBuffer
+                bufferSource.connect(AC.destination)
+                bufferSource.connect(analyser);
+                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                bufferSource.start(0,globalVar.timeValue / 1000);
+                bufferSource.connect(gainNode)
+                gainNode.connect(AC.destination);
+                gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                drawIndex.value++
+                cancelAnimationFrame(animationId)
+                draw()
+                globalVar.timeValue = 0
+            }
+            timeValueFlag = true
+        }
+    });
     //canplay
     // audio.addEventListener('canplay', () => {
-    //     try {
-    //         bufferSource.start()
-    //     } catch (error) {
+    //     console.log('canplaycanplaycanplaycanplaycanplaycanplaycanplaycanplay',globalVar.timeValue);
 
-    //     }
     // })
     //加载进度
     audio.addEventListener('progress', () => {
@@ -608,7 +635,7 @@ onMounted(async () => {
         stopOrPlayFlag.value = true;
         bufferSource.stop()
         cancelAnimationFrame(animationId)
-        if ((wayIndex.value == 0 && Main.playingList.length != 1)|| wayIndex.value == 4) {
+        if ((wayIndex.value == 0 && Main.playingList.length != 1)|| wayIndex.value == 4 || Main.songType == 'FM') {
             nextSongThor()
         } else if (wayIndex.value == 1 ||( wayIndex.value == 0 && Main.playingList.length == 1)) {
             AC = new AudioContext()
@@ -1434,6 +1461,7 @@ const imgRef = ref<InstanceType<typeof HTMLElement>>()
 const todoHandle = (index)=>{
     if(index == 0){
         startDialogFlag.value = true
+        willStartListId.value = [Main.playing]
     }else if(index == 1){
         download(Main.playing)
     }else if(index == 2){
@@ -1472,7 +1500,7 @@ const closeShareDialog = (done :()=>void)=>{
 }
 
 const addIn = async(id,index)=>{
-    if(index == 0){
+    if(index == 0 && willStartListId.value.length == 1){
         Main.reqLike(Number(playingId.value), true)
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
@@ -1481,12 +1509,12 @@ const addIn = async(id,index)=>{
         Main.likeChange = `${playingId.value},true`
     }else{
         globalVar.loadDefault = true
-        let result = (await Main.reqPlaylistTracks('add',id,Main.playing)).data
+        let result = (await Main.reqPlaylistTracks('add',id,willStartListId.value)).data
         globalVar.loadDefault = false
         if (result.body.code == 200) {
             globalVar.loadMessageDefault = '已收藏到歌单'
             globalVar.loadMessageDefaultFlag = true 
-            Main.playList[index].trackCount += 1
+            Main.playList[index].trackCount += willStartListId.value.length
             if($route.name == 'songPlaylist' && $route.query.id == id){
                 Main.likeChange = `${id},true`
             }
@@ -1497,11 +1525,11 @@ const addIn = async(id,index)=>{
 
 const create = ()=>{
     globalVar.addPlayFlag = true
-    globalVar.addPlayId = Main.playing
+    globalVar.addPlayId = willStartListId.value
 }
 
 watch(()=>globalVar.addPlayId,()=>{
-    if(globalVar.addPlayId == -1){
+    if(globalVar.addPlayId.length == 0){
         startDialogFlag.value = false
     }
 })
@@ -1697,6 +1725,12 @@ const WriteCommitRef2 = ref()
 let commitMessage = ref('')
 const getText = (message:string)=>{
     commitMessage.value = message
+}
+
+const willStartListId = ref()
+const startAll = ()=>{
+    startDialogFlag.value = true
+    willStartListId.value = Main.playingList.map(it=>it.id)
 }
 </script>
 

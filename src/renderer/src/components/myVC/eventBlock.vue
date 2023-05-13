@@ -262,36 +262,78 @@ const getText = (message:string)=>{
 }
 const WriteCommitRef2 = ref()
 const subCommit = async()=>{
-    if(commitMessage.value == ''){
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
-        globalVar.loadMessageDefaultFlag = true
-    }else{
-        let obj:comment.sendComment = {
-            t:1,
-            type:6,
-            threadId:props.threadId,
-            content:commitMessage.value
-        }
-        let result = (await Main.reqcomment(obj)).data;
-        if(result.code == 200){
-            globalVar.loadMessageDefault = '评论成功！'
+    if(postByreplay.value){
+        if(commitMessage.value.split(`回复${replayName.value}:`)[1].length == 0){
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
             globalVar.loadMessageDefaultFlag = true
-            WriteCommitRef2.value.textarea = ''
         }else{
-            globalVar.loadMessageDefault = '评论失败！'
-            globalVar.loadMessageDefaultFlag = true
+            let obj:comment.sendComment = {
+                t:2,
+                type:6,
+                threadId:props.threadId,
+                content:commitMessage.value.split(`回复${replayName.value}:`)[1],
+                commentId:replayId.value
+            }
+            console.log(obj);
+            let result = (await Main.reqcomment(obj)).data;
+            console.log(result);
+            if(result.code == 200){
+                globalVar.loadMessageDefaultFlag = true;
+                globalVar.loadMessageDefault = '回复成功！'
+                WriteCommitRef2.value.textarea = ''
+            }else{
+                globalVar.loadMessageDefaultType = 'error'
+                globalVar.loadMessageDefault = '回复失败'
+                globalVar.loadMessageDefaultFlag = true
+            }
+            let addComment = result.comment
+            addComment['likedCount'] = 0;
+            addComment['liked'] = false;
+            addComment['timeStr'] = '刚刚'
+            addComment['beReplied'] = [{
+                user:{
+                    userId:replayId.value,
+                    nickname:replayName.value
+                },
+                content:replayContent.value
+            }]
+            comments.value.unshift(addComment)
         }
-        let addComment = result.comment
-        addComment['likedCount'] = 0;
-        addComment['liked'] = false;
-        addComment['timeStr'] = '刚刚'
-        addComment['beReplied'] = []
-        comments.value.unshift(addComment)
-        if(ifZhuanfu.value)infoW.value.commentCount++
-        else infoI.value.commentCount++
-        total.value ++;
+        
+    }else{
+        if(commitMessage.value == ''){
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
+            globalVar.loadMessageDefaultFlag = true
+        }else{
+            let obj:comment.sendComment = {
+                t:1,
+                type:6,
+                threadId:props.threadId,
+                content:commitMessage.value
+            }
+            let result = (await Main.reqcomment(obj)).data;
+            if(result.code == 200){
+                globalVar.loadMessageDefault = '评论成功！'
+                globalVar.loadMessageDefaultFlag = true
+                WriteCommitRef2.value.textarea = ''
+            }else{
+                globalVar.loadMessageDefault = '评论失败！'
+                globalVar.loadMessageDefaultFlag = true
+            }
+            let addComment = result.comment
+            addComment['likedCount'] = 0;
+            addComment['liked'] = false;
+            addComment['timeStr'] = '刚刚'
+            addComment['beReplied'] = []
+            comments.value.unshift(addComment)
+            if(ifZhuanfu.value)infoW.value.commentCount++
+            else infoI.value.commentCount++
+            total.value ++;
+        }
     }
+
 }
 
 const showPingLun = ref(false)
@@ -626,6 +668,25 @@ const goSongComments = (cid,sonJSON)=>{
     })
     console.log(cid,sid);
 }
+
+const replayFlag = ref(false)
+const replayId = ref(0)
+const replayName = ref('')
+const postByreplay = ref(false)
+const replayContent = ref('')
+provide('replayFlag',replayFlag)
+provide('replayId',replayId)
+provide('replayName',replayName)
+provide('replayContent',replayContent)
+// const WriteCommitRef2 = ref()
+watch(replayFlag,()=>{
+    if(replayFlag.value == true){
+        postByreplay.value = true
+        WriteCommitRef2.value!.textarea = `回复${replayName.value}:`
+        WriteCommitRef2.value!.getFocus(WriteCommitRef2.value!.textarea.length)
+        replayFlag.value = false
+    }
+})
 </script>
 <style scoped lang="less">
     .noDrag{
