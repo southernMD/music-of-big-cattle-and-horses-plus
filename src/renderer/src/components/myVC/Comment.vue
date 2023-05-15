@@ -1,5 +1,8 @@
 <template>
-    <div class="comment-li">
+    <div class="comment-li" 
+    :data-right="userId == BasicApi.profile!.userId" 
+    data-type="commentMy" 
+    :data-id="`${commentId},${resourceId}`">
         <div class="comment-li-bk">
             <div class="head" draggable="false">
                 <el-image lazy style="width:35px; height:35px;" draggable="false" :src="userUrl">
@@ -12,10 +15,10 @@
                         <span class="word" v-html="regEmoji(content)"></span>
                     </span>
                 </div>
-                <div class="reply" v-if="beReplied.length != 0">
+                <div class="reply" v-if="beReplied && beReplied?.length != 0">
                     <span class="user-comment">
-                        <span class="user-name" @click="go(beReplied[0]?.user?.userId)">@{{beReplied[0]?.user?.nickname}}:&nbsp;</span>
-                        <span class="word" v-html="regEmoji(beReplied[0]?.content)" ></span>
+                        <span class="user-name" @click="go(beReplied?.[0]?.user?.userId)">@{{beReplied?.[0]?.user?.nickname}}:&nbsp;</span>
+                        <span class="word" v-html="regEmoji(beReplied?.[0]?.content)" ></span>
                     </span>
                 </div>
                 <div class="option">
@@ -39,9 +42,10 @@ import { computed, getCurrentInstance, ComponentInternalInstance, inject, toRef,
 import { dayjsCN } from '@renderer/utils/dayjs'
 import { regEmoji } from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
-import { useMain ,useGlobalVar} from '@renderer/store'
+import { useMain ,useGlobalVar, useBasicApi} from '@renderer/store'
 import  {throttle} from 'lodash'
 const Main = useMain()
+const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const $router = useRouter()
 const $el = getCurrentInstance() as ComponentInternalInstance

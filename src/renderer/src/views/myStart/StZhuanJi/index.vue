@@ -17,6 +17,7 @@
                 :trackCount="val.size" 
                 :id="val.id" 
                 :creators="val.artists"
+                dataType="alHad"
                 @click="go(val.id)"
                 @goAr="goAr"
             ></HBlock>
@@ -29,6 +30,7 @@
                 :trackCount="val.size" 
                 :id="val.id" 
                 :creators="val.artists"
+                dataType="alHad"
                 @click="go(val.id)"
                 @goAr="goAr"
             ></HBlock>

@@ -1,5 +1,5 @@
 <template>
-    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }">
+    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }" :data-id="id" :data-type="dataType" :data-right="1">
         <div class="left" :class="{ruName:type == 'searchUser'}">
             <el-image :class="{ru:type == 'searchUser'}" :src="url" style="width: 60px; height: 60px"></el-image>
             <div class="n" :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
@@ -84,6 +84,7 @@ const props = defineProps<{
     time?:number
     creators?:any[]
     signature?:string
+    dataType:string
 }>()
 const $emit = defineEmits(['playAll','goAr'])
 const playAll = ()=>{

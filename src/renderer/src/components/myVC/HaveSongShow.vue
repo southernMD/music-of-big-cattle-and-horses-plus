@@ -1,7 +1,7 @@
 <template>
   <div class="HaveSongShow">
-    <div class="left">
-        <el-image @click="go" draggable="false" :src="url" style="width: 150px; height: 150px"></el-image>
+    <div class="left" >
+        <el-image :data-id="id" :data-type="dataType" data-right="1" @click="go" draggable="false" :src="url" style="width: 150px; height: 150px"></el-image>
         <div v-if="time && type == 'songHand' ">{{dayjsStamp(time!)}}</div>
     </div>
     <div class="right">
@@ -18,6 +18,7 @@
                 :record="true"
                 :count="listCount[index]"
                 @recordPlay="recordPlay"
+                :dataType="props.uid == BasicApi.profile!.userId && props.id != -5?'songMy':'song'"
                 >
             </LineMusic>
             <div class="message" v-else>该用户未公开内容或无内容</div>
@@ -32,6 +33,7 @@
                 :key="list[index]?.id" :show-index="true" :length="10" :oneselfColor="true"
                 :onlyTime="true"
                 @shorPlayList="shorPlayList"
+                :dataType="props.uid == BasicApi.profile!.userId && props.id != -5?'songMy':'song'"
                 >
             </LineMusic>
         </div>
@@ -47,6 +49,7 @@ import {Ref,onMounted,ref, watch,computed } from 'vue'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue';
 import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useMain,useBasicApi } from '@renderer/store';
+
 const Main = useMain()
 const BasicApi = useBasicApi()
 const size = ref(0)
@@ -92,6 +95,7 @@ const props = defineProps<{
     num?:number
     type:'songHand' | 'playList'
     list_6?:any[]
+    dataType:string
 }>()
 watch(()=>props.id,async()=>{
     change()

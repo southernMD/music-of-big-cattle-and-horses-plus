@@ -4,6 +4,9 @@
         start:i+1 > num
     }" @mouseover="showPlayButton" @mouseout="hidePlayButton" 
     @click.self="go"
+    :data-id="id"
+    :data-type="dataType"
+    :data-right="1"
     >
         <div class="play animate__animated" 
             :class="{
@@ -33,7 +36,8 @@ const props = defineProps<{
     idr:number
     myIndex?:number
     uid?:number
-    type:'playList' | 'al'
+    type:'playList' | 'al',
+    dataType:string
 }>()
 let url = toRef($el.props, 'url')
 let id = toRef($el.props, 'idr') as Ref<number>

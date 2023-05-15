@@ -1,5 +1,5 @@
 <template>
-    <div class="line-music" :data-index="index" :data-id="id" :class="{
+    <div class="line-music" :data-index="index" :data-id="id" :data-type="dataType ?? 'song'" data-right="1" :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
         dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid == -1 && Main.dragMouse,
         topColor: topColorid == id && Main.dragType == 'songMy',
@@ -114,6 +114,7 @@ const props = defineProps<{
     record?:boolean //是否听歌排行
     count?:number
     onlyTime?:boolean//只要时间
+    dataType?:string
 }>()
 //leftblock传过来的id，限自己的歌单的id
 let playListid = inject<Ref<number>>('playListId') as Ref<number>
@@ -290,7 +291,8 @@ const fnMouseDragMoving = (e: MouseEvent) => {
         Main.dragType = 'song'
     }
 }
-const pseudoDragBeginn = () => {
+const pseudoDragBeginn = (event:MouseEvent) => {
+    if(event.button !== 0)return
     window.addEventListener('mousemove', fnMouseDragMoving)
     window.addEventListener("mouseup", fnMouseDrag)
 
@@ -375,6 +377,7 @@ const heartJust = async () => {
 
 
 const gotoPlay = (e: MouseEvent) => {
+    if(e.button !== 0)return 
     if (!props.local) {
         let _this = $el.refs['line-music'] as HTMLElement
         if (!_this) return

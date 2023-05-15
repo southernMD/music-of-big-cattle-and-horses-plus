@@ -83,7 +83,7 @@
             </div>
         </div>
         <div class="list" :class="{Wlist:MainMenu.width > 1020}">
-            <PlayListShow v-show="blockList[0]" v-for="({},index) in personalMessage.MyplayList" 
+            <PlayListShow data-right="1" :data-type="personalMessage.dataTypeList[index]" v-show="blockList[0]" v-for="({},index) in personalMessage.MyplayList" 
                 :url="personalMessage.MyplayList[index].coverImgUrl" 
                 :i="index"
                 :my-index="personalMessage.MyplayList[index].index"
@@ -101,7 +101,7 @@
                     </div>
                 </template>
             </PlayListShow>
-            <HBlock v-show="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
+            <HBlock data-right="1" :data-type="personalMessage.dataTypeList[index]" v-show="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
             :url="personalMessage.MyplayList[index].coverImgUrl" 
             :Name="personalMessage.MyplayList[index].name"
             :id="personalMessage.MyplayList[index].id"
@@ -113,7 +113,7 @@
             @playAll="playAll"
             @click="go({id:personalMessage.MyplayList[index].id,index:personalMessage.MyplayList[index].index,uid:+$route.query.id!})"
             ></HBlock>
-            <HaveSongShow v-show="blockList[2]" v-for="({},index) in personalMessage.MyplayList"
+            <HaveSongShow :data-type="personalMessage.dataTypeList[index]" v-show="blockList[2]" v-for="({},index) in personalMessage.MyplayList"
             :url="personalMessage.MyplayList[index].coverImgUrl" 
             :title="personalMessage.MyplayList[index].name"
             :id="personalMessage.MyplayList[index].id"
@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import {nextTick, reactive, ref,Ref, watch, watchEffect} from 'vue'
+import {computed, nextTick, reactive, ref,Ref, watch, watchEffect} from 'vue'
 import { useRoute,useRouter } from 'vue-router';
 import { useBasicApi,useMain,useGlobalVar, useMainMenu } from '@renderer/store';
 import icon from '@renderer/assets/icon.png'
@@ -195,6 +195,7 @@ const openDescribe = () => {
 
 const personalMessage = reactive<{
     MyplayList:Ref<any[]>
+    dataTypeList:Ref<any[]>
     name:string | undefined
     avatarUrl:string
     fans:number
@@ -204,6 +205,7 @@ const personalMessage = reactive<{
     followed:boolean
 }>({
     MyplayList:ref([]),
+    dataTypeList:ref([]),
     name:undefined,
     avatarUrl:'',
     fans:0,
@@ -234,6 +236,12 @@ const changePage = ()=>{
             }
         })
     }
+    personalMessage.dataTypeList.length = personalMessage.MyplayList.length
+    personalMessage.dataTypeList.fill('playList')
+    if(TagList.value[1] == true && $route.query.id == BasicApi.profile!.userId)personalMessage.dataTypeList.fill('playListStart')
+    if(TagList.value[0] == true && $route.query.id == BasicApi.profile!.userId)personalMessage.dataTypeList.fill('playListMy')
+    if(nowPage.value == 1 && TagList.value[0] == true)personalMessage.dataTypeList[0] = 'playListRank'
+    if(nowPage.value == 1 && TagList.value[0] == true && $route.query.id == BasicApi.profile!.userId)personalMessage.dataTypeList[1] = 'playListLike'
     if(flag){
         globalVar.changeMainScroll = -(globalVar.mainScroll - 220)
     }else{
@@ -454,6 +462,15 @@ const followUser = async()=>{
         globalVar.loadMessageDefaultFlag = true
     }
 }
+const dataType = computed(() => (index) => {
+    console.log(index);
+    if(TagList[0] && index == 0) return 'playListRank'
+    else if($route.query.id == BasicApi.profile!.userId && TagList[0] && index == 1) return 'playListLike'
+    else if($route.query.id == BasicApi.profile!.userId && TagList[0])return 'playListMy'
+    else if($route.query.id == BasicApi.profile!.userId && TagList[1]) return 'playListStart'
+    else if($route.query.id != BasicApi.profile!.userId && TagList[0]) return 'playList'
+    else return 'playList'
+})
 
 </script>
 

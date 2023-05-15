@@ -69,6 +69,7 @@
                 type="al"
                 @playAll="playAll"
                 @go="go"
+                data-type="al"
                 >
                 <template #default>
                     <div class="message">
@@ -87,6 +88,7 @@
             type="songHand"
             @playAll="playAll"
             @click="go({id:artilseMessage.alList[index].id})"
+            data-type="al"
             ></HBlock>
             <HaveSongShow :class="{first:artilseMessage.alList[index].id == -6}" v-show="blockList[2]" v-for="({},index) in artilseMessage.alList"
             :url="artilseMessage.alList[index].picUrl" 
@@ -99,6 +101,7 @@
             type="songHand"
             @playAll="playAll"
             @go="go"
+            :data-type="artilseMessage.alList[index].id == -6?'top50':'al'"
             >
             </HaveSongShow>  
             <div class="pagination">

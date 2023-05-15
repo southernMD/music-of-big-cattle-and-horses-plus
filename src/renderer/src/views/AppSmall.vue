@@ -32,6 +32,9 @@
         <Loading :loading="false" :type="globalVar.loadMessageDefaultType" :showTime="1000"
             :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag"
             @close="globalVar.loadMessageDefaultFlag = false"></Loading>
+            <Teleport to="body">
+                <rightBlock :id="id" :left="eventBlockLeft" :top="eventBlockTop" :type="type" :rightFlag="rightFlag"></rightBlock>
+            </Teleport>
     </div>
 </template>
 
@@ -40,6 +43,7 @@ import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, Shall
 import { useMainMenu, useGlobalVar, useBasicApi, useMain } from '@renderer/store'
 import useColor from '@renderer/hooks/useColor';
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
+import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
@@ -405,6 +409,37 @@ watch(() => MainMenu.colorBlock, (newValue) => {
         }, 100)
     }
 }, { immediate: true })
+
+const rightFlag = ref(false)
+const eventBlockLeft = ref(0)
+const eventBlockTop = ref(0)
+const type = ref('')
+const id = ref('0')
+window.addEventListener('contextmenu', (event) => {
+  rightFlag.value = false 
+  event.preventDefault(); // 阻止默认的右键菜单弹出
+  console.log(event.composedPath());
+  const doms = event.composedPath() as HTMLElement[]
+  for(let i = 0 ;i<doms.length;i++){
+    if(doms[i] instanceof HTMLElement && Boolean(eval(doms[i].getAttribute('data-right')!))){
+        console.log(doms[i]);
+        type.value = doms[i].getAttribute('data-type')!
+        id.value = doms[i].getAttribute('data-id')!
+        const x = event.clientX; // 鼠标点击位置相对于浏览器窗口左上角的横坐标
+        const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
+        eventBlockLeft.value = x
+        eventBlockTop.value = y
+        rightFlag.value = true 
+        break
+    }
+  }
+
+// topValue.value = top
+// leftValue.value = left
+});
+window.addEventListener('click',()=>{
+    rightFlag.value = false 
+})
 </script>
 
 <style scoped lang="less">

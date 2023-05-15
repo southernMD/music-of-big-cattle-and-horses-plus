@@ -30,7 +30,7 @@ app.whenReady().then(async() => {
   electronApp.setAppUserModelId('com.electron')
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     await session.defaultSession.loadExtension(
-      join(os.homedir(),'/AppData/Local/Google/Chrome/User Data/Default/Extensions/nhdogjmejiglipccpnnnanhbledajbpd/6.5.0_1')
+      join(os.homedir(),'/AppData/Local/Google/Chrome/User Data/Default/Extensions/nhdogjmejiglipccpnnnanhbledajbpd/6.5.0_0')
     )
   }
   // Default open or close DevTools by F12 in development

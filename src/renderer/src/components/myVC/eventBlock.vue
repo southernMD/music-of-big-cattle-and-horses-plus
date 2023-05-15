@@ -1,5 +1,5 @@
 <template>
-  <div class="eventBlock" ref="eventBlock">
+  <div class="eventBlock" ref="eventBlock" :data-right="[18,19,13].includes(typeI) || (user.userId == BasicApi.profile!.userId)" :data-type="dataType" :data-id="shareId">
     <img :src="user.avatarUrl" alt="" fill="cover" @click="goPersonal(user.userId)">
     <div class="msg">
         <div class="top">
@@ -138,15 +138,17 @@
 
 <script setup lang="ts">
 import {ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, provide, ref, toRaw, watch} from 'vue'
-import {useMain,useGlobalVar} from '@renderer/store'
+import {useMain,useGlobalVar, useBasicApi} from '@renderer/store'
 import { Timeago2 } from '@renderer/utils/dayjs'
 import CommentList from './CommentList.vue'
 import MyDialog from './MyDialog.vue'
 import {throttle} from 'lodash'
 import {regEmoji} from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
+const $router = useRouter()
 // import {regEmoji} from '@/utils/regEmoji'
 const fenxiang = ref(true)
+const BasicApi = useBasicApi()
 provide('fenxiang', fenxiang)
 const props = defineProps<{
     val:any
@@ -248,9 +250,18 @@ const typeChange = ()=>{
 
     }
 }
+const dataType = ref('')
 
 watch(()=>typeI,()=>{
     typeChange()
+    if(typeI.value == 18){
+        dataType.value = 'shareSong'
+    }else if(typeI.value == 13 || typeI.value == 19){
+        dataType.value = 'sharePlayList'
+    }
+    if(props.user.userId == BasicApi.profile!.userId){
+        dataType.value+='shareMy'
+    }
 },{immediate:true})
 
 
@@ -509,7 +520,7 @@ const shareHandle = async()=>{
         Main.playStatus = 'play'
         Main.songType = 'song'
     }else if(typeI.value == 19){
-        useRouter().push({
+        $router.push({
             name:'songPlaylist',
             query:{
                 id:shareId.value,type:"专辑",my:'false'
@@ -518,7 +529,7 @@ const shareHandle = async()=>{
     }else if(typeI.value == 56){
         window.open(valI.value.resource.webviewUrl, '_blank')
     }else if(typeI.value == 13){
-        useRouter().push({
+        $router.push({
             name:'songPlaylist',
             query:{
                 id:shareId.value,type:"歌单",my:'false'
@@ -631,7 +642,7 @@ const download = ()=>{
 }
 
 const goPersonal = (id)=>{
-    useRouter().push({
+    $router.push({
         name:'PersonalCenter',
         query:{
             id
@@ -646,7 +657,7 @@ const goPersonalX = async(e)=>{
         try {
             const userId = (await Main.reqSearch(nickname, '1002', 1, 0))[0].userId
             console.log(userId);
-            useRouter().push({
+            $router.push({
                 name:'PersonalCenter',
                 query:{
                     id:userId
@@ -660,7 +671,7 @@ const goPersonalX = async(e)=>{
 
 const goSongComments = (cid,sonJSON)=>{
     const sid = JSON.parse(sonJSON).id
-    useRouter().push({
+    $router.push({
         name:'SongComments',
         query:{
             cid,id:sid,type:'歌曲'

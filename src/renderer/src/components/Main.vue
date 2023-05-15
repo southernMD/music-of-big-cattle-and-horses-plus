@@ -63,7 +63,7 @@
           </div>
           <div class="play-main-list" v-show="playlistFlag">
             <div class="Ilike">
-              <LeftBlock :big="false" :privacy="Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
+              <LeftBlock data-right="1" data-type="playListLike" :big="false" :privacy="Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
                 :index="0">
                 <template #default>
                   <i class="iconfont icon-aixin"></i>
@@ -76,7 +76,7 @@
               </LeftBlock>
             </div>
             <div class="other">
-              <LeftBlock v-for="(valueIndex, index) in Main.createPlay" :privacy="Main.playList[valueIndex]?.privacy"
+              <LeftBlock data-right="1" data-type="playListMy" v-for="(valueIndex, index) in Main.createPlay" :privacy="Main.playList[valueIndex]?.privacy"
                 :message="Main.playList[valueIndex]?.name" :big="false" :id="Main.playList[valueIndex]?.id"
                 :index="valueIndex" :key="Main.playList[valueIndex]?.id">
                 <template #default v-if="Main.playList[valueIndex].privacy == 10">
@@ -104,7 +104,7 @@
           </div>
           <div class="start-main-list" v-show="startlistFlag">
             <div class="other">
-              <LeftBlock v-for="(valueIndex, index) in Main.startPlay"
+              <LeftBlock data-right="1" data-type="playListStart" v-for="(valueIndex, index) in Main.startPlay"
                 :message="Main.playList[valueIndex + Main.createPlay]?.name"
                 :privacy="Main.playList[valueIndex + Main.createPlay]?.privacy"
                 :id="Main.playList[valueIndex + Main.createPlay]?.id" :index="valueIndex + Main.createPlay" :big="false"

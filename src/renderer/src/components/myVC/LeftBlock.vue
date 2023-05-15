@@ -125,7 +125,8 @@ const moveingPlayListEnd = async()=>{
     dragId.value = -1
 }
 
-const movePlayListBegin = ()=>{
+const movePlayListBegin = (e:MouseEvent)=>{
+    if(e.button !== 0)return
     window.addEventListener('mousemove',moveingPlayList)
     window.addEventListener("mouseup",moveingPlayListEnd)
 }

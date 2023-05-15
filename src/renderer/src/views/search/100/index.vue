@@ -1,7 +1,7 @@
 <template>
   <!-- <div class="">10{{ $route.query.key }}</div> -->
   <div class="list">
-    <HBlock @click="goSongHand(val.id)" type="singer" :id="val.id" :Name="HName(val.name,val.alias)" :url="val.picUrl" v-for="val in list.get(nowPage)"></HBlock>
+    <HBlock :dataType="BasicApi.startSongHand.every(item=>item.id != val.id)?'songHand':'songHandHad' " @click="goSongHand(val.id)" type="singer" :id="val.id" :Name="HName(val.name,val.alias)" :url="val.picUrl" v-for="val in list.get(nowPage)"></HBlock>
   </div>
   <div class="pagination">
       <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
@@ -12,13 +12,14 @@
 <script setup lang="ts">
 import {ref,Ref,watch,toRef} from 'vue'
 import { useRoute,useRouter } from 'vue-router';
-import { useGlobalVar, useMain } from '@renderer/store'
+import { useGlobalVar, useMain,useBasicApi } from '@renderer/store'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
 const list: Ref<Map<number,any[]>> = ref(new Map())
 const $route = useRoute()
 const $router = useRouter()
 const Main = useMain()
 const globalVar = useGlobalVar()
+const BasicApi = useBasicApi()
 list.value.set(1,await Main.reqSearch($route.query.key as string, '100', 20, 0))
 watch(() => $route.query.key, async () => {
     if ($route.name === '100') {

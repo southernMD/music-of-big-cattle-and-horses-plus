@@ -1,6 +1,6 @@
 <template>
   <!-- <div class="">1000{{ $route.query.key }}</div> -->
-  <HBlock type="searchUser" :id="val.userId" :Name="val.nickname" 
+  <HBlock  dataType="user" type="searchUser" :id="val.userId" :Name="val.nickname" 
   :url="val.avatarUrl" :signature="val.signature" v-for="val in list.get(nowPage)" @click="goDetail(val.userId)"></HBlock>
   <div class="pagination">
       <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"

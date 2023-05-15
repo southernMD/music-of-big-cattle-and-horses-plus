@@ -5,7 +5,7 @@
             <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
         </div>
         <div class="main">
-            <div class="imgae" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
+            <div class="imgae" :data-id="everyDaySong[index].id" data-right="1" data-type="song" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
                 <div class="play animate__animated" @click.self="playThis"
                 :class="{
                     animate__fadeIn:playButtonFlag,

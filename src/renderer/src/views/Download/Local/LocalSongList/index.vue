@@ -10,6 +10,7 @@
         :local="true" 
         :index="index+1"
         :path="val.path"
+        :dataType="getSongid(index,val?.userDefinedText?.[0],val?.comment?.text)>0?'songLocal':'songLocalnor'"
         @localPlay="localPlay"
         v-for="val,index in list" ></LineMusic>
         <LineMusic 
@@ -23,6 +24,8 @@
         :local="true" 
         :index="listCopy[index].indexList"
         :path="list[listCopy[index].indexList-1].path"
+        :dataType="getSongid(index,list[listCopy[index].indexList-1]?.userDefinedText?.[0],list[listCopy[index].indexList-1]?.comment?.text)>0?'songLocal':'songLocalnor'"
+
         @localPlay="localPlay"
         v-for="val,index in listCopyLength" ></LineMusic>
         <!-- @localPlay="localPlay" -->

@@ -55,6 +55,7 @@ declare module '@vue/runtime-core' {
     PlayingPointOut: typeof import('./src/components/myVC/PlayingPointOut.vue')['default']
     PlayListPanel: typeof import('./src/components/MusicRadio/playListPanel/index.vue')['default']
     PlayListShow: typeof import('./src/components/myVC/PlayListShow.vue')['default']
+    RightBlock: typeof import('./src/components/myVC/RightBlock.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScroolLrc: typeof import('./src/components/myVC/ScroolLrc.vue')['default']

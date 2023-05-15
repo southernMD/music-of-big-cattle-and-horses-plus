@@ -17,6 +17,7 @@
                 :trackCount="val.albumSize" 
                 :id="val.id" 
                 :creators="val.artists"
+                dataType="songHandHad"
                 @click="go(val.id)"
             ></HBlock>
             <HBlock 
@@ -28,6 +29,7 @@
                 :trackCount="val.albumSize" 
                 :id="val.id" 
                 :creators="val.artists"
+                dataType="songHandHad"
                 @click="go(val.id)"
             ></HBlock>
         </div>

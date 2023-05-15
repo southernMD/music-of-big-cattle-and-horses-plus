@@ -6,7 +6,9 @@
                 <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
             </div>
             <div class="img-list">
-                <PlayListShow v-for="({},index) in playListRand" 
+                <PlayListShow
+                data-type="playList"
+                v-for="({},index) in playListRand" 
                     :url="playListRand[index].picUrl" 
                     :i="index"
                     :num="Math.floor(playListRand.length / 5)*5"

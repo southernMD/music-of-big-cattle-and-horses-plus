@@ -28,7 +28,7 @@
                         <div @click="throNext" title="下一首">
                             <i class="iconfont icon-next"></i>
                         </div>
-                        <div title="更多">
+                        <div title="更多" data-right="1" data-type="FM">
                             <i class="iconfont icon-shenglvehao"></i>
                         </div>
                     </div>

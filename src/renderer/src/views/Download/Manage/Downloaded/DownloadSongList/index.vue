@@ -10,6 +10,7 @@
     :local="true" 
     :index="index+1"
     :path="val.path"
+    dataType="songDownload"
     v-for="val,index in list" @localPlay="localPlay"></LineMusic>
     <LineMusic 
     v-show="searchKey.length != 0"
@@ -22,6 +23,7 @@
     :local="true" 
     :index="listCopy[index].indexList"
     :path="list[listCopy[index].indexList-1].path"
+    dataType="songDownload"
     @localPlay="localPlay"
     v-for="val,index in listCopyLength" ></LineMusic>
 </template>

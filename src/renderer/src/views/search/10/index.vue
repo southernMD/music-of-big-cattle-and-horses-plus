@@ -1,6 +1,16 @@
 <template>
   <!-- <div class="">10{{ $route.query.key }}</div> -->
-  <HBlock type="ZhuanJi" :id="val.id" :Name="HName(val.name,val.alias)" :ZhunaJi="Hzhuan(val.artist)" :arId="val.artist.id" :url="val.picUrl" v-for="val in list.get(nowPage)"></HBlock>
+  <!-- <HBlock :dataType="BasicApi.startalbum.every(item=>item.id != val.id)?'al':'alHad' " @click="goZhuanji(val.id)" type="singer" :id="val.id" :Name="HName(val.name,val.alias)" type="ZhuanJi" :id="val.id" :Name="HName(val.name,val.alias)" :ZhunaJi="Hzhuan(val.artist)" :arId="val.artist.id" :url="val.picUrl" v-for="val in list.get(nowPage)"></HBlock> -->
+  <HBlock
+    :dataType="BasicApi.startalbum.every(item=>item.id != val.id)?'al':'alHad' "
+    type="ZhuanJi" 
+    :id="val.id" 
+    :Name="HName(val.name,val.alias)"
+    :ZhunaJi="Hzhuan(val.artist)" 
+    :arId="val.artist.id" 
+    :url="val.picUrl" 
+    @click="goZhuanji(val.id)"
+    v-for="val in list.get(nowPage)"></HBlock>
   <div class="pagination">
       <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
           :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
@@ -9,12 +19,15 @@
 
 <script setup lang="ts">
 import {ref,Ref,watch,toRef} from 'vue'
-import { useRoute } from 'vue-router';
-import { useGlobalVar, useMain } from '@renderer/store'
+import { useRoute,useRouter } from 'vue-router';
+import { useGlobalVar, useMain ,useBasicApi} from '@renderer/store'
+
 import HBlock from '@renderer/components/myVC/HBlock.vue'
 const list: Ref<Map<number,any[]>> = ref(new Map())
 const $route = useRoute()
+const $router = useRouter()
 const Main = useMain()
+const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 list.value.set(1,await Main.reqSearch($route.query.key as string, '10', 20, 0))
 watch(() => $route.query.key, async () => {
@@ -44,6 +57,16 @@ const HName = (name:string,alias:any[])=>{
 const Hzhuan = (obj:any)=>{
   if(obj.alias.length == 0)return obj.name
   else return `${obj.name} (${obj.alias.join(',')}) `
+}
+const goZhuanji = (id)=>{
+    if(id != -6){
+        $router.push({
+            name:'songPlaylist',
+            query:{
+                id,my:'false',type:'专辑'
+            }
+        })
+    }
 }
 </script>
 

@@ -7,18 +7,18 @@
         <LineMusic v-show="searchKey.length == 0" v-for="(value, index) in forLength" :index="value"
             :title="list[index]?.name || ''" :singer="list[index]?.ar || ['']" :zhuanji="list[index]?.al || ''"
             :time="list[index]?.dt || 0" :id="list[index]?.id || 0" :tns="list[index]?.tns" :alia="list[index]?.alia"
-            :key="list[index]?.id" :show-index="true" :length="forLength" :oneselfColor="true" @warpPlace="warpPlace" v-load>
+            :key="list[index]?.id" :show-index="true" :length="forLength" :oneselfColor="true" :dataType="dataType" @warpPlace="warpPlace" v-load>
         </LineMusic>
         <LineMusic v-show="searchKey.length != 0" v-for="(value, index) in searchLength" :index="listCopy[index]?.indexList"
             :title="listCopy[index]?.name || ''" :singer="listCopy[index]?.ar || ['']" :zhuanji="listCopy[index]?.al || ''"
             :time="listCopy[index]?.dt || 0" :id="listCopy[index]?.id || 0" :tns="listCopy[index]?.tns"
             :alia="listCopy[index]?.alia" :key="listCopy[index]?.id" :show-index="true" :indexSearch="value"
-            :length="searchLength" :oneselfColor="true" @warpPlace="warpPlace"></LineMusic>
+            :length="searchLength" :oneselfColor="true" :dataType="dataType" @warpPlace="warpPlace"></LineMusic>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { inject, Ref, watch, ref, shallowRef, toRef,Directive, nextTick } from 'vue'
+import { inject, Ref, watch, ref, shallowRef, toRef,Directive, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router';
 import { useMain, useGlobalVar } from '@renderer/store'
 import { throttle } from 'lodash'
@@ -275,6 +275,12 @@ const load = async() => {
         forLength.value += 500
     }
 }
+
+const dataType = computed(()=>{
+    if(routeQuery.value.type == '歌单' && routeQuery.value.my == 'true')return 'songMy'
+    else if(routeQuery.value.type == '歌单' && routeQuery.value.my == 'false')return 'song'
+    else return 'song'
+})
 
 </script>
 
