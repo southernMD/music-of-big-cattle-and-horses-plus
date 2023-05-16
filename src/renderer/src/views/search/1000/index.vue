@@ -1,66 +1,82 @@
 <template>
-  <!-- <div class="">1000{{ $route.query.key }}</div> -->
-  <HBlock :dataType="val.creator.userId == BasicApi.profile!.userId?'playListSearchMy':'playList'" type="playList" :id="val.id" :Name="val.name" :url="val.coverImgUrl" :trackCount="val.trackCount" :playCount="val.playCount" :creator="val.creator" v-for="val in list.get(nowPage)" @click="goDetail(val.id)"></HBlock>
-  <div class="pagination">
-      <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
-          :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
-  </div>
+    <!-- <div class="">1000{{ $route.query.key }}</div> -->
+    <HBlock :dataType="val.creator.userId == BasicApi.profile!.userId ? 'playListSearchMy' : 'playList'" type="playList"
+        :id="val.id" :Name="val.name" :url="val.coverImgUrl" :trackCount="val.trackCount" :playCount="val.playCount"
+        :creator="val.creator" v-for="val in list.get(nowPage)" @click="goDetail(val.id)"></HBlock>
+    <div class="pagination">
+        <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
+            :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
+    </div>
 </template>
 
 <script setup lang="ts">
-import {ref,Ref,watch,toRef} from 'vue'
-import { useRoute,useRouter } from 'vue-router';
-import { useGlobalVar, useMain,useBasicApi } from '@renderer/store'
+import { ref, Ref, watch, toRef } from 'vue'
+import { useRoute, useRouter } from 'vue-router';
+import { useGlobalVar, useMain, useBasicApi } from '@renderer/store'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
-const list: Ref<Map<number,any[]>> = ref(new Map())
+const list: Ref<Map<number, any[]>> = ref(new Map())
 const $route = useRoute()
 const $router = useRouter()
 const Main = useMain()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
-list.value.set(1,await Main.reqSearch($route.query.key as string, '1000', 20, 0))
+list.value.set(1, await Main.reqSearch($route.query.key as string, '1000', 20, 0))
 console.log(list.value.get(1));
 watch(() => $route.query.key, async () => {
     if ($route.name === '1000') {
-      list.value.clear()
-      list.value.set(1,await Main.reqSearch($route.query.key as string, '1000', 20, 0))
-      nowPage.value = 1
+        list.value.clear()
+        list.value.set(1, await Main.reqSearch($route.query.key as string, '1000', 20, 0))
+        nowPage.value = 1
     }
 })
 const total = toRef(Main, 'searchNumber')
 const totalPage = ref(Math.ceil(total.value / 20))
 const nowPage = ref(1)
-watch(total,()=>{
+watch(total, () => {
     totalPage.value = Math.ceil(total.value / 20)
 })
-watch(nowPage,async()=>{
-    if(!list.value.has(nowPage.value)){
-        list.value.set(nowPage.value,await Main.reqSearch($route.query.key as string, '1000', 20, (nowPage.value - 1)*20)) 
-    }else{
+watch(nowPage, async () => {
+    if (!list.value.has(nowPage.value)) {
+        list.value.set(nowPage.value, await Main.reqSearch($route.query.key as string, '1000', 20, (nowPage.value - 1) * 20))
+    } else {
         globalVar.scrollToTop = true
     }
 })
 
-const goDetail = (id)=>{
-    $router.push({
-        name:'songPlaylist',
-        query:{
-            id,
-            my:'false',
-            type:'歌单'
-        }
-    })
+const goDetail = (id) => {
+    const index = Main.playListId.indexOf(id)
+    if (index == -1 || index > Main.createPlay) {
+        $router.push({
+            name: 'songPlaylist',
+            query: {
+                id,
+                my: 'false',
+                type: '歌单'
+            }
+        })
+    } else {
+        $router.push({
+            name: 'songPlaylist',
+            query: {
+                id,
+                index,
+                my: 'true',
+                type: '歌单'
+            }
+        })
+    }
+
 }
 
 </script>
 
 <style scoped lang="less">
-
 .pagination {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
     margin-top: 20px;
+
     :deep(.el-pagination) {
         --el-pagination-hover-color: @font-color;
 

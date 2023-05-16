@@ -90,6 +90,7 @@
                 :num="Math.floor(personalMessage.MyplayList.length / 4)*4"
                 :idr="personalMessage.MyplayList[index].id"
                 :uid="+$route.query.id!"
+                :data-txt="`歌单:${personalMessage.MyplayList[index].name} by${personalMessage.name}`"
                 type="playList"
                 @go="go"
                 @playAll="playAll"
@@ -102,13 +103,13 @@
                 </template>
             </PlayListShow>
             <HBlock data-right="1" :data-type="personalMessage.dataTypeList[index]" v-show="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
-            :url="personalMessage.MyplayList[index].coverImgUrl" 
-            :Name="personalMessage.MyplayList[index].name"
-            :id="personalMessage.MyplayList[index].id"
-            :playCount="personalMessage.MyplayList[index].playCount"
-            :trackCount="personalMessage.MyplayList[index].trackCount"
-            :creator="personalMessage.MyplayList[index].creator"
-            :startNumber="personalMessage.MyplayList[index].subscribedCount"
+            :url="personalMessage.MyplayList[index]?.coverImgUrl" 
+            :Name="personalMessage.MyplayList[index]?.name"
+            :id="personalMessage.MyplayList[index]?.id"
+            :playCount="personalMessage.MyplayList[index]?.playCount"
+            :trackCount="personalMessage.MyplayList[index]?.trackCount"
+            :creator="personalMessage.MyplayList[index]?.creator"
+            :startNumber="personalMessage.MyplayList[index]?.subscribedCount"
             type="showPersonal"
             @playAll="playAll"
             @click="go({id:personalMessage.MyplayList[index].id,index:personalMessage.MyplayList[index].index,uid:+$route.query.id!})"
@@ -266,6 +267,8 @@ const changeTag = (index:number,flag:boolean)=>{
 const init = async() =>{
     if($route.query.id == BasicApi.profile!.userId){
         personalMessage.name = BasicApi.profile!.nickname
+        //@ts-ignore
+        $route.query.name = personalMessage.name
         personalMessage.avatarUrl = BasicApi.profile!.avatarUrl
         personalMessage.fans = BasicApi.profile!.followeds 
         personalMessage.like = BasicApi.profile!.follows
@@ -279,6 +282,8 @@ const init = async() =>{
             const p2 = Main.reqUserPlaylist($route.query.id!+'')
             let results = await Promise.all([p1,p2])
             personalMessage.name = results[0].data.profile!.nickname
+            //@ts-ignore
+            $route.query.name = personalMessage.name
             personalMessage.avatarUrl = results[0].data.profile!.avatarUrl
             personalMessage.fans = results[0].data.profile!.followeds 
             personalMessage.like = results[0].data.profile!.follows
@@ -462,15 +467,7 @@ const followUser = async()=>{
         globalVar.loadMessageDefaultFlag = true
     }
 }
-const dataType = computed(() => (index) => {
-    console.log(index);
-    if(TagList[0] && index == 0) return 'playListRank'
-    else if($route.query.id == BasicApi.profile!.userId && TagList[0] && index == 1) return 'playListLike'
-    else if($route.query.id == BasicApi.profile!.userId && TagList[0])return 'playListMy'
-    else if($route.query.id == BasicApi.profile!.userId && TagList[1]) return 'playListStart'
-    else if($route.query.id != BasicApi.profile!.userId && TagList[0]) return 'playList'
-    else return 'playList'
-})
+
 
 </script>
 

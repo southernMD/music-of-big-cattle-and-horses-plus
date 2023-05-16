@@ -60,12 +60,13 @@
         </div>
         <div class="list" :class="{Wlist:MainMenu.width > 1020}" v-if="TagList[0]">
             <PlayListShow v-show="blockList[0]" v-for="({},index) in artilseMessage.alList" 
-                :url="artilseMessage.alList[index].picUrl" 
+                :url="artilseMessage.alList[index]?.picUrl" 
                 :i="index"
-                :my-index="artilseMessage.alList[index].index"
+                :my-index="artilseMessage.alList[index]?.index"
                 :num="Math.floor(artilseMessage.alList.length / 4)*4"
-                :idr="artilseMessage.alList[index].id"
+                :idr="artilseMessage.alList[index]?.id"
                 :uid="+$route.query.id!"
+                :data-txt="`专辑:${artilseMessage.alList[index].name} - ${artilseMessage.name }`"
                 type="al"
                 @playAll="playAll"
                 @go="go"
@@ -80,24 +81,25 @@
                 </template>
             </PlayListShow>
             <HBlock v-show="blockList[1]" v-for="({},index) in artilseMessage.alList"
-            :url="artilseMessage.alList[index].picUrl" 
-            :Name="artilseMessage.alList[index].name"
-            :id="artilseMessage.alList[index].id"
-            :trackCount="artilseMessage.alList[index].size"
-            :time="artilseMessage.alList[index].publishTime"
+            :url="artilseMessage.alList[index]?.picUrl" 
+            :Name="artilseMessage.alList[index]?.name"
+            :id="artilseMessage.alList[index]?.id"
+            :zhuna-ji="artilseMessage.alList[index]?.artist?.name"
+            :trackCount="artilseMessage.alList[index]?.size"
+            :time="artilseMessage.alList[index]?.publishTime"
             type="songHand"
             @playAll="playAll"
             @click="go({id:artilseMessage.alList[index].id})"
             data-type="al"
             ></HBlock>
             <HaveSongShow :class="{first:artilseMessage.alList[index].id == -6}" v-show="blockList[2]" v-for="({},index) in artilseMessage.alList"
-            :url="artilseMessage.alList[index].picUrl" 
-            :title="artilseMessage.alList[index].name"
-            :id="artilseMessage.alList[index].id"
+            :url="artilseMessage.alList[index]?.picUrl" 
+            :title="artilseMessage.alList[index]?.name"
+            :id="artilseMessage.alList[index]?.id"
             :index="index"
             :uid="+$route.query.id!"
             :list_6="hotSong"
-            :time="artilseMessage.alList[index].publishTime"
+            :time="artilseMessage.alList[index]?.publishTime"
             type="songHand"
             @playAll="playAll"
             @go="go"
@@ -141,6 +143,9 @@
 
 <script setup lang="ts">
 import icon from '@renderer/assets/icon.png'
+import PlayListShow from '@renderer/components/myVC/PlayListShow.vue';
+import HBlock from '@renderer/components/myVC/HBlock.vue';
+import HaveSongShow from '@renderer/components/myVC/HaveSongShow.vue'
 import {toRef,ref, watchEffect,Ref, reactive, watch} from 'vue'
 import { useMain,useMainMenu,useGlobalVar } from '@renderer/store';
 import { useRoute,useRouter } from 'vue-router';
@@ -213,7 +218,9 @@ watchEffect(()=>{
 let result
 const changePage = async(num?:number)=>{
     let result = await Main.reqartistAlbum(+$route.query.id!,20,(nowPage.value - 1)*20)
+    $route.query.name = result.artist.name
     artilseMessage.alList = result.hotAlbums
+    console.log(result.hotAlbums);
     if(blockList.value[2] && nowPage.value == 1){
         artilseMessage.alList.unshift({
             picUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305052027910.png',

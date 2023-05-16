@@ -41,14 +41,12 @@ declare namespace comment{
     t:0
     type:number
     id:number
-    content:string
     threadId?:never    //动态专属id
   } | {
     t:0
     type:number
     id?:never
-    content:string
-    threadId:number   //动态专属id
+    threadId:string   //动态专属id
   }
   
   type sendComment ={
@@ -64,7 +62,7 @@ declare namespace comment{
     id?:never
     content:string
     commentId?:never
-    threadId?:number    //动态专属id
+    threadId?:string    //动态专属id
   } |{
     t:2
     type:number
@@ -78,7 +76,7 @@ declare namespace comment{
     id:number
     content:string
     commentId:number
-    threadId?:number    //动态专属id
+    threadId?:string    //动态专属id
   } 
 }
 

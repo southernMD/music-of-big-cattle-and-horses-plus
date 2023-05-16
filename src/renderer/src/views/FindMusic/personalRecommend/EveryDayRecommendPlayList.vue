@@ -13,6 +13,7 @@
                     :i="index"
                     :num="Math.floor(playListRand.length / 5)*5"
                     :idr="playListRand[index].id"
+                    :data-txt="`歌单:${playListRand[index].name} by ${playListRand[index].creator.nickname}`"
                     type="playList"
                     @go="go"
                     @play-all="playAll"

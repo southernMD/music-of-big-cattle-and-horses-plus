@@ -6,7 +6,7 @@
                 <span>最热评论({{hotComments.length}})</span>
             </div>
             <div class="hot-list">
-                <Comment v-for="(value,index) in hotComments.length" :key="value"
+                <Comment v-for="(value,index) in hotComments" :key="value"
                 :userUrl="hotComments[index]?.user?.avatarUrl" :userNickname="hotComments[index]?.user?.nickname"
                 :userId="hotComments[index]?.user?.userId" :content="hotComments[index]?.content"
                 :time="hotComments[index]?.time" :timeStr="hotComments[index]?.timeStr"
@@ -28,7 +28,7 @@
                   <span>最新评论({{total}})</span>
               </div>
               <div class="new-list">
-                  <Comment v-for="(value,index) in comments.length" :key="value" :userUrl="comments[index]?.user?.avatarUrl"
+                  <Comment v-for="(value,index) in comments" :key="value" :userUrl="comments[index]?.user?.avatarUrl"
                   :userNickname="comments[index]?.user?.nickname" :userId="comments[index]?.user?.userId"
                   :content="comments[index]?.content" :time="comments[index]?.time" :timeStr="comments[index]?.timeStr"
                   :liked="comments[index]?.liked" :beReplied="comments[index]?.beReplied"
@@ -51,6 +51,7 @@
 </template>
 
 <script lang='ts' setup>
+import {watchEffect} from 'vue'
 import {useMain} from '@renderer/store'
 import {useRouter,useRoute} from 'vue-router';
 import { useGlobalVar } from '@renderer/store';
@@ -60,7 +61,7 @@ const $router = useRouter()
 const globalVar = useGlobalVar()
 const $route = useRoute()
 const Main = useMain()
-defineProps<{
+const props = defineProps<{
     commentFlag:boolean
     nowPage:number
     hotComments:Array<any>

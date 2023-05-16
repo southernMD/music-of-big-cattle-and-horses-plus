@@ -7,6 +7,8 @@
     :data-id="id"
     :data-type="dataType"
     :data-right="1"
+    :data-txt="dataTxt"
+    :data-pic="url"
     >
         <div class="play animate__animated" 
             :class="{
@@ -38,6 +40,7 @@ const props = defineProps<{
     uid?:number
     type:'playList' | 'al',
     dataType:string
+    dataTxt:string
 }>()
 let url = toRef($el.props, 'url')
 let id = toRef($el.props, 'idr') as Ref<number>

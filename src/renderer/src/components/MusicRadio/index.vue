@@ -191,7 +191,7 @@
                 <div class="show">
                     <div class="img" ref="imgRef" v-show="globalVar.share.imgUrl.length != 0"></div>
                     <div class="name" v-if="globalVar.share.type == 'comment'">{{ globalVar.share.name}}</div>
-                    <div class="message">：{{globalVar.share.message }}</div>
+                    <div class="message">{{globalVar.share.message }}</div>
                 </div>
             </div>
         </template>
@@ -1579,6 +1579,14 @@ const confirm = async()=>{
         if(result.code == 200){
             globalVar.loadMessageDefault = '分享成功'
             globalVar.loadMessageDefaultFlag = true
+            globalVar.share = {
+                imgUrl:'',
+                message:'',
+                type:'noresource',
+                id:-1,
+                txt:'',
+                name:''
+            }
         }else{
             globalVar.loadMessageDefaultType = 'error'
             globalVar.loadMessageDefault = '分享失败'

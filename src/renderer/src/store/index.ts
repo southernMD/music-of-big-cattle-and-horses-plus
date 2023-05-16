@@ -35,7 +35,10 @@ import {
     albumSub,
     follow,
     artistSub,
-    playlistPrivacy
+    playlistPrivacy,
+    playlistDelete,
+    eventDel,
+    artistTopSong
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
@@ -272,6 +275,7 @@ export const useBasicApi = defineStore('BaseApi', {
         //我的收藏歌手
         async reqartistSublist(){
             let result = await artistSublist()
+            this.startSongHand = []
             this.startSongHand.unshift(...result.data.data)
         },
         //我的收藏专辑
@@ -1209,6 +1213,46 @@ export const useMain = defineStore('Main', {
                 })
             }
         },
+        //删除歌单
+        async reqPlaylistDelete(id){
+            let result = await playlistDelete(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //删除动态
+        async reqEventDel(id){
+            let result = await eventDel(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //热门top50
+        async reqArtistTopSong(id){
+            let result = await artistTopSong(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data.songs)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve([])
+                })
+            }
+
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -1282,12 +1326,13 @@ interface V {
     addPlayId:number[] //添加歌曲到新歌单
     share:{
         imgUrl:string
+        name:string
         message:string
         type:'song' | 'playlist' | 'mv' | 'djradio' | 'djprogram' | 'artist'| 'noresource' | 'album' | 'comment',
         id:number,
         txt:string,
-        name:string
-    }
+    },
+    delcommentId:number //删除评论id
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1331,7 +1376,8 @@ export const useGlobalVar = defineStore('globalVar', {
                 id:-1,
                 txt:'',
                 name:''
-            }
+            },
+            delcommentId:-1
         }
     },
     actions:{

@@ -63,7 +63,10 @@
           </div>
           <div class="play-main-list" v-show="playlistFlag">
             <div class="Ilike">
-              <LeftBlock data-right="1" data-type="playListLike" :big="false" :privacy="Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
+              <LeftBlock data-right="1" data-type="playListLike" 
+              :data-txt="`歌单：${Main.playList[0]?.name} by ${Main.playList[0]?.creator?.nickname}`" 
+              :data-pic="Main.playList[0]?.coverImgUrl"
+              :big="false" :privacy="Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
                 :index="0">
                 <template #default>
                   <i class="iconfont icon-aixin"></i>
@@ -76,7 +79,10 @@
               </LeftBlock>
             </div>
             <div class="other">
-              <LeftBlock data-right="1" data-type="playListMy" v-for="(valueIndex, index) in Main.createPlay" :privacy="Main.playList[valueIndex]?.privacy"
+              <LeftBlock data-right="1" data-type="playListMy" 
+                :data-txt="`歌单：${Main.playList[valueIndex]?.name} by ${Main.playList[valueIndex]?.creator?.nickname}`" 
+                :data-pic="Main.playList[valueIndex]?.coverImgUrl"
+                v-for="(valueIndex, index) in Main.createPlay" :privacy="Main.playList[valueIndex]?.privacy"
                 :message="Main.playList[valueIndex]?.name" :big="false" :id="Main.playList[valueIndex]?.id"
                 :index="valueIndex" :key="Main.playList[valueIndex]?.id">
                 <template #default v-if="Main.playList[valueIndex].privacy == 10">
@@ -104,7 +110,10 @@
           </div>
           <div class="start-main-list" v-show="startlistFlag">
             <div class="other">
-              <LeftBlock data-right="1" data-type="playListStart" v-for="(valueIndex, index) in Main.startPlay"
+              <LeftBlock data-right="1" data-type="playListStart" 
+                :data-txt="`歌单：${Main.playList[valueIndex + Main.createPlay]?.name} by ${Main.playList[valueIndex + Main.createPlay]?.creator?.nickname}`" 
+                :data-pic="Main.playList[valueIndex + Main.createPlay]?.coverImgUrl"
+                v-for="(valueIndex, index) in Main.startPlay"
                 :message="Main.playList[valueIndex + Main.createPlay]?.name"
                 :privacy="Main.playList[valueIndex + Main.createPlay]?.privacy"
                 :id="Main.playList[valueIndex + Main.createPlay]?.id" :index="valueIndex + Main.createPlay" :big="false"
@@ -324,7 +333,9 @@ const createPlayList = async()=>{
       globalVar.loadMessageDefault = '创建歌单成功'
       globalVar.loadMessageDefaultFlag = true
     }
+    Main.playListId.splice(1,0,result.id)
     Main.playList.splice(1,0,result)
+    Main.createPlay++
     if(globalVar.addPlayId.length != 0){
         let result2 = (await Main.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
         globalVar.loadDefault = false

@@ -98,7 +98,7 @@
                         <span class="title">简介&nbsp;:&nbsp;</span>
                         <span class="add" v-if="!playList[index]?.description && isMy == 'true'"
                             :class="{ noDrag: !Main.dragMouse, 'add-oneself': globalVar.oneself == 1 }" @click="addDetail">添加简介</span>
-                        <span class="txt" :class="{ 'txt-oneself': globalVar.oneself }" id="description"
+                        <span class="txt" :class="{ 'txt-oneself': globalVar.oneself }" ref="description"
                             v-html="playList[index]?.description">
                         </span>
                         <div class="open-jiantou" v-if="openJiantou" :class="{ noDrag: !Main.dragMouse }">
@@ -388,6 +388,7 @@ const isStartStyle = () => {
 
 let routeQuery = toRef(route, 'query')
 const alsongs = ref([])
+const description = ref()
 watch(routeQuery, async () => {
     let Rn = route.name as string
     isMy.value = route.query.my as string || 'true'
@@ -395,12 +396,11 @@ watch(routeQuery, async () => {
     if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
         nextTick(() => {
             //样式修改
-            let description = document.querySelector('#description') as HTMLElement
-            description.style.whiteSpace = 'nowrap'
+            description.value.style.whiteSpace = 'nowrap'
             openDescribeFlag.value = true
             openJiantou.value = false
-            let widthBox = description?.offsetWidth
-            let widthscrool = description?.scrollWidth
+            let widthBox = description.value?.offsetWidth
+            let widthscrool = description.value?.scrollWidth
             if (widthscrool > widthBox) {
                 openJiantou.value = true
             } else {
@@ -473,13 +473,12 @@ provide('alsongs', alsongs)
 
 //展开描述
 const openDescribe = () => {
-    let description = document.querySelector('#description') as HTMLElement
     if (openDescribeFlag.value) {
-        description.style.whiteSpace = 'pre-line'
-        description.style.display = 'inline'
+        description.value.style.whiteSpace = 'pre-line'
+        description.value.style.display = 'inline'
     } else {
-        description.style.whiteSpace = 'nowrap'
-        description.style.display = 'inline'
+        description.value.style.whiteSpace = 'nowrap'
+        description.value.style.display = 'inline'
     }
     openDescribeFlag.value = !openDescribeFlag.value
     // let widthBox = zi.offsetWidth

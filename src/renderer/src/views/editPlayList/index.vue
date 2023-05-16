@@ -80,7 +80,7 @@ const onSubmit = async () => {
         $router.replace({
             name: 'songPlaylist',
             query: {
-                id: Main.playList[+index.value].id, index: index.value, my: 'true'
+                id: Main.playList[+index.value].id, index: index.value, my: 'true',type:'歌单'
             }
         })
 

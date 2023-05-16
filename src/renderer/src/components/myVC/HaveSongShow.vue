@@ -1,7 +1,12 @@
 <template>
   <div class="HaveSongShow">
     <div class="left" >
-        <el-image :data-id="id" :data-type="dataType" data-right="1" @click="go" draggable="false" :src="url" style="width: 150px; height: 150px"></el-image>
+        <el-image :data-id="id" 
+        :data-type="dataType" 
+        data-right="1"
+        :data-pic="url"
+        :data-txt="dataTxt"
+         @click="go" draggable="false" :src="url" style="width: 150px; height: 150px"></el-image>
         <div v-if="time && type == 'songHand' ">{{dayjsStamp(time!)}}</div>
     </div>
     <div class="right">
@@ -13,6 +18,7 @@
             <LineMusic v-if="!Recorderror" v-for="(value, index) in list" :index="index + 1"
                 :title="list[index]?.name || ''" 
                 :singer="list[index]?.ar || ['']"
+                :zhuanji="list[index]?.al"
                 :id="list[index]?.id || 0" :tns="list[index]?.tns" :alia="list[index]?.alia"
                 :key="list[index]?.id" :show-index="true" :length="10" :oneselfColor="true"
                 :record="true"
@@ -29,6 +35,7 @@
                 :title="list[index]?.name || ''" 
                 :singer="list[index]?.ar || ['']"
                 :time="list[index]?.dt || 0"
+                :zhuanji="list[index]?.al"
                 :id="list[index]?.id || 0" :tns="list[index]?.tns" :alia="list[index]?.alia"
                 :key="list[index]?.id" :show-index="true" :length="10" :oneselfColor="true"
                 :onlyTime="true"
@@ -49,7 +56,8 @@ import {Ref,onMounted,ref, watch,computed } from 'vue'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue';
 import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useMain,useBasicApi } from '@renderer/store';
-
+import { useRoute } from 'vue-router';
+const $route = useRoute()
 const Main = useMain()
 const BasicApi = useBasicApi()
 const size = ref(0)
@@ -177,7 +185,14 @@ const shorPlayList = async({index,id})=>{
     Main.playStatus = 'play'
     Main.songType = 'song'
 }
-
+const dataTxt = ref('')
+watch(()=>props.type,()=>{
+    if( props.type == 'songHand'){
+        dataTxt.value = `专辑：${props.title} - ${$route.query.name}`
+    }else if(props.type == 'playList'){
+        dataTxt.value = `歌单：${props.title} by ${$route.query.name}`
+    }
+},{immediate:true})
 </script>
 
 <style scoped lang="less">

@@ -2,7 +2,9 @@
     <div class="comment-li" 
     :data-right="userId == BasicApi.profile!.userId" 
     data-type="commentMy" 
-    :data-id="`${commentId},${resourceId}`">
+    :data-id="`${commentId},${resourceId}`"
+    :data-commentType="type"
+    >
         <div class="comment-li-bk">
             <div class="head" draggable="false">
                 <el-image lazy style="width:35px; height:35px;" draggable="false" :src="userUrl">

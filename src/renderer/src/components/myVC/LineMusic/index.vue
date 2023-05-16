@@ -1,5 +1,14 @@
 <template>
-    <div class="line-music" :data-index="index" :data-id="id" :data-type="dataType ?? 'song'" data-right="1" :class="{
+    <div class="line-music" 
+    :data-index="index" 
+    :data-id="id" 
+    :data-type="dataType ?? 'song'"
+    data-right="1" 
+    :data-pic="zhuanji?.picUrl"
+    :data-txt="`单曲:${title} - ${singer?.map(it=>it.name).join('/')}`"
+    :data-download="!(downloadId.includes(id)) && !(!ifDownload)"
+    :data-path="myPath"
+    :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
         dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid == -1 && Main.dragMouse,
         topColor: topColorid == id && Main.dragType == 'songMy',
@@ -78,7 +87,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef } from 'vue';
+import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect } from 'vue';
 import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
 import { useRouter,useRoute } from 'vue-router';
 import { useMain, useBasicApi, useGlobalVar } from '@renderer/store';
@@ -116,6 +125,7 @@ const props = defineProps<{
     onlyTime?:boolean//只要时间
     dataType?:string
 }>()
+
 //leftblock传过来的id，限自己的歌单的id
 let playListid = inject<Ref<number>>('playListId') as Ref<number>
 let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
@@ -130,6 +140,16 @@ name = name + ' - ' + props.title
 
 
 const cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
+const myPath = ref('')
+watch(()=>props.path,()=>{
+    myPath.value = props.path + ''
+},{immediate:true})
+watchEffect(async()=>{
+    if(!(globalVar.downloadId.includes(props.id)) && !(!ifDownload.value)){
+        const replyMessage = await window.electron.ipcRenderer.invoke('get-song-path',cleanFileName)
+        myPath.value = replyMessage
+    }
+})
 watch(downloadList, () => {
     if (downloadList.value.includes(cleanFileName)) {
         ifDownload.value = true
@@ -138,12 +158,12 @@ watch(downloadList, () => {
     }
 }, { immediate: true })
 
-window.electron.ipcRenderer.on('save-music-finished', ({ }, which) => {
+window.electron.ipcRenderer.on('save-music-finished', ({ }, {which,id}) => {
     if (cleanFileName == which) {
         console.log(cleanFileName, which);
         downloadList.value.push(cleanFileName)
         ifDownload.value = true
-        downloadId.value = downloadId.value.filter(el => el != props.id)
+        globalVar.value = downloadId.value.filter(el => el != props.id)
         loadingValue.value.delete(props.id)
     }
 })

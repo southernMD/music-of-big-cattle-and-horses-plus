@@ -15,6 +15,7 @@ import chokidar from 'chokidar'
 import NodeID3 from 'node-id3'
 import request from 'request'
 import crypto from 'crypto'
+import { exec } from 'child_process'
 export const createWindow = ():BrowserWindow=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     let X: number, Y: number; //鼠标基于显示器的坐标
@@ -378,7 +379,7 @@ export const createWindow = ():BrowserWindow=>{
           fs.writeFileSync(`download/${cleanFileName}.mp3`, buffer);
           console.log(NodeID3.read(`download/${cleanFileName}.mp3`))
         });
-        e.reply('save-music-finished',cleanFileName)
+        e.reply('save-music-finished',{which:cleanFileName,id:id3.ids[0]})
       })
 
     })
@@ -407,7 +408,7 @@ export const createWindow = ():BrowserWindow=>{
       persistent: true
     });
     const delMusic = (path:string)=>{
-      const Files = fs.readdirSync('download')
+      const Files = fs.readdirSync('download').filter(item=>item.endsWith('mp3'))
       mainWindow.webContents.send('look-download-list',Files)
       const detail:any[] = []
       Files.forEach((item)=>{
@@ -417,13 +418,16 @@ export const createWindow = ():BrowserWindow=>{
     }
     const delDir = (path:string)=>{
       watcher.off('unlink', delMusic)
+      watcher.off('add',delMusic)
       watcher.off('unlinkDir', delDir)
       watcher.close()
       fs.mkdirSync('download', { recursive: true });
       watcher.on('unlink',delMusic)
+      watcher.on('unlink', delMusic)
       watcher.on('unlinkDir',delDir)
     }
     watcher.on('unlink',delMusic)
+    watcher.on('add',delMusic)
     watcher.on('unlinkDir',delDir)
 
     //合并音频切片
@@ -538,6 +542,16 @@ export const createWindow = ():BrowserWindow=>{
       // watcher.on('unlink',delMusic)
       // watcher.on('unlinkDir',delDir)
       // return delMusic()
+    })
+    //获取音乐路径
+    ipcMain.handle('get-song-path',({},cleanFileName)=>{
+      return resolve(`download/${cleanFileName}`)
+    })
+    //打开指定目录
+    ipcMain.on('open-path',({},path)=>{
+      // path+'.mp3'
+      if(!path.endsWith('.mp3'))path+='.mp3'
+      shell.showItemInFolder(path)
     })
     //全局播放
     globalShortcut.register('Ctrl+Alt+Left',()=>{

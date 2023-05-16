@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, Ref } from 'vue'
+import { ref, watch, Ref ,toRef} from 'vue'
 import { useMain, useBasicApi } from '@renderer/store'
 import { useRouter } from 'vue-router'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
@@ -50,7 +50,7 @@ const clearSearch = () => {
     searchKey.value = ''
 }
 let searchLength = ref(0);
-const list = ref(BasicApi.startSongHand)
+const list = toRef(BasicApi,'startSongHand')
 const listCopy: Ref<Array<any>> = ref([])
 function searchKeyFn() {
     if (searchKey.value != '') {

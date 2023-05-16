@@ -333,7 +333,7 @@ export const comment = (obj:comment.delComment|comment.sendComment)=>{
     }else{
         data={
             cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie'),
-            t,type,id,content,threadId
+            t,type,id,content,threadId,commentId:obj.commentId
         }
     }
     return axios({
@@ -682,8 +682,11 @@ export const commentAlbum= (id:number,limit?:number,offset?:number,before?:numbe
 //歌手
 export const artists = (id)=>{
     return axios({
-        url:`/artists?id=${id}`,
+        url:`/artists?id=${id}&t=${new Date().getTime()}`,
         method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
     })
 }
 //歌手专辑
@@ -714,12 +717,15 @@ export const simiartist = (id:number)=>{
     return axios({
         url:`/simi/artist?id=${id}`,
         method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
     })
 }
 
 export const albumSublist=(limit = 999999)=>{
     return axios({
-        url:`/album/sublist?limit=${limit}`,
+        url:`/album/sublist?limit=${limit}&t=${new Date().getTime()}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser')
@@ -850,5 +856,38 @@ export const playlistPrivacy =(id)=>{
         data:{
             cookie:localStorage.getItem('cookieUser')
         }
+    })
+}
+
+//删除歌单
+export const playlistDelete = (id)=>{
+    const url = `/playlist/delete?id=${id}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+
+export const eventDel = (id)=>{
+    const url = `/event/del?evId=${id}`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
+//歌手热门50曲
+export const artistTopSong = (id)=>{
+    const url = `/artist/top/song?id=${id}`
+    return axios({
+        url,
+        method:'POST',
     })
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="eventBlock" ref="eventBlock" :data-right="[18,19,13].includes(typeI) || (user.userId == BasicApi.profile!.userId)" :data-type="dataType" :data-id="shareId">
+  <div class="eventBlock" ref="eventBlock" :data-right="[18,19,13].includes(typeI) || (user.userId == BasicApi.profile!.userId)" :data-type="dataType" :data-id="shareId" :data-evid="id">
     <img :src="user.avatarUrl" alt="" fill="cover" @click="goPersonal(user.userId)">
     <div class="msg">
         <div class="top">
@@ -35,8 +35,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="bk shareSong" v-else>
-                    <div class="b" @click.stop="goSongComments(valI.resource.commentId,valI.resource.resourceJson)">
+                <div class="bk shareSong" v-else-if="typeI == 31">
+                    <div class="b" v-if="valI.resource != null" @click.stop="goSongComments(valI.resource.commentId,valI.resource.resourceJson)">
                         <i class="iconfont icon-shuangyinhaozuo"></i>
                         <a href="javascript:;" @click.stop="goPersonal(valI.resource.user.userId)" > {{ ' @'+valI.resource.user.nickname }}</a>
                         <span v-html="regEmoji(`：${valI.resource.content}`)"></span>
@@ -46,6 +46,9 @@
                             <span v-html="regEmoji(`：${valI.resource.beReplied[0].content}`)"></span>
                         </div>
                         <div class="content">{{ valI.resource.resourceName }}</div>
+                    </div>
+                    <div class="b" v-else>
+                        该评论已经删除
                     </div>
                 </div>
             </div>
@@ -256,8 +259,10 @@ watch(()=>typeI,()=>{
     typeChange()
     if(typeI.value == 18){
         dataType.value = 'shareSong'
-    }else if(typeI.value == 13 || typeI.value == 19){
+    }else if(typeI.value == 13 ){
         dataType.value = 'sharePlayList'
+    }else if( typeI.value == 19){
+        dataType.value = 'shareAl'
     }
     if(props.user.userId == BasicApi.profile!.userId){
         dataType.value+='shareMy'

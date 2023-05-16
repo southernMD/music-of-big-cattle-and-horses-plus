@@ -200,7 +200,12 @@ const login = async () => {
                 resolve('ok')
             })
         })
-        Promise.all([p1,p2,p3,p4,p5,p6,p7,p8]).then(()=>{
+        const p9 = new Promise<string>((resolve) => {
+            BasicApi.reqartistSublist().then(()=>{
+                resolve('ok')
+            })
+        })
+        Promise.all([p1,p2,p3,p4,p5,p6,p7,p8,p9]).then(()=>{
             LoadingFlag.value = false
             destroyVC();
             $router.replace({

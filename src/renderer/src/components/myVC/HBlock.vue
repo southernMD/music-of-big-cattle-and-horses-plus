@@ -1,5 +1,11 @@
 <template>
-    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }" :data-id="id" :data-type="dataType" :data-right="1">
+    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }" 
+    :data-id="id" 
+    :data-type="dataType" 
+    :data-right="1"
+    :data-txt="dataTxt"
+    :data-pic="url"
+    >
         <div class="left" :class="{ruName:type == 'searchUser'}">
             <el-image :class="{ru:type == 'searchUser'}" :src="url" style="width: 60px; height: 60px"></el-image>
             <div class="n" :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
@@ -53,6 +59,7 @@
 </template>
 
 <script lang='ts' setup>
+import {ref,watch} from 'vue'
 import { useMain } from '@renderer/store';
 import {numberSimp} from '@renderer/utils/numberSimp'
 import { dayjsStamp } from '@renderer/utils/dayjs';
@@ -80,7 +87,7 @@ const props = defineProps<{
     'start' | 
     'startal' |
     'startSongHand'|
-    'searchUser'
+    'searchUser' 
     time?:number
     creators?:any[]
     signature?:string
@@ -93,6 +100,21 @@ const playAll = ()=>{
 const goAr = (id)=>{
     $emit('goAr',id)
 }
+const dataTxt = ref('')
+// console.log(props.type);
+
+// if(props.type=='ZhuanJi'){
+//     dataTxt.value = `专辑:${props.Name} - ${props.ZhunaJi}`
+// }else if(props.type == 'showPersonal'){
+//     dataTxt.value = `歌单:${props.Name} by ${props.creator.nickname}`
+// }
+watch(()=>props.type,()=>{
+    if(props.type=='songHand'){
+        dataTxt.value = `专辑:${props.Name} - ${props.ZhunaJi}`
+    }else if(props.type == 'showPersonal'){
+        dataTxt.value = `歌单:${props.Name} by ${props.creator.nickname}`
+    }
+},{immediate:true})
 </script>
 
 <style lang='less' scoped>

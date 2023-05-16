@@ -33,7 +33,7 @@
             :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag"
             @close="globalVar.loadMessageDefaultFlag = false"></Loading>
             <Teleport to="body">
-                <rightBlock :id="id" :left="eventBlockLeft" :top="eventBlockTop" :type="type" :rightFlag="rightFlag"></rightBlock>
+                <rightBlock :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" :type="type" :rightFlag="rightFlag"></rightBlock>
             </Teleport>
     </div>
 </template>
@@ -415,6 +415,12 @@ const eventBlockLeft = ref(0)
 const eventBlockTop = ref(0)
 const type = ref('')
 const id = ref('0')
+const txt = ref('')
+const pic = ref('')
+const evid = ref('')
+const download = ref()
+const path = ref()
+const commentType = ref()
 window.addEventListener('contextmenu', (event) => {
   rightFlag.value = false 
   event.preventDefault(); // 阻止默认的右键菜单弹出
@@ -425,6 +431,12 @@ window.addEventListener('contextmenu', (event) => {
         console.log(doms[i]);
         type.value = doms[i].getAttribute('data-type')!
         id.value = doms[i].getAttribute('data-id')!
+        pic.value = doms[i].getAttribute('data-pic')!
+        txt.value = doms[i].getAttribute('data-txt')!
+        download.value = eval(doms[i].getAttribute('data-download')!)
+        path.value = doms[i].getAttribute('data-path')!
+        commentType.value =  doms[i].getAttribute('data-commentType')!
+        evid.value =  doms[i].getAttribute('data-evid')!
         const x = event.clientX; // 鼠标点击位置相对于浏览器窗口左上角的横坐标
         const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
         eventBlockLeft.value = x
