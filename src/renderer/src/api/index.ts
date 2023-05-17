@@ -252,7 +252,7 @@ export const commentNew = (id:number,type:number,pageNo?:number,pageSize?:number
 
 export const playlistTracks = (op:'add' | 'del',pid:number,tracks:number[])=>{
     return axios({
-        url:`/playlist/tracks?op=${op}&pid=${pid}&tracks=${tracks.join(',')}`,
+        url:`/playlist/tracks?op=${op}&pid=${pid}&tracks=${tracks.join(',')}&t=${new Date().getTime()}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')

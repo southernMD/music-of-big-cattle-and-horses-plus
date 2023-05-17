@@ -1,13 +1,14 @@
 <template>
-        <!-- :data-index="index" 
+
+    <div class="line-music" 
+    :data-index="index" 
     :data-id="id" 
     :data-type="dataType ?? 'song'"
     data-right="1" 
     :data-pic="zhuanji?.picUrl ?? bufferpic"
     :data-txt="`单曲:${title} - ${singer?.map(it=>it.name).join('/')}`"
     :data-download="!(downloadId.includes(id)) && !(!ifDownload)"
-    :data-path="myPath" -->
-    <div class="line-music" 
+    :data-path="myPath"
     :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
         dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid == -1 && Main.dragMouse,

@@ -127,13 +127,13 @@ watch(model, () => {
 }, { immediate: true })
 
 const prev = () => {
-    if ($route.name == 'moreComment' && Number($route.query.type) == 0 && Main.songType != 'FM') Main.detailStatus = 'open'
+    if ($route.name == 'moreComment' && +$route.query.type! == 0 && Main.songType != 'FM' && Main.playing == +$route.query.id!) Main.detailStatus = 'open'
     if ($el.props.songMenu) Main.detailStatus = 'close'
     else $router.go(-1)
 }
 const next = () => {
     console.log(window.history.length);
-    if ($route.name == 'moreComment' && Number($route.query.type) == 0 && Main.songType != 'FM') Main.detailStatus = 'open'
+    if ($route.name == 'moreComment' && +$route.query.type! == 0 && Main.songType != 'FM' && Main.playing == +$route.query.id!) Main.detailStatus = 'open'
     if ($el.props.songMenu) Main.detailStatus = 'close'
     else $router.go(1)
 }

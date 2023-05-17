@@ -615,7 +615,7 @@ export const useMain = defineStore('Main', {
         //对歌单添加或删除歌曲
         async reqPlaylistTracks(op: 'add' | 'del', pid: number, tracks: number[]): Promise<any> {
             let result = await playlistTracks(op, pid, tracks);
-            if (result.data.code == 200) {
+            if (result.data.body.code == 200) {
                 return new Promise((resolve) => {
                     resolve(result)
                 })

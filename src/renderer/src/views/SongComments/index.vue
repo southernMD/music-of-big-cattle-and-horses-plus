@@ -22,7 +22,7 @@
             </div>
         </div>
         <Comment>
-            <template #now>
+            <template #now v-if="cid">
                 <div class="now-comment">
                     <div class="bk">
                         <div class="title">当前评论</div>
@@ -70,18 +70,29 @@ const songMessage = reactive<{
 const nowComment = ref()
 let songDetail 
 try {
-    const p1 = Main.reqSongDetail([sid.value])
-    const p2 = Main.reqCommentFloor(cid.value,sid.value,0)
-    Promise.all([p1,p2]).then((results)=>{
-        console.log(p1,p2);
-        songDetail = results[0]
-        const song = results[0].data.songs[0]
-        nowComment.value = results[1].fa
+    if(cid.value){
+        const p1 = Main.reqSongDetail([sid.value])
+        const p2 = Main.reqCommentFloor(cid.value,sid.value,0)
+        Promise.all([p1,p2]).then((results)=>{
+            console.log(p1,p2);
+            songDetail = results[0]
+            const song = results[0].data.songs[0]
+            nowComment.value = results[1].fa
+            songMessage.url = song.al.picUrl
+            songMessage.name = song.name
+            songMessage.al = song.al
+            songMessage.ar = song.ar
+        })
+    }else{
+        const res = await Main.reqSongDetail([sid.value])
+        songDetail = res
+        const song = res.data.songs[0]
         songMessage.url = song.al.picUrl
         songMessage.name = song.name
         songMessage.al = song.al
         songMessage.ar = song.ar
-    })
+    }
+
 } catch (error) {
     $router.push({
         name:'404'

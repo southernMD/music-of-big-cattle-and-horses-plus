@@ -422,38 +422,38 @@ const download = ref()
 const path = ref()
 const commentType = ref()
 const index = ref()
-// window.addEventListener('contextmenu', (event) => {
-//   rightFlag.value = false 
-//   event.preventDefault(); // 阻止默认的右键菜单弹出
-//   console.log(event.composedPath());
-//   const doms = event.composedPath() as HTMLElement[]
-//   for(let i = 0 ;i<doms.length;i++){
-//     if(doms[i] instanceof HTMLElement && Boolean(eval(doms[i].getAttribute('data-right')!))){
-//         console.log(doms[i],event.clientX,event.clientY);
-//         type.value = doms[i].getAttribute('data-type')!
-//         id.value = doms[i].getAttribute('data-id')!
-//         pic.value = doms[i].getAttribute('data-pic')!
-//         txt.value = doms[i].getAttribute('data-txt')!
-//         download.value = eval(doms[i].getAttribute('data-download')!)
-//         path.value = doms[i].getAttribute('data-path')!
-//         commentType.value =  doms[i].getAttribute('data-commentType')!
-//         evid.value =  doms[i].getAttribute('data-evid')!
-//         index.value =  doms[i].getAttribute('data-index')!
-//         const x = event.clientX; // 鼠标点击位置相对于浏览器窗口左上角的横坐标
-//         const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
-//         eventBlockLeft.value = x
-//         eventBlockTop.value = y
-//         rightFlag.value = true 
-//         break
-//     }
-//   }
+window.addEventListener('contextmenu', (event) => {
+  rightFlag.value = false 
+  event.preventDefault(); // 阻止默认的右键菜单弹出
+  console.log(event.composedPath());
+  const doms = event.composedPath() as HTMLElement[]
+  for(let i = 0 ;i<doms.length;i++){
+    if(doms[i] instanceof HTMLElement && Boolean(eval(doms[i].getAttribute('data-right')!))){
+        console.log(doms[i],event.clientX,event.clientY);
+        type.value = doms[i].getAttribute('data-type')!
+        id.value = doms[i].getAttribute('data-id')!
+        pic.value = doms[i].getAttribute('data-pic')!
+        txt.value = doms[i].getAttribute('data-txt')!
+        download.value = eval(doms[i].getAttribute('data-download')!)
+        path.value = doms[i].getAttribute('data-path')!
+        commentType.value =  doms[i].getAttribute('data-commentType')!
+        evid.value =  doms[i].getAttribute('data-evid')!
+        index.value =  doms[i].getAttribute('data-index')!
+        const x = event.clientX; // 鼠标点击位置相对于浏览器窗口左上角的横坐标
+        const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
+        eventBlockLeft.value = x
+        eventBlockTop.value = y
+        rightFlag.value = true 
+        break
+    }
+  }
 
-// // topValue.value = top
-// // leftValue.value = left
-// });
-// window.addEventListener('click',(event)=>{
-//     rightFlag.value = false 
-// })
+// topValue.value = top
+// leftValue.value = left
+});
+window.addEventListener('click',(event)=>{
+    rightFlag.value = false 
+})
 </script>
 
 <style scoped lang="less">

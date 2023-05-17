@@ -1,22 +1,46 @@
 <template>
   <div class="rightBlock" ref="rightBlockRef" v-show="flag && rightFlag">
-    {{ type }}
-    <div class="op" @click="eventsHandle[index].bind(null,params[index])()"  v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
-    >
-    <!-- -->
-        <div class="icon">
-            <i class="iconfont" :class="[iconList[index]]"></i>
-        </div>
-        <div class="msg">{{ messageList[index] }}</div>
-        <div class="i" v-if=" messageList[index] == '收藏' && (type == ('song' || 'songMy' || 'shareSong'))">
-            <i class="iconfont icon-youjiantou"></i>
+    <div class="list">
+        {{ type }}
+        <div class="op" @mouseenter="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')?showStartList():hideStartList()" 
+        @click="eventsHandle[index].bind(null,params[index])()"  
+        v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
+        >
+        <!-- -->
+            <div class="icon">
+                <i class="iconfont" :class="[iconList[index]]"></i>
+            </div>
+            <div class="msg">{{ messageList[index] }}</div>
+            <div class="i" v-if="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')">
+                <i class="iconfont icon-youjiantou"></i>
+            </div>
+            <div class="list-start" id="listStartRef" @mouseenter.stop  v-show="flagStart" v-if="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')">
+                <el-scrollbar>
+                    <div class="op op-border" @click="create()">
+                        <div class="icon">
+                            <i class="iconfont icon-zengjia" ></i>
+                        </div>
+                        <div class="msg">创建新歌单</div>
+                    </div>
+                    <div class="op" @click="pushInto(index,val.id)"  v-for="val,index in Main.playList.slice(0,Main.createPlay + 1)">
+                        <div class="icon">
+                            <i class="iconfont" :class="{
+                                'icon-suoding_o':val.privacy == 10,
+                                'icon-icon--':val.privacy != 10
+                            }"></i>
+                        </div>
+                        <div class="msg">{{ index == 0 ?'我喜欢的音乐':val.name }}</div>
+                    </div>
+                </el-scrollbar>
+            </div>
         </div>
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { watch,watchEffect,ref, nextTick,Ref, inject, ShallowRef, toRef } from 'vue'
+import { watch,watchEffect,ref, nextTick,Ref, inject, ShallowRef, toRef, computed } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
 import { useMain ,useGlobalVar,useBasicApi} from '@renderer/store'
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
@@ -26,6 +50,7 @@ const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const $router = useRouter()
 const $route = useRoute()
+const flagStart = ref(false)
 
 const props = defineProps<{
     left:number
@@ -44,6 +69,7 @@ const props = defineProps<{
 const flag = ref(false)
 const rightBlockRef = ref<InstanceType<typeof HTMLElement>>()
 watchEffect(()=>{
+    flagStart.value = false
     if(rightBlockRef.value){
         flag.value = false
         rightBlockRef.value!.style.left = props.left + 10 + 'px'
@@ -207,13 +233,13 @@ const buildList = ()=>{
         ifBorderBottom.value.push(...[false,false,false])
         iconList.value.push(...['icon-bofang_o','icon-nextplay','icon-tianjiawenjian'])
         params.value.push(...[])
-        eventsHandle.value.push(...[play,nextPlay,start])
+        eventsHandle.value.push(...[play,nextPlay,function(){}])
     }else if(props.type == 'FM'){
         messageList.value.push(...['收藏','分享','下载'])
         ifBorderBottom.value.push(...[false,false,false])
         iconList.value.push(...['icon-tianjiawenjian','icon-fenxiang1','icon-xiazai1'])
         params.value.push(...[props.id,props.id,props.id])
-        eventsHandle.value.push(...[start,share,download])
+        eventsHandle.value.push(...[function(){},share,download])
     }else if(props.type == 'songDownload'){
         messageList.value.push(...['查看评论','播放','下一首播放','收藏','分享','打开文件所在目录','删除下载'])
         ifBorderBottom.value.push(...[false,false,true,false,false,true,false])
@@ -267,6 +293,8 @@ const buildList = ()=>{
             messageList.value.push('从列表中删除')
             ifBorderBottom.value.push(false)
             iconList.value.push('icon-lajixiang')
+            params.value.push(props.index)
+            eventsHandle.value.push(delfromlately)
         }
     }
     eventLength.value = messageList.value.length
@@ -325,6 +353,13 @@ const look = (id:string)=>{
             name:'PersonalCenter',
             query:{
                 id,
+            }
+        })
+    }else if(props.type.startsWith('song')){
+        $router.push({
+            name:'SongComments',
+            query:{
+                id,type:'歌曲'
             }
         })
     }
@@ -422,6 +457,7 @@ const play = async(id:string)=>{
             globalVar.playLoacalIndex = +id
         }
     }
+    Main.songType = 'song'
 }
 
 const nextPlay = async(id:string)=>{
@@ -925,53 +961,153 @@ const delfromPlayList = async({id,index})=>{
     globalVar.loadMessageDefault = '删除成功'
     globalVar.loadMessageDefaultFlag = true
     globalVar.delMyPlayListSongIndex = index
+    Main.playList[+$route.query.index!].trackCount--
   }else{
     globalVar.loadMessageDefault = '删除失败'
     globalVar.loadMessageDefaultFlag = true
   }
 }
 
+const delfromlately = async(index)=>{
+    Main.latelyPlay.splice(index-1,1)
+}
+let flagover = true
+const showStartList = ()=>{
+    if(flagover){
+        flagover = false
+        flagStart.value = true
+        const listStartRef = document.querySelector('#listStartRef') as HTMLElement
+        listStartRef.style.left =  props.left + 250 + 'px'
+        listStartRef.style.height = 'auto'
+        nextTick(()=>{
+            if(window.innerHeight *0.9 <=listStartRef!.offsetHeight){
+                listStartRef!.style.height = window.innerHeight *0.9 + 'px'
+                listStartRef!.style.top = window.innerHeight *0.05 + 'px'
+            }
+            let {right,left,width}= listStartRef.getBoundingClientRect();
+            const visibleWidth = Math.min(right, window.innerWidth) - Math.max(left, 0);
+            console.log(visibleWidth ,width);
+            if(visibleWidth < width){
+                listStartRef!.style.left = +rightBlockRef.value!.style.left.split('px')[0] - 240 + 'px'
+            }
+        })
+        flagover = true
+    }
+}
+
+const pushInto = async(index,id)=>{
+    let ids:number[]
+    try {
+        if(props.type.startsWith('song') || props.type == 'FM'){
+            ids = [+props.id!]
+            let res = await Main.reqPlaylistTracks('add',id,ids)
+            console.log(res.data);
+            if(res.data.body.code == 200){
+                globalVar.loadMessageDefault ='添加成功'
+                globalVar.loadMessageDefaultFlag = true
+                Main.playList[index].trackCount++
+            }else{
+                throw Error(res?.data?.body?.message ?? '添加失败')
+            }
+        }else if(props.type.startsWith('top50')){
+            ids = (await Main.reqArtistTopSong(+$route.query.id!)).map(it=>it.id)
+            let res = await Main.reqPlaylistTracks('add',id,ids)
+            if(res.data.body.code == 200){
+                globalVar.loadMessageDefault ='添加成功'
+                globalVar.loadMessageDefaultFlag = true
+                Main.playList[index].trackCount+=ids.length
+            }else{
+                throw Error(res?.data?.body?.message ?? '添加失败')
+            }
+            globalVar.loadMessageDefault ='添加成功'
+            globalVar.loadMessageDefaultFlag = true
+        }
+    } catch (error) {
+        globalVar.loadMessageDefault = error as string
+        globalVar.loadMessageDefaultType = 'error'
+        globalVar.loadMessageDefaultFlag = true
+    }
+
+}
+const create = async()=>{
+    if(props.type.startsWith('song') || props.type == 'FM'){
+        let ids = [+props.id!]
+        globalVar.addPlayId = ids
+        globalVar.addPlayFlag = true
+    }else if(props.type.startsWith('top50')){
+        let ids = (await Main.reqArtistTopSong(+$route.query.id!)).map(it=>it.id)
+        globalVar.addPlayId = ids
+        globalVar.addPlayFlag = true
+    }
+}
+
+const hideStartList = ()=>{
+    flagStart.value = false
+}
+
 </script>
 
 <style scoped lang="less">
 .rightBlock{
-    height: auto;
-    min-height: 43px;
-    width: 230px;
-    padding: 4px 0 4px 0;
-    background-color: @my-dialog-bk;
-    border-radius: .5em;
+    // display: flex;
     // background-color: red;
     position: fixed;
-    .op{
-        height: 35px;
-        box-sizing: border-box;
-        user-select: none;
-        display: flex;
-        color: @font-color;
-        align-items: center;
-       
-        .icon{
-            width: 15px;
-            padding:0 10px 0 10px;
-            text-align: center;
-        }
-        .msg{
-            width: calc(100% - 45px);
-            font-size: 14px;
-        }
-        .i{
-            padding-right: 10px;
-            i{
-                font-size: 10px;
+    display: flex;
+    z-index: 13;
+    .list{
+        height: auto;
+        min-height: 43px;
+        width: 230px;
+        padding: 4px 0 4px 0;
+        background-color: @my-dialog-bk;
+        border-radius: .5em;
+        .op{
+            height: 35px;
+            box-sizing: border-box;
+            user-select: none;
+            display: flex;
+            color: @font-color;
+            align-items: center;
+            position: relative;
+            .icon{
+                width: 15px;
+                padding:0 10px 0 10px;
+                text-align: center;
+            }
+            .msg{
+                width: calc(100% - 45px);
+                font-size: 14px;
+            }
+            .i{
+                padding-right: 10px;
+                i{
+                    font-size: 10px;
+                }
+            }
+            &:hover{
+                background-color: @right-button-hover;
             }
         }
-        &:hover{
-            background-color: @right-button-hover;
+        .op-border{
+            border-bottom: 1px solid @font-color;
+        }
+        .list-start{
+            min-height: 78px;
+            width: 230px;
+            padding: 4px 0 4px 0;
+            background-color: @my-dialog-bk;
+            border-radius: .5em;
+            position: fixed;
+            .op{
+                .msg{
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    width: 180px;
+                }
+            }
         }
     }
-    .op-border{
-        border-bottom: 1px solid @font-color;
-    }
+
 }
 </style>
