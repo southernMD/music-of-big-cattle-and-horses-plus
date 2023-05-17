@@ -11,6 +11,7 @@
         :index="index+1"
         :path="val.path"
         :dataType="getSongid(index,val?.userDefinedText?.[0],val?.comment?.text)>0?'songLocal':'songLocalnor'"
+        :imageBuffer="val.image?.imageBuffer"
         @localPlay="localPlay"
         v-for="val,index in list" ></LineMusic>
         <LineMusic 
@@ -25,6 +26,7 @@
         :index="listCopy[index].indexList"
         :path="list[listCopy[index].indexList-1].path"
         :dataType="getSongid(index,list[listCopy[index].indexList-1]?.userDefinedText?.[0],list[listCopy[index].indexList-1]?.comment?.text)>0?'songLocal':'songLocalnor'"
+        :imageBuffer="list[listCopy[index].indexList-1].image?.imageBuffer"
 
         @localPlay="localPlay"
         v-for="val,index in listCopyLength" ></LineMusic>
@@ -33,10 +35,10 @@
 
 <script setup lang="ts">
 import {watch,nextTick,ref, Ref} from 'vue'
-import { useMain } from '@renderer/store';
+import { useGlobalVar, useMain } from '@renderer/store';
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import { throttle } from 'lodash';
-
+const globalVar = useGlobalVar()
 const props = defineProps<{
     list:id3Message[]
     searchKey:string
@@ -56,7 +58,7 @@ const getZhuanji = (index:number,name: string ,detail: {description: string;valu
         //@ts-ignore
         return { name, id: props.list[index].comment.text.albumId, tns: [] }
     }else{
-        return { name, id: -index, tns: [] }
+        return { name, id: -new Date().getTime(), tns: [] }
     }
 }
 const getSongid = (index:number,detail: {description: string;value: string;} | undefined,_163key:string | undefined)=>{
@@ -65,9 +67,9 @@ const getSongid = (index:number,detail: {description: string;value: string;} | u
     }
     else if(_163key){
         //@ts-ignore
-        return props.list[index].comment.text.musicId | -index
+        return props.list[index].comment.text.musicId | -new Date().getTime()
     }else{
-        return -index
+        return -new Date().getTime()
     }
 }
 
@@ -110,10 +112,12 @@ const getTime = (item:id3Message)=>{
     }
 }
 const Main = useMain()
-const playingList:any[] = []
-const playingPrivileges:any[] = []
-const pushPlayList = async(flag:1 | undefined)=>{
-    const promises = props.list.map(async(item,index)=>{
+
+const pushPlayList = async(flag:1 | undefined,list = Array.from(props.list))=>{
+    const playingList:any[] = []
+    const playingPrivileges:any[] = []
+    console.log(list);
+    const promises = list.map(async(item,index)=>{
         const song = {
             name:item.title,
             id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
@@ -151,8 +155,6 @@ const localPlay = async({index,id})=>{
     Main.playingList = []
     Main.playingPrivileges = []
     await pushPlayList(undefined)   //替换
-    console.log(playingList);
-    console.log(playingPrivileges);
     Main.playingindex = index
     Main.playStatus = 'play'
     Main.songType = 'song'
@@ -228,6 +230,37 @@ function searchKeyFn() {
         listCopyLength.value = listCopy.value.length;
     }
 }
+
+watch(()=>globalVar.playLoacalIndex,async()=>{
+    if(globalVar.playLoacalIndex!=0){
+        let tflag = false
+        if(Main.playingList.length == 0)tflag = true
+        console.log(Math.abs(globalVar.playLoacalIndex));
+        console.log(props.list);
+        await pushPlayList(1,Array.from([props.list[Math.abs(globalVar.playLoacalIndex)-1]]))
+        console.log(Main.playingList);
+        if(tflag){
+            Main.playingindex = 1
+            Main.playStatus = 'play'
+            Main.songType = 'song'
+            Main.playing = Main.playingList[0].id
+            globalVar.closePointOutMessage = '已经开始播放'
+            globalVar.closePointOut = true
+        }else if(globalVar.playLoacalIndex > 0 ){
+            Main.playingindex++
+            Main.playStatus = 'play'
+            Main.songType = 'song'
+            Main.playing = Main.playingList[Main.playingindex-1].id
+            globalVar.closePointOutMessage = '已经开始播放'
+            globalVar.closePointOut = true
+        }else{
+            globalVar.closePointOutMessage = '已添加到播放列表'
+            globalVar.closePointOut = true
+        }
+        globalVar.playLoacalIndex = 0
+    }
+})
+
 defineExpose({pushPlayList})
 </script>
 

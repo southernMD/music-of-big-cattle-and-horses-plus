@@ -520,6 +520,7 @@ const dowloadAll = async () => {
         // await Promise.all(promises);
         oldlength = WaitdownloadList.value.length
         globalVar.downLoadAll++
+        console.log(globalVar.downloadList);
         await nextTick()
         // console.log(globalVar.downloadId);
         // console.log(oldlength,WaitdownloadList.value.length);

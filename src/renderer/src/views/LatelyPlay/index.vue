@@ -38,6 +38,7 @@
             :oneself-color="true"
             :lately="true" 
             :local="Boolean(val.localPath)"
+            data-type="songLately"
             ></LineMusic>
         </div>
 

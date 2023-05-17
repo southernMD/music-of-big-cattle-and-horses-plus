@@ -21,7 +21,6 @@ import { useRouter,useRoute } from 'vue-router'
 import { useMain ,useGlobalVar,useBasicApi} from '@renderer/store'
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
-import { fi } from 'element-plus/es/locale';
 const Main = useMain()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
@@ -34,6 +33,7 @@ const props = defineProps<{
     rightFlag:boolean
     type:string
     id:string
+    index:string | null
     shareTxt:string | null
     shareAvg:string | null
     download:boolean | null
@@ -206,29 +206,33 @@ const buildList = ()=>{
         messageList.value.push(...['播放','下一首播放','全部收藏'])
         ifBorderBottom.value.push(...[false,false,false])
         iconList.value.push(...['icon-bofang_o','icon-nextplay','icon-tianjiawenjian'])
-        params.value.push(...[props.id])
+        params.value.push(...[])
         eventsHandle.value.push(...[play,nextPlay,start])
     }else if(props.type == 'FM'){
         messageList.value.push(...['收藏','分享','下载'])
         ifBorderBottom.value.push(...[false,false,false])
         iconList.value.push(...['icon-tianjiawenjian','icon-fenxiang1','icon-xiazai1'])
+        params.value.push(...[props.id,props.id,props.id])
+        eventsHandle.value.push(...[start,share,download])
     }else if(props.type == 'songDownload'){
         messageList.value.push(...['查看评论','播放','下一首播放','收藏','分享','打开文件所在目录','删除下载'])
         ifBorderBottom.value.push(...[false,false,true,false,false,true,false])
         iconList.value.push(...['icon-chakan','icon-bofang_o','icon-nextplay','icon-tianjiawenjian','icon-fenxiang1','icon-wenjian','icon-lajixiang'])
-        params.value.push(...[props.id,props.id,props.id,props.id,props.id,props.path])
-        eventsHandle.value.push(...[look,play,nextPlay,function(){},share,openFile])
+        params.value.push(...[props.id,props.index,props.index,props.id,props.id,props.path,props.path])
+        eventsHandle.value.push(...[look,play,nextPlay,function(){},share,openFile,delDownload])
     }else if(props.type.startsWith('songLocal')){
         if(props.type.endsWith('nor')){
             messageList.value.push(...['播放','下一首播放','打开文件所在目录','删除下载'])
             iconList.value.push(...['icon-bofang_o','icon-nextplay','icon-wenjian','icon-lajixiang'])
             ifBorderBottom.value.push(...[false,true,true,false])
+            params.value.push(...[props.index,props.index,props.path,props.path])
+            eventsHandle.value.push(...[play,nextPlay,openFile,delDownload])
         }else{
             messageList.value.push(...['查看评论','播放','下一首播放','收藏','分享','打开文件所在目录','删除下载'])
             ifBorderBottom.value.push(...[false,false,true,false,false,true,false])
             iconList.value.push(...['icon-chakan','icon-bofang_o','icon-nextplay','icon-tianjiawenjian','icon-fenxiang1','icon-wenjian','icon-lajixiang'])
-            params.value.push(...[props.id,props.id,props.id,props.id,props.id,props.path])
-            eventsHandle.value.push(...[look,play,nextPlay,function(){},share,openFile])
+            params.value.push(...[props.id,props.index,props.index,props.id,props.id,props.path,props.path])
+            eventsHandle.value.push(...[look,play,nextPlay,function(){},share,openFile,delDownload])
         }
     }else if(props.type.startsWith('song')){
         messageList.value.push(...['查看评论','播放','下一首播放','收藏','分享'])
@@ -240,19 +244,27 @@ const buildList = ()=>{
         console.log(props.download);
         if(props.download){
             messageList.value.push('打开文件所在目录')
-            ifBorderBottom.value.push(true)
+            ifBorderBottom.value.push(false)
             iconList.value.push(...['icon-wenjian'])
             eventsHandle.value.push(openFile)
             params.value.push(props.path)
         }else{
             messageList.value.push('下载')
-            ifBorderBottom.value.push(true)
+            ifBorderBottom.value.push(false)
             iconList.value.push('icon-xiazai1')
             params.value.push(props.id)
             eventsHandle.value.push(download)
         }
         if(props.type == 'songMy'){
+            ifBorderBottom.value[5] = true
             messageList.value.push('从歌单中删除')
+            ifBorderBottom.value.push(false)
+            iconList.value.push('icon-lajixiang')
+            params.value.push({id:props.id,index:props.index})
+            eventsHandle.value.push(delfromPlayList)
+        }else if(props.type == 'songLately'){
+            ifBorderBottom.value[5] = true
+            messageList.value.push('从列表中删除')
             ifBorderBottom.value.push(false)
             iconList.value.push('icon-lajixiang')
         }
@@ -401,6 +413,14 @@ const play = async(id:string)=>{
         window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
+    }else if(props.type.startsWith('song')){
+        if(props.type == 'songLocalnor'){
+            globalVar.playLoacalIndex = +id
+        }else if(props.type == 'songLocal'){
+            globalVar.playLoacalIndex = +id
+        }else if(props.type == 'songDownload'){
+            globalVar.playLoacalIndex = +id
+        }
     }
 }
 
@@ -473,6 +493,14 @@ const nextPlay = async(id:string)=>{
             globalVar.closePointOutMessage = '已添加到播放列表'
             globalVar.closePointOut = true
         }
+    }else if(props.type.startsWith('song')){
+        if(props.type == 'songLocalnor'){
+            globalVar.playLoacalIndex = -id
+        }else if(props.type == 'songLocal'){
+            globalVar.playLoacalIndex = -id
+        }else if(props.type == 'songDownload'){
+            globalVar.playLoacalIndex = -id
+        }
     }
 }
 
@@ -485,6 +513,8 @@ const share = (id:string)=>{
         globalVar.share.type = 'song'
     }else if(props.type.startsWith('songHand')){
         globalVar.share.type = 'artist'
+    }else if(props.type.startsWith('FM')){
+        globalVar.share.type = 'song'
     }
     globalVar.shareDialogFlag = true
     globalVar.share.id = +id
@@ -877,7 +907,29 @@ const delev = async(id)=>{
     }
 
 }
-
+const delDownload = async(path)=>{
+   const res = await window.electron.ipcRenderer.invoke('del-music',path)
+   console.log(res);
+   if(res.length == 0){
+    globalVar.loadMessageDefault = '删除成功'
+    globalVar.loadMessageDefaultFlag = true
+   }else {
+    globalVar.loadMessageDefault = '删除失败'
+    globalVar.loadMessageDefaultType = 'error'
+    globalVar.loadMessageDefaultFlag = true
+   }
+}
+const delfromPlayList = async({id,index})=>{
+  let res =  await Main.reqPlaylistTracks('del',+$route.query.id!,[id])
+  if(res.data.status == 200){
+    globalVar.loadMessageDefault = '删除成功'
+    globalVar.loadMessageDefaultFlag = true
+    globalVar.delMyPlayListSongIndex = index
+  }else{
+    globalVar.loadMessageDefault = '删除失败'
+    globalVar.loadMessageDefaultFlag = true
+  }
+}
 
 </script>
 

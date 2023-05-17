@@ -392,13 +392,13 @@ const showStart = () => {
 }
 
 //右键菜单
-window.addEventListener('contextmenu', (e) => {
-  e.preventDefault()
-  e.stopPropagation()
-  if (e.pageY > MainMenu.Height) {
-    window.electron.ipcRenderer.send('show-context-menu')
-  }
-})
+// window.addEventListener('contextmenu', (e) => {
+//   e.preventDefault()
+//   e.stopPropagation()
+//   if (e.pageY > MainMenu.Height) {
+//     window.electron.ipcRenderer.send('show-context-menu')
+//   }
+// })
 
 watch(()=>globalVar.changeMainScroll,()=>{
   if(globalVar.changeMainScroll!=0){

@@ -28,7 +28,13 @@
                         <div @click="throNext" title="下一首">
                             <i class="iconfont icon-next"></i>
                         </div>
-                        <div title="更多" data-right="1" data-type="FM">
+                        <div title="更多" 
+                        data-right="1" 
+                        data-type="FM" 
+                        :data-id="Main.FMList[FMindex].id" 
+                        :data-pic="Main.FMList[FMindex].al.picUrl"
+                        :data-txt="dataTxt"
+                        @click="right" ref="more">
                             <i class="iconfont icon-shenglvehao"></i>
                         </div>
                     </div>
@@ -127,6 +133,7 @@ const goTotime = (time: number) => {
 }
 
 const changePlaying = () => {
+    dataTxt.value = `单曲:${Main.FMList[FMindex.value]!.name} - ${Main.FMList[FMindex.value]!.ar.map(it=>it.name).join('/')}`
     Main.playingindex = FMindex.value + 1 as number
     playingId.value = Main.FMList[FMindex.value]?.id as number
     Main.beforePlayListId = 4
@@ -175,6 +182,7 @@ onActivated(() => {
             imgXXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
             imgXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 1]?.al?.picUrl + ')'
         }
+        dataTxt.value = `单曲:${Main.FMList[FMindex.value]!.name} - ${Main.FMList[FMindex.value]!.ar.map(it=>it.name).join('/')}`
     }
 })
 
@@ -215,6 +223,7 @@ const play = () => {
 }
 
 //替换播放
+const dataTxt = ref('')
 watch(FMindex, async (newValue, oldValue) => {
     let imgs = $el.refs.imgs as HTMLElement
     let imgXXL = $el.refs.imgXXL as HTMLElement
@@ -368,6 +377,24 @@ const goSongHand = (id)=>{
         })
     }
 
+}
+
+const more = ref()
+const right = (event)=>{
+    if (event.button === 0) {
+        setTimeout(()=>{
+            const rightClickEvent = new MouseEvent('contextmenu', {
+                button: 2,
+                clientX: event.clientX,
+                clientY: event.clientY,
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+            console.log(event.targrt);
+            more.value.dispatchEvent(rightClickEvent);
+        })
+    }
 }
 
 </script>

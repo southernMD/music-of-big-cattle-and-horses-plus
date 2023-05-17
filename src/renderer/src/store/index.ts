@@ -340,7 +340,6 @@ interface T {
     // immheart:boolean
     searchHistory:string[]
     latelyPlay:any[]
-
 }
 export const useMain = defineStore('Main', {
     state: (): T => {
@@ -616,12 +615,14 @@ export const useMain = defineStore('Main', {
         //对歌单添加或删除歌曲
         async reqPlaylistTracks(op: 'add' | 'del', pid: number, tracks: number[]): Promise<any> {
             let result = await playlistTracks(op, pid, tracks);
-            if (result.data.body.code == 200 || result.data.body.code == 502) {
+            if (result.data.code == 200) {
                 return new Promise((resolve) => {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
             }
         },
         //调整单曲顺序
@@ -1333,6 +1334,8 @@ interface V {
         txt:string,
     },
     delcommentId:number //删除评论id
+    playLoacalIndex:number//本地播放下标+1
+    delMyPlayListSongIndex:number//右键删除歌单内单曲
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1377,7 +1380,9 @@ export const useGlobalVar = defineStore('globalVar', {
                 txt:'',
                 name:''
             },
-            delcommentId:-1
+            delcommentId:-1,
+            playLoacalIndex:0,
+            delMyPlayListSongIndex:-1
         }
     },
     actions:{

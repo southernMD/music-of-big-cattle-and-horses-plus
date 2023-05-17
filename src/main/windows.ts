@@ -484,6 +484,23 @@ export const createWindow = ():BrowserWindow=>{
         return {canceled:false,path:paths}
       }
     })
+    //删除音乐文件
+    ipcMain.handle('del-music', async (_, path) => {
+      if (!path.endsWith('.mp3')) path += '.mp3';
+      return new Promise((resolve, reject) => {
+        try {
+          fs.unlink(path, (err) => {
+            if (err) {
+              resolve(err);
+            } else {
+              resolve('');
+            }
+          });
+        } catch (error) {
+          resolve(error);
+        }
+      });
+    });
     let watcherLocalMusic: chokidar.FSWatcher | null = null;
     let paths:any[] = [];
     let delPath:any[] = []

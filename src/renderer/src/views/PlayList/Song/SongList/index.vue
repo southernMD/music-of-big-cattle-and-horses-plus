@@ -282,6 +282,14 @@ const dataType = computed(()=>{
     else return 'song'
 })
 
+watch(()=>globalVar.delMyPlayListSongIndex,()=>{
+    if(globalVar.delMyPlayListSongIndex != -1){
+        list.value.splice(globalVar.delMyPlayListSongIndex-1,1)
+        songNumber.value--
+        globalVar.delMyPlayListSongIndex = -1
+    }
+})
+
 </script>
 
 <style lang="less" scoped>

@@ -1,20 +1,21 @@
 <template>
     <LineMusic 
     v-show="searchKey.length == 0"
-    :title="val.title" 
-    :singer="getSinger(val.artist, val.userDefinedText[2].value)"
-    :id="+val.userDefinedText[0].value" 
+    :title="val?.title" 
+    :singer="getSinger(val.artist, val.userDefinedText[2]?.value)"
+    :id="+val.userDefinedText[0]?.value" 
     :showIndex="true" 
     :oneselfColor="true"
-    :zhuanji="getZhuanji(val.album, val.userDefinedText[1].value)" 
+    :zhuanji="getZhuanji(val.album, val.userDefinedText[1]?.value)" 
     :local="true" 
     :index="index+1"
     :path="val.path"
+    :imageBuffer="val.image?.imageBuffer"
     dataType="songDownload"
     v-for="val,index in list" @localPlay="localPlay"></LineMusic>
     <LineMusic 
     v-show="searchKey.length != 0"
-    :title="listCopy[index].title" 
+    :title="listCopy[index]?.title" 
     :singer="getSinger(listCopy[index].ar, list[listCopy[index].indexList-1].userDefinedText[2].value)"
     :id="+list[listCopy[index].indexList-1].userDefinedText[0].value" 
     :showIndex="true" 
@@ -23,6 +24,7 @@
     :local="true" 
     :index="listCopy[index].indexList"
     :path="list[listCopy[index].indexList-1].path"
+    :imageBuffer="list[listCopy[index].indexList-1].image?.imageBuffer"
     dataType="songDownload"
     @localPlay="localPlay"
     v-for="val,index in listCopyLength" ></LineMusic>
@@ -33,6 +35,8 @@ import { shallowRef, ShallowRef,nextTick, watch, Ref, ref } from 'vue'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import { useMain } from '@renderer/store';
 import {throttle} from 'lodash'
+import { useGlobalVar } from '@renderer/store';
+const globalVar = useGlobalVar()
 const props = defineProps<{
     searchKey:string
 }>()
@@ -40,6 +44,7 @@ const list: ShallowRef<id3Message[]> = shallowRef([])
 const Main = useMain()
 window.electron.ipcRenderer.send('get-download-list-detail')
 window.electron.ipcRenderer.on('look-download-list-detail', ({ }, data: any[]) => {
+    data = data.filter(it=>it.userDefinedText[0].description=='song id')
     console.log(data);
     list.value = data
 })
@@ -55,12 +60,13 @@ const getSinger = (names: string | string[], ids: string): any[] => {
 }
 
 const getZhuanji = (name: string, id: string): any => {
-    return { name, id: +id, tns: [] }
+    return { name, id: +id, tns: []}
 }
-const playingList:any[] = []
-const playingPrivileges:any[] = []
-const pushPlayList = async(flag:1 | undefined)=>{
-    const promises = list.value.map(async(item)=>{
+
+const pushPlayList = async(flag:1 | undefined,list2 = Array.from(list.value))=>{
+    const playingList:any[] = []
+    const playingPrivileges:any[] = []
+    const promises = list2.map(async(item)=>{
         const song = {
             name:item.title,
             id:+item.userDefinedText[0].value,
@@ -100,14 +106,42 @@ const pushPlayList = async(flag:1 | undefined)=>{
 
 const localPlay = async({index,id})=>{
     await pushPlayList(undefined)   //替换
-    console.log(playingList);
-    console.log(playingPrivileges);
     Main.playingindex = index
     Main.playStatus = 'play'
     Main.songType = 'song'
     Main.beforePlayListId = 0
     Main.playing = id
 }
+
+watch(()=>globalVar.playLoacalIndex,async()=>{
+    if(globalVar.playLoacalIndex!=0){
+        let tflag = false
+        if(Main.playingList.length == 0)tflag = true
+        console.log(Math.abs(globalVar.playLoacalIndex));
+        await pushPlayList(1,Array.from([list.value[Math.abs(globalVar.playLoacalIndex)-1]]))
+        console.log(Main.playingList);
+        if(tflag){
+            Main.playingindex = 1
+            Main.playStatus = 'play'
+            Main.songType = 'song'
+            Main.playing = Main.playingList[0].id
+            globalVar.closePointOutMessage = '已经开始播放'
+            globalVar.closePointOut = true
+        }else if(globalVar.playLoacalIndex > 0 ){
+            Main.playingindex++
+            Main.playStatus = 'play'
+            Main.songType = 'song'
+            Main.playing = Main.playingList[Main.playingindex-1].id
+            globalVar.closePointOutMessage = '已经开始播放'
+            globalVar.closePointOut = true
+        }else{
+            globalVar.closePointOutMessage = '已添加到播放列表'
+            globalVar.closePointOut = true
+        }
+        globalVar.playLoacalIndex = 0
+    }
+})
+
 function bufferToBase64(buffer) {
   const reader = new FileReader();
   reader.readAsDataURL(new Blob([buffer], { type: 'image/jpeg' }));

@@ -508,19 +508,23 @@ const normalPlayWay = async()=>{
 }
 //获取播放url
 watch(playingId, async () => {
-    if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
+    if(Main.playingList[Main.playingindex - 1].localPath){
         loaclPlayWay()
-    } else if(Main.beforePlayListId == -3){
-        nextTick(()=>{
-            if(Main.playingList[Main.playingindex - 1].localPath){
-                loaclPlayWay()
-            }else{
-                normalPlayWay()
-            }
-        })
-
     }else{
-        normalPlayWay()
+        if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
+            loaclPlayWay()
+        } else if(Main.beforePlayListId == -3){
+            nextTick(()=>{
+                if(Main.playingList[Main.playingindex - 1].localPath){
+                    loaclPlayWay()
+                }else{
+                    normalPlayWay()
+                }
+            })
+
+        }else{
+            normalPlayWay()
+        }
     }
 })
 function base64ToArrayBuffer(base64) {

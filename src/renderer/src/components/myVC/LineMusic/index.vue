@@ -1,13 +1,13 @@
 <template>
-    <div class="line-music" 
-    :data-index="index" 
+        <!-- :data-index="index" 
     :data-id="id" 
     :data-type="dataType ?? 'song'"
     data-right="1" 
-    :data-pic="zhuanji?.picUrl"
+    :data-pic="zhuanji?.picUrl ?? bufferpic"
     :data-txt="`单曲:${title} - ${singer?.map(it=>it.name).join('/')}`"
     :data-download="!(downloadId.includes(id)) && !(!ifDownload)"
-    :data-path="myPath"
+    :data-path="myPath" -->
+    <div class="line-music" 
     :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
         dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid == -1 && Main.dragMouse,
@@ -46,6 +46,7 @@
                         v-html="title"></span>
                     <span class="small" v-if="tns?.length" v-html="`&nbsp;(${tns[0]})`"></span>
                     <span class="small" v-else-if="alia?.length" v-html="`&nbsp;(${alia[0]})`"></span>
+                    <span class="tag" v-if="!(downloadId.includes(id)) && !(!ifDownload) && ( lately)">本地</span>
                 </div>
             </div>
             <div class="song-hand"  v-if="!record && !onlyTime" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
@@ -124,7 +125,22 @@ const props = defineProps<{
     count?:number
     onlyTime?:boolean//只要时间
     dataType?:string
+    imageBuffer?:Uint8Array
 }>()
+
+const bufferpic = ref('')
+const reader = new FileReader();
+reader.readAsDataURL(new Blob([props.imageBuffer!], { type: 'image/jpeg' }));
+new Promise<any>((resolve, reject) => {
+    reader.onloadend = () => {
+        const base64String = reader.result;
+        resolve(base64String);
+    };
+    reader.onerror = reject;
+}).then((base64:any)=>{
+    bufferpic.value = base64
+})
+
 
 //leftblock传过来的id，限自己的歌单的id
 let playListid = inject<Ref<number>>('playListId') as Ref<number>
@@ -163,7 +179,7 @@ window.electron.ipcRenderer.on('save-music-finished', ({ }, {which,id}) => {
         console.log(cleanFileName, which);
         downloadList.value.push(cleanFileName)
         ifDownload.value = true
-        globalVar.value = downloadId.value.filter(el => el != props.id)
+        downloadId.value = downloadId.value.filter(el => el != props.id)
         loadingValue.value.delete(props.id)
     }
 })
@@ -622,12 +638,14 @@ watch(downLoadAll, async () => {
 // }
 
 const goZhuanji = (id)=>{
-    $router.push({
-        name:'songPlaylist',
-        query:{
-            id,type:"专辑",my:'false'
-        }
-    })
+    if(id>0){
+        $router.push({
+            name:'songPlaylist',
+            query:{
+                id,type:"专辑",my:'false'
+            }
+        })
+    }
     console.log(id);
 }
 </script>
@@ -782,6 +800,14 @@ const goZhuanji = (id)=>{
                 .small {
                     color: rgb(105, 105, 105);
                 }
+            }
+            .tag {
+                font-size: 10px;
+                color: @primary-color;
+                border: 1px solid @primary-color;
+                padding:0 2px 0 2px;
+                margin-left: 5px;
+                border-radius: .2em;
             }
         }
 
