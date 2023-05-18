@@ -431,7 +431,11 @@ const loaclPlayWay = async()=>{
         simiSong.value = simiSongData.data.songs;
         simiPlaylist.value = simiPlaylistData.data.playlists;
     }
-    window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(({ base64 }) => {
+    window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(({ base64,error }) => {
+        if(error){
+            nextSong()
+            return
+        }
         SongUrl.value = `data:audio/mp3;base64,${base64}`
         AC = new AudioContext()
         gainNode = AC.createGain()
@@ -507,25 +511,72 @@ const normalPlayWay = async()=>{
     }
 }
 //获取播放url
-watch(playingId, async () => {
-    if(Main.playingList[Main.playingindex - 1].localPath){
-        loaclPlayWay()
-    }else{
-        if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
-            loaclPlayWay()
-        } else if(Main.beforePlayListId == -3){
-            nextTick(()=>{
-                if(Main.playingList[Main.playingindex - 1].localPath){
-                    loaclPlayWay()
-                }else{
-                    normalPlayWay()
-                }
-            })
 
+// const song = {
+//             name:item.title,
+//             id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
+//             ar:getSinger(index,item.artist, item?.userDefinedText?.[2],item?.comment?.text),
+//             al:getZhuanji(index,item.album, item?.userDefinedText?.[1],item?.comment?.text),
+//             localPath:item.path,
+//             dt:getTime(item)
+//         }
+//         console.log(item);
+//         playingList.push(song)
+//         playingList[playingList.length - 1].al['picUrl'] = await bufferToBase64(item.image?.imageBuffer)
+//         const privilege = {
+//             id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
+//             maxBrLevel: "local",
+//             playMaxBrLevel: "local",
+//             downloadMaxBrLevel: "local",
+//             plLevel: "local",
+//             dlLevel: "local",
+//             flLevel: "local",
+//         }
+
+
+
+
+watch(playingId, async () => {
+    nextTick(()=>{
+        const playList = document.querySelector("#play-list-Panel-bottom")!.children
+        if(Main.playingList[Main.playingindex - 1].localPath){
+            loaclPlayWay()
+        }else if(eval(playList[Main.playingindex - 1].getAttribute('data-download')!)){
+            setTimeout(()=>{
+                console.log(playList[Main.playingindex - 1].getAttribute('data-download')!);
+                console.log(playList[Main.playingindex - 1].getAttribute('data-path'));
+                let path = playList[Main.playingindex - 1].getAttribute('data-path')
+                if(!path?.endsWith('.mp3'))path+='.mp3'
+                Main.playingList[Main.playingindex - 1]['localPath'] = path
+                console.log(Main.playingList[Main.playingindex - 1]);
+                Main.playingPrivileges[Main.playingindex - 1] = {
+                    id:playingId.value,
+                    maxBrLevel: "local",
+                    playMaxBrLevel: "local",
+                    downloadMaxBrLevel: "local",
+                    plLevel: "local",
+                    dlLevel: "local",
+                    flLevel: "local",
+                }
+                loaclPlayWay()
+            })
         }else{
-            normalPlayWay()
+            if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
+                loaclPlayWay()
+            } else if(Main.beforePlayListId == -3){
+                nextTick(()=>{
+                    if(Main.playingList[Main.playingindex - 1].localPath){
+                        loaclPlayWay()
+                    }else{
+                        normalPlayWay()
+                    }
+                })
+
+            }else{
+                normalPlayWay()
+            }
         }
-    }
+    })
 })
 function base64ToArrayBuffer(base64) {
     const binaryStr = atob(base64);

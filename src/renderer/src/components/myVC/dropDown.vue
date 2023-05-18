@@ -1,5 +1,5 @@
 <template>
-    <div class="dropdown xdrop" @click="showList"  >
+    <div class="dropdown xdrop" @click="showList"  ref="dropdownRef">
         <span class="xdrop">{{ showMessage }}</span>
         <i class="iconfont icon-xiajiantou xdrop"></i>
         <div class="list" @click.stop v-show="showListFlag">
@@ -15,14 +15,18 @@ import { onMounted, ref,watch } from 'vue'
 const props = defineProps<{
     message?: string
     list: any[]
+    width?:number
 }>()
 const showMessage = ref('')
+const dropdownRef = ref()
 onMounted(()=>{
     if (props.message) {
         showMessage.value = props.message
     } else {
         showMessage.value = props.list[0].name ?? ''
     }
+    
+    dropdownRef.value.style.width = (props.width ?? 120)+ 'px'
 })
 
 watch(()=>props.message,()=>{
@@ -78,7 +82,6 @@ defineExpose({showListFlag})
         font-size: 12px;
         position: absolute;
         right: 6px;
-        top: -2px;
     }
 
     >span {
@@ -105,7 +108,9 @@ defineExpose({showListFlag})
             cursor: pointer;
             text-indent: 12px;
             line-height: 25px;
-
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             &:hover {
                 background-color: @left-click-color;
             }

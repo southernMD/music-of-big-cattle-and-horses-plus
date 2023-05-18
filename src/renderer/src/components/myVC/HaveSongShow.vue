@@ -55,8 +55,9 @@
 import {Ref,onMounted,ref, watch,computed } from 'vue'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue';
 import { dayjsStamp } from '@renderer/utils/dayjs';
-import { useMain,useBasicApi } from '@renderer/store';
+import { useMain,useBasicApi ,useGlobalVar} from '@renderer/store';
 import { useRoute } from 'vue-router';
+const globalVar = useGlobalVar()
 const $route = useRoute()
 const Main = useMain()
 const BasicApi = useBasicApi()
@@ -166,22 +167,49 @@ const recordPlay = ({index,id})=>{
 }
 const shorPlayList = async({index,id})=>{
     if(props.id == -6){
-        Main.playingList = props.list_6!
-        Main.playingPrivileges = props.list_6!.map(item=>item.privilege)
-    }else{
-        let result
-        if(props.type == 'playList'){
-            result = (await Main.reqPlaylistTrackAll(props.id)).data
-            Main.playingPrivileges = result.privileges
-        }else if(props.type == 'songHand'){
-            result = (await Main.reqAlbumTrackAll(props.id)).data
-            Main.playingPrivileges = result.songs.map(item=>item.privilege)
+        if(globalVar.setting.playWay){
+            Main.playingList = props.list_6!
+            Main.playingPrivileges = props.list_6!.map(item=>item.privilege)
+            Main.playingindex = index
+            Main.beforePlayListId = props.id
+        }else{
+            if(Main.playingindex == -1){
+                Main.playingList = props.list_6!.slice(index!-1,index)
+                Main.playingPrivileges = [props.list_6!.slice(props.index!-1,props.index)[0].privilege]
+                Main.playingindex = 1
+            }else{
+                Main.playingList.splice(Main.playingindex,0,...props.list_6!.slice(props.index!-1,props.index)) 
+                Main.playingPrivileges.splice(Main.playingindex,0,...[props.list_6!.slice(props.index!-1,props.index)[0].privilege])
+                Main.playingindex++
+            }
         }
-        Main.playingList = result.songs
+    }else{
+        if(globalVar.setting.playWay){
+            let result
+            if(props.type == 'playList'){
+                result = (await Main.reqPlaylistTrackAll(props.id)).data
+                Main.playingPrivileges = result.privileges
+            }else if(props.type == 'songHand'){
+                result = (await Main.reqAlbumTrackAll(props.id)).data
+                Main.playingPrivileges = result.songs.map(item=>item.privilege)
+            }
+            Main.playingindex = index
+            Main.playingList = result.songs
+            Main.beforePlayListId = props.id
+        }else{
+            let result = (await Main.reqSongDetail([props.id])).data
+            if(Main.playingindex == -1){
+                Main.playingList = result.songs
+                Main.playingPrivileges = result.privileges
+                Main.playingindex = 1
+            }else{
+                Main.playingList.splice(Main.playingindex,0,...result.songs) 
+                Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                Main.playingindex++
+            }
+        }
     }
-    Main.playingindex = index
     Main.playing = id
-    Main.beforePlayListId = props.id
     Main.playStatus = 'play'
     Main.songType = 'song'
 }

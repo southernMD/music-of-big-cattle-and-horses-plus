@@ -131,10 +131,11 @@
       </aside>
     </el-scrollbar>
     <main @mouseover="rightOver" id="mainWindow">
-      <div class="stopS" v-if="route.path.includes('findMusic') || route.path.includes('download')">
+      <div class="stopS" v-if="route.path.includes('setting') || route.path.includes('findMusic') || route.path.includes('download')">
         <header>
           <Tag :class="{'tag-oneself':globalVar.oneself == 1}" v-for="(value,index) in messageList" :message="value" :big="true" :size="16" :ifClick="clickFlag[index]" :name="routeName[index]"
             @click="go(index)"></Tag>
+            <div class="setting" v-if="route.path.includes('setting')">设置</div>
         </header>
       </div>
       <el-scrollbar ref="scrollbarRef" @scroll="barRight">
@@ -187,18 +188,21 @@ const findMusic = ['个性推荐']
 const findMusicRouteName = ['personalRecommend']
 const downloadMusic = ['下载管理', '本地音乐']
 const downloadMusicRouteName = ['downloaded', 'local']
+let clickFlag = ref([true, false, false])
 watch(route,()=>{
   messageList.value.length = 0
   routeName.value.length = 0
   if(route.path.includes('findMusic')){
     messageList.value.push(...findMusic)
     routeName.value.push(...findMusicRouteName)
+    clickFlag.value .fill(false)
   }else if(route.path.includes('download')){
     messageList.value.push(...downloadMusic)
     routeName.value.push(...downloadMusicRouteName)
+    clickFlag.value .fill(false)
+    if(route.path.includes('manage'))clickFlag.value[0] = true
   }
 },{immediate:true})
-let clickFlag = ref([true, false, false])
 
 const go = (index: number) => {
   clickFlag.value.forEach((element, i) => {
@@ -645,6 +649,11 @@ watch(()=>globalVar.changeMainScroll,()=>{
         .follow{
           font-size: 20px;
           font-weight: bolder;
+        }
+        .setting{
+          user-select: none;
+          font-weight: bolder;
+          font-size: 20px;
         }
       }
     }

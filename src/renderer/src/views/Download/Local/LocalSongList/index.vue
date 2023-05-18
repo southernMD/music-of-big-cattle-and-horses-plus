@@ -154,11 +154,12 @@ const pushPlayList = async(flag:1 | undefined,list = Array.from(props.list))=>{
 const localPlay = async({index,id})=>{
     Main.playingList = []
     Main.playingPrivileges = []
-    await pushPlayList(undefined)   //替换
+    if(globalVar.setting.playWay)await pushPlayList(undefined)  //替换
+    else await pushPlayList(1,[props.list[index - 1]])
     Main.playingindex = index
     Main.playStatus = 'play'
     Main.songType = 'song'
-    Main.beforePlayListId = -2
+    if(globalVar.setting.playWay)Main.beforePlayListId = -2
     Main.playing = id
 }
 function bufferToBase64(buffer) {

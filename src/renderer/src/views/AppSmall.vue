@@ -195,6 +195,9 @@ try {
     
 }
 
+const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
+globalVar.fontList = fontList.filter(it=>/[\u4e00-\u9fa5]/.test(it)).map(it=>{return {name:it}})
+globalVar.fontList.unshift({name:'默认'})
 
 let flagC = toRef(MainMenu, 'colorBlock')
 flagC.value = localStorage.getItem('colorBlock') as string

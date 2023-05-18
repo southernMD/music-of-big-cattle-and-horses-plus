@@ -207,6 +207,11 @@ const routes: Array<RouteRecordRaw> = [
                 component:()=>import('@renderer/views/SongComments/index.vue'),
             },
             {
+                path:'setting',
+                name:'setting',
+                component:()=>import('@renderer/views/setting/index.vue'),
+            },
+            {
                 path: '/404',
                 name:'404',
                 component: ()=>import('@renderer/components/myVC/404.vue'),

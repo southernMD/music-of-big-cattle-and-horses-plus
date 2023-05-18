@@ -46,7 +46,7 @@
             <div class="other" ref="other">
                 <i v-show="!songMenu" @click.stop="changeSkin" @dblclick.stop class="iconfont icon-huanfu"
                     :class="{ noDrag: !Main.dragMouse }"></i>
-                <i class="iconfont icon-setting" :class="{ noDrag: !Main.dragMouse }"></i>
+                <i class="iconfont icon-setting" @click="setting" :class="{ noDrag: !Main.dragMouse }"></i>
                 <i class="iconfont icon-xinfeng" :class="{ noDrag: !Main.dragMouse }"></i>
                 <Teleport to="#header" v-if="flagSkin">
                     <ChangeSkin :l="LeftValue" @close="flagSkin = false" @click.stop></ChangeSkin>
@@ -139,7 +139,7 @@ const next = () => {
 }
 //退出
 const guanbi = () => {
-    window.electron.ipcRenderer.send('to-close')
+    window.electron.ipcRenderer.send('to-close',globalVar.setting.quitmodel)
 }
 
 //中化
@@ -442,7 +442,12 @@ const searchSuggest = async()=>{
     listTop.value = (await Main.reqSearchSuggest(searchKey.value.trim(),'mobile')).allMatch
 }
 const searchSuggestThrottle = throttle(searchSuggest,500)
-
+const setting = ()=>{
+    Main.detailStatus == 'close'
+    $router.push({
+        name:'setting'
+    })
+}
 </script> 
 
 <style lang="less" scoped>

@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.bigNMusice.app
 productName: '大牛马音乐'
 directories:
   buildResources: build

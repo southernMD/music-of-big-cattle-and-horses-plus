@@ -1336,6 +1336,14 @@ interface V {
     delcommentId:number //删除评论id
     playLoacalIndex:number//本地播放下标+1
     delMyPlayListSongIndex:number//右键删除歌单内单曲
+    fontList:{name:string}[]
+    setting:{
+        fontFamily:string
+        autoOpen:boolean
+        defaultMusic:boolean
+        quitmodel:boolean
+        playWay:boolean
+    }
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1382,10 +1390,21 @@ export const useGlobalVar = defineStore('globalVar', {
             },
             delcommentId:-1,
             playLoacalIndex:0,
-            delMyPlayListSongIndex:-1
+            delMyPlayListSongIndex:-1,
+            fontList:[],
+            setting:{
+                fontFamily:'默认',
+                autoOpen:false,
+                defaultMusic:false,
+                quitmodel:false,
+                playWay:false
+            }
         }
     },
     actions:{
 
-    }
+    },
+    persist: [{
+        paths: ['setting'],
+    }]
 })

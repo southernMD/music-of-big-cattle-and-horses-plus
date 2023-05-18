@@ -29,12 +29,13 @@
 
 <script setup lang="ts">
 import {useRoute} from 'vue-router'
-import { useMain,useBasicApi } from '@renderer/store'
+import { useMain,useBasicApi,useGlobalVar } from '@renderer/store'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import {ref,Ref,onMounted,watch} from 'vue'
 const $route = useRoute()
 const Main = useMain()
 const BasicApi = useBasicApi()
+const globalVar = useGlobalVar()
 const flag = ref(true)
 const list:Ref<any[]> = ref([])
 const listCount:Ref<any[]> = ref([])
@@ -72,13 +73,25 @@ watch(flag,async()=>{
 
 })
 const recordPlay = ({index,id})=>{
-    Main.playingList = list.value
-    Main.playingPrivileges = list.value.map(item=>item.privilege)
-    Main.playingindex = index
+    if(globalVar.setting.playWay){
+        Main.playingList = list.value
+        Main.playingPrivileges = list.value.map(item=>item.privilege)
+        Main.playingindex = index
+        Main.beforePlayListId = -5
+    }else{
+        if(Main.playingindex == -1){
+            Main.playingList = list.value.slice(index!-1,index)
+            Main.playingPrivileges = [list.value.slice(index!-1,index)[0].privilege]
+            Main.playingindex = 1
+        }else{
+            Main.playingList.splice(Main.playingindex,0,list.value.slice(index!-1,index)) 
+            Main.playingPrivileges.splice(Main.playingindex,0,[list.value.slice(index!-1,index)[0].privilege])
+            Main.playingindex++
+        }
+    }
+    Main.playing = id
     Main.playStatus = 'play'
     Main.songType = 'song'
-    Main.playing = id
-    Main.beforePlayListId = -5
 }
 </script>
 

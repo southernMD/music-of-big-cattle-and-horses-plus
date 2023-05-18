@@ -91,14 +91,33 @@ const addAll = async () => {
 }
 
 const localPlay = ({index,id})=>{
-    Main.playingList = Main.latelyPlay
-    Main.playingPrivileges = Main.latelyPlay.map((it)=>{
-        return it.privilege
-    })
-    Main.beforePlayListId = -3
-    Main.playingindex = index as number
-    Main.playing =  id
-    Main.playStatus = 'play'
+    if(globalVar.setting.playWay){
+        Main.playingList = Main.latelyPlay
+        Main.playingPrivileges = Main.latelyPlay.map((it)=>{
+            return it.privilege
+        })
+        Main.beforePlayListId = -3
+        Main.playingindex = index as number
+        Main.playing =  id
+        Main.playStatus = 'play'
+    }else{
+        if(Main.playingindex == -1){
+            Main.playingList = Main.latelyPlay.slice(index!-1,index)
+            Main.playingPrivileges = [Main.latelyPlay.slice(index!-1,index)[0].privilege]
+            Main.playingindex = 1
+            Main.playing =  id
+            Main.playStatus = 'play'
+            Main.songType = 'song'
+        }else{
+            Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(index!-1,index)) 
+            Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(index!-1,index)[0].privilege])
+            Main.playingindex++
+            Main.playing = id
+            Main.playStatus = 'play'
+            Main.songType = 'song'
+        }
+    }
+
 }
 
 </script>

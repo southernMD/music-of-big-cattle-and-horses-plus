@@ -435,42 +435,98 @@ const gotoPlay = (e: MouseEvent) => {
                         heartJust()
                         return;
                     }
-                    let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
-                    Main.playingList = result.songs
-                    Main.playingPrivileges = result.privileges
-                    Main.playingindex = props.index as number
-                    Main.playing = props.id as number
-                    Main.beforePlayListId = playListid.value
-                    Main.playStatus = 'play'
-                    Main.songType = 'song'
+                    if(globalVar.setting.playWay){
+                        let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                        Main.playingList = result.songs
+                        Main.playingPrivileges = result.privileges
+                        Main.playingindex = props.index as number
+                        Main.playing = props.id as number
+                        Main.beforePlayListId = playListid.value
+                        Main.playStatus = 'play'
+                        Main.songType = 'song'
+                    }else{
+                        let result = (await Main.reqSongDetail([props.id])).data
+                        if(Main.playingindex == -1){
+                            Main.playingList = result.songs
+                            Main.playingPrivileges = result.privileges
+                            Main.playingindex = 1
+                            Main.playing = props.id
+                            Main.playStatus = 'play'
+                            Main.songType = 'song'
+                        }else{
+                            Main.playingList.splice(Main.playingindex,0,...result.songs)
+                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                            Main.playingindex++
+                            Main.playing = props.id
+                            Main.playStatus = 'play'
+                            Main.songType = 'song'
+                        }
+                    }
                     console.log(Main.beforePlayListId, Main.playListId[0]);
                     heartJust()
                 }else if($route.query.type == '专辑'){
-                    let result = (await Main.reqAlbumTrackAll(playListid.value)).data;
-                    Main.playingList = result.songs
-                    Main.playingPrivileges = result.songs.map(item=>item.privilege)
-                    Main.playingindex = props.index as number
-                    Main.playing = props.id as number
-                    Main.beforePlayListId = playListid.value
-                    Main.playStatus = 'play'
-                    Main.songType = 'song'
+                    if(globalVar.setting.playWay){
+                        let result = (await Main.reqAlbumTrackAll(playListid.value)).data;
+                        Main.playingList = result.songs
+                        Main.playingPrivileges = result.songs.map(item=>item.privilege)
+                        Main.playingindex = props.index as number
+                        Main.playing = props.id as number
+                        Main.beforePlayListId = playListid.value
+                        Main.playStatus = 'play'
+                        Main.songType = 'song'
+                    }else{
+                        let result = (await Main.reqSongDetail([props.id])).data
+                        if(Main.playingindex == -1){
+                            Main.playingList = result.songs
+                            Main.playingPrivileges = result.privileges
+                            Main.playingindex = 1
+                            Main.playing = props.id
+                            Main.playStatus = 'play'
+                            Main.songType = 'song'
+                        }else{
+                            Main.playingList.splice(Main.playingindex,0,...result.songs)
+                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                            Main.playingindex++
+                            Main.playing = props.id
+                            Main.playStatus = 'play'
+                            Main.songType = 'song'
+                        }
+                    }
                 }
-
             } else if (father.getAttribute('id') == 'play-list-Panel-bottom') {
                 Main.playing = props.id as number
                 Main.playingindex = props.index as number + 1
                 Main.playStatus = 'play'
             } else if (father.getAttribute('id') === 'every-day') {
-                Main.playingList = BasicApi.everyDaySong
-                let playingPrivileges: Array<any> = []
-                BasicApi.everyDaySong.forEach((val) => {
-                    playingPrivileges.push(val.privilege)
-                })
-                Main.playingPrivileges = playingPrivileges
-                Main.playingindex = Number(props.index)
-                Main.playing = BasicApi.everyDaySong[Number(props.index) - 1].id
-                Main.playStatus = 'play'
-                Main.songType = 'song'
+                if(globalVar.setting.playWay){
+                    Main.playingList = BasicApi.everyDaySong
+                    let playingPrivileges: Array<any> = []
+                    BasicApi.everyDaySong.forEach((val) => {
+                        playingPrivileges.push(val.privilege)
+                    })
+                    Main.playingPrivileges = playingPrivileges
+                    Main.playingindex = Number(props.index)
+                    Main.playing = BasicApi.everyDaySong[Number(props.index) - 1].id
+                    Main.playStatus = 'play'
+                    Main.songType = 'song'
+                }else{
+                    let result = (await Main.reqSongDetail([props.id])).data
+                    if(Main.playingindex == -1){
+                        Main.playingList = result.songs
+                        Main.playingPrivileges = result.privileges
+                        Main.playingindex = 1
+                        Main.playing = props.id
+                        Main.playStatus = 'play'
+                        Main.songType = 'song'
+                    }else{
+                        Main.playingList.splice(Main.playingindex,0,...result.songs)
+                        Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                        Main.playingindex++
+                        Main.playing = props.id
+                        Main.playStatus = 'play'
+                        Main.songType = 'song'
+                    }
+                }
             } else if (father.getAttribute('id') === 'search-line-list') {
                 // if(Main.playStatus = 'play'){
                 let index = 0
@@ -486,14 +542,33 @@ const gotoPlay = (e: MouseEvent) => {
 
                 // }
             }else if(father.getAttribute('id') === 'lately'){
-                Main.playingList = Main.latelyPlay
-                Main.playingPrivileges = Main.latelyPlay.map((it)=>{
-                    return it.privilege
-                })
-                Main.beforePlayListId = -3
-                Main.playingindex = props.index as number
-                Main.playing =  props.id
-                Main.playStatus = 'play'
+                if(globalVar.setting.playWay){
+                    Main.playingList = Main.latelyPlay
+                    Main.playingPrivileges = Main.latelyPlay.map((it)=>{
+                        return it.privilege
+                    })
+                    Main.beforePlayListId = -3
+                    Main.playingindex = props.index as number
+                    Main.playing =  props.id
+                    Main.playStatus = 'play'
+                    Main.songType = 'song'
+                }else{
+                    if(Main.playingindex == -1){
+                        Main.playingList = Main.latelyPlay.slice(props.index!-1,props.index)
+                        Main.playingPrivileges = [Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege]
+                        Main.playingindex = 1
+                        Main.playing =  props.id
+                        Main.playStatus = 'play'
+                        Main.songType = 'song'
+                    }else{
+                        Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(props.index!-1,props.index)) 
+                        Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege])
+                        Main.playingindex++
+                        Main.playing = props.id
+                        Main.playStatus = 'play'
+                        Main.songType = 'song'
+                    }
+                }
             }else if(father.getAttribute('id') === 'record-list'){
                 $emit('recordPlay',{index:props.index,id:props.id})
             }else if(father.getAttribute('id') === 'short-play-list'){

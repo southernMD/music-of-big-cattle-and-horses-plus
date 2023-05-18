@@ -15,6 +15,7 @@ import chokidar from 'chokidar'
 import NodeID3 from 'node-id3'
 import request from 'request'
 import crypto from 'crypto'
+import fontList from 'font-list'
 import { exec } from 'child_process'
 export const createWindow = ():BrowserWindow=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
@@ -50,6 +51,19 @@ export const createWindow = ():BrowserWindow=>{
     mainWindow.webContents.setWindowOpenHandler((details) => {
       shell.openExternal(details.url)
       return { action: 'deny' }
+    })
+    
+    //第二次点击
+    app.on('second-instance', (event,argv,workingDirectory,additionalData) => {
+      console.log(argv,'__________',workingDirectory,'__________',additionalData);
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) {
+          mainWindow.restore();
+        }
+        mainWindow.focus();
+        // 向主窗口发送消息，以触发相应的聚焦逻辑
+        mainWindow.webContents.send('focus');
+      }
     })
     //托盘事件
     let appIcon = new Tray(iconW)
@@ -199,31 +213,31 @@ export const createWindow = ():BrowserWindow=>{
         e.preventDefault();
         shell.openExternal(message);
     })
-    ipcMain.on('to-close', () => {
-      mainWindow.hide();
-      // mainWindow.close();
+    ipcMain.on('to-close', ({},flag) => {
+      if(flag)mainWindow.hide();
+      else app.quit()
     })
-    mainWindow.on('close', (e) => {
-      // e.preventDefault()
-      // app.quit();
-      mainWindow.hide();
-      //点击关闭按钮向渲染进程请求页面
-      //选择退出模式
-      // let giveWayToMain = (event: Electron.IpcMainEvent, message?: string) => {
-      //     ipcMain.removeListener('give-way-to-main', giveWayToMain)
-      //     //选择已存在方案
-      //     if (message === 'quit') {
-      //         win.destroy();
-      //     } else if (message === 'leave') {
-      //         win.hide();
-      //     } else {
-      //         //展示退出面板
-      //         event.reply('main-back-way-to-render', { ifToClose: true })
-      //     }
-      // }
-      // win.webContents.send('check-up-quit-way')
-      // ipcMain.on('give-way-to-main', giveWayToMain)
-  })
+  //   mainWindow.on('close', (e) => {
+  //     // e.preventDefault()
+  //     // app.quit();
+  //     mainWindow.hide();
+  //     //点击关闭按钮向渲染进程请求页面
+  //     //选择退出模式
+  //     // let giveWayToMain = (event: Electron.IpcMainEvent, message?: string) => {
+  //     //     ipcMain.removeListener('give-way-to-main', giveWayToMain)
+  //     //     //选择已存在方案
+  //     //     if (message === 'quit') {
+  //     //         win.destroy();
+  //     //     } else if (message === 'leave') {
+  //     //         win.hide();
+  //     //     } else {
+  //     //         //展示退出面板
+  //     //         event.reply('main-back-way-to-render', { ifToClose: true })
+  //     //     }
+  //     // }
+  //     // win.webContents.send('check-up-quit-way')
+  //     // ipcMain.on('give-way-to-main', giveWayToMain)
+  // })
     ipcMain.on('to-small', () => {
       mainWindow.minimize();
     })
@@ -469,8 +483,12 @@ export const createWindow = ():BrowserWindow=>{
     })
     //获取本地音乐
     ipcMain.handle('get-local-music',({},{path})=>{
-      const buffer = Buffer.from(fs.readFileSync(path))
-      return {base64:buffer.toString('base64')}
+      try {
+        const buffer = Buffer.from(fs.readFileSync(path))
+        return {base64:buffer.toString('base64')}
+      } catch (error) {
+        return {error}
+      }
     })
     //添加本地文件目录
     ipcMain.handle('add-local-dir',({})=>{
@@ -641,6 +659,76 @@ export const createWindow = ():BrowserWindow=>{
           });
       });
     });
+    //字体列表
+    ipcMain.handle('get-font-list',()=>{
+      return new Promise<any>((resolve, reject) => {
+        fontList.getFonts()
+        .then(fonts => {
+          resolve(fonts)
+          console.log(fonts)
+        })
+        .catch(err => {
+          console.log(err)
+        })
+      })
+    })
+    //设置默认播放器
+    ipcMain.handle('to-link-local',({},flag)=>{
+      return new Promise<any>((resolve, reject) => {
+        if(flag){
+          exec("reg add HKCU\\Software\\Classes\\.mp3 /ve /d mp3file /f",(err)=>{
+            if (err) {
+              console.log(err);
+              resolve(false);
+            }
+            exec('reg add HKCU\\Software\\Classes\\mp3file\\shell\\open\\command /ve /d "\"'+ process.execPath +'\" \"%1\"" /f',(err)=>{
+              if(err){
+                console.log(err);
+                resolve(false);
+              }
+              resolve(true);
+            })
+          })
+        }else{
+          exec("reg delete HKCU\\Software\\Classes\\.mp3 /f",(err)=>{
+            if (err) {
+              console.log(err);
+              resolve(false);
+            }
+            exec('reg delete HKCU\\Software\\Classes\\mp3file\\shell\\open\\command /f',(err)=>{
+              if (err) {
+                console.log(err);
+                resolve(false);
+              }
+              resolve(true);
+            })
+          })
+        }
+      })
+    })
+    //设置开机自启
+    ipcMain.handle('auto-open',({},flag)=>{
+      return new Promise<any>((resolve, reject) => {
+        if(flag){
+          exec('reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v "bigNMusice" /d "\"'+ process.execPath +'\" /f',(err)=>{
+            if (err) {
+              console.log(err);
+              resolve(false);
+            }
+            resolve(true);
+          })
+        }else{
+          exec('reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v "bigNMusice" /f',(err)=>{
+            if (err) {
+              console.log(err);
+              resolve(false);
+            }
+            resolve(true);
+          })
+        }
+      })
+    })
+    
     return mainWindow
 }
 
@@ -674,7 +762,7 @@ export const lrcwindow = (): any => {
         preload: join(__dirname, "../preload/index.js"),
       },
   })
-  child.webContents.toggleDevTools()
+  // child.webContents.toggleDevTools()
   //注册名称
   child.webContents.on('did-finish-load', () => {
       // 二、注册窗口id

@@ -165,7 +165,7 @@ export default function (): any {
             MainMenu.iconSrc = "/src/assets/icon.png"
         }
     })
-
+    document.documentElement.style.setProperty('--fontFamily', globalVar.setting.fontFamily);
     onMounted(() => {
         if (!localStorage.getItem('primaryColor')) {
             localStorage.setItem('primaryColor', '236,65,65')    //默认颜色
