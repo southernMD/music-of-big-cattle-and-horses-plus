@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, ShallowRef, inject } from 'vue'
+import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject } from 'vue'
 import { useMainMenu, useGlobalVar, useBasicApi, useMain } from '@renderer/store'
 import useColor from '@renderer/hooks/useColor';
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
@@ -457,6 +457,29 @@ window.addEventListener('contextmenu', (event) => {
 window.addEventListener('click',(event)=>{
     rightFlag.value = false 
 })
+
+const quickGlobal = toRef(globalVar.setting,'quickGlobal')
+const errGlobal = toRef(globalVar.setting,'errGlobal')
+const quick = toRef(globalVar.setting,'quick')
+if(quick.value.length == 0)quick.value = ['Ctrl + P','Ctrl + Left','Ctrl+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L']
+if(quickGlobal.value.length == 0)quickGlobal.value = ['Ctrl + Alt + P','Ctrl + Alt + Left','Ctrl + Alt + Right','Ctrl + Alt + Up','Ctrl + Alt + Down','Ctrl + Alt + M','Ctrl + Alt + L']
+if(errGlobal.value.length == 0)errGlobal.value = [false,false,false,false,false,false,false]
+let timeoutId:any  = null 
+watch(quickGlobal,()=>{
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+        window.electron.ipcRenderer.invoke('set-global-op',toRaw(quickGlobal.value)).then((ress)=>{
+            console.log(ress);
+            ress.forEach((val,index)=>{
+                if(!val)errGlobal.value[index] = true
+                else errGlobal.value[index] = false
+            })
+        })
+      timeoutId = null;
+    }, 1000);
+},{deep:true,immediate:true})
 </script>
 
 <style scoped lang="less">

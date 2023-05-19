@@ -1343,6 +1343,13 @@ interface V {
         defaultMusic:boolean
         quitmodel:boolean
         playWay:boolean
+        quick:string[]
+        quickGlobal:string[]
+        closeGlWay:boolean
+        errGlobal:boolean[]
+        opencanvas:boolean
+        canvasColor:boolean
+        canvasColorRGB:string
     }
 }
 //已开始播放
@@ -1397,14 +1404,21 @@ export const useGlobalVar = defineStore('globalVar', {
                 autoOpen:false,
                 defaultMusic:false,
                 quitmodel:false,
-                playWay:false
+                playWay:false,
+                quick:['Ctrl + P','Ctrl + Left','Cti+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L','Ctrl + D'],
+                quickGlobal:['Ctrl + Alt + P','Ctrl + Alt + Left','Ctrl + Alt + Right','Ctrl + Alt + Up','Ctrl + Alt + Down','Ctrl + Alt + M','Ctrl + Alt + L','Ctrl + Alt + D'],
+                closeGlWay:false,
+                errGlobal:[],
+                opencanvas:true,
+                canvasColor:true,
+                canvasColorRGB:''
             }
         }
     },
     actions:{
 
     },
-    persist: [{
+    persist:{
         paths: ['setting'],
-    }]
+    }
 })

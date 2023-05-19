@@ -19,12 +19,12 @@ if (!isAppAlreadyRunning) {
   app.setAppUserModelId('大牛马音乐')
   app.whenReady().then(async() => {
     // Set app user model id for windows
-    electronApp.setAppUserModelId('com.electron')
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      await session.defaultSession.loadExtension(
-        join(os.homedir(),'AppData\\Local\\Google\\Chrome\\User Data\\Default\\Extensions\\nhdogjmejiglipccpnnnanhbledajbpd\\6.5.0_0')
-      )
-    }
+    electronApp.setAppUserModelId('com.bigNMusic')
+    // if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    //   await session.defaultSession.loadExtension(
+    //     join(os.homedir(),'AppData\\Local\\Google\\Chrome\\User Data\\Default\\Extensions\\nhdogjmejiglipccpnnnanhbledajbpd\\6.5.0_1')
+    //   )
+    // }
     // Default open or close DevTools by F12 in development
     // and ignore CommandOrControl + R in production.
     // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils

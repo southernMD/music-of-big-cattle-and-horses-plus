@@ -589,15 +589,114 @@ export const createWindow = ():BrowserWindow=>{
       shell.showItemInFolder(path)
     })
     //全局播放
-    globalShortcut.register('Ctrl+Alt+Left',()=>{
-      mainWindow.webContents.send('main-prev')
+    ipcMain.handle('set-global-op',async({},keys)=>{
+      globalShortcut.unregisterAll()
+      const promise:Promise<any>[] = []
+      console.log(keys);
+      keys.forEach((op,index)=>{
+        op = op.replaceAll(" ","")
+        console.log(op);
+        if(op == '空'){
+          promise.push(new Promise<boolean>((resolve, reject) => {
+            resolve(true)
+          }))
+        }else if(op.endsWith('+') ){
+          promise.push(new Promise<boolean>((resolve, reject) => {
+            resolve(false)
+          }))
+        }else{
+          globalShortcut.unregister(op)
+          switch (index) {
+            case 0 :
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              globalShortcut.register(op,()=>{
+                mainWindow.webContents.send('main-play')
+              })
+              resolve(globalShortcut.isRegistered(op))
+            }))
+            break
+            case 1 :
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              globalShortcut.register(op,()=>{
+                mainWindow.webContents.send('main-prev')
+              })
+              resolve(globalShortcut.isRegistered(op))
+            }))
+            break
+            case 2 :
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              globalShortcut.register(op,()=>{
+                mainWindow.webContents.send('main-next')
+              })
+              resolve(globalShortcut.isRegistered(op))
+            }))
+            break
+            case 3 :
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              globalShortcut.register(op,()=>{
+                mainWindow.webContents.send('main-add-volum')
+              })
+              resolve(globalShortcut.isRegistered(op))
+            }))
+            break
+            case 4 :
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              globalShortcut.register(op,()=>{
+                mainWindow.webContents.send('main-reduce-volum')
+              })
+              resolve(globalShortcut.isRegistered(op))
+            }))
+            break
+            case 5 :
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              globalShortcut.register(op,()=>{
+                mainWindow.webContents.send('main-like')
+              })
+              resolve(globalShortcut.isRegistered(op))
+            }))
+            break
+            case 6 :
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              globalShortcut.register(op,()=>{
+                mainWindow.webContents.send('main-open-ci')
+              })
+              resolve(globalShortcut.isRegistered(op))
+            }))
+            break
+            default:
+            promise.push(new Promise<boolean>((resolve, reject) => {
+              resolve(true)
+            }))
+          }
+        }
+      })
+      return await Promise.all(promise)
     })
-    globalShortcut.register('Ctrl+Alt+P',()=>{
-      mainWindow.webContents.send('main-play')
-    })
-    globalShortcut.register('Ctrl+Alt+Right',()=>{
-      mainWindow.webContents.send('main-next')
-    })
+    // ipcMain.handle('check-global-op',async({},keys:string[])=>{
+    //   const promise:Promise<any>[] = []
+    //   keys.forEach((op)=>{
+    //     op = op.replaceAll(" ","")
+    //     if(op.endsWith('+') || op == '空'){
+    //       promise.push(new Promise<any>((resolve, reject) => {
+    //         resolve(false)
+    //       }))
+    //     }else{
+    //       promise.push(new Promise<any>((resolve, reject) => {
+    //         resolve(globalShortcut.isRegistered(op))
+    //       }))
+    //     }
+    //   })
+    //   return await Promise.all(promise)
+    // })
+    // globalShortcut.register('Ctrl+Alt+Left',()=>{
+    //   mainWindow.webContents.send('main-prev')
+    // })
+    // globalShortcut.register('Ctrl+Alt+P',()=>{
+    //   mainWindow.webContents.send('main-play')
+    // })
+    // globalShortcut.register('Ctrl+Alt+Right',()=>{
+    //   mainWindow.webContents.send('main-next')
+    // })
     //歌词请求出现详情页面
     ipcMain.on('lrc-open-playDetail',()=>{
       mainWindow.show()
@@ -812,7 +911,7 @@ export const lrcwindow = (): any => {
   ipcMain.on('open-lyric', (e, flag) => {
       child.setAlwaysOnTop(true, 'pop-up-menu')
       if (flag == true) {
-          child.show()
+          child.showInactive()
       } else {
           child.hide();
       }

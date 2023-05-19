@@ -76,20 +76,20 @@
                         v-if="Main.songType !== 'FM'"></i>
                     <i class="iconfont icon-lajixiang" v-else title="垃圾桶" @click="rubish"></i>
                 </div>
-                <div class="before" @click="prevSongThor" title="上一首（Ctrl + Left）">
+                <div class="before" @click="prevSongThor" :title="`上一首（${globalVar.setting.quick[1]}）`">
                     <i class="iconfont icon-shangyishou"></i>
                 </div>
                 <div class="start">
                     <div class="bk" :class="{ 'bk-oneself': globalVar.oneself == 1 }" @click="changPlayStatus"
-                        :title="`${stopOrPlayFlag ? '继续' : '暂停'}（Ctrl + P）`">
+                        :title="`${stopOrPlayFlag ? '继续' : '暂停'}（${globalVar.setting.quick[0]}）`">
                         <i class="iconfont icon-gf-play" v-if="stopOrPlayFlag"></i>
                         <i class="iconfont icon-zanting" v-else></i>
                     </div>
                 </div>
-                <div class="next" @click="nextSongThor" title="下一首（Ctrl + Right">
+                <div class="next" @click="nextSongThor" :title="`下一首（${globalVar.setting.quick[2]}）`">
                     <i class="iconfont icon-xiayishou"></i>
                 </div>
-                <div class="ci" @click="openCi" ref="ci">
+                <div class="ci" @click="openCi" ref="ci" :title="`打开歌词（${globalVar.setting.quick[6]}）`">
                     <i class="iconfont icon-geciweidianji"></i>
                     <i class="iconfont icon-openci-copy" v-if="showCi"></i>
                 </div>
@@ -128,7 +128,7 @@
                 <i class="iconfont icon-shengyinguanbi" @click="Mute" v-else></i>
                 <div class="shengyin-line" v-show="changeShengYing">
                     <div class="hua" @click="immediateChamgeYingLiang">
-                        <div class="liang">
+                        <div class="liang" ref="liangRef">
                             <div class="point" @mousedown="beginMove"></div>
                         </div>
                     </div>
@@ -1142,6 +1142,7 @@ const immediateChamgeYingLiang = (e: MouseEvent) => {
     audioVolume();
 }
 
+
 //音量控制 初始化
 onMounted(() => {
     let dom = document.querySelector('.liang') as HTMLElement
@@ -1337,52 +1338,126 @@ const clearList = () => {
     canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+const specialCharactersMap = new Map([
+    ['Digit1', '1'],
+    ['Digit2', '2'],
+    ['Digit3', '3'],
+    ['Digit4', '4'],
+    ['Digit5', '5'],
+    ['Digit6', '6'],
+    ['Digit7', '7'],
+    ['Digit8', '8'],
+    ['Digit9', '9'],
+    ['Digit0', '0'],
+    ['Minus', '-'],
+    ['Equal', '='],
+    ['Backquote', '`'],
+    ['BracketLeft', '['],
+    ['BracketRight', ']'],
+    ['Backslash', '\\'],
+    ['Semicolon', ';'],
+    ['Quote', '\''],
+    ['Comma', ','],
+    ['Period', '.'],
+    ['Slash', '/'],
+]);
+
 //按键监视
+const liangRef = ref<InstanceType<typeof HTMLElement>>()
 const keyDownWatch = (e: KeyboardEvent) => {
     const activeEl = document.activeElement;
     if (!activeEl || activeEl.tagName.toLowerCase() === 'input') return
-    if (e.ctrlKey) {
-        if (e.code == 'ArrowRight') {
-            nextSongThor();
-        } else if (e.code == 'ArrowLeft') {
-            prevSong();
-        } else if (e.code == 'KeyP') {
-            changPlayStatus();
-        }
+    let keys:string[] = []
+    if(e.ctrlKey)keys.push('Ctrl')
+    if(e.shiftKey)keys.push('Shift')
+    if(e.altKey)keys.push('Alt')
+    if (!(['Control','Shift','Alt'].includes(e.key)) ){
+        keys.push(e.key.split('Arrow')[1] ?? (specialCharactersMap.has(e.code)?specialCharactersMap.get(e.code)!:e.key.slice(0,1).toUpperCase() + e.key.slice(1).toLowerCase()!))
+    }
+    let press = keys.join(' + ')
+    if (press == globalVar.setting.quick[2]) {
+        nextSongThor();
+    } else if (press == globalVar.setting.quick[1]) {
+        prevSong();
+    } else if (press == globalVar.setting.quick[0]) {
+        changPlayStatus();
+    }else if(press == globalVar.setting.quick[3]){
+        //+10%
+        add_10_volum()
+    }else if(press == globalVar.setting.quick[4]){
+        //-10%
+        reduce_10_volum()
+    }else if(press == globalVar.setting.quick[5]){
+        likeOrDislike()
+    }else if(press == globalVar.setting.quick[6]){
+        openCi()
     }
     if (e.code == 'Space') {
         changPlayStatus();
     }
 }
+const add_10_volum = ()=>{
+    let volum = +liangRef.value!.style.height.split('%')[0]
+    MuteFlag.value = true
+    audio.volume = Math.min(audio.volume+0.1,1)
+    liangRef.value!.style.height = Math.min(volum+10,100) + '%'
+    localStorage.setItem('baseLine',Math.min(volum+10,100)+'')
+    globalVar.closePointOutMessage = Math.min(volum+10,100) + '%'
+    globalVar.closePointOut = true
+}
+
+const reduce_10_volum = ()=>{
+    let volum = +liangRef.value!.style.height.split('%')[0]
+    audio.volume = Math.max(audio.volume-0.1,0)
+    if(audio.volume == 0)MuteFlag.value = false
+    liangRef.value!.style.height = Math.max(volum-10,0) + '%'
+    localStorage.setItem('baseLine',Math.max(volum-10,0)+'')
+    globalVar.closePointOutMessage = Math.max(volum-10,0) + '%'
+    globalVar.closePointOut = true
+}
 
 //主进程播放
 onMounted(() => {
     window.electron.ipcRenderer.on('main-prev', () => {
-        if (playingList.value.length != 0) {
+        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
             console.log('上一首');
             prevSongThor();
         }
     })
     window.electron.ipcRenderer.on('main-next', () => {
-        if (playingList.value.length != 0) {
+        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
             console.log('下一首');
             nextSongThor();
         }
     })
     window.electron.ipcRenderer.on('main-play', () => {
-        if (playingList.value.length != 0) {
+        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
             console.log('播放');
             changPlayStatus();
         } else {
             window.electron.ipcRenderer.send('render-play-fail')
         }
     })
-    // window.electron.ipcRenderer.on('main-stop', () => {
-    //     if (playingList.value.length != 0) {
-    //         console.log('暂停');
-    //         changPlayStatus();
-    //     }
-    // })
+    window.electron.ipcRenderer.on('main-add-volum',()=>{
+        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+            add_10_volum()
+        }
+    })
+    window.electron.ipcRenderer.on('main-reduce-volum',()=>{
+        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+            reduce_10_volum()
+        }
+    })
+    window.electron.ipcRenderer.on('main-like',()=>{
+        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+            likeOrDislike()
+        }
+    })
+    window.electron.ipcRenderer.on('main-open-ci',()=>{
+        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+            openCi()
+        }
+    })
 })
 
 //垃圾桶
@@ -1469,7 +1544,8 @@ function draw() {
         barHeight = dataArray[i]
         analyser.getByteFrequencyData(dataArray)
         // 绘制向上的线条
-        canvasCTX.fillStyle = document.documentElement.style.getPropertyValue('--primaryColor')
+        if(globalVar.setting.canvasColor) canvasCTX.fillStyle = document.documentElement.style.getPropertyValue('--primaryColor')
+        else canvasCTX.fillStyle = globalVar.setting.canvasColorRGB 
         canvasCTX.fillRect(oW / 2 + (i * 8), oH, 2, -barHeight / 4 + 30);
         canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight / 4 + 30);
     }
