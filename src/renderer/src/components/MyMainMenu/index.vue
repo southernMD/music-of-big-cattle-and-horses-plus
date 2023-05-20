@@ -443,7 +443,7 @@ const searchSuggest = async()=>{
 }
 const searchSuggestThrottle = throttle(searchSuggest,500)
 const setting = ()=>{
-    Main.detailStatus == 'close'
+    Main.detailStatus = 'close'
     $router.push({
         name:'setting'
     })

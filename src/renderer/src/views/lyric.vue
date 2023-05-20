@@ -46,11 +46,11 @@
                 <i title="解锁桌面歌词" class="iconfont icon-jiesuo" v-show="suoFlag && suoShowFlag" @click="jiesuo"></i>
                 <span>{{title}}</span>
             </span>
-            <span ref="roma" v-if="!true && romalrcArr.length != 0" class="two">
+            <span ref="roma" v-if="yinOryi[1] && romalrcArr.length != 0" class="two">
                 <span>{{ lrcArr[indexLrc]?.time !== 0 && lrcArr[indexLrc]?.lyric !== '' ? romalrcArr[indexRm]?.lyric :
                 ''}}</span>
             </span>
-            <span ref="tly" v-else-if="true && tlyricArr.length != 0" class="there">
+            <span ref="tly" v-if="yinOryi[0] && tlyricArr.length != 0" class="there">
                 <span>{{ lrcArr[indexLrc]?.time !== 0 && lrcArr[indexLrc]?.lyric !== '' ? tlyricArr[indexTr]?.lyric :
                 ''}}</span>
             </span>
@@ -84,6 +84,10 @@ let t =setInterval(()=>{
 //         return  electronIpc.ipcSendSync('getWindowId', 'Main')
 //     }
 // }
+const yinOryi = ref([false,false])
+window.electron.ipcRenderer.on('yin-or-yi',({},arg:boolean[])=>{
+    yinOryi.value = arg
+})
 
 
 let lrc = ref('');

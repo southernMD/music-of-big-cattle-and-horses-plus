@@ -10,6 +10,7 @@
     :local="true" 
     :index="index+1"
     :path="val.path"
+    :key="+val.userDefinedText[0]?.value"
     :imageBuffer="val.image?.imageBuffer"
     dataType="songDownload"
     v-for="val,index in list" @localPlay="localPlay"></LineMusic>
@@ -25,6 +26,7 @@
     :index="listCopy[index].indexList"
     :path="list[listCopy[index].indexList-1].path"
     :imageBuffer="list[listCopy[index].indexList-1].image?.imageBuffer"
+    :key="+list[listCopy[index].indexList-1].userDefinedText[0].value"
     dataType="songDownload"
     @localPlay="localPlay"
     v-for="val,index in listCopyLength" ></LineMusic>
@@ -47,6 +49,16 @@ window.electron.ipcRenderer.on('look-download-list-detail', ({ }, data: any[]) =
     data = data.filter(it=>it.userDefinedText[0].description=='song id')
     console.log(data);
     list.value = data
+})
+window.electron.ipcRenderer.on('look-download-list-del-path',({},path)=>{
+    console.log(path);
+    list.value = list.value.filter((it)=>{
+        console.log(it.path);
+        return it.path != path
+    })
+})
+window.electron.ipcRenderer.on('look-download-list-add-path',({},val)=>{
+    list.value.unshift(val)
 })
 const getSinger = (names: string | string[], ids: string): any[] => {
     const arr: { id: number, name: string }[] = []

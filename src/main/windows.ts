@@ -16,7 +16,9 @@ import NodeID3 from 'node-id3'
 import request from 'request'
 import crypto from 'crypto'
 import fontList from 'font-list'
-import { exec } from 'child_process'
+import { exec, spawn } from 'child_process'
+import { Worker } from 'worker_threads'
+import moveFileWorker from './moveFile?nodeWorker'
 export const createWindow = ():BrowserWindow=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     let X: number, Y: number; //鼠标基于显示器的坐标
@@ -358,7 +360,7 @@ export const createWindow = ():BrowserWindow=>{
         // 三、销毁窗口 id
         removeWindowId('Main');
     })
-
+    let downloadPath = resolve('download')
     ipcMain.on('save-music',(e,{arrayBuffer,name,id3})=>{
       const buffer = Buffer.from(arrayBuffer);
       const imageUrl = id3.image
@@ -390,27 +392,27 @@ export const createWindow = ():BrowserWindow=>{
             console.error(err);
             return;
           }
-          fs.writeFileSync(`download/${cleanFileName}.mp3`, buffer);
-          console.log(NodeID3.read(`download/${cleanFileName}.mp3`))
+          fs.writeFileSync(`${downloadPath}/${cleanFileName}.mp3`, buffer);
+          console.log(NodeID3.read(`${downloadPath}/${cleanFileName}.mp3`))
         });
         e.reply('save-music-finished',{which:cleanFileName,id:id3.ids[0]})
       })
 
     })
     ipcMain.on('get-download-list',(e)=>{
-      if (fs.existsSync('download')) {
-        const Files = fs.readdirSync('download')
+      if (fs.existsSync(downloadPath)) {
+        const Files = fs.readdirSync(downloadPath)
         e.reply('look-download-list',Files)
       }else {
         e.reply('look-download-list',[])
       }
     })
     ipcMain.on('get-download-list-detail',(e)=>{
-      if (fs.existsSync('download')) {
-        const Files = fs.readdirSync('download')
+      if (fs.existsSync(downloadPath)) {
+        const Files = fs.readdirSync(downloadPath)
         const detail:any[] = []
         Files.forEach((item)=>{
-          detail.push(Object.assign(NodeID3.read(`download/${item}`),{path:resolve(`download/${item}`)}))
+          detail.push(Object.assign(NodeID3.read(`${downloadPath}/${item}`),{path: downloadPath + '\\' + item }))
         })
         e.reply('look-download-list-detail',detail)
       }else {
@@ -418,68 +420,63 @@ export const createWindow = ():BrowserWindow=>{
       }
     })
     //下载目录文件变化
-    const watcher = chokidar.watch('download', {
+
+    const watcher = chokidar.watch(downloadPath, {
       persistent: true
     });
     const delMusic = (path:string)=>{
-      const Files = fs.readdirSync('download').filter(item=>item.endsWith('mp3'))
-      mainWindow.webContents.send('look-download-list',Files)
-      const detail:any[] = []
-      Files.forEach((item)=>{
-        detail.push(NodeID3.read(`download/${item}`))
-      })
-      mainWindow.webContents.send('look-download-list-detail',detail)
+      // console.log(path,'delMusic');
+      // const Files = fs.readdirSync(downloadPath).filter(item=>item.endsWith('mp3'))
+      // mainWindow.webContents.send('look-download-list',Files)
+      // const detail:any[] = []
+      // Files.forEach((item)=>{
+      //   detail.push(NodeID3.read(`${downloadPath}/${item}`))
+      // })
+      mainWindow.webContents.send('look-download-list-del-path',path)
+    }
+    const addMuisc = (path:string)=>{
+      // console.log(path,'addMuisc');
+      mainWindow.webContents.send('look-download-list-add-path',NodeID3.read(path))
     }
     const delDir = (path:string)=>{
+      console.log(path,'delDir');
       watcher.off('unlink', delMusic)
       watcher.off('add',delMusic)
       watcher.off('unlinkDir', delDir)
       watcher.close()
-      fs.mkdirSync('download', { recursive: true });
+      fs.mkdirSync(downloadPath, { recursive: true });
       watcher.on('unlink',delMusic)
       watcher.on('unlink', delMusic)
       watcher.on('unlinkDir',delDir)
     }
-    watcher.on('unlink',delMusic)
-    watcher.on('add',delMusic)
-    watcher.on('unlinkDir',delDir)
-
-    //合并音频切片
-    // ipcMain.on('save-music-pick',async(e,{name})=>{
-    //   name = name.replace(/[\\/:\*\?"<>\|]/g, "");
-    //   console.log(name);
-    //   const Files = fs.readdirSync('download')
-    //   const fixName = name.endsWith('.mp3')?name:name+ '.mp3'
-    //   const writeStream = fs.createWriteStream(`download/${fixName}`);
-    //   for (const fileName of Files) {
-    //     if(fileName.includes(name)){
-    //       const readStream = fs.createReadStream('download/'+fileName);
-    //       await new Promise<any>((resolve, reject) => {
-    //         readStream.pipe(writeStream, { end: false });
-    //         readStream.on('end', () => {
-    //           console.log('end',fileName);
-    //           fs.unlink('download/'+fileName,(err)=>{
-    //             console.log('ok',fileName);
-    //             if(err)console.log(err);
-    //             resolve('ok')
-    //           })
-    //         });
-    //       })
-    //     }
-    //   }
-    //   writeStream.on('finish', () => {
-    //     console.log('save-music-finished');
-    //     if(!name.endsWith('.mp3'))name+='.mp3'
-    //     e.reply('save-music-finished',name)
-    //   });
-    //   writeStream.end()
-    // })
-    //获取下载目录路径
+    watcher.on('unlink', delMusic);
+    watcher.on('add', addMuisc);
+    watcher.on('unlinkDir', delDir);
+    watcher.add(downloadPath);
+    
+    //获取默认下载目录路径
     ipcMain.handle('get-download-path',()=>{
       return resolve('download')
     })
+
+    ipcMain.on('change-download-path',({},path)=>{
+      watcher.off('unlink', delMusic);
+      watcher.off('add', addMuisc);
+      watcher.off('unlinkDir', delDir);
+      watcher.close();
+      if(path != downloadPath){
+        moveFileWorker({workerData: { downloadPath, destinationPath: path }}).on('message',()=>{
+          downloadPath = path;
+          console.log('完成');
+          watcher.add(downloadPath);
+          watcher.on('unlink', delMusic);
+          watcher.on('add', addMuisc);
+          watcher.on('unlinkDir', delDir);
+        })
+      }
+    })
     ipcMain.on('open-download-dir',()=>{
-      shell.openPath(resolve('download'))
+      shell.openPath(downloadPath)
     })
     //获取本地音乐
     ipcMain.handle('get-local-music',({},{path})=>{
@@ -494,12 +491,13 @@ export const createWindow = ():BrowserWindow=>{
     ipcMain.handle('add-local-dir',({})=>{
        const paths:string[] | undefined = dialog.showOpenDialogSync(mainWindow,{
         title:'选择添加目录',
-        properties:['openDirectory','promptToCreate','dontAddToRecent'],
+        properties:['openDirectory','dontAddToRecent'],
       })
+      console.log(paths);
       if(paths == undefined){
         return {canceled:true,path:[]}
       }else{
-        return {canceled:false,path:paths}
+        return { canceled: false, path: paths };
       }
     })
     //删除音乐文件
@@ -580,7 +578,7 @@ export const createWindow = ():BrowserWindow=>{
     })
     //获取音乐路径
     ipcMain.handle('get-song-path',({},cleanFileName)=>{
-      return resolve(`download/${cleanFileName}`)
+      return downloadPath + '\\' + cleanFileName
     })
     //打开指定目录
     ipcMain.on('open-path',({},path)=>{
@@ -592,10 +590,10 @@ export const createWindow = ():BrowserWindow=>{
     ipcMain.handle('set-global-op',async({},keys)=>{
       globalShortcut.unregisterAll()
       const promise:Promise<any>[] = []
-      console.log(keys);
+      // console.log(keys);
       keys.forEach((op,index)=>{
         op = op.replaceAll(" ","")
-        console.log(op);
+        // console.log(op);
         if(op == '空'){
           promise.push(new Promise<boolean>((resolve, reject) => {
             resolve(true)
@@ -764,7 +762,7 @@ export const createWindow = ():BrowserWindow=>{
         fontList.getFonts()
         .then(fonts => {
           resolve(fonts)
-          console.log(fonts)
+          // console.log(fonts)
         })
         .catch(err => {
           console.log(err)
@@ -861,7 +859,7 @@ export const lrcwindow = (): any => {
         preload: join(__dirname, "../preload/index.js"),
       },
   })
-  // child.webContents.toggleDevTools()
+  child.webContents.toggleDevTools()
   //注册名称
   child.webContents.on('did-finish-load', () => {
       // 二、注册窗口id
@@ -1011,3 +1009,37 @@ export const dragWindw = ():BrowserWindow=>{
   })
   return win
 }
+
+
+    
+    
+    //合并音频切片
+    // ipcMain.on('save-music-pick',async(e,{name})=>{
+    //   name = name.replace(/[\\/:\*\?"<>\|]/g, "");
+    //   console.log(name);
+    //   const Files = fs.readdirSync('download')
+    //   const fixName = name.endsWith('.mp3')?name:name+ '.mp3'
+    //   const writeStream = fs.createWriteStream(`download/${fixName}`);
+    //   for (const fileName of Files) {
+    //     if(fileName.includes(name)){
+    //       const readStream = fs.createReadStream('download/'+fileName);
+    //       await new Promise<any>((resolve, reject) => {
+    //         readStream.pipe(writeStream, { end: false });
+    //         readStream.on('end', () => {
+    //           console.log('end',fileName);
+    //           fs.unlink('download/'+fileName,(err)=>{
+    //             console.log('ok',fileName);
+    //             if(err)console.log(err);
+    //             resolve('ok')
+    //           })
+    //         });
+    //       })
+    //     }
+    //   }
+    //   writeStream.on('finish', () => {
+    //     console.log('save-music-finished');
+    //     if(!name.endsWith('.mp3'))name+='.mp3'
+    //     e.reply('save-music-finished',name)
+    //   });
+    //   writeStream.end()
+    // })

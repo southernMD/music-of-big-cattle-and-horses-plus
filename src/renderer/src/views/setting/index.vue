@@ -54,6 +54,7 @@
             </div>
             <div class="st-bt">
                 <el-checkbox v-model="globalVar.setting.opencanvas" label="开启音频可视化" size="large" />
+                <span>（关闭后可以加快加载速度）</span>
             </div>
             <div class="el">
                 <el-radio-group  v-model="globalVar.setting.canvasColor" class="ml-4">
@@ -102,6 +103,42 @@
             <span>（在后台也可以响应）</span>
         </div>
     </div>
+    <div class="dwn">
+        <div class="title">下载</div>
+        <div class="ds">
+            <div class="title">下载音质：</div>
+            <el-radio-group v-model="globalVar.setting.downloadlevel" class="ml-4">
+                <el-radio label="standard" size="large">标准</el-radio>
+                <el-radio label="higher" size="large">较高</el-radio>
+                <el-radio label="exhigh" size="large">极高</el-radio>
+                <el-radio label="lossless" size="large">无损</el-radio>
+            </el-radio-group>
+        </div>
+        <div class="ts">
+            <div class="title">下载目录：</div>
+            <div class="path">
+                <div class="msg">{{ globalVar.setting.downloadPath }}</div>
+                <div class="change" @click="changeDir">更改目录</div>
+            </div>
+        </div>
+    </div>
+    <div class="lrc">
+        <div class="title">歌词</div>
+        <div class="ls">
+            <div class="title">启用：</div>
+            <div class="ll">
+                <div>
+                    <el-checkbox v-model="showCi" label="启用歌词" size="large" />
+                </div>
+                <div >
+                    <el-checkbox @click.stop="isClick(1)" v-model="yinOryi[1]" label="外文歌词显示音译" size="large" />
+                </div>
+                <div >
+                    <el-checkbox @click.stop="isClick(0)" v-model="yinOryi[0]" label="外文歌词显示翻译" size="large" />
+                </div>
+            </div>
+        </div>
+    </div>
   </div>
 </template>
 
@@ -116,6 +153,9 @@ const closeGlWay = toRef(globalVar.setting,'closeGlWay')
 const quick = toRef(globalVar.setting,'quick')
 const quickGlobal = toRef(globalVar.setting,'quickGlobal')
 const errGlobal = toRef(globalVar.setting,'errGlobal')
+const showCi = toRef(globalVar.setting,'showCi')
+const yinOryi = toRef(globalVar.setting,'yinOryi')
+
 
 console.log(quick.value,quickGlobal.value);
 const changeFontFamily = (ms)=>{
@@ -305,6 +345,29 @@ const loseFocus =(index)=>{
 
 }
 
+const changeDir = ()=>{
+    window.electron.ipcRenderer.invoke('add-local-dir').then(({canceled, path})=>{
+        if(!canceled){
+            globalVar.setting.downloadPath = path[0]
+        }
+    })
+}
+
+let flagsuo = true
+const isClick = (index:number) => {
+    if(flagsuo){
+        flagsuo = false
+        return 
+    }
+    if(index == 0){ 
+      yinOryi.value[0] = !yinOryi.value[0] 
+      if(yinOryi.value[1] && yinOryi.value[0])yinOryi.value[1] = false
+    }else{
+      yinOryi.value[1] = !yinOryi.value[1]
+      if( yinOryi.value[0] && yinOryi.value[1])yinOryi.value[0] = false
+    }
+    flagsuo = true
+}
 
 </script>
 
@@ -328,7 +391,7 @@ const loseFocus =(index)=>{
         }
     }
     .normal,.play{
-        .font-choice,.start,.link,.close,.play-way,.play-canvas{
+        .font-choice,.start,.link,.close,.play-way,.play-canvas,.dwn{
             user-select: none;
             >.title{
                 font-size: 12px;
@@ -349,6 +412,13 @@ const loseFocus =(index)=>{
             .el{
                 display: flex;
                 align-items: center;
+                margin-top: 5px;
+            }
+            .st-bt{
+                display: flex;
+                align-items: center;
+                color: @small-font-color;
+                font-size: 12px;
             }
         }
     }
@@ -445,6 +515,66 @@ const loseFocus =(index)=>{
             }
         }
     }
+    .dwn{
+        .ds{
+            .title{
+                font-weight: bolder;
+                font-size: 12px;
+                color: @small-font-color;
+            }
+        } 
+        .ts{
+            .title{
+                font-size: 12px;
+                color: @small-font-color;
+            }
+            .path{
+                margin-top: 10px;
+                display: flex;
+                align-items: center;
+                font-size: 12px;
+                .title{
+                    font-weight: bolder;
+                    font-size: 12px;
+                    color: @small-font-color;
+                }
+                .msg{
+                    width: 400px;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    margin-right: 15px;
+                }
+                .change{
+                    width: 120px;
+                    height: 20px;
+                    border-radius: 2em;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    border: 1px solid @split-line-color;
+                }
+            }
+        }
+    }
+    .lrc{
+        .ls{
+            .title{
+                font-weight: bolder;
+                font-size: 12px;
+                color: @small-font-color;
+            }
+            .ll{
+                display: flex;
+                flex-direction: column;
+                margin-top: 10px;
+                >div{
+                    margin-top: 10px;
+                }
+            }
+        } 
+    }
 }
 :deep(.el-checkbox){
     --el-checkbox-input-border:var(--smallFontColor) 1px solid;
@@ -493,6 +623,7 @@ const loseFocus =(index)=>{
         width: 100px;
         top: 3px;
         left: 0px;
+        background-color: @leftClickColorOneself;
     }
     .el-color-picker__trigger{
         .el-color-picker__color{

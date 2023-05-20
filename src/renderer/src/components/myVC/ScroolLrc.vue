@@ -19,14 +19,14 @@
                         {{ value.lyric }}
                     </div>
                     <div v-if="
-                    yinOryi == 'yin' &&
+                    yinOryi[1] == true &&
                     romalrc != undefined &&
                     Number(romalrc?.length) != 0
                     " class="lrc-roma">
                         {{ $roma(index) }}
                     </div>
                     <div v-else-if="
-                    yinOryi == 'yi' && tlyric != undefined && Number(tlyric?.length) != 0
+                    yinOryi[0] == true && tlyric != undefined && Number(tlyric?.length) != 0
                     " class="lrc-tly">
                         {{ $tly(index) }}
                     </div>
@@ -43,11 +43,11 @@
                 </div>
             </div>
             <div class="bottom">
-                <div class="yin" :class="{optionColor:yinOryi == 'yin'}" @click="isClick('yin')"
+                <div class="yin" :class="{optionColor:yinOryi[1]}" @click="isClick(1)"
                     v-show="romalrc?.length !== 1 && romalrc?.length !== 0">
                     <span>音</span>
                 </div>
-                <div class="yi" :class="{optionColor:yinOryi == 'yi'}" @click="isClick('yi')"
+                <div class="yi" :class="{optionColor:yinOryi[0]}" @click="isClick(0)"
                     v-show="tlyric?.length !== 1 && tlyric?.length !== 0">
                     <span>译</span>
                 </div>
@@ -57,7 +57,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, toRef, Ref, getCurrentInstance, ComponentInternalInstance, watch, nextTick } from 'vue'
+import { ref, toRef, Ref, getCurrentInstance, ComponentInternalInstance, watch, nextTick, toRaw } from 'vue'
 import { useMain, useMainMenu, useElectronToApp,useGlobalVar } from "@renderer/store";
 import { dayjsMMSS } from '@renderer/utils/dayjs'
 import { ElScrollbar } from "element-plus";
@@ -111,6 +111,14 @@ window.electron.ipcRenderer.on("resolved-lrc", ({}, objArr: any) => {
       lrc.value = lrcObj.lrc;
       romalrc.value = lrcObj.romalrc;
       tlyric.value = lrcObj.tlyric;
+      if(romalrc.value != undefined &&Number(romalrc.value?.length) != 0 && (tlyric.value == undefined || Number(tlyric.value?.length) == 0) ){
+        yinOryi.value[1] = true
+        if(yinOryi.value[0] == true) yinOryi.value[0] = false
+      }
+      else if(tlyric.value != undefined &&Number(tlyric.value?.length) != 0 && (romalrc.value == undefined || Number(romalrc.value?.length) == 0) ){
+        yinOryi.value[0] = true
+        if(yinOryi.value[1] == true) yinOryi.value[1] = false
+      }
     }
 });
 
@@ -282,12 +290,14 @@ watch(playingId,()=>{
   playingTime.value = 0
 })
 //音译切换
-let yinOryi = ref('yi')
-const isClick = (way: string) => {
-    if(way == yinOryi.value){
-      yinOryi.value = ''
+let yinOryi = toRef(globalVar.setting,'yinOryi')
+const isClick = (index:number) => {
+    if(index == 0){ 
+      yinOryi.value[0] = !yinOryi.value[0] 
+      if(yinOryi.value[1] && yinOryi.value[0])yinOryi.value[1] = false
     }else{
-      yinOryi.value = way
+      yinOryi.value[1] = !yinOryi.value[1]
+      if( yinOryi.value[0] && yinOryi.value[1])yinOryi.value[0] = false
     }
 }
 //加0.5
@@ -303,6 +313,13 @@ const jian = () => {
     window.electron.ipcRenderer.sendTo(ciId, 'lyric-offset-ci', eqi.value)
     window.electron.ipcRenderer.sendTo(mainId, 'lyric-offset', eqi.value)
 }
+
+//歌词状态
+// ciId
+watch(yinOryi,()=>{
+  console.log(toRaw(yinOryi.value));
+  window.electron.ipcRenderer.sendTo(ciId,'yin-or-yi',toRaw(yinOryi.value))
+},{immediate:true,deep:true})
 </script>
 
 <style lang="less" scoped>

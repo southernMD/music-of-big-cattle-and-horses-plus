@@ -39,15 +39,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, toRef } from 'vue'
 import { useGlobalVar, useMain } from '@renderer/store'
 import DownloadSongList from './DownloadSongList/index.vue'
 const Main = useMain()
-const path = ref('')
 const globalVar = useGlobalVar()
-window.electron.ipcRenderer.invoke('get-download-path').then((data) => {
-  path.value = data
-})
+const path = toRef(globalVar.setting,'downloadPath')
+
 const searchKey = ref('')
 //清除搜索内容
 const clearSearch = () => {

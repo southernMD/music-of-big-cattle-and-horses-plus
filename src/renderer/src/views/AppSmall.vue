@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject } from 'vue'
 import { useMainMenu, useGlobalVar, useBasicApi, useMain } from '@renderer/store'
+import MusicRadio from '@renderer/components/MusicRadio/index.vue'
 import useColor from '@renderer/hooks/useColor';
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
@@ -480,6 +481,19 @@ watch(quickGlobal,()=>{
       timeoutId = null;
     }, 1000);
 },{deep:true,immediate:true})
+
+if(globalVar.setting.downloadPath == ''){
+    window.electron.ipcRenderer.invoke('get-download-path').then((data) => {
+        globalVar.setting.downloadPath = data
+    })
+}
+
+watch(()=>globalVar.setting.downloadPath,()=>{
+    if(globalVar.setting.downloadPath != ''){
+        window.electron.ipcRenderer.send('change-download-path',globalVar.setting.downloadPath)
+    }
+},{immediate:true})
+
 </script>
 
 <style scoped lang="less">

@@ -540,7 +540,12 @@ const dowloadAll = async () => {
 }
 
 const WaitdownloadList = toRef(globalVar, 'downloadList')
-
+const br = (str: string) => {
+    if (str == 'standard') return 128000
+    else if (str == 'higher') return 192000
+    else if (str == 'exhigh') return 320000
+    else return 999000
+}
 
 //下载请求
 const getUrl = async (id, name) => {
@@ -558,18 +563,18 @@ const getUrl = async (id, name) => {
         chunks = globalVar.musicPick.get(id)
     }
     try {
-        result = await Main.reqSongDlUrl(id, 999000)
+        result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
         //@ts-ignore
         url = result.data.data.url
         if (url == null) {
-            result = await Main.reqSongUrl(id, 'standard')
+            result = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
             //@ts-ignore
             url = result.data.data[0].url
             //@ts-ignore
-            downloadObj.level = 'standard'
+            downloadObj.level = globalVar.setting.downloadlevel
         } else {
             //@ts-ignore
-            downloadObj.br = 999000
+            downloadObj.br = br(globalVar.setting.downloadlevel)
         }
     } catch (error) {
         globalVar.musicPick.set(id, chunks)

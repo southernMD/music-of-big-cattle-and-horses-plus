@@ -89,9 +89,9 @@
                 <div class="next" @click="nextSongThor" :title="`下一首（${globalVar.setting.quick[2]}）`">
                     <i class="iconfont icon-xiayishou"></i>
                 </div>
-                <div class="ci" @click="openCi" ref="ci" :title="`打开歌词（${globalVar.setting.quick[6]}）`">
+                <div class="ci" @click="openCi" :class="{'open-ci':showCi && Main.playingList.length}" :title="`打开歌词（${globalVar.setting.quick[6]}）`">
                     <i class="iconfont icon-geciweidianji"></i>
-                    <i class="iconfont icon-openci-copy" v-if="showCi"></i>
+                    <i class="iconfont icon-openci-copy" v-if="showCi && Main.playingList.length"></i>
                 </div>
             </div>
             <div class="bottom" :class="{ 'bottom-oneself': globalVar.oneself == 1 }">
@@ -209,7 +209,7 @@
 <script lang="ts" setup>
 import {
     ref, onMounted, getCurrentInstance, ComponentInternalInstance,
-    Ref, nextTick, toRef, watch, shallowRef, provide
+    Ref, nextTick, toRef, watch, shallowRef, provide, inject
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
 import { before, throttle } from 'lodash'
@@ -229,7 +229,19 @@ const $route = useRoute();
 let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbofang', 'icon-shunxubofang'])
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
-const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
+let ciId
+let t2 = setInterval(() => {
+    ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
+    if (ciId) {
+        clearInterval(t2);
+    }
+}, 100)
+// let t = setInterval(() => {
+//     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'ciId');
+//     if (ciId) {
+//         clearInterval(t);
+//     }
+// }, 100)
 let animationId;
 
 let playingList = toRef(Main, 'playingList')
@@ -242,7 +254,6 @@ let randIndex = ref(-1);
 
 let stopOrPlayFlag: Ref<Boolean> = ref(true)
 let wayIndex = toRef(Main, 'wayIndex');
-let showCi = ref(false);
 let MuteFlag = ref(true);
 let audio: HTMLAudioElement
 let loadingLine: HTMLElement
@@ -431,18 +442,42 @@ const loaclPlayWay = async()=>{
         simiSong.value = simiSongData.data.songs;
         simiPlaylist.value = simiPlaylistData.data.playlists;
     }
-    window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(({ base64,error }) => {
+    window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(async({ base64,error }) => {
         if(error){
             nextSong()
             return
         }
         SongUrl.value = `data:audio/mp3;base64,${base64}`
+        await loaclMusicCanSee(base64)
+        stopOrPlayFlag.value = false
+        nextTick(() => {
+            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            if (bufferSource) bufferSource.playbackRate.value = audio.playbackRate
+            audio.play()
+            nowLevel.value = 'local'
+            levelName.value = '本地'
+            playStatus.value = 'play'
+            let str = playingList.value[playingindex.value - 1].name + ' - ';
+            let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
+            singerArr.forEach((element, index) => {
+                str += element.name
+                if (index != singerArr.length - 1) str += ' / '
+            })
+            window.electron.ipcRenderer.send('change-play-thum', str)
+            window.electron.ipcRenderer.send('render-play')
+            // stopPlayAudip()
+        })
+    })
+}
+
+const loaclMusicCanSee = (base64)=>{
+    if(globalVar.setting.opencanvas){
         AC = new AudioContext()
         gainNode = AC.createGain()
         analyser = AC.createAnalyser();
         loadingCanSeeUrl = true
         const arrayBuffer = base64ToArrayBuffer(base64)
-        AC.decodeAudioData(arrayBuffer).then((AudioBuffer) => {
+        return AC.decodeAudioData(arrayBuffer).then((AudioBuffer) => {
             // console.log(AudioBuffer.getChannelData(1));
             // console.log(AudioBuffer.getChannelData(0));
             musicBuffer = AudioBuffer
@@ -467,26 +502,10 @@ const loaclPlayWay = async()=>{
                 clearTimeout(t)
             }, 0)
         })
-        stopOrPlayFlag.value = false
-        nextTick(() => {
-            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            if (bufferSource) bufferSource.playbackRate.value = audio.playbackRate
-            audio.play()
-            nowLevel.value = 'local'
-            levelName.value = '本地'
-            playStatus.value = 'play'
-            let str = playingList.value[playingindex.value - 1].name + ' - ';
-            let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-            singerArr.forEach((element, index) => {
-                str += element.name
-                if (index != singerArr.length - 1) str += ' / '
-            })
-            window.electron.ipcRenderer.send('change-play-thum', str)
-            window.electron.ipcRenderer.send('render-play')
-            // stopPlayAudip()
-        })
-    })
+    }
+    return
 }
+
 const normalPlayWay = async()=>{
     if (playingId.value != -1) {
         audio = document.querySelector('audio') as HTMLAudioElement
@@ -511,29 +530,6 @@ const normalPlayWay = async()=>{
     }
 }
 //获取播放url
-
-// const song = {
-//             name:item.title,
-//             id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
-//             ar:getSinger(index,item.artist, item?.userDefinedText?.[2],item?.comment?.text),
-//             al:getZhuanji(index,item.album, item?.userDefinedText?.[1],item?.comment?.text),
-//             localPath:item.path,
-//             dt:getTime(item)
-//         }
-//         console.log(item);
-//         playingList.push(song)
-//         playingList[playingList.length - 1].al['picUrl'] = await bufferToBase64(item.image?.imageBuffer)
-//         const privilege = {
-//             id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
-//             maxBrLevel: "local",
-//             playMaxBrLevel: "local",
-//             downloadMaxBrLevel: "local",
-//             plLevel: "local",
-//             dlLevel: "local",
-//             flLevel: "local",
-//         }
-
-
 
 
 watch(playingId, async () => {
@@ -628,24 +624,26 @@ onMounted(async () => {
             timeValueFlag = false
             if(globalVar.timeValue!=0){
                 audio.currentTime = globalVar.timeValue / 1000
-                const currentTime = AC.currentTime;
-                AC = new AudioContext()
-                gainNode = AC.createGain()
-                analyser = AC.createAnalyser();
-                bufferSource.stop(currentTime);
-                bufferSource.disconnect()
-                bufferSource = AC.createBufferSource()
-                bufferSource.buffer = musicBuffer
-                bufferSource.connect(AC.destination)
-                bufferSource.connect(analyser);
-                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                bufferSource.start(0,globalVar.timeValue / 1000);
-                bufferSource.connect(gainNode)
-                gainNode.connect(AC.destination);
-                gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                drawIndex.value++
-                cancelAnimationFrame(animationId)
-                draw()
+                if(globalVar.setting.opencanvas){
+                    const currentTime = AC.currentTime;
+                    AC = new AudioContext()
+                    gainNode = AC.createGain()
+                    analyser = AC.createAnalyser();
+                    bufferSource.stop(currentTime);
+                    bufferSource.disconnect()
+                    bufferSource = AC.createBufferSource()
+                    bufferSource.buffer = musicBuffer
+                    bufferSource.connect(AC.destination)
+                    bufferSource.connect(analyser);
+                    bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                    bufferSource.start(0,globalVar.timeValue / 1000);
+                    bufferSource.connect(gainNode)
+                    gainNode.connect(AC.destination);
+                    gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                    drawIndex.value++
+                    cancelAnimationFrame(animationId)
+                    draw()
+                }
                 globalVar.timeValue = 0
             }
             timeValueFlag = true
@@ -693,25 +691,27 @@ onMounted(async () => {
         if ((wayIndex.value == 0 && Main.playingList.length != 1)|| wayIndex.value == 4 || Main.songType == 'FM') {
             nextSongThor()
         } else if (wayIndex.value == 1 ||( wayIndex.value == 0 && Main.playingList.length == 1)) {
-            AC = new AudioContext()
-            gainNode = AC.createGain()
-            analyser = AC.createAnalyser();
-            const currentTime = AC.currentTime;
-            bufferSource.stop(currentTime);
-            bufferSource.disconnect()
-            bufferSource = AC.createBufferSource()
-            bufferSource.buffer = musicBuffer
-            bufferSource.connect(AC.destination)
-            bufferSource.connect(analyser);
-            bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            bufferSource.start();
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            bufferSource.connect(gainNode)
-            gainNode.connect(AC.destination);
-            gainNode.gain.setValueAtTime(-1, AC.currentTime)
-            drawIndex.value++
-            cancelAnimationFrame(animationId)
-            draw()
+            if(globalVar.setting.opencanvas){
+                AC = new AudioContext()
+                gainNode = AC.createGain()
+                analyser = AC.createAnalyser();
+                const currentTime = AC.currentTime;
+                bufferSource.stop(currentTime);
+                bufferSource.disconnect()
+                bufferSource = AC.createBufferSource()
+                bufferSource.buffer = musicBuffer
+                bufferSource.connect(AC.destination)
+                bufferSource.connect(analyser);
+                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                bufferSource.start();
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                bufferSource.connect(gainNode)
+                gainNode.connect(AC.destination);
+                gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                drawIndex.value++
+                cancelAnimationFrame(animationId)
+                draw()
+            }
             audio.play()
             stopOrPlayFlag.value = false
         } else if (wayIndex.value == 2) {
@@ -785,25 +785,27 @@ const audioPlayEnd = () => {
     playLine = $el.refs['line-play'] as HTMLElement
     let wh = playLine.style.width
     audio.currentTime = Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01
-    const currentTime = AC.currentTime;
-    AC = new AudioContext()
-    gainNode = AC.createGain()
-    analyser = AC.createAnalyser();
-    bufferSource.stop(currentTime);
-    bufferSource.disconnect()
-    bufferSource = AC.createBufferSource()
-    bufferSource.buffer = musicBuffer
-    bufferSource.connect(AC.destination)
-    bufferSource.connect(analyser);
-    bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-    bufferSource.start(0, Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01);
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
-    bufferSource.connect(gainNode)
-    gainNode.connect(AC.destination);
-    gainNode.gain.setValueAtTime(-1, AC.currentTime)
-    drawIndex.value++
-    cancelAnimationFrame(animationId)
-    draw()
+    if(globalVar.setting.opencanvas){
+        const currentTime = AC.currentTime;
+        AC = new AudioContext()
+        gainNode = AC.createGain()
+        analyser = AC.createAnalyser();
+        bufferSource.stop(currentTime);
+        bufferSource.disconnect()
+        bufferSource = AC.createBufferSource()
+        bufferSource.buffer = musicBuffer
+        bufferSource.connect(AC.destination)
+        bufferSource.connect(analyser);
+        bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+        bufferSource.start(0, Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        bufferSource.connect(gainNode)
+        gainNode.connect(AC.destination);
+        gainNode.gain.setValueAtTime(-1, AC.currentTime)
+        drawIndex.value++
+        cancelAnimationFrame(animationId)
+        draw()
+    }
     audioPlayFlag.value = false;
     suo.value = false
     window.removeEventListener('mousemove', audioPlayMoving)
@@ -837,30 +839,36 @@ const clickAudioPlay = (e: MouseEvent) => {
             nowTime.value = dayjsSMMSS(audio.duration * (wh / line.offsetWidth))
             suoFlag.value = true;
             audio.currentTime = wh / line.offsetWidth * audio.duration
-            const currentTime = AC.currentTime;
-            AC = new AudioContext()
-            gainNode = AC.createGain()
-            analyser = AC.createAnalyser();
-            bufferSource.stop(currentTime);
-            bufferSource.disconnect()
-            bufferSource = AC.createBufferSource()
-            bufferSource.buffer = musicBuffer
-            bufferSource.connect(AC.destination)
-            bufferSource.connect(analyser);
-            bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            bufferSource.start(0, wh / line.offsetWidth * audio.duration);
-            bufferSource.connect(gainNode)
-            gainNode.connect(AC.destination);
-            gainNode.gain.setValueAtTime(-1, AC.currentTime)
-            drawIndex.value++
-            cancelAnimationFrame(animationId)
-            draw()
+            clickCanvas(wh)
             // musicCanSee(SongUrl.value,currentTime,0)
         } else {
             suo.value = true;
         }
     }
 
+}
+
+const clickCanvas = (wh)=>{
+    if(globalVar.setting.opencanvas){
+        const currentTime = AC.currentTime;
+        AC = new AudioContext()
+        gainNode = AC.createGain()
+        analyser = AC.createAnalyser();
+        bufferSource.stop(currentTime);
+        bufferSource.disconnect()
+        bufferSource = AC.createBufferSource()
+        bufferSource.buffer = musicBuffer
+        bufferSource.connect(AC.destination)
+        bufferSource.connect(analyser);
+        bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+        bufferSource.start(0, wh / line.offsetWidth * audio.duration);
+        bufferSource.connect(gainNode)
+        gainNode.connect(AC.destination);
+        gainNode.gain.setValueAtTime(-1, AC.currentTime)
+        drawIndex.value++
+        cancelAnimationFrame(animationId)
+        draw()
+    }
 }
 
 
@@ -881,13 +889,13 @@ const stopOrPlay = () => {
             } else {
                 audio.play();
                 Main.playStatus = 'play'
-                if (AC && AC.state === "suspended") AC.resume();
+                if (AC && AC.state === "suspended"  && globalVar.setting.opencanvas) AC.resume();
                 window.electron.ipcRenderer.send('render-play')
             }
         } else if(!audio.paused){
             audio.pause();
             Main.playStatus = 'stop'
-            if (AC && AC.state === "running") AC.suspend();
+            if (AC && AC.state === "running" && globalVar.setting.opencanvas) AC.suspend();
             window.electron.ipcRenderer.send('render-play-fail')
         }
     }
@@ -913,24 +921,28 @@ const nextWay = () => {
     }
 }
 
+const showCi = toRef(globalVar.setting,'showCi')
 //打开歌词
 const openCi = async () => {
     if (playingList.value.length) {
         showCi.value = !showCi.value
-        let dom = $el.refs.ci as HTMLElement
-        if (dom.classList.contains('open-ci')) {
-            dom.classList.remove('open-ci')
-        } else {
-            dom.classList.add('open-ci')
-        }
-        window.electron.ipcRenderer.send('open-lyric', showCi.value)
     }
 }
+
+watch(showCi,()=>{
+    if (playingList.value.length) {
+        window.electron.ipcRenderer.send('open-lyric', showCi.value)
+    }
+})
+watch(playingList,()=>{
+    if (playingList.value.length && showCi.value) {
+        window.electron.ipcRenderer.send('open-lyric', showCi.value)
+    }
+})
+
 //关闭歌词
-window.electron.ipcRenderer.on('to-close-ci', ({ }, flag: [boolean]) => {
-    showCi.value = flag[0]
-    let dom = $el.refs.ci as HTMLElement
-    dom.classList.remove('open-ci')
+window.electron.ipcRenderer.on('to-close-ci', ({ }, flag:boolean ) => {
+    showCi.value = flag
 })
 //监视播放给另一个进程
 let playStatus = toRef(Main, 'playStatus')
@@ -1490,49 +1502,57 @@ let musicBuffer: AudioBuffer
 let dataArray: Uint8Array
 let loadingCanSeeUrl: boolean = false
 const musicCanSee = (url: string, offset: number, timer: number) => {
-    if (bufferSource) bufferSource.stop()
-    AC = new AudioContext()
-    gainNode = AC.createGain()
-    analyser = AC.createAnalyser();
-    loadingCanSeeUrl = true
-    return new Promise<any>((resolve) => {
-        fetch(url, { mode: 'cors' }).then((response) => {
-            return response.arrayBuffer()
-        }).then((buffer) => {
-            // console.log('拉取音频流解码成AudioBuffer',buffer);
-            //拉取音频流解码成AudioBuffer
-            //音频可视化
-            console.log(buffer);
-            AC.decodeAudioData(buffer).then((AudioBuffer) => {
-                // console.log(AudioBuffer);
-                musicBuffer = AudioBuffer
-                bufferSource = AC.createBufferSource();
-                analyser.fftSize = 256;
-                bufferSource.connect(analyser);
-                analyser.connect(AC.destination);
-                bufferSource.buffer = AudioBuffer;
-                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-                bufferSource.connect(gainNode)
-                gainNode.connect(AC.destination);
-                gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
-                // color.addColorStop(0, 'rgba(102, 204, 255,1)');
-                drawIndex.value++
-                cancelAnimationFrame(animationId)
-                draw()
-                resolve('ok')
-                const t = setTimeout(() => {
-                    bufferSource.start(0, offset)
-                    loadingCanSeeUrl = false
-                    clearTimeout(t)
-                }, timer)
+    if(globalVar.setting.opencanvas){
+        if (bufferSource) bufferSource.stop()
+        AC = new AudioContext()
+        gainNode = AC.createGain()
+        analyser = AC.createAnalyser();
+        loadingCanSeeUrl = true
+        return new Promise<any>((resolve) => {
+            fetch(url, { mode: 'cors' }).then((response) => {
+                return response.arrayBuffer()
+            }).then((buffer) => {
+                // console.log('拉取音频流解码成AudioBuffer',buffer);
+                //拉取音频流解码成AudioBuffer
+                //音频可视化
+                console.log(buffer);
+                AC.decodeAudioData(buffer).then((AudioBuffer) => {
+                    // console.log(AudioBuffer);
+                    musicBuffer = AudioBuffer
+                    bufferSource = AC.createBufferSource();
+                    analyser.fftSize = 256;
+                    bufferSource.connect(analyser);
+                    analyser.connect(AC.destination);
+                    bufferSource.buffer = AudioBuffer;
+                    bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                    dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    bufferSource.connect(gainNode)
+                    gainNode.connect(AC.destination);
+                    gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                    // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
+                    // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+                    drawIndex.value++
+                    cancelAnimationFrame(animationId)
+                    draw()
+                    resolve('ok')
+                    const t = setTimeout(() => {
+                        bufferSource.start(0, offset)
+                        loadingCanSeeUrl = false
+                        clearTimeout(t)
+                    }, timer)
+                })
             })
         })
-    })
+    }
+    return
 }
 const drawIndex = ref(0)
 function draw() {
+    if(!globalVar.setting.opencanvas){
+        canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
+        cancelAnimationFrame(animationId)
+        return
+    }
     console.log(drawIndex.value);
     let oW = canvas.width;
     let oH = canvas.height;
@@ -1871,6 +1891,13 @@ const startAll = ()=>{
     startDialogFlag.value = true
     willStartListId.value = Main.playingList.map(it=>it.id)
 }
+
+watch(()=>globalVar.setting.opencanvas,()=>{
+    if(globalVar.setting.opencanvas){
+        draw()
+    }
+})
+
 </script>
 
 <style lang="less" scoped>

@@ -1350,6 +1350,10 @@ interface V {
         opencanvas:boolean
         canvasColor:boolean
         canvasColorRGB:string
+        downloadlevel:string
+        downloadPath:string
+        showCi:boolean
+        yinOryi:[boolean,boolean]
     }
 }
 //已开始播放
@@ -1411,7 +1415,11 @@ export const useGlobalVar = defineStore('globalVar', {
                 errGlobal:[],
                 opencanvas:true,
                 canvasColor:true,
-                canvasColorRGB:''
+                canvasColorRGB:'',
+                downloadlevel:'lossless',
+                downloadPath:'',
+                showCi:false,
+                yinOryi:[true,false]
             }
         }
     },
@@ -1422,3 +1430,5 @@ export const useGlobalVar = defineStore('globalVar', {
         paths: ['setting'],
     }
 })
+
+

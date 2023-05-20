@@ -119,6 +119,13 @@ const deleteALL = () => {
 }
 
 const WaitdownloadList = toRef(globalVar, 'downloadList')
+const br = (str: string) => {
+    if (str == 'standard') return 128000
+    else if (str == 'higher') return 192000
+    else if (str == 'exhigh') return 320000
+    else return 999000
+}
+
 const getUrl = async (id, name) => {
   globalVar.initDownloadButton = true
   const downloadObj = globalVar.downloadList.find(item => item.id === id)
@@ -147,17 +154,17 @@ const getUrl = async (id, name) => {
         result = await Main.reqSongDlUrl(id, downloadObj?.br)
         url = result.data.data.url
       } else {
-        result = await Main.reqSongDlUrl(id, 999000)
+        result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
         url = result.data.data.url
         if (url == null) {
-          result = await Main.reqSongUrl(id, 'standard')
+          result = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
           //@ts-ignore
           url = result.data.data[0].url
           //@ts-ignore
-          downloadObj.level = 'standard'
+          downloadObj.level = globalVar.setting.downloadlevel
         } else {
           //@ts-ignore
-          downloadObj.br = 999000
+          downloadObj.br = br(globalVar.setting.downloadlevel)
         }
         //@ts-ignore
         downloadObj.url = url

@@ -7,15 +7,15 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import eslintPlugin from 'vite-plugin-eslint'
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin(), bytecodePlugin()],
+    plugins: [externalizeDepsPlugin()],
     build: {
       rollupOptions: {
-        external: ['express']
+        external: ['express'],
       }
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin(), bytecodePlugin()]
+    plugins: [externalizeDepsPlugin()]
   },
   renderer: {
     resolve: {
