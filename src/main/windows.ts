@@ -834,7 +834,13 @@ const pares163Key = (comment:string)=>{
   const aes128ecbDecipher = crypto.createDecipheriv('aes-128-ecb', '#14ljk_!\\]&0U<\'(', '');
   //@ts-ignore
   const aesd = aes128ecbDecipher.update(key, 'base64') + aes128ecbDecipher.final(); // Base64 解码，AES 解密
-  return JSON.parse(aesd.substring(6)) // 移除 music: 并解析 JSON
+  if(aesd.startsWith('dj')){
+    return JSON.parse(aesd.substring(aesd.indexOf(':')+1)).mainMusic // 移除 music: 并解析 JSON
+  }else if(aesd.startsWith('music')){
+    return JSON.parse(aesd.substring(aesd.indexOf(':')+1)) // 移除 music: 并解析 JSON
+  }else{
+    return {}
+  }
 }
 
 
@@ -847,7 +853,7 @@ export const lrcwindow = (): any => {
       minWidth:616,
       minHeight:123,
       width:616,
-      height:123,
+      height:291,
       maxHeight:291,
       show: false,
       skipTaskbar: true,
@@ -885,7 +891,9 @@ export const lrcwindow = (): any => {
   ipcMain.on('get-child-x-y',(event)=>{
       event.returnValue = {x:child.getSize()[0],y:child.getSize()[1]}
   })
-
+  ipcMain.on('send-child-y',({},y)=>{
+    child.setBounds({ height: parseInt(y) })
+  })
   //移动
   let X,Y;
   let screenMoveChil:any;
@@ -896,7 +904,7 @@ export const lrcwindow = (): any => {
           screenMoveChil = setInterval(() => {
               X = screen.getCursorScreenPoint().x
               Y = screen.getCursorScreenPoint().y
-              child.setBounds({width:width,height:height,x:x + (X - (mouseX + x)),y:y + (Y - (mouseY + y))})
+              child.setBounds({width,height,x:x + (X - (mouseX + x)),y:y + (Y - (mouseY + y))})
           }, 10)
       }
   })
@@ -928,6 +936,9 @@ export const lrcwindow = (): any => {
   })
   ipcMain.on('mouse-no',()=>{
       child.setIgnoreMouseEvents(true,{forward:true})
+  })
+  ipcMain.on('change-lrc-position',({},flag)=>{
+    child.setAlwaysOnTop(flag,'pop-up-menu')
   })
   return child
 }

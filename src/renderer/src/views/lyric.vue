@@ -37,20 +37,24 @@
             </span>
         </span>
         <div class="lrc" ref="lrcBlock">
-            <span ref="lrc" v-if="lrcArr.length!==0" class="one" @mouseover="can" @mouseout="nocan">
-                <i title="解锁桌面歌词" class="iconfont icon-jiesuo" v-show="suoFlag && suoShowFlag" @click="jiesuo"></i>
+            <span ref="lrc" v-if="lrcArr.length!==0" class="one">
+                <div class="i-bk" @mouseover="can" @mouseout="nocan" :class="{opacity:suoFlag && suoShowFlag}">
+                    <i title="解锁桌面歌词" class="iconfont icon-jiesuo"  @click.self="jiesuo"></i>
+                </div>
                 <span>{{ lrcArr[indexLrc]?.time === 0 || lrcArr[indexLrc]?.lyric === '' ? title :
                 lrcArr[indexLrc]?.lyric}}</span>
             </span>
-            <span ref="lrc" class="one" @mouseover="can" @mouseout="nocan" v-if="lrcArr.length==0">
-                <i title="解锁桌面歌词" class="iconfont icon-jiesuo" v-show="suoFlag && suoShowFlag" @click="jiesuo"></i>
+            <span ref="lrc" class="one" v-if="lrcArr.length==0">
+                <div class="i-bk" @mouseover="can" @mouseout="nocan" :class="{opacity:suoFlag && suoShowFlag}" >
+                    <i title="解锁桌面歌词" class="iconfont icon-jiesuo" @click.self="jiesuo"></i>
+                </div>
                 <span>{{title}}</span>
             </span>
-            <span ref="roma" v-if="yinOryi[1] && romalrcArr.length != 0" class="two">
+            <span ref="roma" v-show="yinOryi[1] && romalrcArr.length != 0" class="two">
                 <span>{{ lrcArr[indexLrc]?.time !== 0 && lrcArr[indexLrc]?.lyric !== '' ? romalrcArr[indexRm]?.lyric :
                 ''}}</span>
             </span>
-            <span ref="tly" v-if="yinOryi[0] && tlyricArr.length != 0" class="there">
+            <span ref="tly" v-show="yinOryi[0] && tlyricArr.length != 0" class="there">
                 <span>{{ lrcArr[indexLrc]?.time !== 0 && lrcArr[indexLrc]?.lyric !== '' ? tlyricArr[indexTr]?.lyric :
                 ''}}</span>
             </span>
@@ -62,18 +66,27 @@
 <script lang="ts" setup>
 import { onMounted, ref, Ref, nextTick, 
     watch, toRef, getCurrentInstance, ComponentInternalInstance,onUnmounted } from 'vue';
-import { useElectronToApp, useMain } from '@renderer/store/index'
+import { useElectronToApp, useMain ,useGlobalVar} from '@renderer/store/index'
 import { parseLyricLine } from '@renderer/utils/parseLyricLine'
 const electronToApp = useElectronToApp();
 const Main = useMain();
 const $el = getCurrentInstance() as ComponentInternalInstance;
+
+
 let mainId = ref(0)
 let t =setInterval(()=>{
     mainId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Main')
     if(mainId.value != undefined){
+        console.log('得到mainid');
         clearInterval(t)
     }
 },100)
+
+let ok = false
+let t2 = setInterval(()=>{
+    if(ok) clearInterval(t2)
+    window.electron.ipcRenderer.sendTo(mainId.value,'lrc-ready')
+},2000)
 // const geMainid = async()=>{
 //     let id =  electronIpc.ipcSendSync('getWindowId', 'Main')
 //     console.log(id,'递归');
@@ -259,6 +272,7 @@ watch(lrcArry, () => {
 
 
 //样式
+const baseFontSize = ref(20)
 onMounted(async () => {
     let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
     let dom = $el.refs.lyric as HTMLElement
@@ -266,7 +280,7 @@ onMounted(async () => {
     let roma = $el.refs.roma as HTMLElement
     let tly = $el.refs.tly as HTMLElement
     let lrcBlock = $el.refs.lrcBlock as HTMLElement
-    lrcBlock.style.fontSize = 20 + 'px'
+    lrcBlock.style.fontSize = baseFontSize.value + 'px'
     if (romalrcArr.value.length == 0 && tlyricArr.value.length == 0) {
         dom.style.height = 'calc(' + obj.y + 'px' + ' * 0.8)'
     } else {
@@ -304,7 +318,7 @@ onMounted(async () => {
         }
     })
 })
-
+let isDragging = false;
 const moveBegin = (e: MouseEvent) => {
     if (!suoFlag.value) {
         let dom = $el.refs.lyric as HTMLElement
@@ -312,6 +326,7 @@ const moveBegin = (e: MouseEvent) => {
         flagOption.value = true
         dom.style.backgroundColor = 'rgba(0,0,0,.4)';
         window.addEventListener('mouseup', destoryMove);
+        isDragging = true;
         window.electron.ipcRenderer.send('move-child', { mouseY: e.pageY, mouseX: e.pageX,width:dom.offsetWidth,height:dom.offsetHeight })
     }
 }
@@ -321,6 +336,7 @@ const destoryMove = () => {
     dom.style.cursor = 'grab'
     window.electron.ipcRenderer.send('destory-move-child')
     window.removeEventListener('mouseup', destoryMove);
+    isDragging = false;
 }
 
 const can = () => {
@@ -367,7 +383,7 @@ const hide = () => {
     }
 }
 window.addEventListener('resize', async() => {
-    if (!suoFlag.value) {
+    if (!suoFlag.value && !isDragging) {
         let dom = $el.refs.lyric as HTMLElement
         dom.style.backgroundColor = 'rgba(0,0,0,.4)';
         flagOption.value = true
@@ -401,16 +417,19 @@ window.electron.ipcRenderer.on('play-status', ({}, str: string) => {
 })
 //暂停/播放
 const playOrStop = () => {
+    console.log('playOrStop');
     window.electron.ipcRenderer.sendTo(mainId.value, 'play-or-stop')
 }
 
 //上一首
 const prev = () => {
+    console.log('prev');
     window.electron.ipcRenderer.sendTo(mainId.value, 'prev-song')
     playStatus.value = 'play'
 }
 //下一首
 const next = () => {
+    console.log('next',mainId.value);
     window.electron.ipcRenderer.sendTo(mainId.value, 'next-song')
     playStatus.value = 'play'
 }
@@ -462,13 +481,32 @@ const jiesuo = () => {
 
 //打开音乐详情页
 const showDetail = ()=>{
+    console.log('lrc-open-playDetail');
     window.electron.ipcRenderer.sendTo(mainId.value,'lrc-open-playDetail')
     window.electron.ipcRenderer.send('lrc-open-playDetail')
 }
 
+window.electron.ipcRenderer.on('lrc-fontFamily',({},name)=>{
+    document.documentElement.style.setProperty('--fontFamily', name);
+})
+
+window.electron.ipcRenderer.on('lrc-fontSize',({},size)=>{
+    console.log('我拿到值'); 
+    if(!ok)baseFontSize.value = size
+    ok = true
+    const y = (size - 20) / (96 - 20) * (291 - 123) + 123
+    console.log(y,size);
+    window.electron.ipcRenderer.send('send-child-y',y)
+    let lrcBlock = $el.refs.lrcBlock as HTMLElement
+    lrcBlock.style.fontSize = size + 'px'
+})
 </script>
 
 <style lang="less" scoped>
+
+.opacity{
+    opacity: 1 !important;
+}
 .lyric {
     cursor: grab;
     user-select: none;
@@ -481,18 +519,27 @@ const showDetail = ()=>{
     position: relative;
 
 
-
     .lrc {
         width: 100vw;
         display: flex;
         flex-direction: column;
-        margin-top: 40px;
+        padding-top: 40px;
         position: relative;
         font-size: 20px;
+        .i-bk{
+            width: 20%;
+            height: 30px;
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            top: 0;
+            opacity: 0;
+        }
         .icon-jiesuo {
             color: white;
             position: absolute;
-            top: -20px;
+            width: 40px;
             left: 0;
             right: 0;
             margin: 0 auto;
@@ -541,6 +588,7 @@ const showDetail = ()=>{
         justify-content: center;
         position: absolute;
         margin-top: 10px;
+        z-index: 10;
 
         >span {
             cursor: pointer;

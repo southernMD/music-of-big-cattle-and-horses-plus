@@ -1354,6 +1354,15 @@ interface V {
         downloadPath:string
         showCi:boolean
         yinOryi:[boolean,boolean]
+        lrcPosition:boolean
+        lrcFontFamily:string
+        lrcSize:number
+        lrcWeigth:'标准' | '加粗'
+        lrcBorder:'有描边' | '无描边'
+        lrcColor:'默认' | '自定义'
+        topColor:string
+        bottomColor:string
+        borderColor:string
     }
 }
 //已开始播放
@@ -1397,7 +1406,7 @@ export const useGlobalVar = defineStore('globalVar', {
                 type:'noresource',
                 id:-1,
                 txt:'',
-                name:''
+                name:'',
             },
             delcommentId:-1,
             playLoacalIndex:0,
@@ -1419,7 +1428,16 @@ export const useGlobalVar = defineStore('globalVar', {
                 downloadlevel:'lossless',
                 downloadPath:'',
                 showCi:false,
-                yinOryi:[true,false]
+                yinOryi:[true,false],
+                lrcPosition:true,
+                lrcFontFamily:'默认',
+                lrcSize:35,
+                lrcWeigth:'标准',
+                lrcBorder:'有描边',
+                lrcColor:'默认',
+                topColor:'rgb(255,255,0)',
+                bottomColor:'rgb(255,0,0)',
+                borderColor:'unset'
             }
         }
     },

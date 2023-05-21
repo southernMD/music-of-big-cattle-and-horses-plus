@@ -518,7 +518,7 @@ const normalPlayWay = async()=>{
         nextTick(() => {
             stopOrPlayFlag.value = false
             audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            bufferSource.playbackRate.value = audio.playbackRate
+            if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
             audio.play()
         })
         nowLevel.value = 'standard'
@@ -686,7 +686,7 @@ onMounted(async () => {
     audio.addEventListener('ended', async () => {
         console.log('播放完毕');
         stopOrPlayFlag.value = true;
-        bufferSource.stop()
+        if(bufferSource)bufferSource.stop()
         cancelAnimationFrame(animationId)
         if ((wayIndex.value == 0 && Main.playingList.length != 1)|| wayIndex.value == 4 || Main.songType == 'FM') {
             nextSongThor()
@@ -964,9 +964,9 @@ window.electron.ipcRenderer.on('next-song', () => {
 })
 //另一进程歌词偏离
 let lyricOffset = toRef(globalVar, 'lyricOffset')
-window.electron.ipcRenderer.on('lyric-offset', ({ }, num: [number]) => {
+window.electron.ipcRenderer.on('lyric-offset', ({ }, num: number) => {
     offsetFlag.value = true
-    lyricOffset.value = num[0]
+    lyricOffset.value = num
 })
 
 //上一首

@@ -197,7 +197,7 @@ try {
 }
 
 const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
-globalVar.fontList = fontList.filter(it=>/[\u4e00-\u9fa5]/.test(it)).map(it=>{return {name:it}})
+globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
 globalVar.fontList.unshift({name:'默认'})
 
 let flagC = toRef(MainMenu, 'colorBlock')
@@ -493,6 +493,21 @@ watch(()=>globalVar.setting.downloadPath,()=>{
         window.electron.ipcRenderer.send('change-download-path',globalVar.setting.downloadPath)
     }
 },{immediate:true})
+
+let ciId = ref(0)
+let t3 =setInterval(()=>{
+    ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+    if(ciId.value != undefined){
+        clearInterval(t3)
+    }
+},100)
+
+window.electron.ipcRenderer.on('lrc-ready',()=>{
+    console.log('lrc准备完毕');
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',globalVar.setting.lrcSize )
+})
+
 
 </script>
 

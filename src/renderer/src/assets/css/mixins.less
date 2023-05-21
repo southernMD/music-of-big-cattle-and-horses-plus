@@ -39,7 +39,11 @@
 @play-line-loading:var(--playLineLoading,rgb(206, 206, 206));
 @shengyin:var(--shengyin,rgb(255, 255, 255));
 @small-tips:var(--smallTips,rgb(61,61,61));
-@lrc-color:var(--lrcColor,-webkit-linear-gradient(bottom,red,yellow));  //歌词颜色
+@lrc-color:var(--lrcColor,-webkit-linear-gradient(bottom,@lrc-color-top,@lrc-color-bottom));  //歌词颜色
+@lrc-color-top:var(--lrcColorTop,red);  //歌词颜色
+@lrc-color-bottom:var(--lrcColorBottom,yellow);  //歌词颜色
+// @lrc-color:var(--lrcColor,-webkit-linear-gradient(bottom,red,yellow));  //歌词颜色
+
 @audio-border-color:var(--audioBorderColor,rgb(219, 212, 212));
 @select-color:var(--selectColor,rgb(185, 197, 201));
 @lrc-detail:var(--lrcDetail,rgb(95,95,95));

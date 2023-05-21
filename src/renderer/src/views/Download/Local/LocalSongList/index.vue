@@ -56,7 +56,7 @@ const getZhuanji = (index:number,name: string ,detail: {description: string;valu
         return { name, id: +detail.value, tns: [] }
     }else if(_163key){
         //@ts-ignore
-        return { name, id: props.list[index].comment.text.albumId, tns: [] }
+        return { name, id: props.list[index].comment.text.albumId ?? -new Date().getTime(), tns: [] }
     }else{
         return { name, id: -new Date().getTime(), tns: [] }
     }
@@ -67,7 +67,7 @@ const getSongid = (index:number,detail: {description: string;value: string;} | u
     }
     else if(_163key){
         //@ts-ignore
-        return props.list[index].comment.text.musicId | -new Date().getTime()
+        return props.list[index].comment.text.musicId ?? -new Date().getTime()
     }else{
         return -new Date().getTime()
     }
@@ -85,7 +85,8 @@ const getSinger = (index:number,names: string | string[], detail: {description: 
         return arr
     }else if(_163key){
         const arr:{}[] = []
-        props.list[index].comment?.text.artist.forEach((item:[string,number])=>{
+        const list = props.list[index].comment?.text.artist ?? []
+        list.forEach((item:[string,number])=>{
             arr.push({id:item[1],name:item[0]})
         })
         // console.log(arr);//[ [ 'AO', 18444 ], [ 'TOPHAMHAT-KYO', 201635 ] ],

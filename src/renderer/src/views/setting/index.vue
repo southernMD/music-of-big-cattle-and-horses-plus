@@ -7,7 +7,7 @@
                 <span>字体选择: </span>
                 <span>如果字体显示不清晰，请在控制面板一字体设置中启用系统Clear Type设置</span>   
             </div>
-            <dropDown @change="changeFontFamily" :width="300" ref="dropDownYear" :list="fontList" :message="globalVar.setting.fontFamily"></dropDown>
+            <dropDown @change="changeFontFamily" :width="300" ref="dropDownYear" :list="fontList.filter(it=>/[\u4e00-\u9fa5]/.test(it.name))" :message="globalVar.setting.fontFamily"></dropDown>
         </div>
         <div class="start">
             <div class="title">
@@ -138,6 +138,46 @@
                 </div>
             </div>
         </div>
+        <div class="on-top">
+            <div class="title">总在最前：</div>
+            <el-checkbox @change="lrcPositionHandle" v-model="lrcPosition" label="启用总在最前" size="large" />
+        </div>
+        <div class="font-set">
+            <div class="font-set-item">
+                <div class="name">字体</div>
+                <dropDown @change="changeLrcFamily" ref="dropDownYear" :list="fontList" :message="globalVar.setting.lrcFontFamily"></dropDown>
+            </div>
+            <div class="font-set-item">
+                <div class="name">字号</div>
+                <dropDown @change="changeLrcSize" ref="dropDownYear" :list="sizelist" :message="''+globalVar.setting.lrcSize"></dropDown>
+            </div>
+            <div class="font-set-item">
+                <div class="name">字粗</div>
+                <dropDown @change="changeLrcWeight" ref="dropDownYear" :list="lrcWeight" :message="globalVar.setting.lrcWeigth"></dropDown>
+            </div>
+            <div class="font-set-item">
+                <div class="name">描边</div>
+                <dropDown @change="changeLrcBorder" ref="dropDownYear" :list="lrcBorder" :message="globalVar.setting.lrcBorder"></dropDown>
+            </div>
+            <div class="font-set-item">
+                <div class="name">颜色</div>
+                <dropDown @change="changeLrcColor" ref="dropDownYear" :list="lrcColor" :message="globalVar.setting.lrcColor"></dropDown>
+            </div>
+            <div class="font-set-item color" v-show="globalVar.setting.lrcColor == '自定义'">
+                <div>
+                    <div class="name">渐变上</div>
+                    <el-color-picker v-model="globalVar.setting.topColor" color-format="rgb" />
+                </div>
+                <div>
+                    <div class="name">渐变下</div>
+                    <el-color-picker v-model="globalVar.setting.bottomColor" color-format="rgb" />
+                </div>
+                <div v-show="globalVar.setting.lrcBorder == '有描边'">
+                    <div class="name">描边</div>
+                    <el-color-picker v-model="globalVar.setting.borderColor" color-format="rgb" />
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 </template>
@@ -155,8 +195,11 @@ const quickGlobal = toRef(globalVar.setting,'quickGlobal')
 const errGlobal = toRef(globalVar.setting,'errGlobal')
 const showCi = toRef(globalVar.setting,'showCi')
 const yinOryi = toRef(globalVar.setting,'yinOryi')
-
-
+const lrcPosition = toRef(globalVar.setting,'lrcPosition')
+const sizelist = ref(Array.from({ length:  76 }, (_, index) => index + 20).map(it=>{return {name:it}}))
+const lrcWeight = ref([{name:'标准'},{name:'加粗'}])
+const lrcBorder = ref([{name:'有描边'},{name:'无描边'}])
+const lrcColor = ref([{name:'默认'},{name:'自定义'}])
 console.log(quick.value,quickGlobal.value);
 const changeFontFamily = (ms)=>{
     console.log(ms.name);
@@ -368,6 +411,40 @@ const isClick = (index:number) => {
     }
     flagsuo = true
 }
+let ciId = ref(0)
+let t =setInterval(()=>{
+    ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+    if(ciId.value != undefined){
+        clearInterval(t)
+    }
+},100)
+
+const lrcPositionHandle = ()=>{
+    window.electron.ipcRenderer.send('change-lrc-position',lrcPosition.value)
+}
+
+const changeLrcFamily = (ms)=>{
+    globalVar.setting.lrcFontFamily = ms.name
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',ms.name)
+}
+
+const changeLrcSize = (ms)=>{
+    globalVar.setting.lrcSize = +ms.name
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',+ms.name)
+}
+
+
+const changeLrcWeight = (ms)=>{
+    globalVar.setting.lrcWeigth = ms.name
+}
+
+const changeLrcBorder = (ms)=>{
+    globalVar.setting.lrcBorder = ms.name
+}
+
+const changeLrcColor = (ms)=>{
+    globalVar.setting.lrcColor = ms.name
+}
 
 </script>
 
@@ -574,6 +651,42 @@ const isClick = (index:number) => {
                 }
             }
         } 
+        .on-top{
+            .title{
+                font-weight: bolder;
+                font-size: 12px;
+                color: @small-font-color;
+                margin-bottom: 20px;
+            }
+        }
+        .font-set{
+            display: flex;
+            width: 600px;
+            flex-wrap: wrap;
+            .font-set-item{
+                margin-bottom: 10px;
+                :deep(.el-color-picker){
+                    margin-left: 0;
+                    margin-right: 20px;
+                    width: 120px;
+                    .el-color-picker__mask{
+                        width: 120px;
+                    }
+                    .el-color-picker__trigger{
+                        width: 120px;
+                    }
+                }
+                .name{
+                    font-weight: bolder;
+                    font-size: 12px;
+                    color: @small-font-color;
+                    margin-bottom: 10px;
+                }
+            }
+            .color{
+                display: flex;
+            }
+        }
     }
 }
 :deep(.el-checkbox){

@@ -1,8 +1,8 @@
 <template>
-    <div class="dropdown xdrop" @click="showList"  ref="dropdownRef">
-        <span class="xdrop">{{ showMessage }}</span>
-        <i class="iconfont icon-xiajiantou xdrop"></i>
-        <div class="list" @click.stop v-show="showListFlag">
+    <div class="dropdown xdrop" @click="showList"  ref="dropdownRef" :data-id="rand">
+        <span class="xdrop" :data-id="rand">{{ showMessage }}</span>
+        <i class="iconfont icon-xiajiantou xdrop" :data-id="rand"></i>
+        <div class="list" @click.stop v-show="showListFlag" ref="listRef">
             <el-scrollbar>
                 <div class="list-item" @click="choiceItem(it)" v-for="it in list">{{ it.name }}</div>
             </el-scrollbar>
@@ -19,6 +19,8 @@ const props = defineProps<{
 }>()
 const showMessage = ref('')
 const dropdownRef = ref()
+const listRef = ref()
+const rand = ref(Math.random())
 onMounted(()=>{
     if (props.message) {
         showMessage.value = props.message
@@ -27,6 +29,7 @@ onMounted(()=>{
     }
     
     dropdownRef.value.style.width = (props.width ?? 120)+ 'px'
+    listRef.value.style.height = Math.min(25 * props.list.length,200) + 'px'
 })
 
 watch(()=>props.message,()=>{
@@ -52,6 +55,10 @@ const choiceItem = (ms: any) => {
 const hic = (e)=>{
     if([...e.target.classList].includes('xdrop') == false){
         showListFlag.value = false
+    }else{
+        if(e.target.getAttribute('data-id') != rand.value){
+            showListFlag.value = false
+        }
     }
 }
 
@@ -93,7 +100,6 @@ defineExpose({showListFlag})
 
     .list {
         width: 100%;
-        height: 200px;
         background-color: @commit-block-color;
         border: @commit-block-border-color 1px solid;
         position: absolute;
