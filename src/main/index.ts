@@ -31,7 +31,7 @@ if (!isAppAlreadyRunning) {
     app.on('browser-window-created', (_, window) => {
       optimizer.watchWindowShortcuts(window)
     })
-    httpSever()
+    // httpSever()
     videoServer(createWindow())
     lrcwindow()
     dragWindw()
