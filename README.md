@@ -21,7 +21,7 @@
 [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
 ## 下载
 
-[v0.0.2-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.2-beta-setup.exe)
+[v0.0.2-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.2-beta/bingNMmusic-0.0.2-beta-setup.exe)
 
 
 ## 克隆项目
