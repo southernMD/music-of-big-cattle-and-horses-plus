@@ -269,12 +269,7 @@ watch(lrcArry, () => {
 
 
 }, { immediate: true })
-
-
-//样式
-const baseFontSize = ref(20)
-onMounted(async () => {
-    let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
+const resize = (obj)=>{
     let dom = $el.refs.lyric as HTMLElement
     let l = $el.refs.lrc as HTMLElement
     let roma = $el.refs.roma as HTMLElement
@@ -299,23 +294,31 @@ onMounted(async () => {
         tly.style.width = 'calc((' + obj.x + 'px + 16px ) * 0.9 )'
         tly.style.height = 'calc(' + obj.y + 'px' + ' * 0.4)'
     }
+}
+
+//样式
+const baseFontSize = ref(20)
+onMounted(async () => {
+    console.log('onMounted');
+    let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
+    resize(obj)
     window.electron.ipcRenderer.on('lyric-x-y', ({}, Obj: any) => {
         console.log('question1');
-        
-        dom.style.width = 'calc(' + Obj.x + 'px + 16px )';
-        dom.style.height = Obj.y + 'px'
-        if (l) {
-            l.style.width = 'calc((' + Obj.x + 'px + 16px ) * 0.9 )'
-            l.style.height = 'calc(' + Obj.y + 'px' + ' * 0.35)'
-        }
-        if (roma) {
-            roma.style.width = 'calc((' + Obj.x + 'px + 16px ) * 0.9 )'
-            roma.style.height = 'calc(' + Obj.y + 'px' + ' * 0.4)'
-        }
-        if (tly) {
-            tly.style.width = 'calc((' + Obj.x + 'px + 16px ) * 0.9 )'
-            tly.style.height = 'calc(' + Obj.y + 'px' + ' * 0.4)'
-        }
+        resize(Obj)
+        // dom.style.width = 'calc(' + Obj.x + 'px + 16px )';
+        // dom.style.height = Obj.y + 'px'
+        // if (l) {
+        //     l.style.width = 'calc((' + Obj.x + 'px + 16px ) * 0.9 )'
+        //     l.style.height = 'calc(' + Obj.y + 'px' + ' * 0.35)'
+        // }
+        // if (roma) {
+        //     roma.style.width = 'calc((' + Obj.x + 'px + 16px ) * 0.9 )'
+        //     roma.style.height = 'calc(' + Obj.y + 'px' + ' * 0.4)'
+        // }
+        // if (tly) {
+        //     tly.style.width = 'calc((' + Obj.x + 'px + 16px ) * 0.9 )'
+        //     tly.style.height = 'calc(' + Obj.y + 'px' + ' * 0.4)'
+        // }
     })
 })
 let isDragging = false;
@@ -392,6 +395,7 @@ window.addEventListener('resize', async() => {
         let lrcBlock = $el.refs.lrcBlock as HTMLElement
         let size = (obj.y - 123)/(291 - 123) * (96 - 20) + 20
         lrcBlock.style.fontSize = size + 'px'
+        window.electron.ipcRenderer.sendTo(mainId.value,'setting-size',size)
         //291 - 123 = 168
         //obj.y - 123 = ? 
         //size = ? / 168 nowSize /(96 - 20)
@@ -495,17 +499,54 @@ window.electron.ipcRenderer.on('lrc-fontSize',({},size)=>{
     if(!ok)baseFontSize.value = size
     ok = true
     const y = (size - 20) / (96 - 20) * (291 - 123) + 123
-    console.log(y,size);
-    window.electron.ipcRenderer.send('send-child-y',y)
+    console.log(y,size,'重设');
+    window.electron.ipcRenderer.sendSync('send-child-y',y)
+    let dom = $el.refs.lyric as HTMLElement
     let lrcBlock = $el.refs.lrcBlock as HTMLElement
     lrcBlock.style.fontSize = size + 'px'
+    dom.style.height = y + 'px'
+    let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
+    resize(obj)
+})
+window.electron.ipcRenderer.on('lrc-fontWeight',({},name)=>{
+    let str = ''
+    if(name == '标准'){
+        str = 'normal'
+        document.documentElement.style.setProperty('--lrcColorBorderWidth', '0.02em');
+    }
+    else{
+        str = 'bolder'
+        document.documentElement.style.setProperty('--lrcColorBorderWidth', '0.005em');
+    }
+    document.documentElement.style.setProperty('--lrcfontWeight', str);
+//     @lrc-color-border-color:var(--lrcColorBorderColor,unset);
+// @lrc-font-weight:var(--lrcfontWeight,normal);
+})
+window.electron.ipcRenderer.on('lrc-LrcBorder',({},name)=>{
+    let str = ''
+    if(name == '有描边'){
+      if(getComputedStyle(document.documentElement).getPropertyValue('--lrcfontWeight') == 'bolder')  str = '0.005em'
+      else str = '0.02em'
+    }
+    else str = 'unset'
+    document.documentElement.style.setProperty('--lrcColorBorderWidth', str);
+})
+window.electron.ipcRenderer.on('lrc-changeLrcColor',({},{top,bottom})=>{
+    document.documentElement.style.setProperty('--lrcColorTop', top);
+    document.documentElement.style.setProperty('--lrcColorBottom', bottom);
+})
+
+window.electron.ipcRenderer.on('lrc-changeLrcborderColor',({},color)=>{
+    document.documentElement.style.setProperty('--lrcColorBorderColor', color);
 })
 </script>
 
 <style lang="less" scoped>
 
+
 .opacity{
     opacity: 1 !important;
+    // font-weight: bolder;
 }
 .lyric {
     cursor: grab;
@@ -554,6 +595,10 @@ window.electron.ipcRenderer.on('lrc-fontSize',({},size)=>{
 
             >span {
                 margin: 0 auto;
+                -webkit-text-stroke-width:var(--lrcColorBorderWidth);
+                -webkit-text-stroke-color:var(--lrcColorBorderColor);
+                font-weight: var(--lrcfontWeight);
+                // -webkit-text-stroke: 4px navy;
                 text-align: center;
                 display: inline-block;
                 white-space: nowrap;

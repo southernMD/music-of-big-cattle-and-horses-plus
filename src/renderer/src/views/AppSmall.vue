@@ -506,6 +506,21 @@ window.electron.ipcRenderer.on('lrc-ready',()=>{
     console.log('lrc准备完毕');
     window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
     window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',globalVar.setting.lrcSize )
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontWeight',globalVar.setting.lrcWeigth)
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-LrcBorder',globalVar.setting.lrcBorder)
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    if(globalVar.setting.lrcColor == '默认'){
+        window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',{
+            top:'rgb(255,255,0)',
+            bottom:'rgb(255,0,0)'
+        })
+    }else{
+        window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',{
+            top:toRaw(globalVar.setting.topColor),
+            bottom:toRaw(globalVar.setting.bottomColor)
+        })
+    }
+
 })
 
 

@@ -163,21 +163,39 @@
                 <div class="name">颜色</div>
                 <dropDown @change="changeLrcColor" ref="dropDownYear" :list="lrcColor" :message="globalVar.setting.lrcColor"></dropDown>
             </div>
-            <div class="font-set-item color" v-show="globalVar.setting.lrcColor == '自定义'">
-                <div>
+            <div class="font-set-item color" >
+                <div v-show="globalVar.setting.lrcColor == '自定义'">
                     <div class="name">渐变上</div>
-                    <el-color-picker v-model="globalVar.setting.topColor" color-format="rgb" />
+                    <el-color-picker @change="topColorChange" v-model="globalVar.setting.topColor" color-format="rgb" />
                 </div>
-                <div>
+                <div v-show="globalVar.setting.lrcColor == '自定义'">
                     <div class="name">渐变下</div>
-                    <el-color-picker v-model="globalVar.setting.bottomColor" color-format="rgb" />
+                    <el-color-picker @change="bottomColorChange" v-model="globalVar.setting.bottomColor" color-format="rgb" />
                 </div>
                 <div v-show="globalVar.setting.lrcBorder == '有描边'">
                     <div class="name">描边</div>
-                    <el-color-picker v-model="globalVar.setting.borderColor" color-format="rgb" />
+                    <el-color-picker @change="borderColorChange" v-model="globalVar.setting.borderColor" color-format="rgb" />
                 </div>
             </div>
         </div>
+        <div class="font-look">
+            <div class="title">预览：</div>
+            <div class="bk">
+                <div class="txt" ref="txtRef">大牛马音乐</div>
+            </div>
+        </div>
+    </div>
+    <div class="about">
+        <div class="title">关于</div>
+        <div class="now-version">
+            <div class="txt">当前版本：{{ version }}</div>
+            <div class="btn">检测更新</div>
+            <div class="btn" title="暂不可用">意见反馈</div>
+        </div>
+        <el-radio-group style="margin-top:0; flex-direction: column; align-items: start;" v-model="globalVar.setting.updataWay" class="ml-4">
+            <el-radio :label="true" size="large">自动更新</el-radio>
+            <el-radio :label="false" size="large">有新版本时提醒我</el-radio>
+        </el-radio-group>
     </div>
   </div>
 </template>
@@ -201,6 +219,8 @@ const lrcWeight = ref([{name:'标准'},{name:'加粗'}])
 const lrcBorder = ref([{name:'有描边'},{name:'无描边'}])
 const lrcColor = ref([{name:'默认'},{name:'自定义'}])
 console.log(quick.value,quickGlobal.value);
+const version = ref('1.0.0')
+version.value = window.electron.ipcRenderer.sendSync('app-version')
 const changeFontFamily = (ms)=>{
     console.log(ms.name);
     document.documentElement.style.setProperty('--fontFamily', ms.name);
@@ -423,29 +443,115 @@ const lrcPositionHandle = ()=>{
     window.electron.ipcRenderer.send('change-lrc-position',lrcPosition.value)
 }
 
+const txtRef = ref()
 const changeLrcFamily = (ms)=>{
     globalVar.setting.lrcFontFamily = ms.name
     window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',ms.name)
+    txtRef.value.style.setProperty('--fontFamilyLrc',  ms.name);
 }
 
 const changeLrcSize = (ms)=>{
     globalVar.setting.lrcSize = +ms.name
     window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',+ms.name)
+    txtRef.value.style.setProperty('--fontSizeLrc',  ms.name + 'px');
 }
 
 
 const changeLrcWeight = (ms)=>{
     globalVar.setting.lrcWeigth = ms.name
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontWeight',ms.name)
+    if(ms.name == "标准")txtRef.value.style.setProperty('--fontWeightLrc', 'normal');
+    else txtRef.value.style.setProperty('--fontWeightLrc', 'bolder');
+    
 }
 
 const changeLrcBorder = (ms)=>{
     globalVar.setting.lrcBorder = ms.name
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-LrcBorder',ms.name)
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    let str = ''
+    if(ms.name == '有描边'){
+      if(getComputedStyle(document.documentElement).getPropertyValue('--lrcfontWeight') == 'bolder')  str = '0.005em'
+      else str = '0.02em'
+    }
+    else str = 'unset'
+    document.documentElement.style.setProperty('--lrcColorBorderWidth', str);
+    document.documentElement.style.setProperty('--lrcColorBorderColor', toRaw(globalVar.setting.borderColor));
 }
 
 const changeLrcColor = (ms)=>{
     globalVar.setting.lrcColor = ms.name
+    let t = {
+        top:'rgb(255,255,0)',
+        bottom:'rgb(255,0,0)'
+    }
+    if(ms.name != '默认'){
+        t.top = toRaw(globalVar.setting.topColor)
+        t.bottom = toRaw(globalVar.setting.bottomColor)
+    }
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    document.documentElement.style.setProperty('--lrcColorTop', t.top);
+    document.documentElement.style.setProperty('--lrcColorBottom', t.bottom);
 }
 
+const topColorChange = ()=>{
+    let t = {
+        top:toRaw(globalVar.setting.topColor),
+        bottom:toRaw(globalVar.setting.bottomColor)
+    }
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    document.documentElement.style.setProperty('--lrcColorTop', t.top);
+    document.documentElement.style.setProperty('--lrcColorBottom', t.bottom);
+}
+const bottomColorChange = ()=>{
+    let t = {
+        top:toRaw(globalVar.setting.topColor),
+        bottom:toRaw(globalVar.setting.bottomColor)
+    }
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    document.documentElement.style.setProperty('--lrcColorTop', t.top);
+    document.documentElement.style.setProperty('--lrcColorBottom', t.bottom);
+}
+
+const borderColorChange = ()=>{
+    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    document.documentElement.style.setProperty('--lrcColorBorderColor', toRaw(globalVar.setting.borderColor));
+}
+onMounted(()=>{
+    document.documentElement.style.setProperty('--lrcColorBorderColor', toRaw(globalVar.setting.borderColor));
+    let t = {
+        top:'rgb(255,255,0)',
+        bottom:'rgb(255,0,0)'
+    }
+    if(globalVar.setting.lrcColor != '默认'){
+        t.top = toRaw(globalVar.setting.topColor)
+        t.bottom = toRaw(globalVar.setting.bottomColor)
+    }
+    document.documentElement.style.setProperty('--lrcColorTop', t.top);
+    document.documentElement.style.setProperty('--lrcColorBottom', t.bottom);
+    document.documentElement.style.setProperty('--lrcColorBorderColor', toRaw(globalVar.setting.borderColor));
+
+    let str = ''
+    if(globalVar.setting.lrcBorder == '有描边'){
+      if(getComputedStyle(document.documentElement).getPropertyValue('--lrcfontWeight') == 'bolder')  str = '0.005em'
+      else str = '0.02em'
+    }
+    else str = 'unset'
+    document.documentElement.style.setProperty('--lrcColorBorderWidth', str);
+
+
+    if(globalVar.setting.lrcWeigth == "标准")txtRef.value.style.setProperty('--fontWeightLrc', 'normal');
+    else txtRef.value.style.setProperty('--fontWeightLrc', 'bolder');
+
+    txtRef.value.style.setProperty('--fontSizeLrc',  globalVar.setting.lrcSize + 'px');
+
+    txtRef.value.style.setProperty('--fontFamilyLrc',  globalVar.setting.lrcFontFamily);
+
+})
+
+window.electron.ipcRenderer.on('setting-size',({},size)=>{
+    globalVar.setting.lrcSize = parseInt(size)
+})
 </script>
 
 <style scoped lang="less">
@@ -651,7 +757,7 @@ const changeLrcColor = (ms)=>{
                 }
             }
         } 
-        .on-top{
+        .on-top,.font-look{
             .title{
                 font-weight: bolder;
                 font-size: 12px;
@@ -685,6 +791,59 @@ const changeLrcColor = (ms)=>{
             }
             .color{
                 display: flex;
+            }
+        }
+        .font-look{
+            .bk{
+                width: 600px;
+                height: 150px;
+                border: 1px solid @split-line-color;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                .txt{
+                    --fontSizeLrc:20px;
+                    --fontFamilyLrc:默认;
+                    --fontWeightLrc:normal;
+                    margin: 0 auto;
+                    -webkit-text-stroke-width:var(--lrcColorBorderWidth);
+                    -webkit-text-stroke-color:var(--lrcColorBorderColor);
+                    font-weight: var(--fontWeightLrc);
+                    // -webkit-text-stroke: 4px navy;
+                    // font-weight: bolder;
+                    text-align: center;
+                    display: inline-block;
+                    white-space: nowrap;
+                    background-image: @lrc-color;
+                    background-clip: text;
+                    -webkit-background-clip: text;
+                    color: transparent;
+                    -webkit-text-fill-color: transparent;
+                    font-size: var(--fontSizeLrc);
+                    height: auto;
+                    font-family: var(--fontFamilyLrc);
+                }
+            }
+        }
+    }
+    .about{
+        .btn{
+            width: 60px;
+            height: 20px;
+            border-radius: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid @split-line-color;
+            margin-left:10px;
+            font-size:12px;
+        }
+        .now-version{
+            display:flex;
+            align-items:center;
+            .txt{
+                font-size:12px;
             }
         }
     }

@@ -6,6 +6,10 @@
 	--fontFamily:默认;
 	--lrcColorTop:rgb(255,0,0);
 	--lrcColorBottom:rgb(255,255,0);
+	--lrcColorBorderWidth:unset;
+	--lrcColorBorderColor:unset;
+	--lrcfontWeight:normal;
+    --fontFamilyLrc:默认;
 }
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,

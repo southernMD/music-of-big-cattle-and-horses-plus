@@ -86,6 +86,12 @@ export const createWindow = ():BrowserWindow=>{
     ])
     appIcon.setContextMenu(contextMenu)
     //托盘事件结束
+    //应用版本
+    console.log('当前版本',app.getVersion());
+    
+    ipcMain.on('app-version',(event)=>{
+      event.returnValue = app.getVersion()
+    })
     //记忆背景
     ipcMain.on('renderer-ready',()=>{
       let basePath = ''
@@ -891,8 +897,9 @@ export const lrcwindow = (): any => {
   ipcMain.on('get-child-x-y',(event)=>{
       event.returnValue = {x:child.getSize()[0],y:child.getSize()[1]}
   })
-  ipcMain.on('send-child-y',({},y)=>{
+  ipcMain.on('send-child-y',(e,y)=>{
     child.setBounds({ height: parseInt(y) })
+    e.returnValue = 'ok'
   })
   //移动
   let X,Y;
