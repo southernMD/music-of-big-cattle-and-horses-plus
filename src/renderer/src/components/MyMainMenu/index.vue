@@ -63,9 +63,6 @@
         </div>
         <slot name="songLrc"></slot>
     </header>
-    <Teleport to=".smallApp">
-        <div class="red-line"></div>
-    </Teleport>
     <MyDialog :flag="flag" @confirm="delAll" @cancel="flag = false" @closeDialog="close">
         <template #midle>
             确认删除历史记录？
@@ -105,7 +102,7 @@ let flagSkin: Ref<boolean> = ref(false)
 let iconSrc = toRef(MainMenu, 'iconSrc')
 
 defineProps<{
-    songMenu: boolean
+    songMenu?: boolean
     changefontColor?: boolean
     scrollY?: number
 }>()

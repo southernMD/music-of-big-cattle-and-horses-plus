@@ -19,7 +19,8 @@ import fontList from 'font-list'
 import { exec, spawn } from 'child_process'
 import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
-export const createWindow = ():BrowserWindow=>{
+import log from 'electron-log'
+export const createWindow = (path?:string):BrowserWindow=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     let X: number, Y: number; //鼠标基于显示器的坐标
     let screenMove: any = null;  //鼠标移动监听
@@ -63,9 +64,43 @@ export const createWindow = ():BrowserWindow=>{
           mainWindow.restore();
         }
         mainWindow.focus();
-        // 向主窗口发送消息，以触发相应的聚焦逻辑
-        mainWindow.webContents.send('focus');
+        let path = argv.slice(2).join(' ')
+        if(path.endsWith('.mp3')){
+          const buffer = Buffer.from(fs.readFileSync(path))
+          const base64 =  buffer.toString('base64')
+          const t = Object.assign(NodeID3.read(path),{path})
+          if(t.comment && t.comment.text.startsWith("163 key(Don't modify)")){
+            t.comment.text = pares163Key(t.comment.text)
+          }
+          // 向主窗口发送消息，以触发相应的聚焦逻辑
+          mainWindow.webContents.send('load-local-music',{msg:t,base64})
+        }
       }
+    })
+    let pathRead:any = null
+    let ok = false
+    let err
+    
+    if(path){
+      try {
+        log.info(path)
+        pathRead = setInterval(()=>{
+          const t = Object.assign(NodeID3.read(path),{path})
+          if(t.comment && t.comment.text.startsWith("163 key(Don't modify)")){
+            t.comment.text = pares163Key(t.comment.text)
+          }
+          mainWindow.webContents.send('load-local-music',{msg:t,err})
+          if(ok)clearInterval(pathRead)
+        },5000)
+      } catch (error) {
+        console.log(error);
+        log.info(error)
+        err = error
+      }
+    }
+    ipcMain.on('radio-ok',()=>{
+      ok = true
+      clearInterval(pathRead)
     })
     //托盘事件
     let appIcon = new Tray(iconW)

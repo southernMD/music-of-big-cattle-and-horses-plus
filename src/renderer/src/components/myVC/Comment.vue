@@ -1,6 +1,6 @@
 <template>
     <div class="comment-li" 
-    :data-right="userId == BasicApi.profile!.userId" 
+    :data-right="userId == BasicApi.profile?.userId" 
     data-type="commentMy" 
     :data-id="`${commentId},${resourceId}`"
     :data-commentType="type"

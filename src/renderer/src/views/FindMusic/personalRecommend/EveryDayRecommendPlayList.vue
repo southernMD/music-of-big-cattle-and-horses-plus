@@ -44,7 +44,7 @@ const $router = useRouter()
 let playList = toRef(BasicApi,'everyDayPlayList') 
 let playListRand = shallowRef(sampleSize(playList.value,10))
 const playAll = async (id)=>{
-    let result = (await Main.reqPlaylistTrackAll(id.value)).data;
+    let result = (await Main.reqPlaylistTrackAll(id)).data;
     Main.playingList = result.songs
     Main.playingPrivileges = result.privileges
     Main.playingindex = 1

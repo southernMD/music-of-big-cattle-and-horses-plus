@@ -7,15 +7,26 @@ import os from 'os'
 import videoServer from './video-server'
 import httpSever from './http/app'
 import {createWindow,lrcwindow,dragWindw} from './windows'
-
+import log from 'electron-log'
 // import *  as bytenode from 'bytenode'
 // 检查应用程序是否已经在运行
+const argv = process.argv;
+// fs.writeFileSync("C:\\Users\\southernMD\\Desktop\\txt.txt", argv.toString());
+log.info(argv);
+let path = ''
+for(let arg of argv){
+  log.info(arg)
+  if(arg.endsWith('.mp3')){
+    path = argv.slice(1).join(' ')
+  }
+}
+log.info(path);
 const isAppAlreadyRunning = app.requestSingleInstanceLock();
 if (!isAppAlreadyRunning) {
   // 如果应用程序已经在运行，则退出当前实例
   app.quit();
 }else{
-  fs.mkdirSync('download', { recursive: true });
+  if(!path)fs.mkdirSync('download', { recursive: true });
   app.setAppUserModelId('大牛马音乐')
   app.whenReady().then(async() => {
     // Set app user model id for windows
@@ -32,7 +43,7 @@ if (!isAppAlreadyRunning) {
       optimizer.watchWindowShortcuts(window)
     })
     // httpSever()
-    videoServer(createWindow())
+    videoServer(createWindow(path))
     lrcwindow()
     dragWindw()
     //托盘事件
@@ -47,6 +58,7 @@ if (!isAppAlreadyRunning) {
       ])
       menu.popup()
     })
+
     app.on('activate', function () {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.

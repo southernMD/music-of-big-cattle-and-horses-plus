@@ -274,16 +274,25 @@ export const useBasicApi = defineStore('BaseApi', {
         },
         //我的收藏歌手
         async reqartistSublist(){
-            let result = await artistSublist()
-            this.startSongHand = []
-            this.startSongHand.unshift(...result.data.data)
+            try {
+                let result = await artistSublist()
+                this.startSongHand = []
+                this.startSongHand.unshift(...result.data.data ?? [])
+            } catch (error) {
+                this.startSongHand.unshift(...[])
+            }
         },
         //我的收藏专辑
         async reqalbumSublist(limit?:number){
-            let result = await albumSublist(limit)
-            if(result.data.code == 200){
-                this.startalbum.unshift(...result.data.data)
+            try {
+                let result = await albumSublist(limit)
+                if(result.data.code == 200){
+                    this.startalbum.unshift(...result.data.data ?? [])
+                }   
+            } catch (error) {
+                this.startalbum.unshift(...[])
             }
+
         },
         //我的关注列表
         async requserFollows(id){

@@ -7,6 +7,7 @@ export default function (): any {
     let primaryColor = toRef(MainMenu, 'primaryColor')
     let flag = 0
     watch(mainColor, (newValue) => {
+        if(mainColor.value == null) return
         if(newValue.length == 0){
             newValue = localStorage.getItem('colorBlock') as string
             MainMenu.iconSrc = "/src/assets/icon.png"

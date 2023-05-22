@@ -58,13 +58,13 @@ const props = defineProps<{
     rightFlag:boolean
     type:string
     id:string
-    index:string | null
-    shareTxt:string | null
-    shareAvg:string | null
-    download:boolean | null
-    path:string | null
-    commentType:string | null
-    evid:string | null
+    index:string | null | undefined
+    shareTxt:string | null | undefined
+    shareAvg:string | null | undefined
+    download:boolean | null | undefined
+    path:string | null | undefined
+    commentType:string | null | undefined
+    evid:string | null | undefined
 }>()
 const flag = ref(false)
 const rightBlockRef = ref<InstanceType<typeof HTMLElement>>()

@@ -22,7 +22,7 @@
 ## 下载
 
 [v0.0.2-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.2-beta-setup.exe)
-
+[v0.0.3-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.2-beta-setup.exe)修复bug，更新打开方式限.mp3格式
 
 ## 克隆项目
 
@@ -49,7 +49,7 @@ yarn build:win
 注意一下几点
 
 - yarn dev启动可能会卡住，可以使用yarn start(失去热更新)
-- 设置内最好不要设置为开机自动启动,设置为默认播放器暂时不能使用。
+- 设置内最好不要设置为开机自动启动。
 - 启动时请务必联网，没有网络将导致项目无法启动。
 - 如果使用自定义皮肤页面可能会很丑,建议使用黑色主题。
 - 运行不是很稳定所以默认会启动控制台，如果你不希望有控制台，注释src/main/windows.ts 内的win.webContents.toggleDevTools()

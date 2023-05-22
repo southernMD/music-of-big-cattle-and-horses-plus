@@ -156,7 +156,7 @@
             </keep-alive>
         </router-view>
     </div>
-    <AddTipDialog ref="AddTipDialogRef" @confirm="confirm" :index="+index"></AddTipDialog>
+    <AddTipDialog v-if="$route.query.my == 'true'" ref="AddTipDialogRef" @confirm="confirm" :index="+index"></AddTipDialog>
     <MyDialog :flag="PrivacyFlag" @closeDialog="closePrivacy" @confirm="confirmPrivacy" @cancel="canclePrivacy" confirmName="公开">
         <template #header>
             <div class="title">公开歌单</div>

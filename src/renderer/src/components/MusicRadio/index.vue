@@ -949,7 +949,7 @@ let playStatus = toRef(Main, 'playStatus')
 watch(playStatus, async () => {
     window.electron.ipcRenderer.sendTo(ciId, 'play-status', playStatus.value)
     stopOrPlay()
-}, { immediate: true })
+})
 //另一进程play or stop
 window.electron.ipcRenderer.on('play-or-stop', () => {
     changPlayStatus();
@@ -1570,7 +1570,8 @@ function draw() {
         canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight / 4 + 30);
     }
 }
-watch(playStatus,()=>{
+watch(playStatus,(newValue,oldValue)=>{
+    console.log(newValue,oldValue);
     if(playStatus.value == 'stop'){
         cancelAnimationFrame(animationId)
     }else{
@@ -1898,6 +1899,115 @@ watch(()=>globalVar.setting.opencanvas,()=>{
     }
 })
 
+
+window.electron.ipcRenderer.on('load-local-music',async({},{msg,error})=>{
+    window.electron.ipcRenderer.send('radio-ok')
+    if(error){
+        globalVar.loadMessageDefaultType = 'error'
+        globalVar.loadMessageDefaultFlag = true
+        globalVar.loadMessageDefault = '播放失败'
+        return
+    }
+    const song = {
+        name:msg.title,
+        id:getSongid(msg,msg?.userDefinedText?.[0],msg?.comment?.text),
+        ar:getSinger(msg,msg.artist, msg?.userDefinedText?.[2],msg?.comment?.text),
+        al:getZhuanji(msg,msg.album, msg?.userDefinedText?.[1],msg?.comment?.text),
+        localPath:msg.path,
+        dt:getTime(msg)
+    }
+    Main.playingList.push(song)
+    const index = Main.playingindex == -1?1:Main.playingindex +1
+    Main.playingList[index - 1].al['picUrl'] = await bufferToBase64(msg.image?.imageBuffer)
+    const privilege = {
+        id:getSongid(msg,msg?.userDefinedText?.[0],msg?.comment?.text),
+        maxBrLevel: "local",
+        playMaxBrLevel: "local",
+        downloadMaxBrLevel: "local",
+        plLevel: "local",
+        dlLevel: "local",
+        flLevel: "local",
+    }
+    Main.playingPrivileges.push(privilege)
+    Main.playStatus = 'play'
+    Main.songType = 'song'
+    playingindex.value = index
+    playingId.value = song.id
+})
+
+function bufferToBase64(buffer) {
+    if(buffer == undefined)return Promise.resolve('')
+    const reader = new FileReader();
+    reader.readAsDataURL(new Blob([buffer], { type: 'image/jpeg' }));
+    return new Promise((resolve, reject) => {
+        reader.onloadend = () => {
+        const base64String = reader.result;
+        resolve(base64String);
+        };
+        reader.onerror = reject;
+    });
+}
+const getZhuanji = (msg:id3Message,name: string ,detail: {description: string;value: string;} | undefined,_163key:string | undefined) => {
+    if(detail && detail.description == 'al id'){
+        return { name, id: +detail.value, tns: [] }
+    }else if(_163key){
+        //@ts-ignore
+        return { name, id: msg.comment.text.albumId ?? -new Date().getTime(), tns: [] }
+    }else{
+        return { name, id: -new Date().getTime(), tns: [] }
+    }
+}
+const getSongid = (msg:id3Message,detail: {description: string;value: string;} | undefined,_163key:string | undefined)=>{
+    if(detail && detail.description == 'song id'){
+        return +detail.value
+    }
+    else if(_163key){
+        //@ts-ignore
+        return msg.comment.text.musicId ?? -new Date().getTime()
+    }else{
+        return -new Date().getTime()
+    }
+}
+
+const getSinger = (msg:id3Message,names: string | string[], detail: {description: string;value: string;} | undefined,_163key:string | undefined): any[] => {
+    if(detail && detail.description == 'ar ids'){
+        const arr: { id: number, name: string }[] = []
+        let namesList = names as string[]
+        if(typeof(names)=='string') namesList = names.split('/')
+        const idsList = detail?.value.split(',')
+        namesList.forEach(({ }, index) => {
+            arr.push({ id: +idsList[index], name: namesList[index] })
+        })
+        return arr
+    }else if(_163key){
+        const arr:{}[] = []
+        const list = msg.comment?.text.artist ?? []
+        list.forEach((item:[string,number])=>{
+            arr.push({id:item[1],name:item[0]})
+        })
+        // console.log(arr);//[ [ 'AO', 18444 ], [ 'TOPHAMHAT-KYO', 201635 ] ],
+        // console.log(props.list[index].comment?.text);
+        return arr
+    }else{
+        const arr: { id: number, name: string }[] = []
+        let namesList = names as string[]
+        if(typeof(names)=='string') namesList = names.split('/')
+        namesList.forEach(({ }, index) => {
+            arr.push({ id: 0, name: namesList[index] })
+        })
+        return arr
+    }
+
+}
+const getTime = (item:id3Message)=>{
+    if(item.comment && item.comment.text.duration){
+        return item.comment.text.duration
+    }else if(item.time){
+        return item.time
+    }else{
+        return 0
+    }
+}
 </script>
 
 <style lang="less" scoped>
