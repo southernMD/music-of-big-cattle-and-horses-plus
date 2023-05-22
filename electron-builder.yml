@@ -15,10 +15,15 @@ win:
   executableName: '大牛马音乐'
   icon: build/faviconB.ico
 nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  removeDefaultUninstallWelcomePage: false
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  createStartMenuShortcut: true
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
