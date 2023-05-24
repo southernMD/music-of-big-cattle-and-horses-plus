@@ -21,8 +21,8 @@
 [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)
 ## 下载
 
-[v0.0.2-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.2-beta-setup.exe)
-[v0.0.3-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.3-beta-setup.exe)修复bug，更新打开方式限.mp3格式
+[v0.0.2-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.2-beta-setup.exe)<br>
+[v0.0.3-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.3-beta-setup.exe)修复bug，更新打开方式限.mp3格式<br>
 [v0.0.4-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/untagged-c5b9107fc5a518256e72/bingNMmusic-0.0.4-beta-setup.exe)修复bug，应用内更新
 ## 克隆项目
 
