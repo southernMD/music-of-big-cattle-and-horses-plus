@@ -24,7 +24,7 @@
 [v0.0.2-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.2-beta/bingNMmusic-0.0.2-beta-setup.exe)<br>
 [v0.0.3-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.3-beta/bingNMmusic-0.0.3-beta-setup.exe)修复bug，更新打开方式限.mp3格式<br>
 [v0.0.4-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.4-beta/bingNMmusic-0.0.4-beta-setup.exe)修复bug，应用内更新<br>
-[v0.0.5-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.4-beta/bingNMmusic-0.0.5-beta-setup.exe)修复bug
+[v0.0.5-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.5-beta/bingNMmusic-0.0.5-beta-setup.exe)修复bug
 
 ## 克隆项目
 
@@ -50,6 +50,7 @@ yarn build:win
 ### 注意
 注意一下几点
 
+- 下载浏览器报毒属于正常现象，本应用保证未窃取个人信息
 - yarn dev启动可能会卡住，可以使用yarn start(失去热更新)
 - 设置内最好不要设置为开机自动启动。
 - 启动时请务必联网，没有网络将导致项目无法启动。
