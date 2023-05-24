@@ -54,9 +54,9 @@ yarn build:win
 - 设置内最好不要设置为开机自动启动。
 - 启动时请务必联网，没有网络将导致项目无法启动。
 - 如果使用自定义皮肤页面可能会很丑,建议使用黑色主题。
-- 运行不是很稳定所以默认会启动控制台，如果你不希望有控制台，注释src/main/windows.ts 内的win.webContents.toggleDevTools()
-- 更换登录的方式,点击退出登录后直接关闭应用重新打开，再登录
+- 运行不是很稳定所以默认会启动控制台，如果你不希望有控制台，注释src/main/windows.ts 内的win.webContents.toggleDevTools(),应用内可点击f12弹出开发者工具，可能弹不出来
 - 应该有很多bug，但是应该不影响使用
+- 重启应用可以解决95%的问题
 - 仅供学习交流个人使用
 ### 浏览
 ![Alt Text](https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305221528523.png)
