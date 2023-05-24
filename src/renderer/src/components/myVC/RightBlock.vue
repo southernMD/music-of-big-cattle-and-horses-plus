@@ -1,7 +1,7 @@
 <template>
   <div class="rightBlock" ref="rightBlockRef" v-show="flag && rightFlag">
     <div class="list">
-        <!-- {{ type }} -->
+        {{ type }}
         <div class="op" @mouseenter="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')?showStartList():hideStartList()" 
         @click="eventsHandle[index].bind(null,params[index])()"  
         v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
@@ -455,12 +455,36 @@ const play = async(id:string)=>{
             globalVar.playLoacalIndex = +id
         }else if(props.type == 'songDownload'){
             globalVar.playLoacalIndex = +id
+        }else if(props.type == 'songMy' || props.type == 'song'){
+            console.log(id,props.path);
+            //@ts-ignore
+            if(props.path == 'undefined'){
+                let result = (await Main.reqSongDetail([+id])).data
+                if(Main.playingindex == -1){
+                    Main.playingList = result.songs
+                    Main.playingPrivileges = result.privileges
+                    Main.playingindex = 1
+                    Main.playing = +id
+                    Main.playStatus = 'play'
+                    Main.songType = 'song'
+                }else{
+                    Main.playingList.splice(Main.playingindex,0,...result.songs)
+                    Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                    Main.playingindex++
+                    Main.playing = +id
+                    Main.playStatus = 'play'
+                    Main.songType = 'song'
+                }
+            }else{
+                window.electron.ipcRenderer.send('right-click',{flag:true,path:props.path})
+            }
         }
     }
     Main.songType = 'song'
 }
 
 const nextPlay = async(id:string)=>{
+    console.log(Main.playingindex);
     if(props.type.startsWith('playList')){
         if(Main.playingList.length == 0){
             play(id)
@@ -536,6 +560,32 @@ const nextPlay = async(id:string)=>{
             globalVar.playLoacalIndex = -id
         }else if(props.type == 'songDownload'){
             globalVar.playLoacalIndex = -id
+        }else if(props.type == 'songMy' || props.type == 'song'){
+            console.log(id,props.path);
+            //@ts-ignore
+            if(props.path == 'undefined'){
+                let result = (await Main.reqSongDetail([+id])).data
+                if(Main.playingindex == -1){
+                    Main.playingList = result.songs
+                    Main.playingPrivileges = result.privileges
+                    Main.playingindex = 1
+                    Main.playing = +id
+                    Main.playStatus = 'play'
+                    Main.songType = 'song'
+                }else{
+                    Main.playingList.splice(Main.playingindex,0,...result.songs)
+                    Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                    globalVar.closePointOutMessage = '已添加到播放列表'
+                    globalVar.closePointOut = true
+                }
+            }else{
+                if(Main.playingindex == -1){
+                    window.electron.ipcRenderer.send('right-click',{flag:true,path:props.path})
+                }else{
+                    window.electron.ipcRenderer.send('right-click',{flag:false,path:props.path})
+                }
+                // globalVar.playLoacalIndex = -id
+            }
         }
     }
 }

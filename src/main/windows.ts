@@ -81,6 +81,22 @@ export const createWindow = (path?:string):BrowserWindow=>{
       }
 
     })
+    //右键点击
+    ipcMain.on('right-click',({},{path,flag})=>{
+      if(!path.endsWith('.mp3'))path+='.mp3'
+      try {
+        const t = Object.assign(NodeID3.read(path),{path})
+        if(t.comment && t.comment.text.startsWith("163 key(Don't modify)")){
+          t.comment.text = pares163Key(t.comment.text)
+        }
+        // 向主窗口发送消息，以触发相应的聚焦逻辑
+        mainWindow.webContents.send('load-local-music',{msg:t,flag})
+      } catch (error) {
+        console.log(error);
+        mainWindow.webContents.send('load-local-music',{error})
+      }
+
+    })
     let pathRead:any = null
     let ok = false
     let err

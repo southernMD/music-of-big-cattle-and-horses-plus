@@ -546,14 +546,11 @@ const searchUpdate = async()=>{
     globalVar.loadDefault = true
     let res =  await githubUpdate()
     globalVar.loadDefault = false
+    console.log(globalVar.setting.version,res.data.name);
+    
     if(res == null){
-        globalVar.loadMessageDefault = '检测失败'
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefaultFlag = true
     }else{
         if(res.data.name.endsWith(globalVar.setting.version)){
-            globalVar.loadMessageDefault = '当前版本已是最新'
-            globalVar.loadMessageDefaultFlag = true
         }else{
             newVersion.value = res.data.name
             updateFlag.value = true

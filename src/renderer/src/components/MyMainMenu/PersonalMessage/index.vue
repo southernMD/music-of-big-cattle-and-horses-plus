@@ -100,9 +100,13 @@ const quitLogin = async()=>{
         BasicApi.account=null;
         BasicApi.profile=null;
         BasicApi.everyDaySong = []
+        BasicApi.everyDayPlayList = []
         Main.init()
         globalVar.loginQuit = true
         localStorage.setItem('cookieUser','');
+        const p1 = BasicApi.reqRecommendSongs()
+        const p2 = BasicApi.reqRecommendPlayList()  
+        await Promise.allSettled([p1,p2])
         LoadingFlag.value = false
         $router.replace({
             name:`FixRoute`,

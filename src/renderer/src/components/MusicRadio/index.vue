@@ -817,7 +817,7 @@ const loginQuit = toRef(globalVar, 'loginQuit')
 watch(loginQuit, () => {
     if (loginQuit.value == true) {
         loginQuit.value = false
-        bufferSource.stop(AC.currentTime)
+        if(bufferSource)bufferSource.stop(AC.currentTime)
         audio.pause()
     }
 })
@@ -1908,9 +1908,9 @@ watch(()=>globalVar.setting.opencanvas,()=>{
 })
 
 
-window.electron.ipcRenderer.on('load-local-music',async({},{msg,error})=>{
+window.electron.ipcRenderer.on('load-local-music',async({},{msg,error,flag})=>{
     console.log('load-local-music');
-    window.electron.ipcRenderer.send('radio-ok')
+    if(flag == undefined)window.electron.ipcRenderer.send('radio-ok')
     if(error){
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefaultFlag = true
@@ -1938,10 +1938,13 @@ window.electron.ipcRenderer.on('load-local-music',async({},{msg,error})=>{
         flLevel: "local",
     }
     Main.playingPrivileges.splice(index - 1,0,privilege)
-    Main.playStatus = 'play'
-    Main.songType = 'song'
-    playingindex.value = index
-    playingId.value = song.id
+    if(flag == true){
+        Main.playStatus = 'play'
+        Main.songType = 'song'
+        playingindex.value = index
+        playingId.value = song.id
+    }
+
 })
 
 function bufferToBase64(buffer) {
