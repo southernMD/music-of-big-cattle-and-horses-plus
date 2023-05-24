@@ -36,6 +36,7 @@ const $router = useRouter();
 const $route = useRoute();
 const MainPinia = useMain();
 const globalVar = useGlobalVar();
+const BasicApi = useBasicApi()
 const props = defineProps<{
     message: string   //标题信息
     big:boolean         //点击是否放大
@@ -115,7 +116,7 @@ const moveingPlayListEnd = async()=>{
                     id:del[0].id,
                     index:addInde as number,
                     my:MainPinia.playList[props.index!].creator.userId 
-                    == useBasicApi().profile!.userId?'true':'false',
+                    == BasicApi.profile!.userId?'true':'false',
                     type:'歌单'
                 }
             })
@@ -147,7 +148,7 @@ const go = async () => {
                 id,
                 index:props.index as number,
                 my:MainPinia.playList[props.index!].creator.userId 
-                == useBasicApi().profile!.userId?'true':'false',
+                == BasicApi.profile!.userId?'true':'false',
                 type:'歌单'
             }
         })
@@ -163,6 +164,8 @@ const go = async () => {
                     name:`${props.name}`
                 }
             })
+        }else if(props.name == 'follow' && BasicApi.profile == null){
+            globalVar.flagLogin = true
         }else{
             $router.push({
                 name:`${props.name}`,

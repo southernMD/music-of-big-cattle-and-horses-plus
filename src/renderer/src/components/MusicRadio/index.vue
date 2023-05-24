@@ -213,7 +213,7 @@ import {
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
 import { before, throttle } from 'lodash'
-import { useMain, useGlobalVar, useMainMenu } from '@renderer/store';
+import { useMain, useGlobalVar, useMainMenu ,useBasicApi} from '@renderer/store';
 import { rand } from '@renderer/utils/rand';
 import { useRouter,useRoute } from 'vue-router';
 import { useElectronToApp } from '@renderer/store/index'
@@ -223,6 +223,7 @@ import MyDialog from '../myVC/MyDialog.vue';
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const globalVar = useGlobalVar();
+const BasicApi = useBasicApi()
 const ElectronToApp = useElectronToApp()
 const $router = useRouter();
 const $route = useRoute();
@@ -1721,6 +1722,13 @@ const getZhuanfaText = (message:string)=>{
     globalVar.share.txt = message
 }
 const senddongtaiFlag = toRef(globalVar,'shareDialogFlag')
+watch(senddongtaiFlag,()=>{
+    if(senddongtaiFlag.value == true && BasicApi.profile == null){
+        globalVar.flagLogin = true
+        senddongtaiFlag.value = false
+    }
+
+})
 const confirm = async()=>{
     try {
         senddongtaiFlag.value = false
@@ -1901,6 +1909,7 @@ watch(()=>globalVar.setting.opencanvas,()=>{
 
 
 window.electron.ipcRenderer.on('load-local-music',async({},{msg,error})=>{
+    console.log('load-local-music');
     window.electron.ipcRenderer.send('radio-ok')
     if(error){
         globalVar.loadMessageDefaultType = 'error'
@@ -1916,8 +1925,8 @@ window.electron.ipcRenderer.on('load-local-music',async({},{msg,error})=>{
         localPath:msg.path,
         dt:getTime(msg)
     }
-    Main.playingList.push(song)
     const index = Main.playingindex == -1?1:Main.playingindex +1
+    Main.playingList.splice(index - 1,0,song)
     Main.playingList[index - 1].al['picUrl'] = await bufferToBase64(msg.image?.imageBuffer)
     const privilege = {
         id:getSongid(msg,msg?.userDefinedText?.[0],msg?.comment?.text),
@@ -1928,7 +1937,7 @@ window.electron.ipcRenderer.on('load-local-music',async({},{msg,error})=>{
         dlLevel: "local",
         flLevel: "local",
     }
-    Main.playingPrivileges.push(privilege)
+    Main.playingPrivileges.splice(index - 1,0,privilege)
     Main.playStatus = 'play'
     Main.songType = 'song'
     playingindex.value = index

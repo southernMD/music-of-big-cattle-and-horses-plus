@@ -20,6 +20,7 @@ import { exec, spawn } from 'child_process'
 import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
 import log from 'electron-log'
+import e from 'express'
 export const createWindow = (path?:string):BrowserWindow=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     let X: number, Y: number; //鼠标基于显示器的坐标
@@ -58,24 +59,27 @@ export const createWindow = (path?:string):BrowserWindow=>{
     
     //第二次点击
     app.on('second-instance', (event,argv,workingDirectory,additionalData) => {
-      console.log(argv,'__________',workingDirectory,'__________',additionalData);
-      if (mainWindow) {
-        if (mainWindow.isMinimized()) {
-          mainWindow.restore();
-        }
-        mainWindow.focus();
-        let path = argv.slice(2).join(' ')
-        if(path.endsWith('.mp3')){
-          const buffer = Buffer.from(fs.readFileSync(path))
-          const base64 =  buffer.toString('base64')
-          const t = Object.assign(NodeID3.read(path),{path})
-          if(t.comment && t.comment.text.startsWith("163 key(Don't modify)")){
-            t.comment.text = pares163Key(t.comment.text)
+      try {
+        console.log(argv,'__________',workingDirectory,'__________',additionalData);
+        if (mainWindow) {
+          if (mainWindow.isMinimized()) {
+            mainWindow.restore();
           }
-          // 向主窗口发送消息，以触发相应的聚焦逻辑
-          mainWindow.webContents.send('load-local-music',{msg:t,base64})
+          mainWindow.focus();
+          let path = argv.slice(2).join(' ')
+          if(path.endsWith('.mp3')){
+            const t = Object.assign(NodeID3.read(path),{path})
+            if(t.comment && t.comment.text.startsWith("163 key(Don't modify)")){
+              t.comment.text = pares163Key(t.comment.text)
+            }
+            // 向主窗口发送消息，以触发相应的聚焦逻辑
+            mainWindow.webContents.send('load-local-music',{msg:t})
+          }
         }
+      } catch (error) {
+        mainWindow.webContents.send('load-local-music',{error})
       }
+
     })
     let pathRead:any = null
     let ok = false
@@ -936,6 +940,7 @@ export const lrcwindow = (): any => {
     child.setBounds({ height: parseInt(y) })
     e.returnValue = 'ok'
   })
+
   //移动
   let X,Y;
   let screenMoveChil:any;

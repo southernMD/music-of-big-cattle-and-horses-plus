@@ -32,9 +32,17 @@
         <Loading :loading="false" :type="globalVar.loadMessageDefaultType" :showTime="1000"
             :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag"
             @close="globalVar.loadMessageDefaultFlag = false"></Loading>
-            <Teleport to="body">
-                <rightBlock :index="index" :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" :type="type" :rightFlag="rightFlag"></rightBlock>
-            </Teleport>
+        <Teleport to="body">
+            <rightBlock :index="index" :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" :type="type" :rightFlag="rightFlag"></rightBlock>
+        </Teleport>
+        <MyDialog :flag="updateFlag" @closeDialog="closeUpdate" @confirm="confirmUpdate" @cancel="cancleUpdate" confirmName="现在更新">
+            <template #header>
+                <div class="title">{{ newVersion }}</div>
+            </template>
+            <template #midle>
+                <div class="center">检测到新版本是否下载？</div>
+            </template>
+        </MyDialog>
     </div>
 </template>
 
@@ -46,12 +54,16 @@ import useColor from '@renderer/hooks/useColor';
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
+import { githubUpdate } from '@renderer/api';
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
 const MainPinia = useMain();
 const flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 const loadDefault: Ref<boolean> = toRef(globalVar, 'loadDefault')
 const downloadQueue = shallowRef(new PromiseQueue({ concurrency: 3 }))
+
+globalVar.setting.version = window.electron.ipcRenderer.sendSync('app-version')
+
 provide('downloadQueue', downloadQueue)
 useColor()
 onMounted(() => {
@@ -522,7 +534,53 @@ window.electron.ipcRenderer.on('lrc-ready',()=>{
     }
 
 })
+window.electron.ipcRenderer.on('setting-size',({},{size})=>{
+    globalVar.setting.lrcSize = parseInt(size)
+})
 
+
+const newVersion = toRef(globalVar.setting,'newVersion')
+const url = toRef(globalVar.setting,'updataUrl')
+const updateFlag = toRef(globalVar.setting,'updateFlag')
+const searchUpdate = async()=>{
+    globalVar.loadDefault = true
+    let res =  await githubUpdate()
+    globalVar.loadDefault = false
+    if(res == null){
+        globalVar.loadMessageDefault = '检测失败'
+        globalVar.loadMessageDefaultType = 'error'
+        globalVar.loadMessageDefaultFlag = true
+    }else{
+        if(res.data.name.endsWith(globalVar.setting.version)){
+            globalVar.loadMessageDefault = '当前版本已是最新'
+            globalVar.loadMessageDefaultFlag = true
+        }else{
+            newVersion.value = res.data.name
+            updateFlag.value = true
+            url.value = res.data.assets[0].browser_download_url
+            // const assets = response.data.assets;
+            // console.log(assets,response.data);
+        }
+    }
+}
+
+onMounted(()=>{
+    searchUpdate()
+})
+
+const closeUpdate = (done:()=>void)=>{
+    done()
+    updateFlag.value = false
+}
+
+const confirmUpdate = ()=>{
+    updateFlag.value = false
+    open(url.value,'_blank')
+}
+
+const cancleUpdate = ()=>{
+    updateFlag.value = false
+}
 
 </script>
 
@@ -544,6 +602,12 @@ video {
     height: 100%;
     width: 100%;
     object-fit: fill;
+}
+
+.center{
+    width: 100%;
+    text-align: center;
+    color: @font-color;
 }
 
 </style>

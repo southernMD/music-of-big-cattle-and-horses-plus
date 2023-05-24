@@ -36,15 +36,15 @@
                 <i class="iconfont icon-guanbi_o" @click="close" title="关闭桌面歌词"></i>
             </span>
         </span>
-        <div class="lrc" ref="lrcBlock">
-            <span ref="lrc" v-if="lrcArr.length!==0" class="one">
+        <div class="lrc" ref="lrcBlock" :class="{fill:fillHeight}">
+            <span ref="lrc" v-if="lrcArr.length!==0" class="one" >
                 <div class="i-bk" @mouseover="can" @mouseout="nocan" :class="{opacity:suoFlag && suoShowFlag}">
                     <i title="解锁桌面歌词" class="iconfont icon-jiesuo"  @click.self="jiesuo"></i>
                 </div>
                 <span>{{ lrcArr[indexLrc]?.time === 0 || lrcArr[indexLrc]?.lyric === '' ? title :
                 lrcArr[indexLrc]?.lyric}}</span>
             </span>
-            <span ref="lrc" class="one" v-if="lrcArr.length==0">
+            <span ref="lrc" class="one" v-if="lrcArr.length==0" >
                 <div class="i-bk" @mouseover="can" @mouseout="nocan" :class="{opacity:suoFlag && suoShowFlag}" >
                     <i title="解锁桌面歌词" class="iconfont icon-jiesuo" @click.self="jiesuo"></i>
                 </div>
@@ -65,7 +65,7 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, Ref, nextTick, 
-    watch, toRef, getCurrentInstance, ComponentInternalInstance,onUnmounted } from 'vue';
+    watch, toRef, getCurrentInstance, ComponentInternalInstance,onUnmounted, computed } from 'vue';
 import { useElectronToApp, useMain ,useGlobalVar} from '@renderer/store/index'
 import { parseLyricLine } from '@renderer/utils/parseLyricLine'
 const electronToApp = useElectronToApp();
@@ -81,6 +81,11 @@ let t =setInterval(()=>{
         clearInterval(t)
     }
 },100)
+
+const fillHeight = computed(()=>{
+    return !(yinOryi[1] && romalrcArr.value.length != 0) && !(yinOryi[0] && tlyricArr.value.length != 0)
+})
+
 
 let ok = false
 let t2 = setInterval(()=>{
@@ -275,12 +280,13 @@ const resize = (obj)=>{
     let roma = $el.refs.roma as HTMLElement
     let tly = $el.refs.tly as HTMLElement
     let lrcBlock = $el.refs.lrcBlock as HTMLElement
+    console.log(baseFontSize.value);
     lrcBlock.style.fontSize = baseFontSize.value + 'px'
-    if (romalrcArr.value.length == 0 && tlyricArr.value.length == 0) {
-        dom.style.height = 'calc(' + obj.y + 'px' + ' * 0.8)'
-    } else {
+    // if (romalrcArr.value.length == 0 && tlyricArr.value.length == 0) {
+    //     dom.style.height = 'calc(' + obj.y + 'px' + ' * 0.8)'
+    // } else {
         dom.style.height = obj.y + 'px'
-    }
+    // }
     dom.style.width = 'calc(' + obj.x + 'px + 16px )';
     if (l) {
         l.style.width = 'calc((' + obj.x + 'px + 16px ) * 0.9 )'
@@ -395,7 +401,8 @@ window.addEventListener('resize', async() => {
         let lrcBlock = $el.refs.lrcBlock as HTMLElement
         let size = (obj.y - 123)/(291 - 123) * (96 - 20) + 20
         lrcBlock.style.fontSize = size + 'px'
-        window.electron.ipcRenderer.sendTo(mainId.value,'setting-size',size)
+        baseFontSize.value = size
+        window.electron.ipcRenderer.sendTo(mainId.value,'setting-size',{size})
         //291 - 123 = 168
         //obj.y - 123 = ? 
         //size = ? / 168 nowSize /(96 - 20)
@@ -623,6 +630,13 @@ window.electron.ipcRenderer.on('lrc-changeLrcborderColor',({},color)=>{
             margin: 0 auto;
             text-align: center;
         }
+    }
+    
+    .fill{
+        height: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 
     .option {

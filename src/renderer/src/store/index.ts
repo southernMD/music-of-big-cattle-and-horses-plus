@@ -1373,6 +1373,10 @@ interface V {
         bottomColor:string
         borderColor:string
         updataWay:boolean
+        updateFlag:boolean
+        version:string
+        updataUrl:string
+        newVersion:string
     }
 }
 //已开始播放
@@ -1448,7 +1452,11 @@ export const useGlobalVar = defineStore('globalVar', {
                 topColor:'rgb(255,0,0)',
                 bottomColor:'rgb(255,255,0)',
                 borderColor:'unset',
-                updataWay:true
+                updataWay:true,
+                updateFlag:false,
+                version:'',
+                updataUrl:'',
+                newVersion:''
             }
         }
     },

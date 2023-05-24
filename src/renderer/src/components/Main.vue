@@ -320,6 +320,12 @@ const showPlay = () => {
 }
 
 const addPlayFlag = toRef(globalVar,'addPlayFlag')
+watch(addPlayFlag,()=>{
+  if(addPlayFlag.value == true && BasicApi.profile == null){
+    globalVar.flagLogin = true
+    addPlayFlag.value = false
+  }
+})
 const yinsi = ref(false)
 const playListName = ref('')
 const addPlay = () => {

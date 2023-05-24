@@ -891,3 +891,34 @@ export const artistTopSong = (id)=>{
         method:'POST',
     })
 }
+
+//检测更新
+export const githubUpdate = ()=>{
+    const owner = 'southernMD';
+    const repo = 'music-of-big-cattle-and-horses-plus';
+    const token = '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';
+
+    try {
+        // 获取最新发布的信息
+        return axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        // 获取下载链接
+        // const assets = response.data.assets;
+        // console.log(assets,response.data);
+    //     const exeAsset = assets.find(asset => asset.name.endsWith('.exe'));
+    //     if (exeAsset) {
+    //     const downloadLink = exeAsset.browser_download_url;
+    //     console.log('Latest release download link:', downloadLink);
+    //     return downloadLink;
+    //     } else {
+    //     console.log('No exe file found in the latest release.');
+    //     return null;
+    //     }
+    } catch (error) {
+        return null
+    }
+}

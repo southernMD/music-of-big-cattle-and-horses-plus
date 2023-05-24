@@ -189,12 +189,12 @@
         <div class="title">关于</div>
         <div class="now-version">
             <div class="txt">当前版本：{{ version }}</div>
-            <div class="btn">检测更新</div>
+            <div class="btn" @click="searchUpdate">检测更新</div>
             <div class="btn" title="暂不可用">意见反馈</div>
         </div>
         <el-radio-group style="margin-top:0; flex-direction: column; align-items: start;" v-model="globalVar.setting.updataWay" class="ml-4">
-            <el-radio :label="true" size="large">自动更新</el-radio>
-            <el-radio :label="false" size="large">有新版本时提醒我</el-radio>
+            <el-radio :label="false" size="large">自动更新(暂不支持)</el-radio>
+            <el-radio :label="true" size="large">有新版本时提醒我</el-radio>
         </el-radio-group>
     </div>
   </div>
@@ -202,6 +202,7 @@
 
 <script setup lang="ts">
 import {onMounted, toRef,ref, watch, watchEffect,toRaw} from 'vue'
+import {githubUpdate} from '@renderer/api/index'
 import {useGlobalVar} from '@renderer/store'
 import dropDown from '@renderer/components/myVC/dropDown.vue'
 const globalVar = useGlobalVar()
@@ -219,8 +220,8 @@ const lrcWeight = ref([{name:'标准'},{name:'加粗'}])
 const lrcBorder = ref([{name:'有描边'},{name:'无描边'}])
 const lrcColor = ref([{name:'默认'},{name:'自定义'}])
 console.log(quick.value,quickGlobal.value);
-const version = ref('1.0.0')
-version.value = window.electron.ipcRenderer.sendSync('app-version')
+const version = toRef(globalVar.setting,'version')
+
 const changeFontFamily = (ms)=>{
     console.log(ms.name);
     document.documentElement.style.setProperty('--fontFamily', ms.name);
@@ -549,9 +550,39 @@ onMounted(()=>{
 
 })
 
-window.electron.ipcRenderer.on('setting-size',({},size)=>{
-    globalVar.setting.lrcSize = parseInt(size)
+watch(()=>globalVar.setting.lrcSize,()=>{
+    txtRef.value.style.setProperty('--fontSizeLrc',  globalVar.setting.lrcSize + 'px');
 })
+
+watch(()=>globalVar.setting.updataWay,()=>{
+    globalVar.setting.updataWay = true
+})
+
+const newVersion = toRef(globalVar.setting,'newVersion')
+const url = toRef(globalVar.setting,'updataUrl')
+const searchUpdate = async()=>{
+    globalVar.loadDefault = true
+    let res =  await githubUpdate()
+    globalVar.loadDefault = false
+    if(res == null){
+        globalVar.loadMessageDefault = '检测失败'
+        globalVar.loadMessageDefaultType = 'error'
+        globalVar.loadMessageDefaultFlag = true
+    }else{
+        // if(res.data.name.endsWith(version.value)){
+        if(res.data.name.endsWith == version.value){
+            globalVar.loadMessageDefault = '当前版本已是最新'
+            globalVar.loadMessageDefaultFlag = true
+        }else{
+            newVersion.value = res.data.name
+            globalVar.setting.updateFlag = true
+            url.value = res.data.assets[0].browser_download_url
+            // const assets = response.data.assets;
+            // console.log(assets,response.data);
+        }
+    }
+}
+
 </script>
 
 <style scoped lang="less">
