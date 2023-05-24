@@ -896,7 +896,7 @@ export const artistTopSong = (id)=>{
 export const githubUpdate = ()=>{
     try {
         // 获取最新发布的信息
-        return axios.get(`https://burnt-placid-sidecar.glitch.me`);
+        return axios.get(`https://app-update-address.glitch.me`);
     } catch (error) {
         return null
     }
