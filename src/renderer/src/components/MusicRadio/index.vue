@@ -1938,10 +1938,18 @@ window.electron.ipcRenderer.on('load-local-music',async({},{msg,error,flag})=>{
         flLevel: "local",
     }
     Main.playingPrivileges.splice(index - 1,0,privilege)
-    if(flag == true){
+    if(flag == true || flag == undefined){
+        if(Main.songType != 'song'){
+            Main.playingList = []
+            Main.playingPrivileges = []
+            Main.playingList.push(song)
+            Main.playingPrivileges.push(privilege)
+            playingindex.value = 1
+            Main.songType = 'song'
+        }else{
+            playingindex.value = index
+        }
         Main.playStatus = 'play'
-        Main.songType = 'song'
-        playingindex.value = index
         playingId.value = song.id
     }
 

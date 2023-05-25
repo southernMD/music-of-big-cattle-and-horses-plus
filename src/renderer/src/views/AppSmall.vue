@@ -546,8 +546,6 @@ const searchUpdate = async()=>{
     globalVar.loadDefault = true
     let res =  await githubUpdate()
     globalVar.loadDefault = false
-    console.log(globalVar.setting.version,res.data.name);
-    
     if(res == null){
     }else{
         if(res.data.name.endsWith(globalVar.setting.version)){
