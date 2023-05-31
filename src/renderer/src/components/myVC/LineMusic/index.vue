@@ -11,7 +11,7 @@
     :data-path="myPath"
     :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
-        dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid == -1 && Main.dragMouse,
+        dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid < 0 && Main.dragMouse || Main.dragType != 'songMy' && Main.dragMouse,
         topColor: topColorid == id && Main.dragType == 'songMy',
         bottomColor: Main.dragMouse && Main.dragType == 'songMy' && (length == index || length == indexSearch) && Main.mouseDragOnIndex == -1,
         'line-music-oneself': globalVar.oneself == 1 && oneselfColor != false
@@ -92,7 +92,7 @@
 import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect } from 'vue';
 import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
 import { useRouter,useRoute } from 'vue-router';
-import { useMain, useBasicApi, useGlobalVar } from '@renderer/store';
+import { useMain, useBasicApi, useGlobalVar,useNM } from '@renderer/store';
 import Singer from './Singer/index.vue'
 import ZhuanJi from './ZhuanJi/index.vue'
 // import {ElMessageBox} from 'element-plus'
@@ -102,6 +102,7 @@ const BasicApi = useBasicApi();
 const $router = useRouter();
 const $route = useRoute();
 const globalVar = useGlobalVar()
+const NM = useNM()
 const props = defineProps<{
     index?: number,
     title: string,
@@ -245,7 +246,6 @@ const replaceLocationed = () => {
 
 const $emit = defineEmits(['warpPlace', 'localPlay','recordPlay','shorPlayList'])
 const fnMouseDrag = async (e: any) => {
-    Main.dragMouse = false
     window.removeEventListener('mouseup', fnMouseDrag)
     window.removeEventListener('mousemove', fnMouseDragMoving)
     for (let i = 0; i < e.path.length; i++) {
@@ -269,9 +269,17 @@ const fnMouseDrag = async (e: any) => {
                 }else{
                     Main.dragMouse = false
                     globalVar.loadDefault = true
-                    let result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
+                    let result 
+                    if(localStorage.getItem('NMcookie')){
+                        result = (await NM.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
+                    }else{
+                        result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
+                    }
+                    if(result.url){
+                        Main.playList[Number(dom.getAttribute('data-index'))].coverImgUrl = result.url
+                    }
                     globalVar.loadDefault = false
-                    if (result.body.code == 200) {
+                    if (result.body.code == 200 || (result.data.code == 200 && localStorage.getItem('NMcookie'))) {
                         globalVar.loadMessageDefault = '已收藏到歌单'
                         globalVar.loadMessageDefaultFlag = true 
                         let index = Number(dom.getAttribute('data-index'))
@@ -284,6 +292,7 @@ const fnMouseDrag = async (e: any) => {
     }
     let domTop = document.querySelector('.topColor') as HTMLElement | null
     let domBottom = document.querySelector('.bottomColor') as HTMLElement | null
+    console.log(domTop,domBottom);
     if (domTop && playListid.value != -1) {
         let addIndex = Number(domTop.getAttribute('data-index'))
         console.log(Main.dragIndex - 1, addIndex - 1);
@@ -292,22 +301,23 @@ const fnMouseDrag = async (e: any) => {
             Main.openPlayListId.splice(addIndex - 1, 0, delId[0])
             Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
             $emit('warpPlace', { from: Main.dragIndex - 1, to: addIndex - 1 })
+            
         } else {
             let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
             Main.openPlayListId.splice(addIndex - 1 - 1, 0, delId[0])
             Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
             $emit('warpPlace', { from: Main.dragIndex - 1, to: addIndex - 1 - 1 })
         }
-
+        Main.dragMouse = false
     }
     if (domBottom) {
         let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
         Main.openPlayListId.push(delId[0] as never)
         Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
         $emit('warpPlace', { from: Main.dragIndex - 1, to: -1 })
-
+        Main.dragMouse = false
     }
-
+    Main.dragMouse = false
     topColorid.value = -1
     dragId.value = -1
 

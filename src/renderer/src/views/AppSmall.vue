@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject } from 'vue'
-import { useMainMenu, useGlobalVar, useBasicApi, useMain } from '@renderer/store'
+import { useMainMenu, useGlobalVar, useBasicApi, useMain,useNM } from '@renderer/store'
 import MusicRadio from '@renderer/components/MusicRadio/index.vue'
 import useColor from '@renderer/hooks/useColor';
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
@@ -57,6 +57,7 @@ import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
+const NM = useNM();
 const MainPinia = useMain();
 const flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 const loadDefault: Ref<boolean> = toRef(globalVar, 'loadDefault')
@@ -182,8 +183,15 @@ if (!sessionStorage.getItem('youkeCookie')) {
     }
 }
 let cookie = localStorage.getItem('cookieUser')
-if (sessionStorage.getItem('NMcookie')) {
-
+if (localStorage.getItem('NMcookie')) {
+    NM.reqLogin().then(()=>{
+        NM.reqUserPlaylist(BasicApi.profile?.userId)
+        NM.reqUserLike(BasicApi.profile?.userId)
+        NM.reqUserSubcount()
+        NM.reqartistSublist()
+        NM.reqalbumSublist()
+        NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+    })
 }
 else if (!(cookie == '' || cookie == null || cookie == undefined)) {
     BasicApi.reqLogin(cookie as string).then(() => {
@@ -192,6 +200,9 @@ else if (!(cookie == '' || cookie == null || cookie == undefined)) {
         BasicApi.reqStartDj()
         BasicApi.reqCreateDj(BasicApi.account?.id)
         MainPinia.reqUserSubcount()
+        BasicApi.reqartistSublist()
+        BasicApi.reqalbumSublist()
+        BasicApi.requserFollows(BasicApi.account!.id)
     })
 }
 const p1 = BasicApi.reqRecommendSongs()
@@ -200,13 +211,6 @@ const p3 = BasicApi.reqDjProgramToplist(10)
 const p4 = BasicApi.reqPlayListTags()
 await Promise.allSettled([p1, p2, p3, p4])
 MainPinia.reqPersonal_fm()
-BasicApi.reqartistSublist()
-try {
-    BasicApi.reqalbumSublist()
-    BasicApi.requserFollows(BasicApi.account!.id)
-} catch (error) {
-    
-}
 
 const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
 globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
@@ -548,7 +552,9 @@ const searchUpdate = async()=>{
     globalVar.loadDefault = false
     if(res == null){
     }else{
-        if(res.data.name.endsWith(globalVar.setting.version)){
+        const v = res.data.name.split('v')[1]
+        console.log(v,globalVar.setting.version);
+        if(v <= globalVar.setting.version){
         }else{
             newVersion.value = res.data.name
             updateFlag.value = true

@@ -643,7 +643,7 @@ export const AlbumDetailDynamic = (id:number)=>{
         url:url,
         method:'POST',
         data:{
-            cookie:localStorage.getItem('cookieUser')
+            cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
         }
     })
 }

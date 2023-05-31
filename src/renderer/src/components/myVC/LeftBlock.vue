@@ -9,7 +9,7 @@
         || ($route.query.name as unknown as string == name && name !=undefined)
         || (name !=undefined && $route.fullPath?.includes(name) ) ) && globalVar.oneself == 1
         ,big:big == true && name !=undefined && ($route.query.name as unknown as string == name || $route.fullPath?.includes(name) ),
-        dragMouseStyleAdd:MainPinia.dragMouse && id != undefined && index!=undefined && index <= MainPinia.createPlay && MainPinia.dragType == 'songMy' ,
+        dragMouseStyleAdd:MainPinia.dragMouse && id != undefined && index!=undefined && index <= MainPinia.createPlay && MainPinia.dragType.startsWith('song'),
         noDrag:!MainPinia.dragMouse ,
         dragMouseStyleCan:MainPinia.dragMouse && MainPinia.dragType.startsWith('playList') && name == undefined && index != undefined && 
         MainPinia.dragIndex != index && index != 0 && MainPinia.dragIndex != 0 &&
@@ -19,7 +19,7 @@
         bottomColor:bottomColorFlag && MainPinia.dragIndex != 0,
         'left-block-oneself':globalVar.oneself == 1
         }" @click="go" @mousedown="movePlayListBegin"
-        @mousemove="overMouse" @mouseout="outMouse"
+        @mouseover="overMouse" @mouseout="outMouse"
         >
         <slot></slot>
         <div>{{ message }}</div>
@@ -137,20 +137,24 @@ const go = async () => {
     console.log('触发go事件');
     console.log(props.name,'&^$&*%^(*&)*(&*&*^&%&*())');
     clickFlag.value = true;
-    if(!localStorage.getItem('cookieUser') && !props.name){
+    if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') && !props.name ){
         globalVar.flagLogin = true
     }
     if(props.id){
         let id = props.id as number
+        let query = {
+            id,
+            index:props.index as number,
+            my:MainPinia.playList[props.index!].creator.userId 
+            == BasicApi.profile!.userId?'true':'false',
+            type:'歌单',
+        }
+        if(localStorage.getItem('NMcookie')){
+            query = Object.assign(query,{nm:'true'})
+        }
         $router.push({
             name:'songPlaylist',
-            query:{
-                id,
-                index:props.index as number,
-                my:MainPinia.playList[props.index!].creator.userId 
-                == BasicApi.profile!.userId?'true':'false',
-                type:'歌单'
-            }
+            query
         })
         console.log(props.index);
         

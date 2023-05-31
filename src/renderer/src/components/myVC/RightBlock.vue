@@ -41,10 +41,11 @@
 <script setup lang="ts">
 import { watch,watchEffect,ref, nextTick,Ref, inject, ShallowRef, toRef, computed } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
-import { useMain ,useGlobalVar,useBasicApi} from '@renderer/store'
+import { useMain ,useGlobalVar,useBasicApi,useNM} from '@renderer/store'
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
 const Main = useMain()
+const NM = useNM()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const $router = useRouter()
@@ -1011,8 +1012,16 @@ const delDownload = async({})=>{
    }
 }
 const delfromPlayList = async({id,index})=>{
-  let res =  await Main.reqPlaylistTracks('del',+$route.query.id!,[id])
-  if(res.data.status == 200){
+    let res 
+    if(localStorage.getItem('NMcookie')){
+        res = await NM.reqPlaylistTracks('del',+$route.query.id!,[id])
+    }else{
+        res = await Main.reqPlaylistTracks('del',+$route.query.id!,[id])
+    }
+    if(res.data.url){
+        Main.playList[+$route.query.index!].coverImgUrl = res.data.url
+    }
+  if(res.data.status == 200 || res.data.code == 200 ||  res.data.body.code == 200){
     globalVar.loadMessageDefault = '删除成功'
     globalVar.loadMessageDefaultFlag = true
     globalVar.delMyPlayListSongIndex = index
@@ -1055,9 +1064,17 @@ const pushInto = async(index,id)=>{
     try {
         if(props.type.startsWith('song') || props.type == 'FM'){
             ids = [+props.id!]
-            let res = await Main.reqPlaylistTracks('add',id,ids)
+            let res 
+            if(localStorage.getItem('NMcookie')){
+                res = await NM.reqPlaylistTracks('add',id,ids)
+            }else{
+                res = await Main.reqPlaylistTracks('add',id,ids)
+            }
+            if(res.data.url){
+                Main.playList[index].coverImgUrl = res.data.url
+            }
             console.log(res.data);
-            if(res.data.body.code == 200){
+            if(res.data.body.code == 200 || (res.data.code == 200 && localStorage.getItem('NMcookie'))){
                 globalVar.loadMessageDefault ='添加成功'
                 globalVar.loadMessageDefaultFlag = true
                 Main.playList[index].trackCount++
@@ -1066,8 +1083,16 @@ const pushInto = async(index,id)=>{
             }
         }else if(props.type.startsWith('top50')){
             ids = (await Main.reqArtistTopSong(+$route.query.id!)).map(it=>it.id)
-            let res = await Main.reqPlaylistTracks('add',id,ids)
-            if(res.data.body.code == 200){
+            let res 
+            if(localStorage.getItem('NMcookie')){
+                res = await NM.reqPlaylistTracks('add',id,ids)
+            }else{
+                res = await Main.reqPlaylistTracks('add',id,ids)
+            }
+            if(res.data.url){
+                Main.playList[index].coverImgUrl = res.data.url
+            }
+            if(res.data.body.code == 200 || (res.data.code == 200 && localStorage.getItem('NMcookie'))){
                 globalVar.loadMessageDefault ='添加成功'
                 globalVar.loadMessageDefaultFlag = true
                 Main.playList[index].trackCount+=ids.length

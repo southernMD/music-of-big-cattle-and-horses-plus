@@ -62,10 +62,10 @@ const $router = useRouter()
 const form = reactive({
     name: toRaw(BasicApi.profile)?.nickname,
     description: toRaw(BasicApi.profile)?.signature,
-    sex:toRaw(BasicApi.profile)?.gender,
-    year:new Date(toRaw(BasicApi.profile)?.birthday).getFullYear(),
-    month:new Date(toRaw(BasicApi.profile)?.birthday).getMonth() + 1,
-    day:new Date(toRaw(BasicApi.profile)?.birthday).getDate(),
+    sex:+toRaw(BasicApi.profile)?.gender,
+    year:new Date(+toRaw(BasicApi.profile)?.birthday).getFullYear(),
+    month:new Date(+toRaw(BasicApi.profile)?.birthday).getMonth() + 1,
+    day:new Date(+toRaw(BasicApi.profile)?.birthday).getDate(),
     city:+toRaw(BasicApi.profile)?.city,
     province:+toRaw(BasicApi.profile)?.province,
 })

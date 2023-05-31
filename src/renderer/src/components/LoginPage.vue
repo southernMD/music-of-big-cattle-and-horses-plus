@@ -6,7 +6,7 @@
             <div class="img imgHover" v-if="!okFlag">
                 <div class="r">
                     <el-image draggable="false" v-show="phoneFlag && showPhoneFlag" ref="imgPhone"
-                        class="imgPhone animate__animated animate__fadeInRight" src="/src/assets/image/XW8rcLxOev.png"
+                        class="imgPhone animate__animated animate__fadeInRight" :src="p1"
                         fit="cover"></el-image>
                 </div>
                 <div class="animate__animated animate__fadeInLeft">
@@ -22,7 +22,7 @@
                 </div>
             </div>
             <div class="ok" v-if="okFlag">
-                <el-image src="/src/assets/image/SgCjDdGyLg.png"></el-image>
+                <el-image :src="p2"></el-image>
                 <span>请在手机上确认登陆</span>
             </div>
         </div>
@@ -54,13 +54,16 @@
 </template>
 
 <script setup lang="ts">
-import { useBasicApi, useMain, useGlobalVar } from '../store'
+import { useBasicApi, useMain, useGlobalVar,useNM } from '../store'
 import { getCurrentInstance, ComponentInternalInstance, ref, Ref, onMounted, watch, toRef, onUnmounted, reactive } from 'vue'
 import { useRouter } from 'vue-router';
 import {NMCode,NMReg,NMlogin} from '@renderer/api/niuma'
 import type { FormInstance, FormRules } from 'element-plus'
+import p1 from '@renderer/assets/image/XW8rcLxOev.png'
+import p2 from '@renderer/assets/image/SgCjDdGyLg.png'
 const BasicApi = useBasicApi();
 const Main = useMain();
+const NM = useNM();
 const $router = useRouter()
 const globalVar = useGlobalVar()
 let key: any = await BasicApi.reqQrKey()
@@ -217,6 +220,28 @@ const login = async () => {
         })
     })
 }
+
+const loginNM = async ()=>{
+    NM.reqLogin().then(async ()=>{
+        const p1 = NM.reqUserPlaylist(BasicApi.profile?.userId)
+        const p2 = NM.reqUserLike(BasicApi.profile?.userId)
+        const p3 = NM.reqUserSubcount()
+        const p4 = NM.reqartistSublist()
+        const p5 = NM.reqalbumSublist()
+        const p6 = NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+        await Promise.allSettled([p1,p2,p3,p4,p5,p6]).then(()=>{
+            LoadingFlag.value = false
+            destroyVC();
+            $router.replace({
+                name: `FixRoute`,
+                query: {
+                    path: '/app/findMusic/find1'
+                }
+            });
+        })
+    })
+
+}
 //大牛马登录
 const otherLogin = ref(true)
 const changeLoginWay = () => {
@@ -327,7 +352,7 @@ const submit = async(formEl: FormInstance | undefined)=>{
                             duration:1000
                         })
                     }else{
-                        NMlogin({nickname:formLabelAlign.name,password:formLabelAlign.password}).then((data)=>{
+                        NMlogin({nickname:formLabelAlign.name,password:formLabelAlign.password}).then(async (data)=>{
                             if(data.data.status !=200){
                                 ElMessage({
                                     showClose: true,
@@ -338,14 +363,16 @@ const submit = async(formEl: FormInstance | undefined)=>{
                             }else{
                                 localStorage.setItem('NMcookie',data.data.data.token)
                                 localStorage.removeItem('cookieUser')
-                                LoadingFlag.value = false
-                                destroyVC();
-                                $router.replace({
-                                    name: `FixRoute`,
-                                    query: {
-                                        path: '/app/findMusic/find1'
-                                    }
-                                });
+                                try {
+                                    await loginNM()
+                                    globalVar.loadMessageDefault = '登录成功'
+                                    globalVar.loadMessageDefaultFlag = true
+                                } catch (error) {
+                                    globalVar.loadMessageDefault = '登录失败'
+                                    globalVar.loadMessageDefaultFlag = true
+                                    LoadingFlag.value = false
+                                    destroyVC();
+                                }
                             }
                         })
                     }
@@ -359,7 +386,7 @@ const submit = async(formEl: FormInstance | undefined)=>{
         if (!formEl) return
         await formEl.validate((valid) => {
             if (valid) {
-                NMlogin({nickname:formLabelAlign.name,password:formLabelAlign.password}).then((data)=>{
+                NMlogin({nickname:formLabelAlign.name,password:formLabelAlign.password}).then(async (data)=>{
                     if(data.data.status !=200){
                         ElMessage({
                             showClose: true,
@@ -370,14 +397,16 @@ const submit = async(formEl: FormInstance | undefined)=>{
                     }else{
                         localStorage.setItem('NMcookie',data.data.data.token)
                         localStorage.removeItem('cookieUser')
-                        LoadingFlag.value = false
-                        destroyVC();
-                        $router.replace({
-                            name: `FixRoute`,
-                            query: {
-                                path: '/app/findMusic/find1'
-                            }
-                        });
+                        try {
+                            await loginNM()
+                            globalVar.loadMessageDefault = '登录成功'
+                            globalVar.loadMessageDefaultFlag = true
+                        } catch (error) {
+                            globalVar.loadMessageDefault = '登录失败'
+                            globalVar.loadMessageDefaultFlag = true
+                            LoadingFlag.value = false
+                            destroyVC();
+                        }
                     }
                 })
             }

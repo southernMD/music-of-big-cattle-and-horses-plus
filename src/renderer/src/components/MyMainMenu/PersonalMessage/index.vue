@@ -93,17 +93,38 @@ const destroyVC = () => {
 }
 
 const quitLogin = async()=>{
-    let result:any
-    LoadingFlag.value = true
-    result = await BasicApi.reqQuitLogin();
-    if(result.data.code == 200){
+    if(!localStorage.getItem('NMcookie')){
+        let result:any
+        LoadingFlag.value = true
+        result = await BasicApi.reqQuitLogin();
+        if(result.data.code == 200){
+            BasicApi.account=null;
+            BasicApi.profile=null;
+            BasicApi.everyDaySong = []
+            BasicApi.everyDayPlayList = []
+            Main.init()
+            globalVar.loginQuit = true
+            localStorage.removeItem('cookieUser');
+            const p1 = BasicApi.reqRecommendSongs()
+            const p2 = BasicApi.reqRecommendPlayList()  
+            await Promise.allSettled([p1,p2])
+            LoadingFlag.value = false
+            $router.replace({
+                name:`FixRoute`,
+                query:{
+                    path:'/app/findMusic/find1'
+                }
+            });
+            destroyVC();
+        }
+    }else{
         BasicApi.account=null;
         BasicApi.profile=null;
         BasicApi.everyDaySong = []
         BasicApi.everyDayPlayList = []
         Main.init()
         globalVar.loginQuit = true
-        localStorage.setItem('cookieUser','');
+        localStorage.removeItem('NMcookie');
         const p1 = BasicApi.reqRecommendSongs()
         const p2 = BasicApi.reqRecommendPlayList()  
         await Promise.allSettled([p1,p2])
@@ -116,32 +137,6 @@ const quitLogin = async()=>{
         });
         destroyVC();
     }
-
-
-    // let t = setInterval(() => {
-    //     if (result) {
-    //         console.log('关闭');
-            
-    //         BasicApi.account=null;
-    //         BasicApi.profile=null;
-    //         BasicApi.everyDaySong = []
-    //         Main.init()
-    //         clearInterval(t);
-    //     } else {
-    //         console.log('显示');
-            
-    //     }
-    // }, 100)
-    // if(result.data.code == 200){
-    //     localStorage.setItem('cookieUser','');
-    //     Main.init();
-    //     $router.replace({
-    //         name:`FixRoute`,
-    //         query:{
-    //             path:'/app/findMusic/find1'
-    //         }
-    //     });
-    // }
 }
 const editorPersonal = ()=>{
     $router.push({

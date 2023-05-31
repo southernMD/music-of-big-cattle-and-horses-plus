@@ -16,7 +16,7 @@
                         :class="{ noDrag: !Main.dragMouse, 'author-name-oneself': globalVar.oneself == 1 }">{{
                             playList[index]?.creator?.nickname }}</span>
                     <span class="createtime" :class="{ 'createtime-oneself': globalVar.oneself == 1 }">{{
-                        dayjsStamp(playList[index]?.createTime) }}创建</span>
+                        dayjsStamp(+playList[index]?.createTime) }}创建</span>
                 </div>
                 <div class="button">
                     <div class="playAll">
@@ -175,7 +175,7 @@ import {
     toRefs, reactive, getCurrentInstance, ComponentInternalInstance, inject, ShallowRef
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
-import { useMain, useBasicApi, useMainMenu, useGlobalVar } from '@renderer/store';
+import { useMain, useBasicApi, useMainMenu, useGlobalVar,useNM } from '@renderer/store';
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
@@ -186,6 +186,7 @@ const route = useRoute();
 const router = useRouter();
 const MainMenu = useMainMenu();
 const globalVar = useGlobalVar();
+const NM = useNM()
 const $el = getCurrentInstance() as ComponentInternalInstance;
 
 const changeTag = (index: number) => {
@@ -341,7 +342,6 @@ let dynamic = ref({
     bookedCount: 0,
     subscribed: false,
     remarkName: null,
-    followed: 0,
     gradeStatus: 0,
     remixVideo: null,
     code: 0,
@@ -354,7 +354,7 @@ let dynamic = ref({
 })
 
 const isStartStyle = () => {
-    return route.query.type == '歌单' && playList.value[index.value]?.creator.userId == BasicApi.account?.id
+    return route.query.type == '歌单' && playList.value[index.value]?.creator.userId == BasicApi.profile?.userId
 }
 
 // const startStyle = () => {
@@ -414,7 +414,11 @@ watch(routeQuery, async () => {
         //注入
         songNumber.value = playList.value[index.value].trackCount
         tags.value = playList.value[index.value].tags
-        dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
+        if(route.query.nm != 'true'){
+            dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
+        }else{
+            dynamic.value = await NM.reqPlaylistDetailDynamic(id.value) as any;
+        }
         // console.log(dynamic);
         // console.log(await Main.reqPlaylistTrackAll(id.value));
         // startStyle();
@@ -424,6 +428,7 @@ watch(routeQuery, async () => {
         } else {
             suoFlag.value = false
         }
+        Main.isMyCreate = true
         // let arr: Array<HTMLElement> = document.querySelectorAll('.tag-play') as any;
         // for (let i = 0; i < arr.length; i++) {
         //     let child = arr[i].firstChild as HTMLElement
@@ -441,13 +446,20 @@ watch(routeQuery, async () => {
 
     } else if (route.name == 'songPlaylist' && route.query.my as string != 'true') {
         if(route.query.type == '歌单'){
-            dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
-            Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+            if(route.query.nm != 'true'){
+                dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
+                Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+            }else{
+                dynamic.value = await NM.reqPlaylistDetailDynamic(route.query.id) as any;
+                Main.searchList = [(await NM.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+            }
+            console.log(Main.searchList);
             index.value = 0
             playList.value = Main.searchList
             songNumber.value = playList.value[index.value].trackCount
             tags.value = playList.value[index.value].tags
             id.value = route.query.id
+            Main.isMyCreate = false
         }else if(route.query.type == '专辑'){
             dynamic.value = (await Main.reqAlbumDetailDynamic(route.query.id as unknown as number)).data
             console.log(dynamic.value );
@@ -459,8 +471,9 @@ watch(routeQuery, async () => {
             songNumber.value = playList.value[index.value]?.size
             tags.value = []
             id.value = route.query.id
+            Main.isMyCreate = false
+            suoFlag.value = false
         }
-
     }
 
 }, { immediate: true })

@@ -42,6 +42,7 @@ import {
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
+import { NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMUserLike, NMUserPlaylist, NMUserSubcount, NMalbumSublist, NMartistSublist, NMplaylistDetail, NMplaylistTrackAll, NMplaylistTracks, NMuserFollows } from '@renderer/api/niuma';
 
 interface E {
     ifToCloseWindow: boolean,
@@ -1465,7 +1466,212 @@ export const useGlobalVar = defineStore('globalVar', {
     },
     persist:{
         paths: ['setting'],
-    }
+    } 
 })
 
 
+export const useNM = defineStore('NM',{
+    state: ()=> {
+        return {
+        }
+    },
+    actions:{
+        async reqLogin() {
+            const BaseApi = useBasicApi()
+            return new Promise<any>(async(resolve, reject) => {
+                try {
+                    let res = await NMLoginStatus()
+                    if(res.data.code == 200){
+                        BaseApi.profile = res.data.profile
+                        resolve('ok')
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqUserPlaylist(uid) {
+            const BaseApi = useBasicApi()
+            const Main = useMain()
+            return new Promise<any>(async(resolve, reject) => {
+                try {
+                    let res = await NMUserPlaylist(uid)
+                    console.log( res.data,uid, BaseApi!.profile!.userId);
+                    
+                    if(res.data.code == 200 && uid == BaseApi!.profile!.userId){
+                        Main.playList = res.data.playlist.map((item,index)=>{
+                            item['index'] = index
+                            return item 
+                        })
+                        Main.playListId = []
+                        Main.playList.forEach((element) => {
+                            Main.playListId.push(element.id)
+                        })
+                    }
+                    console.log(Main.playList);
+                    resolve(res)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqUserLike(uid){
+            return new Promise<any>(async (resolve, reject) => {
+                try {
+                    let result = (await NMUserLike(uid)).data;
+                    useMain().likes = result.ids
+                    resolve(result)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqUserSubcount(){
+            return new Promise<any>(async(resolve, reject) => {
+                try {
+                    let result = await NMUserSubcount()
+                    const Main = useMain()
+                    if (result.data.code == 200) {
+                        Main.startDj = 0
+                        Main.createDj = 0
+                        Main.createPlay = result.data.createdPlaylistCount - 1
+                        Main.startPlay = result.data.subPlaylistCount
+                        resolve(result)
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqartistSublist(){
+            const BaseApi = useBasicApi()
+            try {
+                let result = await NMartistSublist()
+                BaseApi.startSongHand = []
+                BaseApi.startSongHand.unshift(...result.data.data ?? [])
+            } catch (error) {
+                BaseApi.startSongHand.unshift(...[])
+            }
+        },
+        async reqalbumSublist(limit?:number){
+            const BaseApi = useBasicApi()
+            try {
+                let result = await NMalbumSublist(limit)
+                if(result.data.code == 200){
+                    BaseApi.startalbum.unshift(...result.data.data ?? [])
+                }   
+            } catch (error) {
+                BaseApi.startalbum.unshift(...[])
+            }
+        },
+        async requserFollows(id,limit,offset){
+            return new Promise<any>(async (resolve, reject) => {
+                try {
+                    let result = await NMuserFollows(id,limit,offset)
+                    if (result.data.code == 200 && limit == 99999999) {
+                        useBasicApi().followsId = result.data.follow.map(item=>item.userId)
+                    }
+                    resolve(result.data)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        //对歌单添加或删除歌曲
+        async reqPlaylistTracks(op: 'add' | 'del', pid: number, tracks: number[]): Promise<any> {
+            let result = await NMplaylistTracks(op, pid, tracks);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            }
+        },
+        //歌单详情动态
+        async reqPlaylistDetailDynamic(id){
+            return new Promise<any>(async (resolve, reject) => {
+                try {
+                    let result = await NMPlaylistDetailDynamic(id)
+                    if (result.data.code == 200 ) {
+                        resolve(result.data)
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqPlaylistDetail(id){
+            return new Promise<any>(async(resolve,reject) => {
+                try {
+                    let result = await NMplaylistDetail(id);
+                    if(result.data.code == 200){
+                        resolve(result)
+                    }else{
+                        resolve({})
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+
+            })
+        },
+        async reqRecursion(id, limit, offset, res) {
+            let result = await NMplaylistTrackAll(id, limit, offset);
+            console.log(res, limit, offset);
+            if (result.data.code === 200) {
+              res.data.songs.push(...result.data.songs);
+              res.data.privileges.push(...result.data.privileges);
+              offset += limit;
+              if (result.data.songs.length != 0) {
+                return await this.reqRecursion(id, limit, offset, cloneDeep(res));
+              } else {
+                console.log(res);
+                return res;
+              }
+            } else {
+              console.log(res);
+              return res;
+            }
+        },
+        async reqPlaylistTrackAll(id,limit,offset){
+            console.log(id, limit, offset);
+            let result
+            if(limit == undefined && offset == undefined){
+                result = await this.reqRecursion(id, 1000, 0, {data:{songs:[],privileges:[],code:200}})
+                console.log(result);
+            }else{
+                result = await NMplaylistTrackAll(id, limit, offset);
+            }
+
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                alert('error');
+            }
+        },
+        async reqPlayListCreate(name:string,privacy?:number){
+            let result = await NMPlayListCreate(name,privacy)
+            if(result.data.code == 200){
+                result = await this.reqPlaylistDetail(result.data.id)
+                if(result.data.code == 200){
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(result.data.playlist)
+                    })
+                }else{
+                    return new Promise<any>((resolve, reject) => {
+                        resolve({})
+                    })
+                }
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+    }
+})

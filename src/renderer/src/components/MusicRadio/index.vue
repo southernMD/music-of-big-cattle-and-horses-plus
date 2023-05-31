@@ -213,7 +213,7 @@ import {
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
 import { before, throttle } from 'lodash'
-import { useMain, useGlobalVar, useMainMenu ,useBasicApi} from '@renderer/store';
+import { useMain, useGlobalVar, useMainMenu ,useBasicApi,useNM} from '@renderer/store';
 import { rand } from '@renderer/utils/rand';
 import { useRouter,useRoute } from 'vue-router';
 import { useElectronToApp } from '@renderer/store/index'
@@ -225,6 +225,7 @@ const Main = useMain();
 const globalVar = useGlobalVar();
 const BasicApi = useBasicApi()
 const ElectronToApp = useElectronToApp()
+const NM = useNM()
 const $router = useRouter();
 const $route = useRoute();
 let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbofang', 'icon-shunxubofang'])
@@ -1662,9 +1663,17 @@ const addIn = async(id,index)=>{
         Main.likeChange = `${playingId.value},true`
     }else{
         globalVar.loadDefault = true
-        let result = (await Main.reqPlaylistTracks('add',id,willStartListId.value)).data
+        let result 
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqPlaylistTracks('add',id,willStartListId.value)).data
+        }else{
+            result = (await Main.reqPlaylistTracks('add',id,willStartListId.value)).data
+        }
+        if(result.url){
+            Main.playList[index].coverImgUrl = result.url
+        }
         globalVar.loadDefault = false
-        if (result.body.code == 200) {
+        if (result.body.code == 200 || (result.code == 200 && localStorage.getItem('NMcookie'))) {
             globalVar.loadMessageDefault = '已收藏到歌单'
             globalVar.loadMessageDefaultFlag = true 
             Main.playList[index].trackCount += willStartListId.value.length

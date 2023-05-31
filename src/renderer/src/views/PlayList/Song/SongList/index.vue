@@ -20,10 +20,11 @@
 <script lang="ts" setup>
 import { inject, Ref, watch, ref, shallowRef, toRef,Directive, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router';
-import { useMain, useGlobalVar } from '@renderer/store'
+import { useMain, useGlobalVar,useNM } from '@renderer/store'
 import { throttle } from 'lodash'
 const Main = useMain();
 const globalVar = useGlobalVar();
+const NM = useNM()
 const route = useRoute();
 let id = ref(route.query.id) as Ref<string>
 
@@ -196,7 +197,11 @@ watch(routeId, async () => {
         if(routeQuery.value.type == '歌单'){
             loadingFlag.value = true
             id.value = route.query.id as string
-            list.value = (await Main.reqPlaylistTrackAll(id.value,500,0)).data.songs
+            if(route.query.nm != 'true'){
+                list.value = (await Main.reqPlaylistTrackAll(id.value,500,0)).data.songs
+            }else{
+                list.value = (await NM.reqPlaylistTrackAll(id.value,500,0)).data.songs
+            }
             let arr: [any] | [] = []
             list.value.forEach((element): void => {
                 arr.push(element.id as never);
@@ -255,7 +260,12 @@ const vLoad: Directive = (el: HTMLElement) => {
 
 const load = async() => {
     if (forLength.value + 500 > songNumber.value && songNumber.value - forLength.value > 0){
-        const MoreSong:any[] = (await Main.reqPlaylistTrackAll(id.value,songNumber.value - forLength.value,forLength.value)).data.songs
+        let MoreSong:any[] 
+        if(route.query.nm != 'true'){
+            MoreSong = (await Main.reqPlaylistTrackAll(id.value,songNumber.value - forLength.value,forLength.value)).data.songs
+        }else{
+            MoreSong = (await NM.reqPlaylistTrackAll(id.value,songNumber.value - forLength.value,forLength.value)).data.songs
+        }
         list.value.push(...MoreSong);
         let arr: [any] | [] = []
         list.value.forEach((element): void => {
@@ -265,7 +275,12 @@ const load = async() => {
         forLength.value += songNumber.value - forLength.value
     }
     else if (songNumber.value - forLength.value > 0){
-        const MoreSong:any[] = (await Main.reqPlaylistTrackAll(id.value,500,forLength.value)).data.songs
+        let MoreSong:any[] 
+        if(route.query.nm != 'true'){
+            MoreSong = (await Main.reqPlaylistTrackAll(id.value,500,forLength.value)).data.songs
+        }else{
+            MoreSong = (await NM.reqPlaylistTrackAll(id.value,500,forLength.value)).data.songs
+        }
         list.value.push(...MoreSong);
         let arr: [any] | [] = []
         list.value.forEach((element): void => {

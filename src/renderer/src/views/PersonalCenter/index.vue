@@ -289,7 +289,6 @@ const init = async() =>{
             personalMessage.like = results[0].data.profile!.follows
             personalMessage.follow = results[0].data.profile!.eventCount
             personalMessage.describe = results[0].data.profile!.signature
-            console.log(BasicApi.followsId,results[0].data.profile!.userId);
             personalMessage.followed = BasicApi.followsId.includes(results[0].data.profile!.userId)
             createPlay.value = results[0].data.profile!.playlistCount  - 1
             playList.value = results[1].data.playlist

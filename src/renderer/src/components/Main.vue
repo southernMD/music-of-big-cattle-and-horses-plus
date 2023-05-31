@@ -66,7 +66,7 @@
               <LeftBlock data-right="1" data-type="playListLike" 
               :data-txt="`歌单：${Main.playList[0]?.name} by ${Main.playList[0]?.creator?.nickname}`" 
               :data-pic="Main.playList[0]?.coverImgUrl"
-              :big="false" :privacy="Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
+              :big="false" :privacy="+Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
                 :index="0">
                 <template #default>
                   <i class="iconfont icon-aixin"></i>
@@ -82,10 +82,10 @@
               <LeftBlock data-right="1" data-type="playListMy" 
                 :data-txt="`歌单：${Main.playList[valueIndex]?.name} by ${Main.playList[valueIndex]?.creator?.nickname}`" 
                 :data-pic="Main.playList[valueIndex]?.coverImgUrl"
-                v-for="(valueIndex, index) in Main.createPlay" :privacy="Main.playList[valueIndex]?.privacy"
+                v-for="(valueIndex, index) in Main.createPlay" :privacy="+Main.playList[valueIndex]?.privacy"
                 :message="Main.playList[valueIndex]?.name" :big="false" :id="Main.playList[valueIndex]?.id"
                 :index="valueIndex" :key="Main.playList[valueIndex]?.id">
-                <template #default v-if="Main.playList[valueIndex].privacy == 10">
+                <template #default v-if="+Main.playList[valueIndex].privacy == 10">
                   <i class="iconfont icon-suoding_o"></i>
                 </template>
                 <template #default v-else>
@@ -115,10 +115,10 @@
                 :data-pic="Main.playList[valueIndex + Main.createPlay]?.coverImgUrl"
                 v-for="(valueIndex, index) in Main.startPlay"
                 :message="Main.playList[valueIndex + Main.createPlay]?.name"
-                :privacy="Main.playList[valueIndex + Main.createPlay]?.privacy"
+                :privacy="+Main.playList[valueIndex + Main.createPlay]?.privacy"
                 :id="Main.playList[valueIndex + Main.createPlay]?.id" :index="valueIndex + Main.createPlay" :big="false"
                 :key="Main.playList[valueIndex + Main.createPlay]?.id">
-                <template #default v-if="Main.playList[valueIndex + Main.createPlay - 1]?.privacy == 10">
+                <template #default v-if="+Main.playList[valueIndex + Main.createPlay]?.privacy == 10">
                   <i class="iconfont icon-suoding_o"></i>
                 </template>
                 <template #default v-else>
@@ -167,11 +167,12 @@
   import { ElScrollbar } from 'element-plus'
 //   import zhCn from 'element-plus/lib/locale/lang/zh-cn'
 import { toRef, ref, watch,nextTick, Ref, Suspense } from 'vue';
-import { useMainMenu, useMain,useGlobalVar,useBasicApi } from '../store'
+import { useMainMenu, useMain,useGlobalVar,useBasicApi,useNM } from '../store'
 import { useRoute, useRouter } from 'vue-router';
 
 import LeftBlock from './myVC/LeftBlock.vue';
 import MyDialog from './myVC/MyDialog.vue';
+import e from 'express';
 
 const MainMenu = useMainMenu();
 const Main = useMain();
@@ -179,7 +180,7 @@ const route = useRoute();
 const globalVar = useGlobalVar()
 const $router = useRouter();
 const BasicApi = useBasicApi();
-
+const NM = useNM()
 const messageList:Ref<any[]> = ref([])
 const routeName:Ref<any[]> = ref([])
 // const findMusic = ['个性推荐', 'q2', 'q3']
@@ -336,7 +337,12 @@ const createPlayList = async()=>{
   if(playListName.value.length == 0)return
   globalVar.loadDefault = true
   addPlayFlag.value = false
-  const result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  let result 
+  if(!localStorage.getItem('NMcookie')){
+    result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  }else{
+    result = await NM.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  }
   if(result.id){
     if(globalVar.addPlayId.length == 0){
       globalVar.loadDefault = false
@@ -347,9 +353,17 @@ const createPlayList = async()=>{
     Main.playList.splice(1,0,result)
     Main.createPlay++
     if(globalVar.addPlayId.length != 0){
-        let result2 = (await Main.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
+      let result2
+      if(localStorage.getItem('NMcookie')){
+        result2 = (await NM.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
+      }else{
+        result2 = (await Main.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
+      }
+      if(result2.url){
+        Main.playList[1].coverImgUrl = result.url
+      }
         globalVar.loadDefault = false
-        if (result2.body.code == 200) {
+        if (result2.body.code == 200 || (result2.code == 200 && localStorage.getItem('NMcookie'))) {
           globalVar.loadMessageDefault = '已收藏到歌单'
           globalVar.loadMessageDefaultFlag = true 
           Main.playList[1].trackCount += globalVar.addPlayId.length
