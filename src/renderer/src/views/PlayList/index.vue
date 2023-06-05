@@ -7,7 +7,7 @@
                 <div class="title">
                     <div class="Btag">{{ $route.query.type }}</div>
                     <span>{{ playList[index]?.name }}</span>
-                    <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true'" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
+                    <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true' && index!=0" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
                 </div>
                 <div class="author" v-if="route.query.type == '歌单'">
                     <el-image @click="goPersonal" fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl">
@@ -50,13 +50,13 @@
                             noClick: isStartStyle()
                         }">
                             <span v-if="(dynamic?.subscribed ?? dynamic?.isSub)">已</span>
-                            <span>收藏({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span>
+                            <span>收藏<span v-if="!($route.query.type == '专辑' && ifNM)">({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span></span>
                         </div>
                     </div>
                     <div @click="sharePlayList" class="fengxiang h" v-if="!suoFlag" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
                         <i class="iconfont icon-fenxiang"></i>
                         <div class="txt">
-                            <span>分享({{ numberSimp(dynamic?.shareCount) }})</span>
+                            <span>分享<span v-if="!($route.query.type == '专辑' && ifNM)">({{ numberSimp(dynamic?.shareCount) }})</span></span>
                         </div>
                     </div>
                     <div class="download h" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }"
@@ -131,7 +131,7 @@
                     <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
                         message="歌曲列表" :ifClick="flagList[0]" :big="true" @click="goRoute('songPlaylist'); changeTag(0)">
                     </Tag>
-                    <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
+                    <Tag class="tag-play" v-if="!($route.query.type == '专辑' && ifNM)" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
                         :message="`评论(${dynamic?.commentCount})`" :ifClick="flagList[1]" :big="true"
                         @click="goRoute('commentPlaylist'); changeTag(1)">
                     </Tag>
@@ -188,7 +188,8 @@ const MainMenu = useMainMenu();
 const globalVar = useGlobalVar();
 const NM = useNM()
 const $el = getCurrentInstance() as ComponentInternalInstance;
-
+const ifNM = ref(false)
+if(localStorage.getItem('NMcookie'))ifNM.value = true
 const changeTag = (index: number) => {
     flagList.value.forEach((value, i) => {
         if (i == index) {
@@ -255,7 +256,11 @@ const goRoute = (name: string,message?:string) => {
 const playAll = async () => {
     let result 
     if(route.query.type == '歌单'){
-        result = (await Main.reqPlaylistTrackAll(id.value)).data;
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqPlaylistTrackAll(id.value)).data;
+        }else{
+            result = (await Main.reqPlaylistTrackAll(id.value)).data;
+        }
         Main.playingList = result.songs
         Main.playingPrivileges = result.privileges
         Main.playingindex = 1
@@ -289,7 +294,11 @@ const addAll = async () => {
     } else {
         let result
         if(route.query.type == '歌单'){
-            result = (await Main.reqPlaylistTrackAll(id.value)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(id.value)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(id.value)).data;
+            }
         }else if(route.query.type == '专辑'){
             result = (await Main.reqAlbumTrackAll(id.value)).data;
         }
@@ -414,10 +423,10 @@ watch(routeQuery, async () => {
         //注入
         songNumber.value = playList.value[index.value].trackCount
         tags.value = playList.value[index.value].tags
-        if(route.query.nm != 'true'){
-            dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
-        }else{
+        if(localStorage.getItem('NMcookie')){
             dynamic.value = await NM.reqPlaylistDetailDynamic(id.value) as any;
+        }else{
+            dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
         }
         // console.log(dynamic);
         // console.log(await Main.reqPlaylistTrackAll(id.value));
@@ -446,12 +455,12 @@ watch(routeQuery, async () => {
 
     } else if (route.name == 'songPlaylist' && route.query.my as string != 'true') {
         if(route.query.type == '歌单'){
-            if(route.query.nm != 'true'){
-                dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
-                Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
-            }else{
+            if(localStorage.getItem('NMcookie')){
                 dynamic.value = await NM.reqPlaylistDetailDynamic(route.query.id) as any;
                 Main.searchList = [(await NM.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+            }else{
+                dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
+                Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
             }
             console.log(Main.searchList);
             index.value = 0
@@ -696,7 +705,11 @@ const add = ()=>{
 const confirm = async(tag)=>{
     console.log(tag);
     try {
-        await Main.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
+        if(localStorage.getItem('NMcookie')){
+            await NM.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
+        }else{
+            await Main.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
+        }
         tags.value = Main.playList[index.value].tags
         globalVar.loadMessageDefault = '保存成功!'
         globalVar.loadMessageDefaultFlag = true
@@ -731,6 +744,10 @@ const goPersonal = ()=>{
 }
 
 const sharePlayList = ()=>{
+    if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
+        globalVar.flagLogin = true
+        return
+    }
     globalVar.shareDialogFlag = true
     globalVar.share.id = id.value
     globalVar.share.type = route.query.type=='歌单'? 'playlist':'album'
@@ -744,6 +761,10 @@ const sharePlayList = ()=>{
 
 const start = async()=>{
     console.log(dynamic);
+    if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
+        globalVar.flagLogin = true
+        return
+    }
     if(isStartStyle())return
     else{
         if(dynamic.value?.subscribed ?? dynamic.value?.isSub){
@@ -753,8 +774,20 @@ const start = async()=>{
             try {
                 globalVar.loadDefault = true
                 let flag = false
-                if(dynamic.value?.subscribed != undefined)flag =  await Main.reqPlaylistSubscribe(2,id.value)
-                else flag = await Main.reqAlbumSub(2,id.value)
+                if(dynamic.value?.subscribed != undefined){
+                    if(localStorage.getItem('NMcookie')){
+                        flag =  await NM.reqPlaylistSubscribe(2,id.value)
+                    }else{
+                        flag =  await Main.reqPlaylistSubscribe(2,id.value)
+                    }
+                }
+                else {
+                    if(localStorage.getItem('NMcookie')){
+                        flag = await NM.reqAlbumSub(2,id.value)
+                    }else{
+                        flag = await Main.reqAlbumSub(2,id.value)
+                    }
+                }
                 console.log(flag);
                 globalVar.loadDefault = false
                 if(flag){
@@ -762,8 +795,13 @@ const start = async()=>{
                     globalVar.loadMessageDefaultFlag = true
                     if(dynamic.value?.subscribed != undefined){
                         dynamic.value.bookedCount--
+                        Main.startPlay--
                         dynamic.value!.subscribed = false
-                        Main.reqUserPlaylist(BasicApi.profile!.userId)
+                        if(localStorage.getItem('NMcookie')){
+                            NM.reqUserPlaylist(BasicApi.profile!.userId)
+                        }else{
+                            Main.reqUserPlaylist(BasicApi.profile!.userId)
+                        }
                     }else{
                         dynamic.value.subCount--
                         dynamic.value!.isSub = false
@@ -789,8 +827,20 @@ const start = async()=>{
             try {
                 globalVar.loadDefault = true
                 let flag = false
-                if(dynamic.value?.subscribed != undefined)flag =  await Main.reqPlaylistSubscribe(1,id.value)
-                else flag = await Main.reqAlbumSub(1,id.value)
+                if(dynamic.value?.subscribed != undefined){
+                    if(localStorage.getItem('NMcookie')){
+                        flag =  await NM.reqPlaylistSubscribe(1,id.value)
+                    }else{
+                        flag =  await Main.reqPlaylistSubscribe(1,id.value)
+                    }
+                }
+                else {
+                    if(localStorage.getItem('NMcookie')){
+                        flag =  await NM.reqAlbumSub(1,id.value)
+                    }else{
+                        flag = await Main.reqAlbumSub(1,id.value)
+                    }
+                }
                 console.log(flag);
                 globalVar.loadDefault = false
                 if(flag){
@@ -798,12 +848,22 @@ const start = async()=>{
                     globalVar.loadMessageDefaultFlag = true
                     if(dynamic.value?.subscribed != undefined){
                         dynamic.value.bookedCount++
+                        Main.startPlay++
                         dynamic.value!.subscribed = true
-                        Main.reqUserPlaylist(BasicApi.profile!.userId)
+                        if(localStorage.getItem('NMcookie')){
+                            NM.reqUserPlaylist(BasicApi.profile!.userId)
+                        }else{
+                            Main.reqUserPlaylist(BasicApi.profile!.userId)
+                        }
                     }else{
                         dynamic.value.subCount++
                         dynamic.value!.isSub = true
-                        await BasicApi.reqalbumSublist(1)
+                        if(localStorage.getItem('NMcookie')){
+                            await NM.reqalbumSublist(1)
+                        }else{
+                            await BasicApi.reqalbumSublist(1)
+                        }
+                        
                     }
                 }else{
                     globalVar.loadMessageDefault = '收藏失败'
@@ -830,7 +890,12 @@ const closePrivacy = (done : ()=>void)=>{
 }
 const confirmPrivacy = async()=>{
     globalVar.loadDefault = true
-    let flag = await  Main.reqPlaylistPrivacy(id.value)
+    let flag
+    if(localStorage.getItem('NMcookie')){
+        flag = await NM.reqPlaylistPrivacy(id.value)
+    }else{
+        flag = await Main.reqPlaylistPrivacy(id.value)
+    }
     globalVar.loadDefault = false
     if(flag){
         globalVar.loadMessageDefault = '歌单已公开'
@@ -1091,7 +1156,7 @@ const canclePrivacy = ()=>{
 
                 .fengxiang {
                     margin-left: 10px;
-                    min-width: 100px;
+                    min-width: 75px;
                     width: auto;
                     height: 32px;
                     border-radius: 2em;
@@ -1111,7 +1176,7 @@ const canclePrivacy = ()=>{
 
                         >span {
                             display: block;
-                            width: 75px;
+                            padding-right: 10px;
                         }
                     }
                 }

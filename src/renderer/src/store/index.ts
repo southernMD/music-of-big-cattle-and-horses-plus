@@ -42,7 +42,7 @@ import {
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
-import { NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMUserLike, NMUserPlaylist, NMUserSubcount, NMalbumSublist, NMartistSublist, NMplaylistDetail, NMplaylistTrackAll, NMplaylistTracks, NMuserFollows } from '@renderer/api/niuma';
+import { NMCommentFloor, NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMPlaylistSubscribe, NMSearch, NMUploadAvatar, NMUserLike, NMUserPlaylist, NMUserSubcount, NMalbumSub, NMalbumSublist, NMartistSub, NMartistSublist, NMcomment, NMcommentLike, NMcommentMusic, NMcommentPlaylist, NMfollow, NMgetDetail, NMlikeQ, NMplaylistDelete, NMplaylistDetail, NMplaylistOrderUpdate, NMplaylistPrivacy, NMplaylistSubscribers, NMplaylistTrackAll, NMplaylistTracks, NMrecommendPlayList, NMshareResource, NMsongOrderUpdate, NMupdatePlayList, NMupdatePlayListTags, NMuploadPlaylistPic, NMuserFolloweds, NMuserFollows, NMuserUpdate } from '@renderer/api/niuma';
 
 interface E {
     ifToCloseWindow: boolean,
@@ -973,16 +973,16 @@ export const useMain = defineStore('Main', {
         },
         //
         async reqUserRecord(uid:number,type:1 | 0){
-            let result = await UserRecord(uid,type)
-            if(result.data.code != 200){
+            // let result = await UserRecord(uid,type)
+            // if(result.data.code != 200){
                 return new Promise<any[]>((resolve, reject) => {
                     resolve([])
                 })
-            }else{
-                return new Promise<any[]>((resolve, reject) => {
-                    resolve(result.data.allData ?? result.data.weekData ?? [])
-                })
-            }
+            // }else{
+            //     return new Promise<any[]>((resolve, reject) => {
+            //         resolve(result.data.allData ?? result.data.weekData ?? [])
+            //     })
+            // }
         },
         async reqAlbumDetailDynamic(id:number){
             let result = await AlbumDetailDynamic(id)
@@ -1636,7 +1636,7 @@ export const useNM = defineStore('NM',{
               return res;
             }
         },
-        async reqPlaylistTrackAll(id,limit,offset){
+        async reqPlaylistTrackAll(id,limit?,offset?){
             console.log(id, limit, offset);
             let result
             if(limit == undefined && offset == undefined){
@@ -1670,6 +1670,345 @@ export const useNM = defineStore('NM',{
             }else{
                 return new Promise<any>((resolve, reject) => {
                     resolve({})
+                })
+            }
+        },
+        //修改歌单信息
+        async reqUpdatePlayList(index:string,id:number,name:string,desc:string,tags:string){
+            let result = await NMupdatePlayList(id,name,desc,tags)
+            if(result.data.code == 200){
+                let result2 = await this.reqPlaylistDetail(id)
+                console.log(result2.data.playlist);
+                const playinglist = result2.data.playlist
+                useMain().playList[index] = playinglist
+                new Promise<boolean>((resolve, reject) => {
+                    resolve(result2)
+                })
+            }else{
+                new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqUpdatePlayListTags(index:number,id:number,tags:string){
+            let result = await NMupdatePlayListTags(id,tags)
+            if(result.data.code == 200){
+                useMain().playList[index].tags = tags.split(';')
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    reject(false)
+                })
+            }
+        },
+        async reqUploadPlaylistPic(id:number,formData:FormData,imgSize:number,imgX:number,imgY:number){
+            let result = await NMuploadPlaylistPic(id,formData,imgSize,imgX,imgY)
+            console.log(result.data.data.url);
+            console.log(result.data.data);
+            console.log(result.data);
+            if(result.data.data.code == 200){
+                return new Promise<string>((resolve, reject) => {
+                    resolve(result.data.data.url)
+                })
+            }else{
+                return new Promise<string>((resolve, reject) => {
+                    resolve('')
+                })
+            }
+        },
+        async reqPlaylistOrderUpdate(ids: [number]): Promise<any> {
+            let result = await NMplaylistOrderUpdate(ids);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                alert('error')
+            }
+        },
+        async reqUserUpdate(form:any){
+            let result = await NMuserUpdate(form)
+            if(result.data.code == 200){
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqUploadAvatar(formData:FormData,imgSize:number,imgX:number,imgY:number){
+            let result = await NMUploadAvatar(formData,imgSize,imgX,imgY)
+            console.log(result.data.data.url);
+            console.log(result.data.data);
+            console.log(result.data);
+            if(result.data.data.code == 200){
+                return new Promise<string>((resolve, reject) => {
+                    resolve(result.data.data.url)
+                })
+            }else{
+                return new Promise<string>((resolve, reject) => {
+                    resolve('')
+                })
+            }
+        },
+        //喜欢歌曲
+        async reqLike(id: number, like: boolean): Promise<any> {
+            try {
+                let result = await NMlikeQ(id, like);
+                if (result.data.code == 200) {
+                    return new Promise((resolve: any) => {
+                        resolve(result)
+                    })
+                }
+            } catch (error) {
+                return new Promise((resolve, reject) => {
+                    resolve({
+                        data: {
+                            code: '405'
+                        }
+                    })
+                })
+            }
+        },
+        async reqSongOrderUpdate(pid: number, ids: [number]): Promise<any> {
+            let result = await NMsongOrderUpdate(pid, ids);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                alert('error')
+            }
+        },
+        //公开隐私歌单
+        async reqPlaylistPrivacy (id){
+            let result = await NMplaylistPrivacy(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //删除歌单
+        async reqPlaylistDelete(id){
+            let result = await NMplaylistDelete(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqSearch(key:string,type?:string,limit?:number,offset?:number){
+            const Main = useMain()
+            let result = await NMSearch(key,type,limit,offset)
+            console.log(result);
+            if(type=='1000')Main.searchNumber = result.data.result.playlistCount
+            if(type=='1002')Main.searchNumber = result.data.result.userprofileCount
+            if(Main.searchNumber != 0){
+                return new Promise<any>((resolve, reject) => {
+                    if(type=='1000')resolve(result.data.result.playlists)
+                    if(type=='1002')resolve(result.data.result.userprofiles)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve([])
+                })
+            }
+
+        },
+        async reqPlaylistSubscribe(t:1|2,id:number){
+            let result = await NMPlaylistSubscribe(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqDetail(id){
+            let result = await NMgetDetail(id);
+            return new Promise<AxiosResponse>((resolve) => {
+                resolve(result)
+            })
+        },
+        async reqPlaylistSubscribers(id,limit,offset){
+            let result = await NMplaylistSubscribers(id,limit,offset)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve({
+                        more:result.data.more,
+                        list:result.data.subscribers
+                    })
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({
+                        more:false,
+                        list:[]
+                    })
+                })
+            }
+        },
+        //每日推荐歌单
+        async reqRecommendPlayList() {
+            let result = await NMrecommendPlayList();
+            console.log(result.data);
+            if (result.data.code == 200) {
+                useBasicApi().everyDayPlayList = result.data.recommend
+                return new Promise((resolve) => {
+                    resolve(result.data.recommend)
+                })
+            }
+        },
+        async reqFollow(id,t){
+            let result = await NMfollow(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async requserFolloweds(id,limit,offser){
+            let result = await NMuserFolloweds(id,limit,offser)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve([])
+                })
+            }
+        },
+        async reqArtistSub(id,t){
+            let result = await NMartistSub(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //收藏专辑
+        async reqAlbumSub(t:1|2,id:number){
+            let result = await NMalbumSub(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //评论/删除
+        async reqcomment(obj: comment.delComment | comment.sendComment): Promise<any> {
+            try {
+                let result = await NMcomment(obj);
+                if (result.data.code == 200) {
+                    return new Promise((resolve: any) => {
+                        resolve(result)
+                    })
+                }
+            } catch (error) {
+                return new Promise((resolve, reject) => {
+                    resolve({
+                        data: {
+                            code: '300'
+                        }
+                    })
+                })
+            }
+        },
+        //获取歌单评论
+        async reqCommentPlaylist(id: number, limit?: number, offset?: number, before?: number): Promise<any> {
+            let result = await NMcommentPlaylist(id, limit, offset, before);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                alert('error')
+                console.log(result);
+            }
+        },
+        //点赞
+        async reqcommentLike (cid:number,options: { id?: number; threadId?: string; },t:1 | 0,type:0|1|2|3|4|5|6|7){
+            let result = await NMcommentLike(cid,options,t,type)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(200)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve(400)
+                })
+            }
+        },
+        async reqCommentMusic(id: number, limit?: number, offset?: number, before?: number): Promise<any> {
+            let result = await NMcommentMusic(id, limit, offset, before);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                alert('error')
+                console.log(result);
+            }
+        },
+        //楼层评论
+        async reqCommentFloor(parentCommentId:number,id:number,type:number){
+            let result = await NMCommentFloor(parentCommentId,id,type)
+            if(result.data.code == 200){
+                return new Promise<{fa:any,time:number,ch:any[]}>((resolve, reject) => {
+                    resolve({
+                        fa:result.data.data.ownerComment,
+                        ch:[],
+                        time:0
+                    })
+                })
+            }else{
+                return new Promise<{fa:any,time:number,ch:any[]}>((resolve, reject) => {
+                    resolve({
+                        fa:{},
+                        ch:[],
+                        time:0
+                    })
+                })
+            }
+        },
+        async reqShareResource(formData:FormData){
+            let result = await NMshareResource(formData)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
                 })
             }
         },

@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useMain,useGlobalVar, useBasicApi } from '@renderer/store'
+import { useMain,useGlobalVar, useBasicApi,useNM } from '@renderer/store'
 import { toRef, watch, ref, getCurrentInstance,ComponentInternalInstance } from 'vue';
 // import $route from '@/router'
 import { useRouter,useRoute } from 'vue-router';
@@ -37,6 +37,7 @@ const $route = useRoute();
 const MainPinia = useMain();
 const globalVar = useGlobalVar();
 const BasicApi = useBasicApi()
+const NM = useNM()
 const props = defineProps<{
     message: string   //标题信息
     big:boolean         //点击是否放大
@@ -105,7 +106,11 @@ const moveingPlayListEnd = async()=>{
         del = copyPlayList.splice(MainPinia.dragIndex,1)
         copyPlayList.splice(addInde,0,del[0])
         globalVar.loadDefault = true
-        await MainPinia.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
+        if(!localStorage.getItem('NMcookie')){
+            await MainPinia.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
+        }else{
+            await NM.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
+        }
         globalVar.loadDefault = false
         MainPinia.playList = copyPlayList
         //你现在浏览的是要拖动的        

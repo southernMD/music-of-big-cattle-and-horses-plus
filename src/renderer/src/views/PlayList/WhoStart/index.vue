@@ -18,19 +18,25 @@
 <script setup lang="ts">
   import messageCard from '@renderer/components/myVC/messageCard.vue';
   import {ref ,nextTick,onMounted, watch} from 'vue'
-  import { useMain } from '@renderer/store';
+  import { useMain,useNM } from '@renderer/store';
   import { useRoute } from 'vue-router';
   const $route = useRoute()
   const Main = useMain();
   let list = ref(new Array())
   let more = ref(true)
+  const NM = useNM()
   const listRef = ref<(InstanceType<typeof HTMLElement>)>()
   const limit = ref(20)
   const offset = ref(0)
   const id = ref(+$route.query.id!)
   const load = async()=>{
     if(more.value){
-      let result = await Main.reqPlaylistSubscribers(id.value,limit.value,offset.value)
+      let result
+      if($route.query.nm == 'true'){
+        result = await NM.reqPlaylistSubscribers(id.value,limit.value,offset.value)
+      }else{
+        result = await Main.reqPlaylistSubscribers(id.value,limit.value,offset.value)
+      }
       offset.value+=limit.value
       more.value = result.more
       let lists = result.list as Array<any>

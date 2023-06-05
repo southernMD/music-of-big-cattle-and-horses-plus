@@ -197,10 +197,10 @@ watch(routeId, async () => {
         if(routeQuery.value.type == '歌单'){
             loadingFlag.value = true
             id.value = route.query.id as string
-            if(route.query.nm != 'true'){
-                list.value = (await Main.reqPlaylistTrackAll(id.value,500,0)).data.songs
-            }else{
+            if(localStorage.getItem('NMcookie')){
                 list.value = (await NM.reqPlaylistTrackAll(id.value,500,0)).data.songs
+            }else{
+                list.value = (await Main.reqPlaylistTrackAll(id.value,500,0)).data.songs
             }
             let arr: [any] | [] = []
             list.value.forEach((element): void => {
@@ -261,10 +261,10 @@ const vLoad: Directive = (el: HTMLElement) => {
 const load = async() => {
     if (forLength.value + 500 > songNumber.value && songNumber.value - forLength.value > 0){
         let MoreSong:any[] 
-        if(route.query.nm != 'true'){
-            MoreSong = (await Main.reqPlaylistTrackAll(id.value,songNumber.value - forLength.value,forLength.value)).data.songs
-        }else{
+        if(localStorage.getItem('NMcookie')){
             MoreSong = (await NM.reqPlaylistTrackAll(id.value,songNumber.value - forLength.value,forLength.value)).data.songs
+        }else{
+            MoreSong = (await Main.reqPlaylistTrackAll(id.value,songNumber.value - forLength.value,forLength.value)).data.songs
         }
         list.value.push(...MoreSong);
         let arr: [any] | [] = []
@@ -276,10 +276,10 @@ const load = async() => {
     }
     else if (songNumber.value - forLength.value > 0){
         let MoreSong:any[] 
-        if(route.query.nm != 'true'){
-            MoreSong = (await Main.reqPlaylistTrackAll(id.value,500,forLength.value)).data.songs
-        }else{
+        if(localStorage.getItem('NMcookie')){
             MoreSong = (await NM.reqPlaylistTrackAll(id.value,500,forLength.value)).data.songs
+        }else{
+            MoreSong = (await Main.reqPlaylistTrackAll(id.value,500,forLength.value)).data.songs
         }
         list.value.push(...MoreSong);
         let arr: [any] | [] = []

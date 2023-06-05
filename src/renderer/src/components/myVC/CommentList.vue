@@ -54,13 +54,14 @@
 import {watchEffect} from 'vue'
 import {useMain} from '@renderer/store'
 import {useRouter,useRoute} from 'vue-router';
-import { useGlobalVar } from '@renderer/store';
+import { useGlobalVar,useNM } from '@renderer/store';
 import {getCurrentInstance, watch,ComponentInternalInstance,toRef,Ref,ref, onMounted, nextTick } from 'vue'
 const $el = getCurrentInstance() as ComponentInternalInstance 
 const $router = useRouter()
 const globalVar = useGlobalVar()
 const $route = useRoute()
 const Main = useMain()
+const NM = useNM()
 const props = defineProps<{
     commentFlag:boolean
     nowPage:number
@@ -118,7 +119,12 @@ const offsetVal = ref<InstanceType<typeof HTMLElement>>()
 watch(nowPage, async () => {
     if(type.value == 0){
         commentFlag.value = false
-        let result = (await Main.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+        let result
+        if(localStorage.getItem('NMcookie')){
+          result = (await NM.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+        }else{
+          result = (await Main.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+        }
         comments.value = result.comments;
         commentFlag.value = true
         if(nowPage.value == 1){
@@ -128,7 +134,12 @@ watch(nowPage, async () => {
         }
     }else if(type.value == 2){
         commentFlag.value = false
-        let result = (await Main.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
+        let result
+        if(localStorage.getItem('NMcookie')){
+          result = (await NM.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
+        }else{
+          result = (await Main.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
+        }
         comments.value = result.comments;
         commentFlag.value = true
     }else if(type.value == 6){

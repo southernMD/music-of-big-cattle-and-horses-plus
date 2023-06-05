@@ -52,13 +52,14 @@
 
 <script setup lang="ts">
 import {Ref, reactive,ref,toRaw,watch} from 'vue'
-import { useBasicApi,useMain,useGlobalVar } from '@renderer/store';
+import { useBasicApi,useMain,useGlobalVar,useNM } from '@renderer/store';
 import dropDown from '@renderer/components/myVC/dropDown.vue';
 import { useRouter } from 'vue-router';
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const Main = useMain()
 const $router = useRouter()
+const NM = useNM()
 const form = reactive({
     name: toRaw(BasicApi.profile)?.nickname,
     description: toRaw(BasicApi.profile)?.signature,
@@ -198,16 +199,30 @@ const onSubmit = async()=>{
     }
     console.log(t);
     globalVar.loadDefault = true
-    if(await Main.reqUserUpdate(t)){
-        await BasicApi.reqLogin(localStorage.getItem('cookieUser') as string)
-        globalVar.loadDefault = false
-        globalVar.loadMessageDefault = '保存成功!'
-        globalVar.loadMessageDefaultFlag = true
+    if(localStorage.getItem('NMcookie')){
+        if(await NM.reqUserUpdate(t)){
+            await NM.reqLogin()
+            globalVar.loadDefault = false
+            globalVar.loadMessageDefault = '保存成功!'
+            globalVar.loadMessageDefaultFlag = true
+        }else{
+            globalVar.loadDefault = false
+            globalVar.loadMessageDefault = '保存失败!'
+            globalVar.loadMessageDefaultFlag = true
+        }
     }else{
-        globalVar.loadDefault = false
-        globalVar.loadMessageDefault = '保存失败!'
-        globalVar.loadMessageDefaultFlag = true
+        if(await Main.reqUserUpdate(t)){
+            await BasicApi.reqLogin(localStorage.getItem('cookieUser') as string)
+            globalVar.loadDefault = false
+            globalVar.loadMessageDefault = '保存成功!'
+            globalVar.loadMessageDefaultFlag = true
+        }else{
+            globalVar.loadDefault = false
+            globalVar.loadMessageDefault = '保存失败!'
+            globalVar.loadMessageDefaultFlag = true
+        }
     }
+
 }
 </script>
 

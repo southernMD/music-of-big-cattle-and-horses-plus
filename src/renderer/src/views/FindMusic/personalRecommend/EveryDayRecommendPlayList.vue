@@ -32,19 +32,25 @@
 
 <script lang='ts' setup>
 import { toRef,shallowRef } from 'vue'
-import { useMain, useBasicApi ,useGlobalVar} from '@renderer/store'
+import { useMain, useBasicApi ,useGlobalVar,useNM} from '@renderer/store'
 import{useRouter} from 'vue-router'
 import {sampleSize} from 'lodash'
 import PlayListShow from '@renderer/components/myVC/PlayListShow.vue'
 const globalVar = useGlobalVar()
 const Main = useMain()
+const NM = useNM()
 const BasicApi = useBasicApi()
 const $router = useRouter()
 
 let playList = toRef(BasicApi,'everyDayPlayList') 
 let playListRand = shallowRef(sampleSize(playList.value,10))
 const playAll = async (id)=>{
-    let result = (await Main.reqPlaylistTrackAll(id)).data;
+    let result 
+    if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqPlaylistTrackAll(+id)).data;
+    }else{
+        result = (await Main.reqPlaylistTrackAll(+id)).data;
+    }
     Main.playingList = result.songs
     Main.playingPrivileges = result.privileges
     Main.playingindex = 1
@@ -67,7 +73,8 @@ const go = ({id})=>{
     $router.push({
         name:'songPlaylist',
         query:{
-            id,my:'false',type:'歌单'
+            id,my:'false',type:'歌单',
+            nm:localStorage.getItem('NMcookie')?'true':'false'
         }
     })
 }

@@ -31,7 +31,7 @@ export const Timeago2 = (timestamp:number)=>{
   const now = dayjs();
   const targetTime = dayjs(timestamp);
   if (now.isSame(targetTime, 'day')) {
-    return format(targetTime.valueOf(), 'zh_CN');
+    return format(targetTime.valueOf(), 'zh_CN').replace(/\s/g, '');
   } else if (now.isSame(targetTime.add(1, 'day'), 'day')) {
     return targetTime.format('昨天 HH:mm');
   } else if(now.year() === targetTime.year()){

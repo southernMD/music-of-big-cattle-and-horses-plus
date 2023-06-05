@@ -96,13 +96,14 @@
 
 <script lang='ts' setup>
 import { onActivated, ref, Ref, getCurrentInstance, ComponentInternalInstance, nextTick, watch, toRef } from 'vue'
-import { useMain, useGlobalVar } from '@renderer/store'
+import { useMain, useGlobalVar,useNM } from '@renderer/store'
 import { throttle } from 'lodash'
 import { useRouter } from 'vue-router'
 const Main = useMain()
 const $router = useRouter()
 const globalVar = useGlobalVar()
 const $el = getCurrentInstance() as ComponentInternalInstance
+const NM = useNM()
 let FMplayFlag = ref(false)
 let currentTime = toRef(globalVar, 'currentTime')
 let lyricOffset = toRef(globalVar, 'lyricOffset')
@@ -273,12 +274,22 @@ let errorMassage = ref('')
 let typeError = ref('')
 let loadingWidth = ref('')
 const subCommit = async () => {
-    let result = (await Main.reqcomment({
-        t: 1,
-        type: 0,
-        id: playingId.value,
-        content: subCommitStr.value
-    })).data
+    let result 
+    if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqcomment({
+            t: 1,
+            type: 0,
+            id: playingId.value,
+            content: subCommitStr.value
+        })).data
+    }else{
+        result = (await Main.reqcomment({
+            t: 1,
+            type: 0,
+            id: playingId.value,
+            content: subCommitStr.value
+        })).data
+    }
     console.log(result);
     if (result.code == 200) {
         typeError.value = ''
@@ -310,7 +321,12 @@ let moreHot = ref(false)
 watch(playingId, async () => {
     if(playingId.value == -1)return 
     commentFlag.value = false
-    let result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+    let result
+    if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqCommentMusic(playingId.value, 20, 0)).data
+    }else[
+        result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+    ]
     console.log(result, '******&&&&&&&&');
     hotComments.value = result.hotComments;
     comments.value = result.comments;

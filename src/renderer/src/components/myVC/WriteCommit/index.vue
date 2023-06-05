@@ -20,6 +20,7 @@
         <Teleport to="body">
             <Emoji v-show="emoji" :top="topValue" :left="leftValue" @close="emoji = false" :flag="emoji" @sendEmojiStr="sendEmojiStr"></Emoji>
         </Teleport>
+        <slot name="share"></slot>
        <!-- <img :src="getAssetsFile('emoji_1.svg')" alt=""> -->
     </div>
 </template>

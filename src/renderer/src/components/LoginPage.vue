@@ -229,7 +229,8 @@ const loginNM = async ()=>{
         const p4 = NM.reqartistSublist()
         const p5 = NM.reqalbumSublist()
         const p6 = NM.requserFollows(BasicApi.profile?.userId,99999999,0)
-        await Promise.allSettled([p1,p2,p3,p4,p5,p6]).then(()=>{
+        const p7 = NM.reqRecommendPlayList()
+        await Promise.allSettled([p1,p2,p3,p4,p5,p6,p7]).then(()=>{
             LoadingFlag.value = false
             destroyVC();
             $router.replace({

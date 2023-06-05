@@ -63,7 +63,7 @@ const goZhuanji = (id)=>{
         $router.push({
             name:'songPlaylist',
             query:{
-                id,my:'false',type:'专辑'
+                id,my:'false',type:'专辑',nm:localStorage.getItem('NMcookie')?'true':'false'
             }
         })
     }

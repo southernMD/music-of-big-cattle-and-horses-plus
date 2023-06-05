@@ -139,7 +139,7 @@
 <script setup lang="ts">
 import {computed, nextTick, reactive, ref,Ref, watch, watchEffect} from 'vue'
 import { useRoute,useRouter } from 'vue-router';
-import { useBasicApi,useMain,useGlobalVar, useMainMenu } from '@renderer/store';
+import { useBasicApi,useMain,useGlobalVar, useMainMenu, useNM } from '@renderer/store';
 import icon from '@renderer/assets/icon.png'
 import Tag from '@renderer/components/myVC/Tag.vue';
 import PlayListShow from '@renderer/components/myVC/PlayListShow.vue';
@@ -157,6 +157,7 @@ const describe = ref()
 const TagList = ref()
 const blockList = ref()
 const nowPage = ref(1)
+const NM = useNM()
 if(sessionStorage.getItem('PersonalCenter') == null){
     TagList.value = [true,false]
     blockList.value = [true,false,false]
@@ -278,8 +279,14 @@ const init = async() =>{
         playList.value = Main.playList
     }else{
         try {
-            const p1 = BasicApi.reqDetail($route.query.id!)
-            const p2 = Main.reqUserPlaylist($route.query.id!+'')
+            let p1,p2
+            if(!localStorage.getItem('NMcookie')){
+                p1 = BasicApi.reqDetail($route.query.id!)
+                p2 = Main.reqUserPlaylist($route.query.id!+'')
+            }else{
+                p1 = NM.reqDetail($route.query.id!)
+                p2 = NM.reqUserPlaylist($route.query.id!+'')
+            }
             let results = await Promise.all([p1,p2])
             personalMessage.name = results[0].data.profile!.nickname
             //@ts-ignore
@@ -336,7 +343,12 @@ const playAll = async (id)=>{
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else{
-        let result = (await Main.reqPlaylistTrackAll(id)).data;
+        let result
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqPlaylistTrackAll(+id)).data;
+        }else{
+            result = (await Main.reqPlaylistTrackAll(+id)).data;
+        }
         Main.playingList = result.songs
         Main.playingPrivileges = result.privileges
         Main.playingindex = 1
@@ -362,14 +374,16 @@ const go = ({id,index,uid})=>{
             $router.push({
                 name:'songPlaylist',
                 query:{
-                    id,my:'true',index,type:'歌单'
+                    id,my:'true',index,type:'歌单',
+                    nm:localStorage.getItem('NMcookie')?'true':'false'
                 }
             })
         }else{
             $router.push({
                 name:'songPlaylist',
                 query:{
-                    id,my:'false',index,type:'歌单'
+                    id,my:'false',index,type:'歌单',
+                    nm:localStorage.getItem('NMcookie')?'true':'false'
                 }
             })
         }
@@ -441,16 +455,25 @@ const followUser = async()=>{
     try {
         let flag
         //取关
-        if(personalMessage.followed)flag  = await Main.reqFollow($route.query.id,2)
-        else flag = await Main.reqFollow($route.query.id,1)
+        if(localStorage.getItem('NMcookie')){
+            if(personalMessage.followed)flag  = await NM.reqFollow($route.query.id,2)
+            else flag = await NM.reqFollow($route.query.id,1)
+        }else{
+            if(personalMessage.followed)flag  = await Main.reqFollow($route.query.id,2)
+            else flag = await Main.reqFollow($route.query.id,1)
+        }
         if(flag){
             if(personalMessage.followed){
                 globalVar.loadMessageDefault = '取关成功'
                 BasicApi.followsId = BasicApi.followsId.filter(it=>it != +$route.query.id!)
+                BasicApi.profile!.follows--
+                personalMessage.fans--
             }
             else{
                 globalVar.loadMessageDefault = '关注成功'
                 BasicApi.followsId.push(+$route.query.id!)
+                BasicApi.profile!.follows++
+                personalMessage.fans++
             }
             personalMessage.followed =!personalMessage.followed
         }else{

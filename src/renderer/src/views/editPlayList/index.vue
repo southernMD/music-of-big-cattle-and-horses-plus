@@ -42,11 +42,12 @@
 <script setup lang="ts">
 import editorPage from '@renderer/components/myVC/editorPage.vue';
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
-import { useMain, useGlobalVar, useBasicApi } from '@renderer/store'
+import { useMain, useGlobalVar, useBasicApi,useNM } from '@renderer/store'
 import { onMounted, reactive, ref, toRaw, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 const AddTipDialogRef = ref<InstanceType<typeof AddTipDialog>>()
 const Main = useMain()
+const NM = useNM()
 const $route = useRoute()
 const globalVar = useGlobalVar()
 const $router = useRouter()
@@ -73,14 +74,18 @@ const onSubmit = async () => {
     ) return
     globalVar.loadDefault = true
     try {
-        await Main.reqUpdatePlayList(index.value, Main.playList[+index.value].id, form.name, form.description, form.tags.join(';'))
+        if(!localStorage.getItem('NMcookie')){
+            await Main.reqUpdatePlayList(index.value, Main.playList[+index.value].id, form.name, form.description, form.tags.join(';'))
+        }else{
+            await NM.reqUpdatePlayList(index.value, Main.playList[+index.value].id, form.name, form.description, form.tags.join(';'))
+        }
         globalVar.loadDefault = false
         globalVar.loadMessageDefault = '保存成功!'
         globalVar.loadMessageDefaultFlag = true
         $router.replace({
             name: 'songPlaylist',
             query: {
-                id: Main.playList[+index.value].id, index: index.value, my: 'true',type:'歌单'
+                id: Main.playList[+index.value].id, index: index.value, my: 'true',type:'歌单',nm:'true'
             }
         })
 

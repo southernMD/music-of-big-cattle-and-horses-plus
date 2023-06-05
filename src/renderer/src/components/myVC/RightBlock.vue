@@ -44,6 +44,7 @@ import { useRouter,useRoute } from 'vue-router'
 import { useMain ,useGlobalVar,useBasicApi,useNM} from '@renderer/store'
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
+import e from 'express';
 const Main = useMain()
 const NM = useNM()
 const BasicApi = useBasicApi()
@@ -369,7 +370,11 @@ const play = async(id:string)=>{
     if(props.type.startsWith('playList')){
         let result 
         if(['playListMy','playListLike','playListSearchMy','playListStart','playList'].includes(props.type)){
-            result = (await Main.reqPlaylistTrackAll(id)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(id)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(id)).data;
+            }
             Main.playingList = result.songs
             Main.playingPrivileges = result.privileges
             Main.playingindex = 1
@@ -398,7 +403,11 @@ const play = async(id:string)=>{
     }else if(props.type.startsWith('share')){
         let result 
         if(props.type.startsWith('sharePlayList') ){
-            result = (await Main.reqPlaylistTrackAll(+id)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(+id)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(+id)).data;
+            }
             Main.playingList = result.songs
             Main.playingPrivileges = result.privileges
             Main.playingindex = 1
@@ -492,7 +501,11 @@ const nextPlay = async(id:string)=>{
         }
         let result 
         if(['playListMy','playListLike','playListSearchMy','playListStart','playList',].includes(props.type)){
-            result = (await Main.reqPlaylistTrackAll(id)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(+id)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(+id)).data;
+            }
             const list:any = []
             const listPrivileges:any = []
             result.songs.forEach((element: any, index: number) => {
@@ -521,7 +534,11 @@ const nextPlay = async(id:string)=>{
             let list:any = []
             let listPrivileges:any = []
             if(props.type.startsWith('sharePlayList')){
-                result = (await Main.reqPlaylistTrackAll(+id)).data;
+                if(localStorage.getItem('NMcookie')){
+                    result = (await NM.reqPlaylistTrackAll(+id)).data;
+                }else{
+                    result = (await Main.reqPlaylistTrackAll(+id)).data;
+                }
                 list = result.songs
                 listPrivileges = result.privileges
             }else if(props.type.startsWith('shareSong')){
@@ -616,7 +633,13 @@ const dowloadAll = async (id) => {
     // await Promise.all(promises);
     let oldlength = globalVar.downloadList.length
     let songs
-    if(props.type.startsWith('playList')) songs = (await Main.reqPlaylistDetail(id)).data.playlist.tracks
+    if(props.type.startsWith('playList')){
+        if(localStorage.getItem('NMcookie')){
+            songs = (await NM.reqPlaylistTrackAll(id)).data.songs
+        }else{
+            songs = (await Main.reqPlaylistDetail(id)).data.playlist.tracks
+        }
+    }
     else if(props.type.startsWith('al')) songs =  (await Main.reqAlbumTrackAll(id)).data.songs
     songs.forEach((item)=>{
         let name = ''
@@ -689,7 +712,12 @@ const delPlayList = async(id)=>{
     try {
         if(props.type == 'playListMy'){
             globalVar.loadDefault = true
-            let flag = await Main.reqPlaylistDelete(id)
+            let flag 
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqPlaylistDelete(id)
+            }else{
+                flag = await Main.reqPlaylistDelete(id)
+            }
             globalVar.loadDefault = false
             if(flag){
                 const index = Main.playListId.indexOf(+id)
@@ -705,7 +733,12 @@ const delPlayList = async(id)=>{
             }
         }else if(props.type == 'playListStart'){
             globalVar.loadDefault = true
-            let flag = await Main.reqPlaylistSubscribe(2,id)
+            let flag 
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqPlaylistSubscribe(2,id)
+            }else{
+                flag = await Main.reqPlaylistSubscribe(2,id)
+            }
             globalVar.loadDefault = false
             if(flag){
                 const index = Main.playListId.indexOf(+id)
@@ -866,14 +899,23 @@ const start = async(id:string)=>{
     try {
         if(props.type.startsWith('playList')){
             globalVar.loadDefault = true
-            let flag = await Main.reqPlaylistSubscribe(1,+id)
+            let flag
+            if(!localStorage.getItem('NMcookie')){
+                flag = await Main.reqPlaylistSubscribe(1,+id)
+            }else{
+                flag = await NM.reqPlaylistSubscribe(1,+id)
+            }
             globalVar.loadDefault = false
             if(flag){
                 const index = Main.playListId.indexOf(+id)
                 Main.playListId.splice(index,1)
                 Main.playList.splice(index,1)
-                Main.startPlay--
-                Main.reqUserPlaylist(BasicApi.profile!.userId)
+                Main.startPlay++
+                if(localStorage.getItem('NMcookie')){
+                    NM.reqUserPlaylist(BasicApi.profile!.userId)
+                }else{
+                    Main.reqUserPlaylist(BasicApi.profile!.userId)
+                }
                 globalVar.loadMessageDefault = '收藏成功'
                 globalVar.loadMessageDefaultFlag = true
             }else{
@@ -882,20 +924,37 @@ const start = async(id:string)=>{
                 globalVar.loadMessageDefaultFlag = true
             }
         }else if(props.type == 'songHand'){
-            let flag = await Main.reqArtistSub(id,1)
+            let flag
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqArtistSub(id,1)
+            }else{
+                flag = await Main.reqArtistSub(id,1)
+            }
             if(flag){
                 globalVar.loadMessageDefault = '关注成功'
-                BasicApi.reqartistSublist()
-
+                if(localStorage.getItem('NMcookie')){
+                    NM.reqartistSublist()
+                }else{
+                    BasicApi.reqartistSublist()
+                }
             }else{
                 globalVar.loadMessageDefault = '关注失败'
             }
             globalVar.loadMessageDefaultFlag = true
         }else if(props.type == 'al'){
-            let flag = await Main.reqAlbumSub(1,+id)
+            let flag
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqAlbumSub(1,+id)
+            }else{
+                flag = await Main.reqAlbumSub(1,+id)
+            }
             if(flag){
                 globalVar.loadMessageDefault = '收藏成功'
-                BasicApi.reqalbumSublist(1)
+                if(localStorage.getItem('NMcookie')){
+                    NM.reqalbumSublist(1)
+                }else{
+                    BasicApi.reqalbumSublist(1)
+                }
             }else{
                 globalVar.loadMessageDefault = '收藏失败'
             }
@@ -911,7 +970,12 @@ const start = async(id:string)=>{
 }
 const delstart = async(id)=>{
     if(props.type == 'songHandHad'){
-        let flag = await Main.reqArtistSub(id,2)
+        let flag 
+        if(localStorage.getItem('NMcookie')){
+            flag = await NM.reqArtistSub(id,2)
+        }else{
+            flag = await Main.reqArtistSub(id,2)
+        }
         if(flag){
             globalVar.loadMessageDefault = '取关成功'
             BasicApi.startSongHand = BasicApi.startSongHand.filter(item=>item.id != +id)
@@ -920,7 +984,12 @@ const delstart = async(id)=>{
         }
         globalVar.loadMessageDefaultFlag = true
     }else if(props.type == 'alHad'){
-        let flag = await  Main.reqAlbumSub(2,+id)
+        let flag
+        if(localStorage.getItem('NMcookie')){
+            flag = await NM.reqAlbumSub(2,+id)
+        }else{
+            flag = await Main.reqAlbumSub(2,+id)
+        }
         if(flag){
             globalVar.loadMessageDefault = '专辑取消收藏成功'
             BasicApi.startalbum = BasicApi.startalbum.filter(item=>item.id != +id)
@@ -956,12 +1025,22 @@ const delComment = async(ids:string)=>{
         }
     }else{
         globalVar.loadDefault = true
-        let res = await Main.reqcomment({
-            t:0,
-            type:+props.commentType!,
-            id:+resId,
-            commentId:+id
-        })
+        let res
+        if(localStorage.getItem('NMcookie')){
+            res = await NM.reqcomment({
+                t:0,
+                type:+props.commentType!,
+                id:+resId,
+                commentId:+id
+            })
+        }else{
+            res = await Main.reqcomment({
+                t:0,
+                type:+props.commentType!,
+                id:+resId,
+                commentId:+id
+            })
+        }
         globalVar.loadDefault = false
         globalVar.loadDefault = false
         if(res.data.code == 200){

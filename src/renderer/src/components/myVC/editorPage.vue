@@ -51,11 +51,12 @@
 <script setup lang="ts">
 import { reactive, ref, toRaw, Ref, nextTick, onMounted, watch, ComponentPublicInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
-import { useMain, useGlobalVar,useBasicApi } from '@renderer/store'
+import { useMain, useGlobalVar,useBasicApi,useNM } from '@renderer/store'
 import MyDialog from '@renderer/components/myVC/MyDialog.vue'
 const $route = useRoute()
 const index = ref($route.query.index as string)
 const Main = useMain()
+const NM = useNM()
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi()
 
@@ -262,11 +263,26 @@ const confirm = async () => {
     formData.append('imgFile', file)
     try {
         if(props.type == 'playList'){
-            let result = await Main.reqUploadPlaylistPic(Main.playList[+index.value].id, formData, Math.ceil(nowWHValue / scale.value), Math.floor(imgX / scale.value), Math.floor(imgY / scale.value))
-            Main.playList[index.value].coverImgUrl = result + `?t=${new Date().getTime()}`
+            if(localStorage.getItem('NMcookie')){
+                let result = await NM.reqUploadPlaylistPic(Main.playList[+index.value].id, formData, Math.ceil(nowWHValue / scale.value), Math.floor(imgX / scale.value), Math.floor(imgY / scale.value))
+                Main.playList[index.value].coverImgUrl = result + `?t=${new Date().getTime()}`
+            }else{
+                let result = await Main.reqUploadPlaylistPic(Main.playList[+index.value].id, formData, Math.ceil(nowWHValue / scale.value), Math.floor(imgX / scale.value), Math.floor(imgY / scale.value))
+                Main.playList[index.value].coverImgUrl = result
+            }
         }else if(props.type == 'user'){
-            let result = await Main.reqUploadAvatar(formData, Math.ceil(nowWHValue / scale.value), Math.floor(imgX / scale.value), Math.floor(imgY / scale.value))
-            if(result.length != 0)BasicApi.profile!.avatarUrl = result + `?t=${new Date().getTime()}`
+            if(localStorage.getItem('NMcookie')){
+                let result = await NM.reqUploadAvatar(formData, Math.ceil(nowWHValue / scale.value), Math.floor(imgX / scale.value), Math.floor(imgY / scale.value))
+                if(result.length != 0){
+                    BasicApi.profile!.avatarUrl = result
+                    for(let i=0;i<=Main.createPlay;i++){
+                        Main.playList[i].creator.avatarUrl = result
+                    }
+                }
+            }else{
+                let result = await Main.reqUploadAvatar(formData, Math.ceil(nowWHValue / scale.value), Math.floor(imgX / scale.value), Math.floor(imgY / scale.value))
+                if(result.length != 0)BasicApi.profile!.avatarUrl = result + `?t=${new Date().getTime()}`
+            }
         }
         picFlag.value = false
         globalVar.loadDefault = false

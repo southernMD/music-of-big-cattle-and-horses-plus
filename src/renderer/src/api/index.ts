@@ -685,7 +685,7 @@ export const artists = (id)=>{
         url:`/artists?id=${id}&t=${new Date().getTime()}`,
         method:'POST',
         data:{
-            cookie:localStorage.getItem('cookieUser')
+            cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
         }
     })
 }
@@ -718,7 +718,7 @@ export const simiartist = (id:number)=>{
         url:`/simi/artist?id=${id}`,
         method:'POST',
         data:{
-            cookie:localStorage.getItem('cookieUser')
+            cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
         }
     })
 }
@@ -901,3 +901,4 @@ export const githubUpdate = ()=>{
         return null
     }
 }
+

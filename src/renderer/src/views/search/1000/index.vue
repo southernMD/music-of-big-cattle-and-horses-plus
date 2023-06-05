@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { ref, Ref, watch, toRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
-import { useGlobalVar, useMain, useBasicApi } from '@renderer/store'
+import { useGlobalVar, useMain, useBasicApi ,useNM} from '@renderer/store'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
 const list: Ref<Map<number, any[]>> = ref(new Map())
 const $route = useRoute()
@@ -20,12 +20,21 @@ const $router = useRouter()
 const Main = useMain()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
-list.value.set(1, await Main.reqSearch($route.query.key as string, '1000', 20, 0))
+const NM = useNM()
+if(localStorage.getItem('NMcookie')){
+    list.value.set(1, await NM.reqSearch($route.query.key as string, '1000', 20, 0))
+}else{
+    list.value.set(1, await Main.reqSearch($route.query.key as string, '1000', 20, 0))
+}
 console.log(list.value.get(1));
 watch(() => $route.query.key, async () => {
     if ($route.name === '1000') {
         list.value.clear()
-        list.value.set(1, await Main.reqSearch($route.query.key as string, '1000', 20, 0))
+        if(localStorage.getItem('NMcookie')){
+            list.value.set(1, await NM.reqSearch($route.query.key as string, '1000', 20, 0))
+        }else{
+            list.value.set(1, await Main.reqSearch($route.query.key as string, '1000', 20, 0))
+        }
         nowPage.value = 1
     }
 })
@@ -37,7 +46,11 @@ watch(total, () => {
 })
 watch(nowPage, async () => {
     if (!list.value.has(nowPage.value)) {
-        list.value.set(nowPage.value, await Main.reqSearch($route.query.key as string, '1000', 20, (nowPage.value - 1) * 20))
+        if(localStorage.getItem('NMcookie')){
+            list.value.set(nowPage.value, await NM.reqSearch($route.query.key as string, '1000', 20, (nowPage.value - 1) * 20))
+        }else{
+            list.value.set(nowPage.value, await Main.reqSearch($route.query.key as string, '1000', 20, (nowPage.value - 1) * 20))
+        }
     } else {
         globalVar.scrollToTop = true
     }
@@ -51,7 +64,8 @@ const goDetail = (id) => {
             query: {
                 id,
                 my: 'false',
-                type: '歌单'
+                type: '歌单',
+                nm:localStorage.getItem('NMcookie')?'true':'false'
             }
         })
     } else {
@@ -61,7 +75,8 @@ const goDetail = (id) => {
                 id,
                 index,
                 my: 'true',
-                type: '歌单'
+                type: '歌单',
+                nm:localStorage.getItem('NMcookie')?'true':'false'
             }
         })
     }

@@ -58,7 +58,11 @@
         <template #midle>
             <div class="default" v-show="change">
                 <div class="writ">
-                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
+                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef">
+                        <template #share v-if="ifNM">
+                            <i @click.self="addShareImage" class="iconfont icon-icon-" :class="{noDrag:!Main.dragMouse}" ></i>
+                        </template>
+                    </WriteCommit>
                 </div>
                 <div class="add" @click="changeFn">
                     <div class="img" ref="imgRef">
@@ -66,6 +70,15 @@
                     </div>
                     <div class="message">{{choiceMessage}}</div>
                     <i class="iconfont icon-guanbi_o" v-show="choiceType != 'noresource'" @click.stop="clearChoice"></i> 
+                </div>
+                <div class="imgs" v-show="shareimages.length!= 0">
+                    <div class="ig" v-for="buffer,index in shareimages" draggable="false">
+                        <el-image draggable="false" :src="buffer"></el-image>
+                        <i class="icon-cuowu iconfont" @click="delimg(index)"></i>
+                    </div>
+                    <div class="ig addd" @click="addShareImage" v-show="shareimages.length != 9">
+                        <i class="iconfont icon-jiahao_o"></i>
+                    </div>
                 </div>
             </div>
             <div class="search" v-show="!change">
@@ -136,9 +149,10 @@
 import {ref,Ref, watch,nextTick } from 'vue'
 import eventBlock from '@renderer/components/myVC/eventBlock.vue';
 import Tag from '@renderer/components/myVC/Tag.vue';
-import { useMain,useBasicApi,useGlobalVar } from '@renderer/store';
+import { useMain,useBasicApi,useGlobalVar,useNM } from '@renderer/store';
 import { useRouter } from 'vue-router';
 const BasicApi = useBasicApi()
+const NM = useNM()
 const $router = useRouter()
 const Main = useMain()
 const valFlag = ref(true)
@@ -148,6 +162,8 @@ const otherList:Ref<any[]> = ref([])
 const lasttime = ref(-1)
 const globalVar = useGlobalVar()
 //
+const ifNM = ref(false)
+if(localStorage.getItem('NMcookie'))ifNM.value = true
 const leftRef = ref<(InstanceType<typeof HTMLElement>)>()
 Main.reqMyEvent().then(async(val)=>{
     const event:any[] = val.event
@@ -224,11 +240,39 @@ const closeDialog = (done:()=>void)=>{
     senddongtaiFlag.value = false
     init()
 }
+
+function base64toFile(base64Data) {
+  const arr = base64Data.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const extension = mime.split('/')[1];
+  const timestamp = Date.now();
+  const fileName = `${timestamp}.${extension}`;
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], fileName, { type: mime });
+}
+
 const confirm = async()=>{
     if(change.value){
         senddongtaiFlag.value = false
         globalVar.loadDefault  = true
-        let result = await Main.reqShareResource(choiceType.value,choiceId.value,zhuanfaMessage.value)
+        let result
+        if(localStorage.getItem('NMcookie')){
+            const formData = new FormData()
+            shareimages.value.forEach((base64,index)=>{
+                formData.append('files',base64toFile(base64))
+            })
+            if(globalVar.share.type != 'noresource')formData.append('id', globalVar.share.id);
+            formData.append('type', globalVar.share.type);
+            formData.append('msg', globalVar.share.txt);
+            result = await NM.reqShareResource(formData)
+        }else{
+            result = await Main.reqShareResource(choiceType.value,choiceId.value,zhuanfaMessage.value)
+        }
         globalVar.loadDefault  = false
         if(result.code == 200){
             globalVar.loadMessageDefault = '分享成功'
@@ -290,7 +334,11 @@ const goSearch = async(index:number)=>{
     change2.value = false
     FlagList.value.fill(false)
     FlagList.value[index] = true
-    listSearch.value= await Main.reqSearch(input.value.trim(),messageType[index],30,0)
+    if(['1002','1000'].includes(messageType[index]) && localStorage.getItem('NMcookie')){
+        listSearch.value= await NM.reqSearch(input.value.trim(),messageType[index],30,0)
+    }else{
+        listSearch.value= await Main.reqSearch(input.value.trim(),messageType[index],30,0)
+    }
     console.log(listSearch.value);
 }
 watch(input,()=>{
@@ -388,7 +436,34 @@ const goFans = ()=>{
         }
     })
 }
-
+const shareimages:Ref<ArrayBuffer[]> = ref([])
+const addShareImage = ()=>{
+    window.electron.ipcRenderer.invoke('add-share-image',shareimages.value.length).then(async(lius:PromiseSettledResult<any>[])=>{
+        let p = await Promise.allSettled(lius.map((item)=>{
+            return new Promise<any>((resolve, reject) => {
+                if(item.status == 'fulfilled'){
+                    const blob = new Blob([item.value], { type: 'image/png' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onload = function(event) {
+                        const base64Data:ArrayBuffer = event.target!.result as ArrayBuffer;
+                        console.log(base64Data);
+                        resolve(base64Data!)
+                    };
+                }else{
+                    resolve(new ArrayBuffer(1))
+                }
+            })
+        }))
+        p.forEach((item:any)=>{
+            shareimages.value.push(item.value)
+        })
+        console.log(shareimages.value);
+    })
+}
+const delimg = (index)=>{
+    shareimages.value.splice(index,1)
+}
 </script>
 
 <style scoped lang="less">
@@ -525,21 +600,26 @@ const goFans = ()=>{
 .default{
     margin-top: -20px;
     .writ{
-    border: 1px solid @small-font-color;
-    border-radius: .2em;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    box-sizing: border-box;
-    :deep(.writeCommit){
-        .input-bk{
-            margin-left: 0;
-            margin-right: 2px;
+        border: 1px solid @small-font-color;
+        border-radius: .2em;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        box-sizing: border-box;
+        :deep(.writeCommit){
+            .input-bk{
+                margin-left: 0;
+                margin-right: 2px;
+            }
         }
-    }
-    :deep(.option){
-        margin-left: 10px;
-        margin-top: 0px;
-    }
+        :deep(.option){
+            margin-left: 10px;
+            margin-top: 0px;
+        }
+
+        .icon-icon-{
+            font-size: 25px;
+            margin-left: 5px;
+        }
     }
     .add{
         height: 50px;
@@ -582,6 +662,62 @@ const goFans = ()=>{
                 color: @font-color-hover;
             }
         }
+    }
+    .imgs{
+        margin-top: 10px;
+        width: 100%;
+        // background-color: red;
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+        flex-wrap: wrap;
+        .ig{
+            user-select: none;
+            flex: 0 0 15%;
+            position: relative;
+            border-radius: .5em;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            .el-image{
+                width: 100%;
+                height: 100%;
+                :deep(img){
+                    width:100%;
+                    height: 65px;
+                    border-radius: .5em;
+                }
+            }
+            .icon-cuowu{
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                font-size: 20px;
+                background-color: white;
+                border-radius: 2em;
+                display: none;
+            }
+            &:hover i{
+                display: block;
+                cursor: pointer;
+            }
+        }
+        .addd{
+            height: 67px;
+            width: 65px;
+            border: 1px dashed  @small-font-color;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            i{
+                font-size: 40px;
+            }
+        }
+        :not(:nth-child(6n)) {
+            margin-right: 2%;
+        }
+
     }
 }
 .search{

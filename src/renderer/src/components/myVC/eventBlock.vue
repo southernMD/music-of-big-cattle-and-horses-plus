@@ -141,7 +141,7 @@
 
 <script setup lang="ts">
 import {ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, provide, ref, toRaw, watch} from 'vue'
-import {useMain,useGlobalVar, useBasicApi} from '@renderer/store'
+import {useMain,useGlobalVar, useBasicApi,useNM} from '@renderer/store'
 import { Timeago2 } from '@renderer/utils/dayjs'
 import CommentList from './CommentList.vue'
 import MyDialog from './MyDialog.vue'
@@ -151,6 +151,7 @@ import { useRouter } from 'vue-router'
 const $router = useRouter()
 // import {regEmoji} from '@/utils/regEmoji'
 const fenxiang = ref(true)
+const NM = useNM()
 const BasicApi = useBasicApi()
 provide('fenxiang', fenxiang)
 const props = defineProps<{
@@ -284,15 +285,27 @@ const subCommit = async()=>{
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
             globalVar.loadMessageDefaultFlag = true
         }else{
-            let obj:comment.sendComment = {
-                t:2,
-                type:6,
-                threadId:props.threadId,
-                content:commitMessage.value.split(`回复${replayName.value}:`)[1],
-                commentId:replayId.value
+            let obj:comment.sendComment,result
+            if(localStorage.getItem('NMcookie')){
+                obj = {
+                    t:2,
+                    type:6,
+                    id:props.threadId,
+                    content:commitMessage.value.split(`回复${replayName.value}:`)[1],
+                    commentId:replayId.value
+                }
+                result = (await NM.reqcomment(obj)).data;
+            }else{
+                obj = {
+                    t:2,
+                    type:6,
+                    threadId:props.threadId,
+                    content:commitMessage.value.split(`回复${replayName.value}:`)[1],
+                    commentId:replayId.value
+                }
+                result = (await Main.reqcomment(obj)).data;
             }
             console.log(obj);
-            let result = (await Main.reqcomment(obj)).data;
             console.log(result);
             if(result.code == 200){
                 globalVar.loadMessageDefaultFlag = true;
@@ -323,13 +336,24 @@ const subCommit = async()=>{
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
             globalVar.loadMessageDefaultFlag = true
         }else{
-            let obj:comment.sendComment = {
-                t:1,
-                type:6,
-                threadId:props.threadId,
-                content:commitMessage.value
+            let obj:comment.sendComment,result;
+            if(localStorage.getItem('NMcookie')){
+                obj = {
+                    t:1,
+                    type:6,
+                    id:props.threadId,
+                    content:commitMessage.value
+                }
+                result = (await NM.reqcomment(obj)).data;
+            }else{
+                obj = {
+                    t:1,
+                    type:6,
+                    threadId:props.threadId,
+                    content:commitMessage.value
+                }
+                result = (await Main.reqcomment(obj)).data;
             }
-            let result = (await Main.reqcomment(obj)).data;
             if(result.code == 200){
                 globalVar.loadMessageDefault = '评论成功！'
                 globalVar.loadMessageDefaultFlag = true

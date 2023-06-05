@@ -49,10 +49,11 @@ import {reactive, ref} from 'vue'
 import {useRouter,useRoute} from 'vue-router'
 import Comment from '@renderer/views/PlayList/Comment/index.vue'
 import CommentLine from '@renderer/components/myVC/Comment.vue'
-import { useMain } from '@renderer/store'
+import { useMain,useNM } from '@renderer/store'
 const Main = useMain()
 const $router = useRouter()
 const $route = useRoute()
+const NM = useNM()
 const cid = ref(+$route.query.cid!)
 const sid = ref(+$route.query.id!)
 const songMessage = reactive<{
@@ -72,7 +73,12 @@ let songDetail
 try {
     if(cid.value){
         const p1 = Main.reqSongDetail([sid.value])
-        const p2 = Main.reqCommentFloor(cid.value,sid.value,0)
+        let p2;
+        if(localStorage.getItem('NMcookie')){
+            p2 = NM.reqCommentFloor(cid.value,sid.value,0)
+        }else{
+            p2 = Main.reqCommentFloor(cid.value,sid.value,0)
+        }
         Promise.all([p1,p2]).then((results)=>{
             console.log(p1,p2);
             songDetail = results[0]

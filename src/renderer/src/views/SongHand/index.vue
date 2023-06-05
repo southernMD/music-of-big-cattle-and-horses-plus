@@ -147,7 +147,7 @@ import PlayListShow from '@renderer/components/myVC/PlayListShow.vue';
 import HBlock from '@renderer/components/myVC/HBlock.vue';
 import HaveSongShow from '@renderer/components/myVC/HaveSongShow.vue'
 import {toRef,ref, watchEffect,Ref, reactive, watch} from 'vue'
-import { useMain,useMainMenu,useGlobalVar } from '@renderer/store';
+import { useMain,useMainMenu,useGlobalVar,useNM } from '@renderer/store';
 import { useRoute,useRouter } from 'vue-router';
 import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useBasicApi } from '@renderer/store';
@@ -157,6 +157,7 @@ const $router = useRouter()
 const MainMenu = useMainMenu()
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi()
+const NM = useNM()
 let mainColor = toRef(MainMenu, 'colorBlock')
 const TagList = ref()
 const blockList = ref()
@@ -371,7 +372,7 @@ const goHandSong = async(id)=>{
     // window.location.href = path +`?id=${id}`
 }
 $router.afterEach(async(to, from, failure) => {
-    if(to.query.id != from.query.id && to.name == from.name){
+    if(to.query.id != from.query.id && to.name == from.name && to.name == 'SongHand'){
         await init(to.query.id,1)
         changeTag(0,true)
         globalVar.scrollToTop = true
@@ -382,8 +383,20 @@ const subSonger = async()=>{
     try {
         let flag
         //取关
-        if(isSub.value)flag  = await Main.reqArtistSub($route.query.id,2)
-        else flag = await Main.reqArtistSub($route.query.id,1)
+        if(isSub.value){
+            if(localStorage.getItem('NMcookie')){
+                flag  = await NM.reqArtistSub($route.query.id,2)
+            }else{
+                flag  = await Main.reqArtistSub($route.query.id,2)
+            }
+        }
+        else{
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqArtistSub($route.query.id,1)
+            }else{
+                flag = await Main.reqArtistSub($route.query.id,1)
+            }
+        }
         if(flag){
             if(isSub.value){
                 globalVar.loadMessageDefault = '取消收藏成功'
@@ -392,7 +405,11 @@ const subSonger = async()=>{
             else{
                 globalVar.loadMessageDefault = '收藏成功'
                 BasicApi.followsId.push(+$route.query.id!)
-                BasicApi.reqartistSublist()
+                if(localStorage.getItem('NMcookie')){
+                    NM.reqartistSublist()
+                }else{
+                    BasicApi.reqartistSublist()
+                }
             }
             isSub.value =!isSub.value
         }else{

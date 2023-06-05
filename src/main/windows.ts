@@ -886,6 +886,33 @@ export const createWindow = (path?:string):BrowserWindow=>{
         }
       })
     })
+    //分享图片
+    ipcMain.handle('add-share-image',({},length)=>{
+      return new Promise<any>((resolve, reject) => {
+        dialog.showOpenDialog(mainWindow,{
+          title:'选择一张图片或一段视频',
+          filters:[
+            {name:'图片资源',extensions:['jpg','png','jpeg','webp']},
+          ],
+          properties:['openFile','multiSelections']
+        }).then(async({canceled,filePaths })=>{
+          if(!canceled){
+            //file-re
+            filePaths = filePaths.slice(0,9 - length)
+            const lius = await Promise.allSettled(filePaths.map((path)=>{
+              return new Promise<any>((resolve, reject) => {
+                fs.readFile(path,(err,data)=>{
+                  if(err)reject(err)
+                  else resolve(data)
+                })
+              })
+            }))
+            resolve(lius)
+          }
+        })
+      })
+
+    })
     
     return mainWindow
 }

@@ -73,7 +73,7 @@
           <div class="right" v-show="ifShowRight">
             <el-scrollbar height="40%">
               <div class="main">
-                <div class="haveSong" v-show="simiPlaylist?.length !== 0">
+                <div class="haveSong" v-show="simiPlaylist?.length !== 0 && NMcookie">
                   <div class="title">
                     <span>包含这首歌的歌单</span>
                     <div class="block">
@@ -134,7 +134,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useMain, useMainMenu, useElectronToApp, useGlobalVar } from "@renderer/store";
+
+import { useMain, useMainMenu, useElectronToApp, useGlobalVar, useNM } from "@renderer/store";
 import {
   toRef,
   watch,
@@ -154,6 +155,7 @@ import MyMainMenu from '@renderer/components/MyMainMenu/index.vue'
 import ZhuanJi from '@renderer/components/myVC/LineMusic/ZhuanJi/index.vue'
 import Singer from '@renderer/components/myVC/LineMusic/Singer/index.vue'
 const Main = useMain();
+const NM = useNM()
 const MainMenu = useMainMenu();
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const $router = useRouter()
@@ -163,7 +165,10 @@ let playingindex = toRef(Main, "playingindex");
 let playingList = toRef(Main, "playingList");
 let detailStatus = toRef(Main, "detailStatus");
 let playingId = toRef(Main, "playing");
-
+const NMcookie = ref(true)
+onMounted(()=>{
+  if(localStorage.getItem('NMcookie'))NMcookie.value = false
+})
 defineProps<{
   currentTime: number;
   lyricOffset: number;
@@ -221,7 +226,12 @@ let nowPage = ref(1);
 let moreHot = ref(false)
 watch(playingId, async () => {
   if (playingId.value > 0) {
-    let result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+    let result
+    if(localStorage.getItem('NMcookie')){
+      result = (await NM.reqCommentMusic(playingId.value, 20, 0)).data
+    }else{
+      result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+    }
     hotComments.value = result.hotComments;
     comments.value = result.comments;
     total.value = result.total

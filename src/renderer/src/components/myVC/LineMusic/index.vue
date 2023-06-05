@@ -192,7 +192,14 @@ const likeOrDislike = async () => {
     let likeIndex = Main.likes.indexOf(props.id)
     if (likeIndex != -1) {
         //取消喜欢
-        let code = (await Main.reqLike(Number(props.id), false)).data.code
+        let code
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(props.id), false)).data
+            code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            code = (await Main.reqLike(Number(props.id), false)).data.code
+        }
         if (code == 405) {
             likeMessage.value = '操作繁忙，请稍后再试'
             globalVar.loadMessageDefault = likeMessage.value
@@ -203,10 +210,18 @@ const likeOrDislike = async () => {
             globalVar.loadMessageDefaultFlag = true
             Main.likes.splice(likeIndex, 1)
             Main.likeChange = `${props.id},false`
+            Main.playList[0].trackCount--
         }
 
     } else {
-        let code = (await Main.reqLike(Number(props.id), true)).data.code
+        let code
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(props.id), true)).data
+            code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            code = (await Main.reqLike(Number(props.id), true)).data.code
+        }
         if (code == 405) {
             likeMessage.value = '操作繁忙，请稍后再试'
             globalVar.loadMessageDefault = likeMessage.value
@@ -217,6 +232,7 @@ const likeOrDislike = async () => {
             globalVar.loadMessageDefaultFlag = true
             Main.likes.unshift(props.id)
             Main.likeChange = `${props.id},true`
+            Main.playList[0].trackCount++
         }
 
     }
@@ -254,7 +270,14 @@ const fnMouseDrag = async (e: any) => {
             if (String(playListid.value) != String(dom.getAttribute('data-id')) && Number(dom.getAttribute('data-index')) <= Main.createPlay) {
                 if(Number(dom.getAttribute('data-index')) == 0){
                     Main.dragMouse = false
-                    let code = (await Main.reqLike(Number(props.id), true)).data.code
+                    let code
+                    if(localStorage.getItem('NMcookie')){
+                        const res = (await NM.reqLike(Number(props.id), true)).data
+                        code = res.code
+                        if(code == 200) Main.playList[0].coverImgUrl = res.url
+                    }else{
+                        code = (await Main.reqLike(Number(props.id), true)).data.code
+                    }
                     if (code == 405) {
                         likeMessage.value = '操作繁忙，请稍后再试'
                         globalVar.loadMessageDefault = likeMessage.value
@@ -265,6 +288,7 @@ const fnMouseDrag = async (e: any) => {
                         globalVar.loadMessageDefaultFlag = true
                         Main.likes.unshift(props.id)
                         Main.likeChange = `${props.id},true`
+                        Main.playList[0].trackCount++
                     }
                 }else{
                     Main.dragMouse = false
@@ -299,13 +323,21 @@ const fnMouseDrag = async (e: any) => {
         if (Main.dragIndex - 1 > addIndex - 1) {      //上拖拽
             let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
             Main.openPlayListId.splice(addIndex - 1, 0, delId[0])
-            Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            if(localStorage.getItem('NMcookie')){
+                NM.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }else{
+                Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }
             $emit('warpPlace', { from: Main.dragIndex - 1, to: addIndex - 1 })
             
         } else {
             let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
             Main.openPlayListId.splice(addIndex - 1 - 1, 0, delId[0])
-            Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            if(localStorage.getItem('NMcookie')){
+                NM.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }else{
+                Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }
             $emit('warpPlace', { from: Main.dragIndex - 1, to: addIndex - 1 - 1 })
         }
         Main.dragMouse = false
@@ -313,7 +345,11 @@ const fnMouseDrag = async (e: any) => {
     if (domBottom) {
         let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
         Main.openPlayListId.push(delId[0] as never)
-        Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+        if(localStorage.getItem('NMcookie')){
+            NM.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+        }else{
+            Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+        }
         $emit('warpPlace', { from: Main.dragIndex - 1, to: -1 })
         Main.dragMouse = false
     }
@@ -446,7 +482,12 @@ const gotoPlay = (e: MouseEvent) => {
                         return;
                     }
                     if(globalVar.setting.playWay){
-                        let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                        let result
+                        if(localStorage.getItem('NMcookie')){
+                            result = (await NM.reqPlaylistTrackAll(playListid.value)).data;
+                        }else{
+                            result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                        }
                         Main.playingList = result.songs
                         Main.playingPrivileges = result.privileges
                         Main.playingindex = props.index as number

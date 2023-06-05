@@ -186,12 +186,25 @@
         <template #midle>
             <div class="default">
                 <div class="writ">
-                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
+                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef">
+                        <template #share v-if="ifNM">
+                            <i @click.self="addShareImage" class="iconfont icon-icon-" :class="{noDrag:!Main.dragMouse}" ></i>
+                        </template>
+                    </WriteCommit>
                 </div>
                 <div class="show">
                     <div class="img" ref="imgRef" v-show="globalVar.share.imgUrl.length != 0"></div>
                     <div class="name" v-if="globalVar.share.type == 'comment'">{{ globalVar.share.name}}</div>
                     <div class="message">{{globalVar.share.message }}</div>
+                </div>
+                <div class="imgs" v-show="shareimages.length!= 0">
+                    <div class="ig" v-for="buffer,index in shareimages" draggable="false">
+                        <el-image draggable="false" :src="buffer"></el-image>
+                        <i class="icon-cuowu iconfont" @click="delimg(index)"></i>
+                    </div>
+                    <div class="ig addd" @click="addShareImage" v-show="shareimages.length != 9">
+                        <i class="iconfont icon-jiahao_o"></i>
+                    </div>
                 </div>
             </div>
         </template>
@@ -228,6 +241,8 @@ const ElectronToApp = useElectronToApp()
 const NM = useNM()
 const $router = useRouter();
 const $route = useRoute();
+const ifNM = ref(false)
+if(localStorage.getItem('NMcookie'))ifNM.value = true
 let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbofang', 'icon-shunxubofang'])
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
@@ -290,23 +305,37 @@ watch(playingId, () => {
     }
 })
 
-const likeOrDislike = () => {
+const likeOrDislike = async () => {
     if(Main.playing < 0) return
     let likeIndex = likes.value.indexOf(playingId.value)
     if (likeIndex != -1) {
         //取消喜欢
-        Main.reqLike(Number(playingId.value), false)
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(playingId.value), false)).data
+            let code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            Main.reqLike(Number(playingId.value), false)
+        }
         likes.value.splice(likeIndex, 1)
+        Main.playList[0].trackCount--
         globalVar.loadMessageDefault = '取消喜欢成功'
         globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},false`
     } else {
-        Main.reqLike(Number(playingId.value), true)
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(playingId.value), true)).data
+            let code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            Main.reqLike(Number(playingId.value), true)
+        }
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
         globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
         globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},true`
+        Main.playList[0].trackCount++
     }
 
 }
@@ -324,7 +353,12 @@ watch(playListId, async () => {
             originalPrivileges.value = playingPrivileges.value
             originalsongIndex.value = playingindex.value
         } else {
-            let result = (await Main.reqPlaylistTrackAll(playListId.value)).data;
+            let result 
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(playListId.value)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(playListId.value)).data;
+            }
             originalList.value = result.songs
             originalPrivileges.value = result.privileges
             originalsongIndex.value = playingindex.value
@@ -1655,12 +1689,19 @@ const closeShareDialog = (done :()=>void)=>{
 
 const addIn = async(id,index)=>{
     if(index == 0 && willStartListId.value.length == 1){
-        Main.reqLike(Number(playingId.value), true)
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(playingId.value), true)).data
+            let code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            Main.reqLike(Number(playingId.value), true)
+        }
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
         globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
         globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},true`
+        Main.playList[0].trackCount++
     }else{
         globalVar.loadDefault = true
         let result 
@@ -1736,13 +1777,40 @@ watch(senddongtaiFlag,()=>{
         globalVar.flagLogin = true
         senddongtaiFlag.value = false
     }
-
 })
+
+function base64toFile(base64Data) {
+  const arr = base64Data.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const extension = mime.split('/')[1];
+  const timestamp = Date.now();
+  const fileName = `${timestamp}.${extension}`;
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], fileName, { type: mime });
+}
+
 const confirm = async()=>{
     try {
         senddongtaiFlag.value = false
         globalVar.loadDefault  = true
-        let result = await Main.reqShareResource(globalVar.share.type,globalVar.share.id,globalVar.share.txt)
+        let result
+        if(localStorage.getItem('NMcookie')){
+            const formData = new FormData()
+            shareimages.value.forEach((base64,index)=>{
+                formData.append('files',base64toFile(base64))
+            })
+            if(globalVar.share.type != 'noresource')formData.append('id', globalVar.share.id);
+            formData.append('type', globalVar.share.type);
+            formData.append('msg', globalVar.share.txt);
+            result = await NM.reqShareResource(formData)
+        }else{
+            result = await Main.reqShareResource(globalVar.share.type,globalVar.share.id,globalVar.share.txt)
+        }
         // let result = await Main.reqShareResource(globalVar.share.type,Main.playing,zhuanfaMessage.value)
         globalVar.loadDefault  = false
         if(result.code == 200){
@@ -1763,6 +1831,7 @@ const confirm = async()=>{
         }
         globalVar.share.txt = ''
     } catch (error) {
+        console.log(error);
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefault = '分享失败'
         globalVar.loadMessageDefaultFlag = true
@@ -1813,13 +1882,24 @@ const confirmComment = async()=>{
             globalVar.loadMessageDefaultFlag = true;
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
         }else{
-            let result = (await Main.reqcomment({
-                t:2,
-                type:0,
-                id:Main.playing,
-                content:commitMessage.value,
-                commentId:replayId.value
-            })).data
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqcomment({
+                    t:2,
+                    type:0,
+                    id:Main.playing,
+                    content:commitMessage.value,
+                    commentId:replayId.value
+                })).data
+            }else{
+                result = (await Main.reqcomment({
+                    t:2,
+                    type:0,
+                    id:Main.playing,
+                    content:commitMessage.value,
+                    commentId:replayId.value
+                })).data
+            }
             if(result.code == 200){
                 globalVar.loadMessageDefaultFlag = true;
                 globalVar.loadMessageDefault = '回复成功！'
@@ -1849,12 +1929,22 @@ const confirmComment = async()=>{
             globalVar.loadMessageDefaultFlag = true;
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
         }else{
-            let result = (await Main.reqcomment({
-                t:1,
-                type:0,
-                id:Main.playing,
-                content:commitMessage.value,
-            })).data
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqcomment({
+                    t:1,
+                    type:0,
+                    id:Main.playing,
+                    content:commitMessage.value,
+                })).data
+            }else{
+                result = (await Main.reqcomment({
+                    t:1,
+                    type:0,
+                    id:Main.playing,
+                    content:commitMessage.value,
+                })).data
+            }
             if(result.code == 200){
                 globalVar.loadMessageDefaultFlag = true;
                 globalVar.loadMessageDefault = '评论成功！'
@@ -2036,6 +2126,35 @@ const getTime = (item:id3Message)=>{
     }else{
         return 0
     }
+}
+
+const shareimages:Ref<ArrayBuffer[]> = ref([])
+const addShareImage = ()=>{
+    window.electron.ipcRenderer.invoke('add-share-image',shareimages.value.length).then(async(lius:PromiseSettledResult<any>[])=>{
+        let p = await Promise.allSettled(lius.map((item)=>{
+            return new Promise<any>((resolve, reject) => {
+                if(item.status == 'fulfilled'){
+                    const blob = new Blob([item.value], { type: 'image/png' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onload = function(event) {
+                        const base64Data:ArrayBuffer = event.target!.result as ArrayBuffer;
+                        console.log(base64Data);
+                        resolve(base64Data!)
+                    };
+                }else{
+                    resolve(new ArrayBuffer(1))
+                }
+            })
+        }))
+        p.forEach((item:any)=>{
+            shareimages.value.push(item.value)
+        })
+        console.log(shareimages.value);
+    })
+}
+const delimg = (index)=>{
+    shareimages.value.splice(index,1)
 }
 </script>
 
@@ -2727,21 +2846,25 @@ const getTime = (item:id3Message)=>{
 .default{
     margin-top: -20px;
     .writ{
-    border: 1px solid @small-font-color;
-    border-radius: .2em;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    box-sizing: border-box;
-    :deep(.writeCommit){
-        .input-bk{
-            margin-left: 0;
-            margin-right: 2px;
+        border: 1px solid @small-font-color;
+        border-radius: .2em;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        box-sizing: border-box;
+        :deep(.writeCommit){
+            .input-bk{
+                margin-left: 0;
+                margin-right: 2px;
+            }
         }
-    }
-    :deep(.option){
-        margin-left: 10px;
-        margin-top: 0px;
-    }
+        :deep(.option){
+            margin-left: 10px;
+            margin-top: 0px;
+        }
+        .icon-icon-{
+            font-size: 25px;
+            margin-left: 5px;
+        }
     }
     .show{
         height: 50px;
@@ -2791,6 +2914,62 @@ const getTime = (item:id3Message)=>{
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+    }
+    .imgs{
+        margin-top: 10px;
+        width: 100%;
+        // background-color: red;
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+        flex-wrap: wrap;
+        .ig{
+            user-select: none;
+            flex: 0 0 15%;
+            position: relative;
+            border-radius: .5em;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            .el-image{
+                width: 100%;
+                height: 100%;
+                :deep(img){
+                    width:100%;
+                    height: 65px;
+                    border-radius: .5em;
+                }
+            }
+            .icon-cuowu{
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                font-size: 20px;
+                background-color: white;
+                border-radius: 2em;
+                display: none;
+            }
+            &:hover i{
+                display: block;
+                cursor: pointer;
+            }
+        }
+        .addd{
+            height: 67px;
+            width: 65px;
+            border: 1px dashed  @small-font-color;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            i{
+                font-size: 40px;
+            }
+        }
+        :not(:nth-child(6n)) {
+            margin-right: 2%;
+        }
+
     }
 }
 

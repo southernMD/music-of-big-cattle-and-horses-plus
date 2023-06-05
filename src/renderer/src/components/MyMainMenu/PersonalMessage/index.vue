@@ -40,9 +40,10 @@
 import { watch, Ref, ref, getCurrentInstance,
  ComponentInternalInstance, onMounted, toRef,  } from 'vue';
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
-import {useBasicApi,useMain,useGlobalVar} from '@renderer/store'
+import {useBasicApi,useMain,useGlobalVar,useNM} from '@renderer/store'
 import { useRouter } from 'vue-router';
 const BasicApi = useBasicApi();
+const NM = useNM()
 const Main = useMain();
 const globalVar = useGlobalVar()
 const $el = getCurrentInstance() as ComponentInternalInstance;
@@ -102,6 +103,8 @@ const quitLogin = async()=>{
             BasicApi.profile=null;
             BasicApi.everyDaySong = []
             BasicApi.everyDayPlayList = []
+            BasicApi.startalbum = []
+            BasicApi.startSongHand = []
             Main.init()
             globalVar.loginQuit = true
             localStorage.removeItem('cookieUser');
@@ -122,6 +125,8 @@ const quitLogin = async()=>{
         BasicApi.profile=null;
         BasicApi.everyDaySong = []
         BasicApi.everyDayPlayList = []
+        BasicApi.startalbum = []
+        BasicApi.startSongHand = []
         Main.init()
         globalVar.loginQuit = true
         localStorage.removeItem('NMcookie');

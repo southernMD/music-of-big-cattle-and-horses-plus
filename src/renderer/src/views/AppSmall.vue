@@ -206,7 +206,12 @@ else if (!(cookie == '' || cookie == null || cookie == undefined)) {
     })
 }
 const p1 = BasicApi.reqRecommendSongs()
-const p2 = BasicApi.reqRecommendPlayList()
+let p2
+if(localStorage.getItem('NMcookie')){
+    p2 = NM.reqRecommendPlayList()
+}else{
+    p2 = BasicApi.reqRecommendPlayList()
+}
 const p3 = BasicApi.reqDjProgramToplist(10)
 const p4 = BasicApi.reqPlayListTags()
 await Promise.allSettled([p1, p2, p3, p4])
