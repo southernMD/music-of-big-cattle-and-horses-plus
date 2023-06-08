@@ -553,9 +553,9 @@ const newVersion = toRef(globalVar.setting,'newVersion')
 const url = toRef(globalVar.setting,'updataUrl')
 const updateFlag = toRef(globalVar.setting,'updateFlag')
 const searchUpdate = async()=>{
-    globalVar.loadDefault = true
+    // globalVar.loadDefault = true
     let res =  await githubUpdate()
-    globalVar.loadDefault = false
+    // globalVar.loadDefault = false
     if(res == null){
     }else{
         const v = res.data.name.split('v')[1]

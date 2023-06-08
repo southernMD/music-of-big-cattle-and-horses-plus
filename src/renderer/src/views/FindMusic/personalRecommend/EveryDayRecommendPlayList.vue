@@ -57,14 +57,6 @@ const playAll = async (id)=>{
     Main.playing = result.songs[0].id as number
     Main.beforePlayListId = id.value
     Main.playStatus = 'play'
-    let str = result.songs[0].name +' - ';
-    let singerArr = result.songs[0].ar as unknown as Array<any>
-    singerArr.forEach((element,index)=>{
-        str+=element.name
-        if(index != singerArr.length - 1)str+=' / '
-    })
-    window.electron.ipcRenderer.send('change-play-thum',str)
-    window.electron.ipcRenderer.send('render-play')
     globalVar.closePointOutMessage = '已经开始播放'
     globalVar.closePointOut = true
 }

@@ -6,10 +6,10 @@
     :imgUrl="BasicApi.profile?.avatarUrl"
     >
         <template #form>
-            <el-form :model="form" label-width="120px">
-                <el-form-item label="昵称：">
-                    <div class="input-bk">
-                        <el-input v-model="form.name" />
+            <el-form :model="form" label-width="120px" :rules="rules" ref="ruleFormRef">
+                <el-form-item label="昵称：" prop="name" style="margin-bottom: 18px;" >
+                    <div class="input-bk" >
+                        <el-input style="margin-bottom: 0;" @blur="checkName" v-model="form.name" />
                     </div>
                 </el-form-item>
                 <el-form-item label="简介：">
@@ -41,7 +41,7 @@
                 </el-form-item>
                 <el-form-item >
                     <div class="ptns">
-                        <div @click="onSubmit">保存</div>
+                        <div @click="onSubmit(ruleFormRef!)">保存</div>
                         <div @click="back">取消</div>
                     </div>
                 </el-form-item>
@@ -55,6 +55,7 @@ import {Ref, reactive,ref,toRaw,watch} from 'vue'
 import { useBasicApi,useMain,useGlobalVar,useNM } from '@renderer/store';
 import dropDown from '@renderer/components/myVC/dropDown.vue';
 import { useRouter } from 'vue-router';
+import { FormInstance, FormRules } from 'element-plus';
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const Main = useMain()
@@ -188,42 +189,79 @@ const back = () => {
     $router.go(-1)
 }
 
-const onSubmit = async()=>{
-    const t = {
-        gender:form.sex,
-        birthday:new Date(form.year, form.month - 1, form.day).getTime(),
-        nickname:form.name,
-        province:form.province,
-        city:form.city,
-        signature:form.description
-    }
-    console.log(t);
-    globalVar.loadDefault = true
-    if(localStorage.getItem('NMcookie')){
-        if(await NM.reqUserUpdate(t)){
-            await NM.reqLogin()
-            globalVar.loadDefault = false
-            globalVar.loadMessageDefault = '保存成功!'
-            globalVar.loadMessageDefaultFlag = true
-        }else{
-            globalVar.loadDefault = false
-            globalVar.loadMessageDefault = '保存失败!'
-            globalVar.loadMessageDefaultFlag = true
+const onSubmit = async(formEl: FormInstance)=>{
+    if (!formEl) return
+    formEl.validate(async(valid) => {
+        if (valid) {
+            const t = {
+                gender:form.sex,
+                birthday:new Date(form.year, form.month - 1, form.day).getTime(),
+                nickname:form.name,
+                province:form.province,
+                city:form.city,
+                signature:form.description
+            }
+            console.log(t);
+            globalVar.loadDefault = true
+            if(localStorage.getItem('NMcookie')){
+                if(await NM.reqUserUpdate(t)){
+                    await NM.reqLogin()
+                    globalVar.loadDefault = false
+                    globalVar.loadMessageDefault = '保存成功!'
+                    globalVar.loadMessageDefaultFlag = true
+                }else{
+                    globalVar.loadDefault = false
+                    globalVar.loadMessageDefault = '保存失败!'
+                    globalVar.loadMessageDefaultFlag = true
+                }
+            }else{
+                if(await Main.reqUserUpdate(t)){
+                    await BasicApi.reqLogin(localStorage.getItem('cookieUser') as string)
+                    globalVar.loadDefault = false
+                    globalVar.loadMessageDefault = '保存成功!'
+                    globalVar.loadMessageDefaultFlag = true
+                }else{
+                    globalVar.loadDefault = false
+                    globalVar.loadMessageDefault = '保存失败!'
+                    globalVar.loadMessageDefaultFlag = true
+                }
+            }
+        } else {
+            return 
         }
-    }else{
-        if(await Main.reqUserUpdate(t)){
-            await BasicApi.reqLogin(localStorage.getItem('cookieUser') as string)
-            globalVar.loadDefault = false
-            globalVar.loadMessageDefault = '保存成功!'
-            globalVar.loadMessageDefaultFlag = true
-        }else{
-            globalVar.loadDefault = false
-            globalVar.loadMessageDefault = '保存失败!'
-            globalVar.loadMessageDefaultFlag = true
-        }
-    }
+    })
 
 }
+
+const checkName = async()=>{
+    if(localStorage.getItem('NMcookie')){
+        console.log(form.name);
+    }
+}
+const ruleFormRef = ref<FormInstance>()
+const validatePass = (rule: any, value: any, callback: any) => {
+    if(localStorage.getItem('NMcookie')){
+        if (value === '') {
+            callback(new Error('输入昵称'))
+        } else {
+            if (form.name !== '') {
+                NM.reqCheckNickname(form.name).then((flag)=>{
+                    if(flag)callback()
+                    else callback(new Error('该昵称已被占用 !'))
+                })
+            }else{
+                callback(new Error('输入昵称'))
+            }
+        }
+    }else{
+        callback()
+    }
+}
+const rules = reactive<FormRules>({
+    name: [{ validator: validatePass, trigger: 'blur' }],
+})
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+
+</style>

@@ -537,6 +537,13 @@ const loaclMusicCanSee = (base64)=>{
 
 const normalPlayWay = async()=>{
     if (playingId.value != -1) {
+        if(!await Main.reqCheckMusic(Main.playing,br(nowLevel.value))){
+            globalVar.loadMessageDefault = '对象不可用'
+            globalVar.loadMessageDefaultType = 'error'
+            globalVar.loadMessageDefaultFlag = true
+            nextSongThor()
+            return
+        }
         audio = document.querySelector('audio') as HTMLAudioElement
         audio.currentTime = 0
         audio.pause()
@@ -560,16 +567,22 @@ const normalPlayWay = async()=>{
 }
 //获取播放url
 
+const br = (str: string) => {
+    if (str == 'standard') return 128000
+    else if (str == 'higher') return 192000
+    else if (str == 'exhigh') return 320000
+    else return 999000
+}
 
-watch(playingId, async () => {
-    nextTick(()=>{
+watch(playingId, async ({},oldValue) => {
+    nextTick(async ()=>{
         console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
         console.log(Main.beforePlayListId,Main.playing);
         if(localStorage.getItem('NMcookie')){
             let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
             let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
             console.log(NT,ET);
-            NM.reqScrobble(Main.playing,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
+            NM.reqScrobble(oldValue,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
         }else{
             Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
         }
@@ -617,6 +630,7 @@ watch(playingId, async () => {
             str += element.name
             if (index != singerArr.length - 1) str += ' / '
         })
+        console.log('这个是主进程的名字',str);
         window.electron.ipcRenderer.send('change-play-thum', str)
         window.electron.ipcRenderer.send('render-play')
     })
@@ -1472,20 +1486,20 @@ const reduce_10_volum = ()=>{
 
 //主进程播放
 onMounted(() => {
-    window.electron.ipcRenderer.on('main-prev', () => {
-        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+    window.electron.ipcRenderer.on('main-prev', ({},flag) => {
+        if (playingList.value.length != 0 && (globalVar.setting.closeGlWay || flag)) {
             console.log('上一首');
             prevSongThor();
         }
     })
-    window.electron.ipcRenderer.on('main-next', () => {
-        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+    window.electron.ipcRenderer.on('main-next', ({},flag) => {
+        if (playingList.value.length != 0 &&  (globalVar.setting.closeGlWay || flag)) {
             console.log('下一首');
             nextSongThor();
         }
     })
-    window.electron.ipcRenderer.on('main-play', () => {
-        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+    window.electron.ipcRenderer.on('main-play', ({},flag) => {
+        if (playingList.value.length != 0 &&  (globalVar.setting.closeGlWay || flag)) {
             console.log('播放');
             changPlayStatus();
         } else {

@@ -199,7 +199,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 tooltip: '上一首',
                 icon: nativeImage.createFromPath(prevIcon),
                 click() {
-                    mainWindow.webContents.send('main-prev')
+                    mainWindow.webContents.send('main-prev',true)
                 }
             },
             {
@@ -207,14 +207,14 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 icon: nativeImage.createFromPath(stopIcon),
                 click() {
                     stop()
-                    mainWindow.webContents.send('main-play')
+                    mainWindow.webContents.send('main-play',true)
                 }
             },
             {
                 tooltip: '下一首',
                 icon: nativeImage.createFromPath(nextIcon),
                 click() {
-                    mainWindow.webContents.send('main-next')
+                    mainWindow.webContents.send('main-next',true)
                 }
             }
         ])
@@ -226,7 +226,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 tooltip: '上一首',
                 icon: nativeImage.createFromPath(prevIcon),
                 click() {
-                    mainWindow.webContents.send('main-prev')
+                    mainWindow.webContents.send('main-prev',true)
                 }
             },
             {
@@ -234,14 +234,14 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 icon: nativeImage.createFromPath(playIcon),
                 click() {
                     play();
-                    mainWindow.webContents.send('main-play')
+                    mainWindow.webContents.send('main-play',true)
                 }
             },
             {
                 tooltip: '下一首',
                 icon: nativeImage.createFromPath(nextIcon),
                 click() {
-                    mainWindow.webContents.send('main-next')
+                    mainWindow.webContents.send('main-next',true)
 
                 }
             }

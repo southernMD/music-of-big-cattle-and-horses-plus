@@ -139,14 +139,6 @@ const changePlaying = () => {
     playingId.value = Main.FMList[FMindex.value]?.id as number
     Main.beforePlayListId = 4
     Main.playStatus = 'play'
-    let str = playingList.value[Main.playingindex - 1]?.name + ' - ';
-    let singerArr = playingList.value[Main.playingindex - 1]?.ar as unknown as Array<any>
-    singerArr?.forEach((element, index) => {
-        str += element.name
-        if (index != singerArr.length - 1) str += ' / '
-    })
-    window.electron.ipcRenderer.send('change-play-thum', str)
-    window.electron.ipcRenderer.send('render-play')
 }
 
 const addPlay = () => {

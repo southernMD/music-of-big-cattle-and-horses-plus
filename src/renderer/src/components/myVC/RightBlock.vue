@@ -393,14 +393,6 @@ const play = async(id:string)=>{
             Main.beforePlayListId = -5
         }
         Main.playStatus = 'play'
-        let str = result.songs[0].name + ' - ';
-        let singerArr = result.songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else if(props.type.startsWith('share')){
@@ -432,14 +424,6 @@ const play = async(id:string)=>{
             Main.beforePlayListId = +id
         }
         Main.playStatus = 'play'
-        let str = result.songs[0].name + ' - ';
-        let singerArr = result.songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else if(props.type == 'top50'){
@@ -450,14 +434,6 @@ const play = async(id:string)=>{
         Main.playing = songs[0].id as number
         Main.beforePlayListId = +id
         Main.playStatus = 'play'
-        let str = songs[0].name + ' - ';
-        let singerArr = songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else if(props.type.startsWith('song')){

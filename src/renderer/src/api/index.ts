@@ -900,6 +900,13 @@ export const Scrobble = (id,sourceid,time = 0)=>{
     })
 }
 
+export const checkMusic = (id,br = 999000)=>{
+    return axios({
+        url:`/check/music?id=${id}&br=${br}`,
+        method:'POST'
+    })
+}
+
 //检测更新
 export const githubUpdate = ()=>{
     try {

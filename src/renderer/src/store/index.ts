@@ -39,11 +39,12 @@ import {
     playlistDelete,
     eventDel,
     artistTopSong,
-    Scrobble
+    Scrobble,
+    checkMusic
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
-import { NMCommentFloor, NMEvent, NMEventComment, NMLikeResource, NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMPlaylistSubscribe, NMScrobble, NMSearch, NMUploadAvatar, NMUserLike, NMUserPlaylist, NMUserRecord, NMUserSubcount, NMalbumSub, NMalbumSublist, NMartistSub, NMartistSublist, NMcomment, NMcommentLike, NMcommentMusic, NMcommentPlaylist, NMeventDel, NMeventForward, NMfollow, NMgetDetail, NMlikeQ, NMplaylistDelete, NMplaylistDetail, NMplaylistOrderUpdate, NMplaylistPrivacy, NMplaylistSubscribers, NMplaylistTrackAll, NMplaylistTracks, NMrecommendPlayList, NMshareResource, NMsongOrderUpdate, NMupdatePlayList, NMupdatePlayListTags, NMuploadPlaylistPic, NMuserEvents, NMuserFolloweds, NMuserFollows, NMuserUpdate } from '@renderer/api/niuma';
+import { NMCheckNickname, NMCommentFloor, NMEvent, NMEventComment, NMLikeResource, NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMPlaylistSubscribe, NMScrobble, NMSearch, NMUploadAvatar, NMUserLike, NMUserPlaylist, NMUserRecord, NMUserSubcount, NMalbumSub, NMalbumSublist, NMartistSub, NMartistSublist, NMcomment, NMcommentLike, NMcommentMusic, NMcommentPlaylist, NMeventDel, NMeventForward, NMfollow, NMgetDetail, NMlikeQ, NMplaylistDelete, NMplaylistDetail, NMplaylistOrderUpdate, NMplaylistPrivacy, NMplaylistSubscribers, NMplaylistTrackAll, NMplaylistTracks, NMrecommendPlayList, NMshareResource, NMsongOrderUpdate, NMupdatePlayList, NMupdatePlayListTags, NMuploadPlaylistPic, NMuserEvents, NMuserFolloweds, NMuserFollows, NMuserUpdate } from '@renderer/api/niuma';
 
 interface E {
     ifToCloseWindow: boolean,
@@ -1278,6 +1279,12 @@ export const useMain = defineStore('Main', {
                 })
             }
         },
+        async reqCheckMusic(id,br){
+            let result = await checkMusic(id,br)
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.data.success)
+            })
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -2128,5 +2135,17 @@ export const useNM = defineStore('NM',{
                 })
             }
         },
+        async reqCheckNickname(nickname:string){
+            let result = (await NMCheckNickname(nickname)).data
+            if(result.code == 200){
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        }
     }
 })

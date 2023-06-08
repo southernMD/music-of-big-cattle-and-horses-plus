@@ -637,6 +637,20 @@ export const NMUserRecord = (uid:number,type:0|1)=>{
     })
 }
 
+export const NMCheckNickname = (nickname)=>{
+    const url = `user/check/nickname`
+    return axios({
+        url:url,
+        method:'POST',
+        data:{
+            nickname
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
 
 // /album/sub
 // /album/sublist
