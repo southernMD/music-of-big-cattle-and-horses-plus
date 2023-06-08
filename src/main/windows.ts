@@ -20,7 +20,6 @@ import { exec, spawn } from 'child_process'
 import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
 import log from 'electron-log'
-import e from 'express'
 export const createWindow = (path?:string):BrowserWindow=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     let X: number, Y: number; //鼠标基于显示器的坐标

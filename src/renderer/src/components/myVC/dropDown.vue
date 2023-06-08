@@ -1,5 +1,5 @@
 <template>
-    <div class="dropdown xdrop" @click="showList"  ref="dropdownRef" :data-id="rand">
+    <div class="dropdown xdrop" :class="{'dropdown-oneself':globalVar.oneself}" @click="showList"  ref="dropdownRef" :data-id="rand">
         <span class="xdrop" :data-id="rand">{{ showMessage }}</span>
         <i class="iconfont icon-xiajiantou xdrop" :data-id="rand"></i>
         <div class="list" @click.stop v-show="showListFlag" ref="listRef">
@@ -12,12 +12,14 @@
 
 <script setup lang="ts">
 import { onMounted, ref,watch } from 'vue'
+import { useGlobalVar } from '@renderer/store'
 const props = defineProps<{
     message?: string
     list: any[]
     width?:number
 }>()
 const showMessage = ref('')
+const globalVar = useGlobalVar()
 const dropdownRef = ref()
 const listRef = ref()
 const rand = ref(Math.random())
@@ -122,4 +124,9 @@ defineExpose({showListFlag})
             }
         }
     }
-}</style>
+}
+.dropdown-oneself{
+    background-color: rgb(58,58,58);
+    border: rgb(39,39,39) 1px solid;
+}
+</style>

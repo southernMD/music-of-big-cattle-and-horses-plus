@@ -133,14 +133,14 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag }) => {
     //     v.play()
     //     const h = document.getElementById('mainBackground') as HTMLImageElement
     //     h.src = ''
-    //     document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    //     document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    //     document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-    //     localStorage.setItem('MainTitle', `255, 255, 255`)
-    //     localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    //     localStorage.setItem('MainMenuHover', `255, 255, 255`)
-    //     localStorage.setItem('oneself', '1')
-    //     globalVar.oneself = 1
+        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
+        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
+        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+        localStorage.setItem('MainTitle', `255, 255, 255`)
+        localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+        localStorage.setItem('MainMenuHover', `255, 255, 255`)
+        localStorage.setItem('oneself', '1')
+        globalVar.oneself = 1
     // })
 })
 
@@ -593,7 +593,7 @@ video {
     position: fixed;
     left: 0;
     top: 0;
-    z-index: -1000;
+    z-index: -999;
     height: 100%;
     width: 100%;
     object-fit: fill;
