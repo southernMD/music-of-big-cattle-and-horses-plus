@@ -12,11 +12,11 @@
         </div>
     </div>
     <div class="btn" v-if="type != 'other'">
-        <div @click.stop="" class="bk h" v-if="$route.query.id == BasicApi.profile!.userId && type == 'like'">
+        <div @click.stop="" class="bk h" v-if="$route.query.id == BasicApi.profile!.userId && type == 'like' && !ifNM">
             <i class="iconfont icon-xinfeng"></i>
             <span>私信</span>
         </div>
-        <div @click.stop="" class="bk h" v-else-if="!followed">
+        <div @click.stop="guanzhu" class="bk h" v-else-if="!followedMy">
             <i class="iconfont icon-jiahao_o"></i>
             <span>关注</span>
         </div>
@@ -28,12 +28,17 @@
 </template>
 
 <script setup lang="ts">
-import {} from 'vue'
-import { useBasicApi } from '@renderer/store'
+import {ref} from 'vue'
+import { useBasicApi,useNM,useMain,useGlobalVar } from '@renderer/store'
 import { numberSimp } from '@renderer/utils/numberSimp'
 import { useRouter } from 'vue-router'
 const BasicApi = useBasicApi()
 const $router = useRouter()
+const Main = useMain()
+const NM = useNM()
+const globalVar = useGlobalVar()
+const ifNM = ref(false)
+if(localStorage.getItem('NMcookie'))ifNM.value = true
 const props = defineProps<{
     name:string
     des:string
@@ -44,6 +49,7 @@ const props = defineProps<{
     src:string
     type:'fan' | 'like' | 'other'
 }>()
+const followedMy = ref(props.followed)
 
 const go = ()=>{
     $router.push({
@@ -52,6 +58,25 @@ const go = ()=>{
             id:props.id
         }
     })
+}
+
+const guanzhu = async()=>{
+    let flag
+    if(ifNM.value){
+        flag = await NM.reqFollow(props.id,1)
+    }else{
+        flag = await Main.reqFollow(props.id,1)
+    }
+    if(flag){
+        globalVar.loadMessageDefault = '关注成功'
+        globalVar.loadMessageDefaultFlag = true
+        followedMy.value = true
+        BasicApi.profile!.follows++
+    }else{
+        globalVar.loadMessageDefault = '关注失败'
+        globalVar.loadMessageDefaultFlag = true
+        globalVar.loadMessageDefaultType = 'error'
+    }
 }
 
 </script>

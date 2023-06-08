@@ -892,6 +892,14 @@ export const artistTopSong = (id)=>{
     })
 }
 
+//听歌打卡
+export const Scrobble = (id,sourceid,time = 0)=>{
+    return axios({
+        url:`/scrobble?id=${id}&sourceid=${sourceid}&time=$${time}&t=${new Date().getTime()}`,
+        method:'POST',
+    })
+}
+
 //检测更新
 export const githubUpdate = ()=>{
     try {

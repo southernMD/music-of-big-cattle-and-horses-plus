@@ -20,9 +20,10 @@
 <script setup lang="ts">
 import {nextTick, onActivated, onMounted, ref} from 'vue'
 import { useRoute } from 'vue-router';
-import { useMain } from '@renderer/store';
+import { useMain,useNM } from '@renderer/store';
 const Main = useMain();
 const $route = useRoute();
+const NM = useNM()
 let list = ref(new Array())
 let otherList = ref(new Array())
 let more = ref(true)
@@ -30,7 +31,12 @@ const lasttime = ref(undefined)
 const listRef = ref<(InstanceType<typeof HTMLElement>)>()
 const load = async()=>{
     if(more.value){
-        let result = await Main.requserEvents(+$route.query.id!,lasttime.value)
+        let result
+        if(localStorage.getItem('NMcookie')){
+            result = await NM.requserEvents(+$route.query.id!,lasttime.value)
+        }else{
+            result = await Main.requserEvents(+$route.query.id!,lasttime.value)
+        }
         let event = result.events as Array<any>
         event.sort((a,b)=>{
             return b.showTime - a.showTime;

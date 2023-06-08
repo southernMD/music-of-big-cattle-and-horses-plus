@@ -144,7 +144,12 @@ watch(nowPage, async () => {
         commentFlag.value = true
     }else if(type.value == 6){
       commentFlag.value = false
-      let result = (await Main.reqMyEventComment(threadId.value, 20, (nowPage.value - 1) * 20))
+      let result
+      if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqMyEventComment(threadId.value, 20, (nowPage.value - 1) * 20))
+      }else{
+        result = (await Main.reqMyEventComment(threadId.value, 20, (nowPage.value - 1) * 20))
+      }
       comments.value = result.comments;
       commentFlag.value = true
       $emait('scroll')

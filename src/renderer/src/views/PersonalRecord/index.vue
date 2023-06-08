@@ -29,13 +29,14 @@
 
 <script setup lang="ts">
 import {useRoute} from 'vue-router'
-import { useMain,useBasicApi,useGlobalVar } from '@renderer/store'
+import { useMain,useBasicApi,useGlobalVar,useNM } from '@renderer/store'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import {ref,Ref,onMounted,watch} from 'vue'
 const $route = useRoute()
 const Main = useMain()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
+const NM = useNM()
 const flag = ref(true)
 const list:Ref<any[]> = ref([])
 const listCount:Ref<any[]> = ref([])
@@ -44,7 +45,12 @@ const flagError = ref(false)
 onMounted(async()=>{
     try {
         flagError.value = false
-        const result = await Main.reqUserRecord(Number(+$route.query.id!),1);
+        let result 
+        if(localStorage.getItem('NMcookie')){
+            result = await NM.reqUserRecord(Number(+$route.query.id!),1);
+        }else{
+            result = await Main.reqUserRecord(Number(+$route.query.id!),1);
+        }
         list.value = result.map(item=>item.song)
         listCount.value = result.map(item=>item.playCount)
         listLength.value = list.value.length  
@@ -60,9 +66,17 @@ watch(flag,async()=>{
         listLength.value = 0
         flagError.value = false
         if(flag.value){
-            result = await Main.reqUserRecord(Number(+$route.query.id!),1);
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(Number(+$route.query.id!),1);
+            }else{
+                result = await Main.reqUserRecord(Number(+$route.query.id!),1);
+            }
         }else{
-            result = await Main.reqUserRecord(Number(+$route.query.id!),0);
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(Number(+$route.query.id!),0);
+            }else{
+                result = await Main.reqUserRecord(Number(+$route.query.id!),0);
+            }
         }
         list.value = result.map(item=>item.song)
         listCount.value = result.map(item=>item.playCount)

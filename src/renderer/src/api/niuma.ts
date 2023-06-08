@@ -526,6 +526,118 @@ export const NMshareResource = (formData:FormData)=>{
     })
 }
 
+export const NMEvent = (lasttime = -1)=>{
+    return axios({
+        url:`/event`,
+        method:'POST',
+        data:{
+            lasttime,
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+export const NMuserEvents = (id:number,lasttime?:number)=>{
+    return axios({
+        url:'/user/event',
+        method:'POST',
+        data:{
+            uid:id,lasttime
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+export const NMeventDel = (id)=>{
+    const url = `/event/del`
+    return axios({
+        url,
+        method:'POST',
+        data:{
+            evId:id
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+//资源点赞
+//t: 操作,1 为点赞,其他为取消点赞
+export const NMLikeResource = (id:string | number,t:1|any)=>{
+    return axios({
+        url:`/resource/like`,
+        method:'POST',
+        data:{
+            id,t
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+//转发用户动态
+export const NMeventForward = (uid:Number,evid:number,forwards:string)=>{
+    return axios({
+        url:`/event/forward`,
+        method:'POST',
+        data:{
+            evId:evid,uid,forwards
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+export const NMEventComment = (threadId:string,limit?:number,offset?:number,before?:number)=>{
+    let t:any = {threadId}
+    if(limit !=undefined)t['limit'] = limit
+    if(offset !=undefined)t['offset'] = offset
+    return axios({
+        url:`/comment/event?t=${new Date().getTime()}&threadId=${threadId}`,
+        method:'POST',
+        data:t,
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+export const NMScrobble = (id,sourceid,time = 0)=>{
+    return axios({
+        url:`/scrobble`,
+        method:'POST',
+        data:{
+            id,sourceid,time
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+
+export const NMUserRecord = (uid:number,type:0|1)=>{
+    const url = `/user/record`
+    return axios({
+        url:url,
+        method:'POST',
+        data:{
+            uid,type
+        },
+        headers:{
+            Authorization:localStorage.getItem('NMcookie')
+        }
+    })
+}
+
+
 // /album/sub
 // /album/sublist
 // /artist/sub

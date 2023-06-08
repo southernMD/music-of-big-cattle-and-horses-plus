@@ -69,7 +69,12 @@ const change = async()=>{
     if(props.id == -5){
         try {
             Recorderror.value = false
-            const result = await Main.reqUserRecord(props.uid,1);
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(props.uid,1)
+            }else{
+                result = await Main.reqUserRecord(props.uid,1)
+            }
             list.value = result.map(item=>item.song).splice(0,10)
             listCount.value = result.map(item=>item.playCount).splice(0,10)
         } catch (error) {
@@ -152,7 +157,12 @@ watch(()=>props.uid,async()=>{
     if(props.id == -5){
         try {
             Recorderror.value = false
-            const result = await Main.reqUserRecord(props.uid,1);
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(props.uid,1)
+            }else{
+                result = await Main.reqUserRecord(props.uid,1)
+            }
             list.value = result.map(item=>item.song).splice(0,10)
             listCount.value = result.map(item=>item.playCount).splice(0,10)
         } catch (error) {

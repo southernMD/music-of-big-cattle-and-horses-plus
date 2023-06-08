@@ -146,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref,Ref, watch,nextTick } from 'vue'
+import {ref,Ref, watch,nextTick, onMounted } from 'vue'
 import eventBlock from '@renderer/components/myVC/eventBlock.vue';
 import Tag from '@renderer/components/myVC/Tag.vue';
 import { useMain,useBasicApi,useGlobalVar,useNM } from '@renderer/store';
@@ -165,7 +165,14 @@ const globalVar = useGlobalVar()
 const ifNM = ref(false)
 if(localStorage.getItem('NMcookie'))ifNM.value = true
 const leftRef = ref<(InstanceType<typeof HTMLElement>)>()
-Main.reqMyEvent().then(async(val)=>{
+
+let eventRes 
+if(localStorage.getItem('NMcookie')){
+    eventRes = await NM.reqMyEvent()
+}else{
+    eventRes = await Main.reqMyEvent()
+}
+const eventResolve = (val)=>{
     const event:any[] = val.event
     event.sort((a,b)=>{
         return b.showTime - a.showTime;
@@ -188,7 +195,11 @@ Main.reqMyEvent().then(async(val)=>{
         const lastChild = children[length - 1];
         observer.observe(lastChild)
     })
+}
+onMounted(()=>{
+    eventResolve(eventRes)
 })
+
 watch(listFlag,()=>{
     if(listFlag.value ){
         valFlag.value = false;
@@ -196,32 +207,38 @@ watch(listFlag,()=>{
         valFlag.value = true;
     }
 })//
-const observer = new IntersectionObserver((entries) => {
+const observer = new IntersectionObserver(async (entries) => {
     console.log(entries);
     if (entries[0].isIntersecting) {
+        observer.disconnect()
         console.log('元素已经出现在视口中');
-        listFlag.value = false
-        Main.reqMyEvent(lasttime.value).then((val)=>{
-            const event:any[] = val.event
-            event.forEach((item,index)=>{
-                list.value.push(JSON.parse(item.json))
-                delete event[index].json
-            })
-            console.log(list.value);
-            otherList.value.push(...event)
-            console.log(otherList.value);
-            listFlag.value = true
-            lasttime.value = val.lasttime
-            observer.disconnect()
-            nextTick(()=>{
-                // 获取所有子元素
-                const children = leftRef.value!.querySelectorAll('.eventBlock')
-                // 获取子元素数量
-                const length = children.length;
-                // 获取最后一个子元素
-                const lastChild = children[length - 1];
-                observer.observe(lastChild)
-            })
+        listFlag.value = false;
+        let eventRes
+        if(localStorage.getItem('NMcookie')){
+            console.log('QIU');
+            eventRes = await NM.reqMyEvent(lasttime.value);
+        }else{
+            eventRes = await Main.reqMyEvent(lasttime.value);
+        }
+        const event:any[] = eventRes.event
+        event.forEach((item,index)=>{
+            list.value.push(JSON.parse(item.json))
+            delete event[index].json
+        })
+        console.log(list.value);
+        otherList.value.push(...event)
+        console.log(otherList.value);
+        listFlag.value = true
+        lasttime.value = eventRes.lasttime
+        if(event.length == 0)return
+        nextTick(()=>{
+            // 获取所有子元素
+            const children = leftRef.value!.querySelectorAll('.eventBlock')
+            // 获取子元素数量
+            const length = children.length;
+            // 获取最后一个子元素
+            const lastChild = children[length - 1];
+            observer.observe(lastChild)
         })
     } else {
         console.log('元素还未出现在视口中');
@@ -266,9 +283,9 @@ const confirm = async()=>{
             shareimages.value.forEach((base64,index)=>{
                 formData.append('files',base64toFile(base64))
             })
-            if(globalVar.share.type != 'noresource')formData.append('id', globalVar.share.id);
-            formData.append('type', globalVar.share.type);
-            formData.append('msg', globalVar.share.txt);
+            if(choiceType.value != 'noresource')formData.append('id', choiceId.value);
+            formData.append('type', choiceType.value);
+            formData.append('msg', zhuanfaMessage.value);
             result = await NM.reqShareResource(formData)
         }else{
             result = await Main.reqShareResource(choiceType.value,choiceId.value,zhuanfaMessage.value)
@@ -281,6 +298,7 @@ const confirm = async()=>{
             let t  = result.event
             delete t['json']
             otherList.value.unshift(t)
+            BasicApi.profile!.eventCount++
         }else{
             globalVar.loadMessageDefaultType = 'error'
             globalVar.loadMessageDefault = '分享失败'

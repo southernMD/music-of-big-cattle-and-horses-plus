@@ -1,11 +1,11 @@
 <template>
+
   <div class="rightBlock" ref="rightBlockRef" v-show="flag && rightFlag">
     <div class="list">
         <div class="op" @mouseenter="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')?showStartList():hideStartList()" 
         @click="eventsHandle[index].bind(null,params[index])()"  
         v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
         >
-        <!-- -->
             <div class="icon">
                 <i class="iconfont" :class="[iconList[index]]"></i>
             </div>
@@ -44,7 +44,6 @@ import { useRouter,useRoute } from 'vue-router'
 import { useMain ,useGlobalVar,useBasicApi,useNM} from '@renderer/store'
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
-import e from 'express';
 const Main = useMain()
 const NM = useNM()
 const BasicApi = useBasicApi()
@@ -214,7 +213,7 @@ const buildList = ()=>{
             iconList.value = ['icon-lajixiang']
             params.value.push(...[props.evid])
             eventsHandle.value.push(...[delev])
-        }else {
+        }else if(!props.type.startsWith('shareAr')){
             messageList.value.push(...['播放','下一首播放'])
             ifBorderBottom.value.push(...[false,false])
             iconList.value.push(...['icon-bofang_o','icon-nextplay'])
@@ -381,7 +380,11 @@ const play = async(id:string)=>{
             Main.playing = result.songs[0].id as number
             Main.beforePlayListId = +id
         }else if(['playListRank'].includes(props.type)){
-            result = await Main.reqUserRecord(+$route.query.id!,1);
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(+$route.query.id!,1);
+            }else{
+                result = await Main.reqUserRecord(+$route.query.id!,1);
+            }
             const songList = result.map(item=>item.song)
             Main.playingList = songList
             Main.playingPrivileges = songList.map(item=>item.privilege)
@@ -1059,14 +1062,20 @@ const delComment = async(ids:string)=>{
 
 const delev = async(id)=>{
     try {
-        let flag = await Main.reqEventDel(id)
+        let flag
+        if(localStorage.getItem('NMcookie')){
+            flag = await NM.reqEventDel(props.evid)
+        }else{
+            flag = await Main.reqEventDel(props.evid)
+        }
         if(flag){
             globalVar.loadMessageDefault = '删除成功'
             globalVar.loadMessageDefaultFlag = true
-            const selectedElements = document.querySelectorAll(`[data-evid="${id}"]`) as unknown as HTMLElement[] 
+            const selectedElements = document.querySelectorAll(`[data-evid="${props.evid}"]`) as unknown as HTMLElement[] 
             selectedElements.forEach((it)=>{
                 it.remove()
             })
+            BasicApi.profile!.eventCount--
         }else{
             globalVar.loadMessageDefault = '删除失败'
             globalVar.loadMessageDefaultFlag = true

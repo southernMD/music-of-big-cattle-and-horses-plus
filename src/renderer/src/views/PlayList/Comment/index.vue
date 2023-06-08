@@ -27,7 +27,6 @@
 import {ref,toRef,watch,Ref,onMounted,getCurrentInstance,ComponentInternalInstance, computed, provide} from 'vue'
 import {useRoute} from 'vue-router'
 import {useMain,useNM} from '@renderer/store'
-import e from 'express'
 // import {regEmoji} from '@/utils/regEmoji'
 const Main = useMain()
 const NM = useNM()
@@ -206,7 +205,7 @@ provide('replayFlag',replayFlag)
 provide('replayId',replayId)
 provide('replayName',replayName)
 provide('replayContent',replayContent)
-provide('fenxiang',true)
+provide('fenxiang',($route.name!='SongComments'?true:false))
 const WriteCommitRef = ref()
 watch(replayFlag,()=>{
     if(replayFlag.value == true){

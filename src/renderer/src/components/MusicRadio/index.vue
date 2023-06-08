@@ -570,6 +570,16 @@ const normalPlayWay = async()=>{
 
 watch(playingId, async () => {
     nextTick(()=>{
+        console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
+        console.log(Main.beforePlayListId,Main.playing);
+        if(localStorage.getItem('NMcookie')){
+            let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
+            let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
+            console.log(NT,ET);
+            NM.reqScrobble(Main.playing,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
+        }else{
+            Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
+        }
         const playList = document.querySelector("#play-list-Panel-bottom")!.children
         if(Main.playingList[Main.playingindex - 1].localPath){
             loaclPlayWay()
@@ -721,6 +731,16 @@ onMounted(async () => {
     //播放完毕
     audio.addEventListener('ended', async () => {
         console.log('播放完毕');
+        console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
+        console.log(Main.beforePlayListId,Main.playing);
+        if(localStorage.getItem('NMcookie')){
+            let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
+            let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
+            console.log(NT,ET);
+            NM.reqScrobble(Main.playing,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
+        }else{
+            Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
+        }
         stopOrPlayFlag.value = true;
         if(bufferSource)bufferSource.stop()
         cancelAnimationFrame(animationId)
@@ -1824,6 +1844,7 @@ const confirm = async()=>{
                 txt:'',
                 name:''
             }
+            BasicApi.profile!.eventCount++
         }else{
             globalVar.loadMessageDefaultType = 'error'
             globalVar.loadMessageDefault = '分享失败'

@@ -890,9 +890,9 @@ export const createWindow = (path?:string):BrowserWindow=>{
     ipcMain.handle('add-share-image',({},length)=>{
       return new Promise<any>((resolve, reject) => {
         dialog.showOpenDialog(mainWindow,{
-          title:'选择一张图片或一段视频',
+          title:'选择图片',
           filters:[
-            {name:'图片资源',extensions:['jpg','png','jpeg','webp']},
+            {name:'图片资源',extensions:['jpg','png','jpeg']},
           ],
           properties:['openFile','multiSelections']
         }).then(async({canceled,filePaths })=>{

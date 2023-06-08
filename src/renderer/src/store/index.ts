@@ -38,11 +38,12 @@ import {
     playlistPrivacy,
     playlistDelete,
     eventDel,
-    artistTopSong
+    artistTopSong,
+    Scrobble
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
-import { NMCommentFloor, NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMPlaylistSubscribe, NMSearch, NMUploadAvatar, NMUserLike, NMUserPlaylist, NMUserSubcount, NMalbumSub, NMalbumSublist, NMartistSub, NMartistSublist, NMcomment, NMcommentLike, NMcommentMusic, NMcommentPlaylist, NMfollow, NMgetDetail, NMlikeQ, NMplaylistDelete, NMplaylistDetail, NMplaylistOrderUpdate, NMplaylistPrivacy, NMplaylistSubscribers, NMplaylistTrackAll, NMplaylistTracks, NMrecommendPlayList, NMshareResource, NMsongOrderUpdate, NMupdatePlayList, NMupdatePlayListTags, NMuploadPlaylistPic, NMuserFolloweds, NMuserFollows, NMuserUpdate } from '@renderer/api/niuma';
+import { NMCommentFloor, NMEvent, NMEventComment, NMLikeResource, NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMPlaylistSubscribe, NMScrobble, NMSearch, NMUploadAvatar, NMUserLike, NMUserPlaylist, NMUserRecord, NMUserSubcount, NMalbumSub, NMalbumSublist, NMartistSub, NMartistSublist, NMcomment, NMcommentLike, NMcommentMusic, NMcommentPlaylist, NMeventDel, NMeventForward, NMfollow, NMgetDetail, NMlikeQ, NMplaylistDelete, NMplaylistDetail, NMplaylistOrderUpdate, NMplaylistPrivacy, NMplaylistSubscribers, NMplaylistTrackAll, NMplaylistTracks, NMrecommendPlayList, NMshareResource, NMsongOrderUpdate, NMupdatePlayList, NMupdatePlayListTags, NMuploadPlaylistPic, NMuserEvents, NMuserFolloweds, NMuserFollows, NMuserUpdate } from '@renderer/api/niuma';
 
 interface E {
     ifToCloseWindow: boolean,
@@ -973,16 +974,16 @@ export const useMain = defineStore('Main', {
         },
         //
         async reqUserRecord(uid:number,type:1 | 0){
-            // let result = await UserRecord(uid,type)
-            // if(result.data.code != 200){
+            let result = await UserRecord(uid,type)
+            if(result.data.code != 200){
                 return new Promise<any[]>((resolve, reject) => {
                     resolve([])
                 })
-            // }else{
-            //     return new Promise<any[]>((resolve, reject) => {
-            //         resolve(result.data.allData ?? result.data.weekData ?? [])
-            //     })
-            // }
+            }else{
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve(result.data.allData ?? result.data.weekData ?? [])
+                })
+            }
         },
         async reqAlbumDetailDynamic(id:number){
             let result = await AlbumDetailDynamic(id)
@@ -1263,6 +1264,19 @@ export const useMain = defineStore('Main', {
                 })
             }
 
+        },
+        //听歌打卡
+        async reqScrobble(id,sourceid,time){
+            let result = await Scrobble(id,sourceid,time)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
         },
         init() {
             this.leftClickColor = '',
@@ -2009,6 +2023,108 @@ export const useNM = defineStore('NM',{
             }else{
                 return new Promise<any>((resolve, reject) => {
                     resolve(result.data)
+                })
+            }
+        },
+        //关注动态
+        async reqMyEvent(lasttime = -1){
+            let result = await NMEvent(lasttime);
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        async requserEvents(id:number,lasttime?:number){
+            let result = await NMuserEvents(id,lasttime)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve([])
+                })
+            }
+        },
+        //删除动态
+        async reqEventDel(id){
+            let result = await NMeventDel(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //资源点赞
+        async reqLikeResource(id:string | number,t:1 | any){
+            let result = await NMLikeResource(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //转发动态
+        async reqEventForward(uid:number,evid:number,forwards:string){
+            let result = await NMeventForward(uid, evid, forwards)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        //动态评论
+        async reqMyEventComment(threadId:string,limit?:number,offset?:number,before?:number){
+            let result = await NMEventComment(threadId,limit,offset,before)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        //听歌打卡
+        async reqScrobble(id,sourceid,time){
+            let result = await NMScrobble(id,sourceid,time)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqUserRecord(uid:number,type:1 | 0){
+            let result = await NMUserRecord(uid,type)
+            if(result.data.code != 200){
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve([])
+                })
+            }else{
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve(result.data.allData ?? result.data.weekData ?? [])
                 })
             }
         },

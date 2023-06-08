@@ -469,6 +469,7 @@ window.addEventListener('contextmenu', (event) => {
         eventBlockLeft.value = x
         eventBlockTop.value = y
         rightFlag.value = true 
+        console.log(id.value,evid.value);
         break
     }
   }
