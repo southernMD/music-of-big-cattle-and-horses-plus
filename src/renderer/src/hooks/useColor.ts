@@ -87,6 +87,8 @@ export default function (): any {
             document.documentElement.style.setProperty('--rightButtonhover', `rgb(74, 74, 74)`);
             document.documentElement.style.setProperty('--quickBk', `rgb(56, 56, 56)`);
             document.documentElement.style.setProperty('--quickBkStop', `rgb(46, 46, 46)`);
+            document.documentElement.style.setProperty('--followRightBk', `rgb(46, 46, 46)`);
+            
             primaryColor.value = `rgb(236,65,65)`
             MainMenu.iconSrc = "/src/assets/icon.png"
             // document.documentElement.style.setProperty('--fontColorHover',`rgb(255,255,255)`);
@@ -164,6 +166,7 @@ export default function (): any {
             document.documentElement.style.setProperty('--rightButtonhover', `rgb(242, 242, 242)`);
            document.documentElement.style.setProperty('--quickBk', `rgb(255, 255, 255)`);
             document.documentElement.style.setProperty('--quickBkStop', `rgb(223, 225, 226)`);
+            document.documentElement.style.setProperty('--followRightBk', `rgb(245, 245, 247)`);
         }
         if (newValue === 'NMred') {
             MainMenu.iconSrc = "/src/assets/icon.png"

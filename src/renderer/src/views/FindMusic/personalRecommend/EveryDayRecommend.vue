@@ -140,6 +140,7 @@ const playThis = async()=>{
             Main.playingindex = 1 as number
             Main.playing = everyDaySong.value[index.value].id as number
             Main.playStatus = 'play'
+            Main.songType = 'song'
         }else{
             let I = 0;
             let flag = true;
@@ -159,7 +160,7 @@ const playThis = async()=>{
                 Main.playing = everyDaySong.value[index.value].id as number
                 Main.playStatus = 'play'
             }
-
+            Main.songType = 'song'
         }
     }
 

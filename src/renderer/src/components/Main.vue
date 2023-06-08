@@ -172,7 +172,6 @@ import { useRoute, useRouter } from 'vue-router';
 
 import LeftBlock from './myVC/LeftBlock.vue';
 import MyDialog from './myVC/MyDialog.vue';
-import e from 'express';
 
 const MainMenu = useMainMenu();
 const Main = useMain();

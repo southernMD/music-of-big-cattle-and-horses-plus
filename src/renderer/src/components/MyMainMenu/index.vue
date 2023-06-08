@@ -47,7 +47,7 @@
                 <i v-show="!songMenu" @click.stop="changeSkin" @dblclick.stop class="iconfont icon-huanfu"
                     :class="{ noDrag: !Main.dragMouse }"></i>
                 <i class="iconfont icon-setting" @click="setting" :class="{ noDrag: !Main.dragMouse }"></i>
-                <i class="iconfont icon-xinfeng" :class="{ noDrag: !Main.dragMouse }"></i>
+                <i class="iconfont icon-xinfeng" v-if="false" :class="{ noDrag: !Main.dragMouse }"></i>
                 <Teleport to="#header" v-if="flagSkin">
                     <ChangeSkin :l="LeftValue" @close="flagSkin = false" @click.stop></ChangeSkin>
                 </Teleport>

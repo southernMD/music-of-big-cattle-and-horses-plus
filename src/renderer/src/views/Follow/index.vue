@@ -517,10 +517,14 @@ const delimg = (index)=>{
             i {
                 font-size: 18px;
                 margin-right: 5px;
+                color: white;
             }
 
             &:hover {
                 background-color: @play-all-button-hover;
+            }
+            >span{
+                color: white;
             }
         }
     }
@@ -536,7 +540,7 @@ const delimg = (index)=>{
         .right{
             margin-top: -50px;
             width: 225px;
-            background-color: @leftClickColorOneself;
+            background-color: @follow-right-bk;
             border-left: 1px solid @small-font-color;
             .top{
                 width: 225px;

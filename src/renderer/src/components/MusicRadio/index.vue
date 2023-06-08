@@ -582,7 +582,7 @@ watch(playingId, async ({},oldValue) => {
             let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
             let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
             console.log(NT,ET);
-            NM.reqScrobble(oldValue,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
+            if(1-(ET-NT)/ET!=1) NM.reqScrobble(oldValue,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
         }else{
             Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
         }

@@ -21,7 +21,8 @@ axios.interceptors.response.use((response) =>{
 });
 
 const niuMaAxios = request.create({
-    baseURL:'http://localhost:3000'
+    // baseURL:'http://localhost:3000'
+    baseURL: (await request.get('https://app-update-address.glitch.me/axios_path')).data
 })
 
 
