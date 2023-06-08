@@ -322,7 +322,12 @@ watch(nowPage,()=>{
 })
 const playAll = async (id)=>{
     if(id == -5){
-        const result = await Main.reqUserRecord(+$route.query.id!,1);
+        let result
+        if(localStorage.getItem('NMcookie')){
+            result = await NM.reqUserRecord(+$route.query.id!,1);
+        }else{
+            result = await Main.reqUserRecord(+$route.query.id!,1);
+        }
         console.log(result);
         const songList = result.map(item=>item.song)
         console.log(result,songList);

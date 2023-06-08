@@ -493,14 +493,7 @@ const loaclPlayWay = async()=>{
             nowLevel.value = 'local'
             levelName.value = '本地'
             playStatus.value = 'play'
-            let str = playingList.value[playingindex.value - 1].name + ' - ';
-            let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-            singerArr.forEach((element, index) => {
-                str += element.name
-                if (index != singerArr.length - 1) str += ' / '
-            })
-            window.electron.ipcRenderer.send('change-play-thum', str)
-            window.electron.ipcRenderer.send('render-play')
+
             // stopPlayAudip()
         })
     })
@@ -618,6 +611,14 @@ watch(playingId, async () => {
                 normalPlayWay()
             }
         }
+        let str = playingList.value[playingindex.value - 1].name + ' - ';
+        let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
+        singerArr.forEach((element, index) => {
+            str += element.name
+            if (index != singerArr.length - 1) str += ' / '
+        })
+        window.electron.ipcRenderer.send('change-play-thum', str)
+        window.electron.ipcRenderer.send('render-play')
     })
 })
 function base64ToArrayBuffer(base64) {
@@ -1050,14 +1051,7 @@ const prevSong = () => {
         }
         playingId.value = playingList.value[playingindex.value - 1].id
         playStatus.value = 'play'
-        let str = playingList.value[playingindex.value - 1].name + ' - ';
-        let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
+
     }
 }
 //下一首
@@ -1083,14 +1077,6 @@ const nextSong = () => {
         }
         playingId.value = playingList.value[playingindex.value - 1].id
         playStatus.value = 'play'
-        let str = playingList.value[playingindex.value - 1].name + ' - ';
-        let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
     }
 
 }

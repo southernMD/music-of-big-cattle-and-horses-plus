@@ -520,7 +520,11 @@ const nextPlay = async(id:string)=>{
             Main.playingList.splice(Main.playingindex,0,...list)
             Main.playingPrivileges.splice(Main.playingindex,0,...listPrivileges)
         }else if(['playListRank'].includes(props.type)){
-            result = await Main.reqUserRecord(+$route.query.id!,1);
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(+$route.query.id!,1);
+            }else{
+                result = await Main.reqUserRecord(+$route.query.id!,1);
+            }
             const list = result.map(item=>item.song)
             const listPrivileges = list.map(item=>item.privilege)
             Main.playingList.splice(Main.playingindex,0,...list)
