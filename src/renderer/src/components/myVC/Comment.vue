@@ -14,7 +14,7 @@
                 <div class="user">
                     <span class="user-comment">
                         <span class="user-name" @click="go(userId)">{{userNickname}}:&nbsp;</span>
-                        <span class="word" v-html="regEmoji(content)"></span>
+                        <span class="word" v-html="regEmoji(content)" :class="{'word-oneself':oneselfComment}"></span>
                     </span>
                 </div>
                 <div class="reply" v-if="beReplied && beReplied?.length != 0">
@@ -68,6 +68,7 @@ const props = defineProps<{
     commentId:number
     type : 0 | 1 | 2 | 3 |4 | 5 | 6 | 7
     resourceId:number | string
+    oneselfComment:boolean
 }>()
 
 const fenxiang = inject('fenxiang',false)
@@ -218,6 +219,9 @@ const reply = ()=>{
                     }
                     :deep(.word){
                         word-break: break-word;
+                    }
+                    :deep(.word-oneself){
+                        color: @font-color-oneself;
                     }
                 }
                 .del{

@@ -1,7 +1,7 @@
 <template>
-    <div class="every-day-recommend-playList">
+    <div class="every-day-recommend-playList" >
         <div class="bk">
-            <div class="title">
+            <div class="title" :class="{'title-oneself':globalVar.oneself}">
                 <span :class="{noDrag:!Main.dragMouse}">推荐歌单</span>
                 <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
             </div>
@@ -98,7 +98,9 @@ const go = ({id})=>{
             margin-right: auto;
             width: 100%;
         }
-
+        .title-oneself{
+            color: rgba(255,255,255,.7);
+        }
         .img-list {
             display: flex;
             justify-content: start;

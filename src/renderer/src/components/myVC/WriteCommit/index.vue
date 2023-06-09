@@ -167,6 +167,7 @@ defineExpose({textarea,getFocus})
                 bottom: 7px;
                 right: 6px;
                 font-size: 12px;
+                color: @font-color;
             }
         }
 

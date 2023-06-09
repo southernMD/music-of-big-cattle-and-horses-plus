@@ -1,6 +1,6 @@
 <template>
     <div class="every-day-recommend">
-        <div class="title" @click="go" >
+        <div class="title" @click="go" :class="{'title-oneself':globalVar.oneself}" >
             <span :class="{noDrag:!Main.dragMouse}">每日推荐</span>
             <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
         </div>
@@ -32,12 +32,12 @@
                     ">/</span>
                     </span>
                 </div>
-                <div class="song-first-comment">
+                <div class="song-first-comment" :class="{'song-first-comment-oneself':globalVar.oneself}">
                     <div class="gou-shang">“</div>
                     <div class="message">{{hotMessage}}</div>
                     <div class="gou-xia">”</div>
                 </div>
-                <div class="option">
+                <div class="option" :class="{'option-oneself':globalVar.oneself}">
                     <div :class="{noDrag:!Main.dragMouse}" @click="playThis">
                         <span>播放当前</span>
                     </div>
@@ -59,14 +59,14 @@
 
 <script lang='ts' setup>
 import {ref,toRef,onMounted, nextTick, getCurrentInstance,ComponentInternalInstance,watch } from 'vue'
-import {useMain,useBasicApi} from '@renderer/store'
+import {useMain,useBasicApi,useGlobalVar} from '@renderer/store'
 import { useRouter } from 'vue-router';
 
 const $router = useRouter()
 const Main = useMain()
 const baseApi = useBasicApi()
 const $el = getCurrentInstance() as ComponentInternalInstance 
-
+const globalVar = useGlobalVar()
 let everyDaySong = toRef(baseApi,'everyDaySong')
 
 const playButtonFlag = ref(false)
@@ -196,6 +196,9 @@ const go = ()=>{
             margin-left: 10px;
             width: 100px;
         }
+        .title-oneself{
+            color: rgba(255,255,255,.7);
+        }
         .main{
             display: flex;
             margin-left: 10px;
@@ -290,6 +293,9 @@ const go = ()=>{
                         bottom: 0;
                     }
                 }
+                .song-first-comment-oneself{
+                    background-color: rgb(51, 51, 51);
+                }
                 .option{
                     position: absolute;
                     display: flex;
@@ -311,6 +317,13 @@ const go = ()=>{
                         }
                         &:hover{
                             background-color: @span-color-hover
+                        }
+                    }
+                }
+                .option-oneself{
+                    >div{
+                        &:hover{
+                            background-color:rgb(66, 66, 66);
                         }
                     }
                 }

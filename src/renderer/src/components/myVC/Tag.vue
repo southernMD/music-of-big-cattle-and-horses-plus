@@ -146,6 +146,7 @@ onMounted(()=>{
         }
     }
     .tag-oneself{
+        color: @font-color-oneself;
         :hover{
             color:rgb(255,255,255);
         }

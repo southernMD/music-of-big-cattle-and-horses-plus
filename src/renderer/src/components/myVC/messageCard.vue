@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div class="card" :class="{'card-oneself':globalVar.oneself}">
     <div class="header">
         <el-image @click="go" draggable="false" :src="src"></el-image>
     </div>
@@ -90,6 +90,8 @@ const guanzhu = async()=>{
     &:hover{
         background-color: @left-click-color;
     }
+
+    
     .header{
         width: 100px;
         height: 100px;
@@ -163,5 +165,8 @@ const guanzhu = async()=>{
             color: @none-font ;
         }
     }
+}
+.card-oneself:hover{
+    background-color: @leftClickColorOneself;
 }
 </style>

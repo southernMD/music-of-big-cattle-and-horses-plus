@@ -266,7 +266,7 @@ const changeTag = (index:number,flag:boolean)=>{
 
 }
 const init = async() =>{
-    if($route.query.id == BasicApi.profile!.userId){
+    if($route.query.id == BasicApi.profile?.userId){
         personalMessage.name = BasicApi.profile!.nickname
         //@ts-ignore
         $route.query.name = personalMessage.name

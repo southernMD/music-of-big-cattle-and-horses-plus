@@ -3,7 +3,7 @@
         <div class="commentList" v-show="commentFlag">
             <div class="hot" v-show="nowPage == 1 && hotComments.length != 0">
             <div class="hot-title">
-                <span>最热评论({{hotComments.length}})</span>
+                <span :class="{'oneself-color':oneself && globalVar.oneself}">最热评论({{hotComments.length}})</span>
             </div>
             <div class="hot-list">
                 <Comment v-for="(value,index) in hotComments" :key="value"
@@ -15,6 +15,7 @@
                 :commentId="hotComments[index]?.commentId"
                 :resourceId="threadId ?? id"
                 :type="type"
+                :oneselfComment="oneself && globalVar.oneself"
                 ></Comment>
             </div>
             </div>
@@ -25,7 +26,7 @@
             </div>
             <div class="new">
               <div class="new-title" >
-                  <span>最新评论({{total}})</span>
+                  <span :class="{'oneself-color':oneself && globalVar.oneself}">最新评论({{total}})</span>
               </div>
               <div class="new-list">
                   <Comment v-for="(value,index) in comments" :key="value" :userUrl="comments[index]?.user?.avatarUrl"
@@ -36,6 +37,7 @@
                   :commentId="comments[index]?.commentId"
                   :resourceId="threadId ?? id"
                   :type="type"
+                  :oneselfComment="oneself && globalVar.oneself"
                   ></Comment>
               </div>
             </div>
@@ -73,6 +75,7 @@ const props = defineProps<{
     id?:number
     type:number
     threadId?:any
+    oneself:number
 }>()
 
 let nowPage = toRef($el.props,'nowPage') as Ref<number>
@@ -289,4 +292,7 @@ defineExpose({nowPage})
     }
 
   }
+.oneself-color{
+  color: @font-color-oneself !important;
+}
 </style>

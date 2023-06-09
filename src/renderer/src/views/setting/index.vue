@@ -881,7 +881,7 @@ const searchUpdate = async()=>{
 }
 :deep(.el-checkbox){
     --el-checkbox-input-border:var(--smallFontColor) 1px solid;
-    --el-checkbox-checked-text-color:@font-color;
+    --el-checkbox-checked-text-color:@font-color-oneself;
     --el-checkbox-bg-color:@commit-block-color;
     --el-checkbox-checked-input-border-color:@primary-color;
     --el-checkbox-checked-bg-color:@primary-color;
@@ -890,7 +890,7 @@ const searchUpdate = async()=>{
     --el-text-color-disabled:: @small-font-color !important;
     --el-disabled-border-color: @quick-bk-stop;
     height: auto;
-    color: @font-color;
+    color: @font-color-oneself;
     .el-checkbox__label{
         font-size: 12px;
     }
@@ -903,7 +903,7 @@ const searchUpdate = async()=>{
         height: 25px;
         .el-radio__label {
             font-size: 13px;
-            color: @font-color;
+            color: @font-color-oneself;
         }
 
     }

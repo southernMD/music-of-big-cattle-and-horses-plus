@@ -1,6 +1,6 @@
 <template>
     <div class="follow">
-        <header>
+        <header :class="{'header-oneself':globalVar.oneself}">
             <div class="title">动态</div>
             <div class="btn" @click="senddongtai">
                 <i class="iconfont icon-xiugaioryijian"></i>
@@ -22,7 +22,7 @@
                 ></eventBlock>
                 <div v-show="valFlag">加载中</div>
             </div>
-            <div class="right">
+            <div class="right" :class="{'right-oneself':globalVar.oneself}">
                 <div class="top">
                     <div class="message">
                         <el-image @click="goPersonal" :src="BasicApi.profile?.avatarUrl" fit="cover"></el-image>
@@ -528,6 +528,9 @@ const delimg = (index)=>{
             }
         }
     }
+    .header-oneself{
+        background-color: rgb(43,43,43,.7);
+    }
     main{
         padding-top: 50px;
         display: flex;
@@ -616,6 +619,9 @@ const delimg = (index)=>{
                 }
             }
 
+        }
+        .right-oneself{
+            background-color: rgb(43,43,43,.7);
         }
     }
 }

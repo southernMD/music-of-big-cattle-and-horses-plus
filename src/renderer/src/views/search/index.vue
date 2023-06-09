@@ -4,7 +4,7 @@
     <div class="router-change">
       <div class="tags-list">
         <Tag v-for="val, index in TagList" :message="val" :if-click="false" :big="true" :name="TagName[index]"
-          @click="goSearch(TagName[index])"></Tag>
+          @click="goSearch(TagName[index])" :oneself="1"></Tag>
       </div>
       <div class="number">找到{{ Main.searchNumber }}首{{ TagList[TagName.indexOf($route.name as string)] }}</div>
     </div>

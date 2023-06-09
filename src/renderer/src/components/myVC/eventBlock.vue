@@ -25,7 +25,7 @@
                     <div class="t">
                         <div class="title">
                             <span class="tag">{{ tagName }}</span>
-                            {{shareTitle}}
+                            <span class="shareTitle">{{shareTitle}}</span>
                             <span class="otherms" v-if="otherMessage.length != 0">{{ otherMessage }}</span></div>
                         <div class="other">
                             <span v-for="it,index in smallMessage">
@@ -897,6 +897,9 @@ watch(replayFlag,()=>{
                             >span{
                                 color: @small-font-color;
                                 display: inline-block;
+                            }
+                            .shareTitle{
+                                color: @font-color;
                             }
                             .otherms{
                                 width: 50%;

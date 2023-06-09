@@ -153,11 +153,14 @@ const pushPlayList = async(flag:1 | undefined,list = Array.from(props.list))=>{
 }
 
 const localPlay = async({index,id})=>{
-    Main.playingList = []
-    Main.playingPrivileges = []
-    if(globalVar.setting.playWay)await pushPlayList(undefined)  //替换
-    else await pushPlayList(1,[props.list[index - 1]])
-    Main.playingindex = index
+    if(globalVar.setting.playWay){//替换
+        await pushPlayList(undefined)
+        Main.playingindex = index
+    }  
+    else {
+        await pushPlayList(1,[props.list[index - 1]])
+        Main.playingindex = Main.playingindex == -1?1:Main.playingindex+1
+    }
     Main.playStatus = 'play'
     Main.songType = 'song'
     if(globalVar.setting.playWay)Main.beforePlayListId = -2

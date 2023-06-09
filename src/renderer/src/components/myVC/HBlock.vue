@@ -1,5 +1,5 @@
 <template>
-    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }" 
+    <div class="Hblock" :class="{ noDrag: !Main.dragMouse ,'Hblock-oneself':globalVar.oneself}" 
     :data-id="id" 
     :data-type="dataType" 
     :data-right="1"
@@ -60,13 +60,13 @@
 
 <script lang='ts' setup>
 import {ref,watch} from 'vue'
-import { useMain } from '@renderer/store';
+import { useMain ,useGlobalVar} from '@renderer/store';
 import {numberSimp} from '@renderer/utils/numberSimp'
 import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()
-
+const globalVar = useGlobalVar()
 const props = defineProps<{
     url: string
     Name: string
@@ -343,6 +343,11 @@ watch(()=>props.type,()=>{
     }
     &:hover {
         background-color: @line-color-hover !important;
+    }
+}
+.Hblock-oneself{
+    &:hover {
+        background-color: rgba(55, 55, 55,.7) !important;
     }
 }
 </style>

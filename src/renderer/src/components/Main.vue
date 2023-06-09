@@ -85,7 +85,7 @@
                 v-for="(valueIndex, index) in Main.createPlay" :privacy="+Main.playList[valueIndex]?.privacy"
                 :message="Main.playList[valueIndex]?.name" :big="false" :id="Main.playList[valueIndex]?.id"
                 :index="valueIndex" :key="Main.playList[valueIndex]?.id">
-                <template #default v-if="+Main.playList[valueIndex].privacy == 10">
+                <template #default v-if="+Main.playList[valueIndex]?.privacy == 10">
                   <i class="iconfont icon-suoding_o"></i>
                 </template>
                 <template #default v-else>

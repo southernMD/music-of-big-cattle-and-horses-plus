@@ -31,9 +31,9 @@
                     <div class="start" id="startSelf" v-if="!suoFlag" @click="start" :class="
                         {
                             h: !isStartStyle(),
-                            'start-color-black-stop': isStartStyle() && mainColor == 'NMblack',
-                            'start-color-red-stop': isStartStyle() && mainColor != 'NMblack',
-                            'start-color-black': !isStartStyle() && mainColor == 'NMblack',
+                            'start-color-black-stop': isStartStyle() && (mainColor == 'NMblack' || globalVar.oneself),
+                            'start-color-red-stop': isStartStyle() && mainColor != 'NMblack' ,
+                            'start-color-black': !isStartStyle() && (mainColor == 'NMblack' || globalVar.oneself),
                             'start-color-red': !isStartStyle() && mainColor != 'NMblack',
                             'h-oneself': globalVar.oneself == 1 && !isStartStyle()
                         }">

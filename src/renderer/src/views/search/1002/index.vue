@@ -1,7 +1,9 @@
 <template>
   <!-- <div class="">1000{{ $route.query.key }}</div> -->
-  <HBlock  dataType="user" type="searchUser" :id="val.userId" :Name="val.nickname" 
-  :url="val.avatarUrl" :signature="val.signature" v-for="val in list.get(nowPage)" @click="goDetail(val.userId)"></HBlock>
+  <div class="list" :class="{'list-oneself':globalVar.oneself}">
+    <HBlock  dataType="user" type="searchUser" :id="val.userId" :Name="val.nickname" 
+    :url="val.avatarUrl" :signature="val.signature" v-for="val in list.get(nowPage)" @click="goDetail(val.userId)"></HBlock>
+  </div>
   <div class="pagination">
       <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
           :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
@@ -66,6 +68,28 @@ const goDetail = (id)=>{
 </script>
 
 <style scoped lang="less">
+.list{
+    
+    >.Hblock:nth-child(odd) {
+        background-color: @line-color-odd;
+    }
+
+    >.Hblock:nth-child(even) {
+        background-color: @line-color-even;
+    }
+}
+.list-oneself{
+    
+    >.Hblock:nth-child(odd) {
+        background-color: rgba(43,43,43,.6);
+    }
+
+    >.Hblock:nth-child(even) {
+        background-color: rgba(46,46,46,.4);
+    }
+}
+
+
 
 .pagination {
     display: flex;

@@ -12,6 +12,7 @@
         :hotComments="hotComments" :moreHot="moreHot" :total="total"
         :comments="comments" :totalPage="totalPage" :id="Number(routeId)"
         :type="CPtype"
+        :oneself="1"
         ></CommentList>
         <Teleport to="body" v-if="errorFlag">
             <Loading :type="typeError" :message="errorMassage" :width="loadingWidth"

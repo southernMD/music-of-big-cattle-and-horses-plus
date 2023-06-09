@@ -134,6 +134,10 @@ watch(nowPage,async()=>{
             background-color: rgb(55, 55, 55) !important;
         }
     }
+    >div{
+        display: flex;
+        align-items: center;
+    }
 
 }
 

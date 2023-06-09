@@ -93,16 +93,18 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
             }, 500)
         };
     }
-    document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
     MainMenu.colorBlock = extname
-    localStorage.setItem('colorBlock', extname);
-    localStorage.setItem('oneself', '1')
     globalVar.oneself = 1
+    nextTick(()=>{
+        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
+        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
+        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+        localStorage.setItem('MainTitle', `255, 255, 255`)
+        localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+        localStorage.setItem('MainMenuHover', `255, 255, 255`)
+        localStorage.setItem('colorBlock', extname);
+        localStorage.setItem('oneself', '1')
+    })
 })
 // window.electron.ipcRenderer.on('ffmpeg-path',({},data)=>{
 //     console.log(data);
@@ -134,14 +136,17 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag }) => {
     //     v.play()
     //     const h = document.getElementById('mainBackground') as HTMLImageElement
     //     h.src = ''
-    //     document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    //     document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    //     document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-    //     localStorage.setItem('MainTitle', `255, 255, 255`)
-    //     localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    //     localStorage.setItem('MainMenuHover', `255, 255, 255`)
-    //     localStorage.setItem('oneself', '1')
-    //     globalVar.oneself = 1
+        MainMenu.colorBlock = '.mp4'
+        nextTick(()=>{
+            document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
+            document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
+            document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+            localStorage.setItem('MainTitle', `255, 255, 255`)
+            localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+            localStorage.setItem('MainMenuHover', `255, 255, 255`)
+            localStorage.setItem('oneself', '1')
+            globalVar.oneself = 1
+        })
     // })
 })
 
@@ -162,18 +167,21 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
     };
     // const h = document.querySelector('#header') as HTMLElement
     // h.style.backgroundImage =   "data:image/png;base64," + base64
-    localStorage.setItem('broundColor', '33,33,36,.8')
-    document.documentElement.style.setProperty(`--broundColor`, `rgba(33,33,36,.8)`)
-    document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
-    MainMenu.colorBlock = extname
-    localStorage.setItem('colorBlock', extname);
-    localStorage.setItem('oneself', '1')
     globalVar.oneself = 1
+    MainMenu.colorBlock = extname
+    nextTick(()=>{
+        localStorage.setItem('broundColor', '33,33,36,.8')
+        document.documentElement.style.setProperty(`--broundColor`, `rgba(33,33,36,.8)`)
+        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
+        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
+        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+        localStorage.setItem('MainTitle', `255, 255, 255`)
+        localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+        localStorage.setItem('MainMenuHover', `255, 255, 255`)
+        localStorage.setItem('colorBlock', extname);
+        localStorage.setItem('oneself', '1')
+    })
+  
 })
 
 if (!sessionStorage.getItem('youkeCookie')) {

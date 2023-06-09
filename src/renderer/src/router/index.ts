@@ -174,7 +174,10 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path:'PersonalCenter',
                 name:'PersonalCenter',
-                component:()=>import('@renderer/views/PersonalCenter/index.vue')
+                component:()=>import('@renderer/views/PersonalCenter/index.vue'),
+                meta:{
+                    keepAlive:true
+                }
             },
             {
                 path:'PersonalRecord',

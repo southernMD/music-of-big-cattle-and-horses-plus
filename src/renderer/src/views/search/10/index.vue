@@ -1,16 +1,18 @@
 <template>
   <!-- <div class="">10{{ $route.query.key }}</div> -->
   <!-- <HBlock :dataType="BasicApi.startalbum.every(item=>item.id != val.id)?'al':'alHad' " @click="goZhuanji(val.id)" type="singer" :id="val.id" :Name="HName(val.name,val.alias)" type="ZhuanJi" :id="val.id" :Name="HName(val.name,val.alias)" :ZhunaJi="Hzhuan(val.artist)" :arId="val.artist.id" :url="val.picUrl" v-for="val in list.get(nowPage)"></HBlock> -->
-  <HBlock
-    :dataType="BasicApi.startalbum.every(item=>item.id != val.id)?'al':'alHad' "
-    type="ZhuanJi" 
-    :id="val.id" 
-    :Name="HName(val.name,val.alias)"
-    :ZhunaJi="Hzhuan(val.artist)" 
-    :arId="val.artist.id" 
-    :url="val.picUrl" 
-    @click="goZhuanji(val.id)"
-    v-for="val in list.get(nowPage)"></HBlock>
+  <div class="list" :class="{'list-oneself':globalVar.oneself}">
+        <HBlock
+        :dataType="BasicApi.startalbum.every(item=>item.id != val.id)?'al':'alHad' "
+        type="ZhuanJi" 
+        :id="val.id" 
+        :Name="HName(val.name,val.alias)"
+        :ZhunaJi="Hzhuan(val.artist)" 
+        :arId="val.artist.id" 
+        :url="val.picUrl" 
+        @click="goZhuanji(val.id)"
+        v-for="val in list.get(nowPage)"></HBlock>
+  </div>
   <div class="pagination">
       <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
           :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
@@ -71,6 +73,28 @@ const goZhuanji = (id)=>{
 </script>
 
 <style scoped lang="less">
+.list{
+    
+    >.Hblock:nth-child(odd) {
+        background-color: @line-color-odd;
+    }
+
+    >.Hblock:nth-child(even) {
+        background-color: @line-color-even;
+    }
+}
+.list-oneself{
+    
+    >.Hblock:nth-child(odd) {
+        background-color: rgba(43,43,43,.6);
+    }
+
+    >.Hblock:nth-child(even) {
+        background-color: rgba(46,46,46,.4);
+    }
+}
+
+
 
 .pagination {
     display: flex;

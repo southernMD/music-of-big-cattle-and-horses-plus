@@ -154,7 +154,7 @@ watch(()=>props.list_6!,()=>{
 })
 const Recorderror = ref(false)
 watch(()=>props.uid,async()=>{
-    if(props.id == -5){
+    if(props.id == -5 && !isNaN(props.uid)){
         try {
             Recorderror.value = false
             let result
