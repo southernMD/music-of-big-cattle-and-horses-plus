@@ -24,8 +24,9 @@
 [v0.0.2-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.2-beta/bingNMmusic-0.0.2-beta-setup.exe)<br>
 [v0.0.3-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.3-beta/bingNMmusic-0.0.3-beta-setup.exe)修复bug，更新打开方式限.mp3格式<br>
 [v0.0.4-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.4-beta/bingNMmusic-0.0.4-beta-setup.exe)修复bug，应用内更新<br>
-[v0.0.5-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.5-beta/bingNMmusic-0.0.5-beta-setup.exe)修复bug
-
+[v0.0.5-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.5-beta/bingNMmusic-0.0.5-beta-setup.exe)修复bug<br>
+[v0.0.6-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.6-beta/bingNMmusic-0.0.6-beta-setup.exe)无牛马api的最后一个版本，存在部分bug<br>
+[v0.0.7-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.7-beta/bingNMmusic-0.0.7-beta-setup.exe)牛马api的第一个版本，修复部分bug<br>
 ## 克隆项目
 
 ```shell
