@@ -255,12 +255,12 @@ const formLabelAlign = reactive({
     code: '',
 })
 const way = ref(false)
-const wayName = ref('用户名/邮箱')
+const wayName = ref('邮箱')
 watch(way, () => {
     ruleFormRef.value!.clearValidate('name')
     ruleFormRef.value!.clearValidate('password')
     ruleFormRef.value!.clearValidate('code')
-    if (!way.value) wayName.value = '用户名/邮箱'
+    if (!way.value) wayName.value = '邮箱'
     else wayName.value = '邮箱'
 })
 const autoTime = ref('获取验证码')
