@@ -7,7 +7,7 @@
                     <el-image draggable="false" :src="icon" style="width: 25px; height: 25px"></el-image>
                 </template>
             </el-image>
-            <span v-show="!songMenu" class="title" :class="{ noDrag: !Main.dragMouse }">大牛马音乐plus</span>
+            <span v-show="!songMenu" class="title" :class="{ noDrag: !Main.dragMouse }" @click="goHome">大牛马音乐plus</span>
             <i v-show="songMenu" title="收起音乐详情页" class="iconfont icon-xiangxiajiantou" @click="Main.detailStatus = 'close'"
                 :class="{ noDrag: !Main.dragMouse }"></i>
             <transition-group name="hideSearch">
@@ -443,6 +443,12 @@ const setting = ()=>{
     Main.detailStatus = 'close'
     $router.push({
         name:'setting'
+    })
+}
+
+const goHome = ()=>{
+    $router.push({
+        path:'/app/findMusic/find1'
     })
 }
 </script> 

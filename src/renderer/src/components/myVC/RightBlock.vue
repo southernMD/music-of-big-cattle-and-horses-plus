@@ -6,6 +6,7 @@
         @click="eventsHandle[index].bind(null,params[index])()"  
         v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
         >
+        {{ type }}
             <div class="icon">
                 <i class="iconfont" :class="[iconList[index]]"></i>
             </div>
@@ -259,6 +260,38 @@ const buildList = ()=>{
             iconList.value.push(...['icon-chakan','icon-bofang_o','icon-nextplay','icon-tianjiawenjian','icon-fenxiang1','icon-wenjian','icon-lajixiang'])
             params.value.push(...[props.id,props.index,props.index,props.id,props.id,props.path,props.path])
             eventsHandle.value.push(...[look,play,nextPlay,function(){},share,openFile,delDownload])
+        }
+    }else if(props.type.startsWith('songPanel')){
+        if(props.type.endsWith('nor')){
+            messageList.value.push(...['播放'])
+            ifBorderBottom.value.push(...[true])
+            iconList.value.push(...['icon-bofang_o'])
+            params.value.push(...[props.id])
+            eventsHandle.value.push(...[play])
+            messageList.value.push('打开文件所在目录','从列表中删除')
+            ifBorderBottom.value.push(...[true,false])
+            iconList.value.push(...['icon-wenjian','icon-lajixiang'])
+            eventsHandle.value.push(openFile,deleteFromList)
+            params.value.push(...[props.path,props.index])
+        }else{
+            messageList.value.push(...['查看评论','播放'])
+            ifBorderBottom.value.push(...[false,true])
+            iconList.value.push(...['icon-chakan','icon-bofang_o'])
+            params.value.push(...[props.id,props.id])
+            eventsHandle.value.push(...[look,play])
+            if(props.type.endsWith('Local')){
+                messageList.value.push(...['收藏','分享','打开文件所在目录','从列表中删除'])
+                ifBorderBottom.value.push(...[false,false,true,false])
+                iconList.value.push(...['icon-tianjiawenjian','icon-fenxiang1','icon-wenjian','icon-lajixiang'])
+                eventsHandle.value.push(...[function(){},share,openFile,deleteFromList])
+                params.value.push(...[props.id,props.id,props.path,props.index])
+            }else{
+                messageList.value.push(...['收藏','分享','下载','从列表中删除'])
+                ifBorderBottom.value.push(...[false,false,true,false])
+                iconList.value.push(...['icon-tianjiawenjian','icon-fenxiang1','icon-xiazai1','icon-lajixiang'])
+                eventsHandle.value.push(...[function(){},share,download,deleteFromList])
+                params.value.push(...[props.id,props.id,props.id,props.index])
+            }
         }
     }else if(props.type.startsWith('song')){
         messageList.value.push(...['查看评论','播放','下一首播放','收藏','分享'])
@@ -1191,6 +1224,23 @@ const create = async()=>{
 
 const hideStartList = ()=>{
     flagStart.value = false
+}
+
+const deleteFromList = (index)=>{
+    if(index == Main.playingindex - 1){
+        Main.playingList.splice(index,1)
+        Main.playingPrivileges.slice(index,1)
+        if(Main.playingList.length != 0)Main.playing = Main.playingList[Main.playingindex - 1].id
+    }else{
+        Main.playingList.splice(index,1)
+        Main.playingPrivileges.slice(index,1)
+        if(index <  Main.playingindex - 1){
+            Main.playingindex--
+        }
+    }
+    if(Main.playingList.length == 0){
+        globalVar.clearList = true
+    }
 }
 
 </script>

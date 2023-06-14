@@ -7,7 +7,7 @@
     data-right="1" 
     :data-pic="zhuanji?.picUrl ?? bufferpic"
     :data-txt="`单曲:${title} - ${singer?.map(it=>it.name).join('/')}`"
-    :data-download="!(downloadId.includes(id)) && !(!ifDownload)"
+    :data-download="!(downloadId.includes(id)) && !(!ifDownload) || myPath != 'undefined'"
     :data-path="myPath"
     :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
@@ -16,7 +16,7 @@
         bottomColor: Main.dragMouse && Main.dragType == 'songMy' && (length == index || length == indexSearch) && Main.mouseDragOnIndex == -1,
         'line-music-oneself': globalVar.oneself == 1 && oneselfColor != false
     }" @mousedown="pseudoDragBeginn" @click="changColor" ref="line-music" @mouseover="replaceLocation"
-        @mouseout="replaceLocationed" @dblclick="gotoPlay">
+        @mouseout="replaceLocationed" @dblclick="gotoPlay" @mouseenter="fnMouseEnter">
         <div class="line">
             <div class="small-jiantou">
                 <slot></slot>
@@ -33,10 +33,10 @@
                 <i class="iconfont icon-aixin_fill xin" :class="{ noDrag: !Main.dragMouse }" v-show="ifLike() && !lately"
                     @click="likeOrDislike"></i>
                 <i class="iconfont icon-xiazai1" :class="{ noDrag: !Main.dragMouse }" @click="download(id)"
-                    v-if="!ifDownload && !downloadId.includes(id) && !local && !lately"></i>
+                    v-if="(!ifDownload && !downloadId.includes(id) || myPath == 'undefined') && !local && !lately"></i>
                 <canvas id="loadingCanvas" width="25" height="25" ref="loadingCanvas"
                     v-show="downloadId.includes(id) && !local  && !lately && loadingValue.get(id) && loadingValue.get(id)?.[0] > 0"></canvas>
-                <i class="iconfont icon-zhengque" v-if="!(downloadId.includes(id)) && !(!ifDownload) && !local  && !lately"
+                <i class="iconfont icon-zhengque" v-if="(!(downloadId.includes(id)) && !(!ifDownload) || myPath != 'undefined') && !local  && !lately"
                     :class="{ noDrag: !Main.dragMouse }"></i>
                 <!-- <canvas id="loadingCanvas" width="18" height="18" ref="loadingCanvas"
                 v-show="true"></canvas> -->
@@ -263,7 +263,7 @@ const replaceLocationed = () => {
 const $emit = defineEmits(['warpPlace', 'localPlay','recordPlay','shorPlayList'])
 const fnMouseDrag = async (e: any) => {
     window.removeEventListener('mouseup', fnMouseDrag)
-    window.removeEventListener('mousemove', fnMouseDragMoving)
+    // window.removeEventListener('mousemove', fnMouseDragMoving)
     for (let i = 0; i < e.path.length; i++) {
         if (e.path[i].classList != undefined && e.path[i].classList.contains('dragMouseStyleAdd')) {
             let dom = e.path[i] as HTMLElement
@@ -367,18 +367,32 @@ const fnMouseDragMoving = (e: MouseEvent) => {
         Main.dragIndex = Number(props.index)
         Main.pageY = e.pageY
         Main.dragMessage = props.title as string
-        dragId.value = props.id as number
     } else if (Main.isMyCreate == false) {
         Main.dragMouse = true
         Main.dragMessage = props.title as string
         Main.dragType = 'song'
     }
 }
+
+const fnMouseEnter = (e:MouseEvent)=>{
+    if(Main.dragMouse == true){
+        if (Main.isMyCreate == true) {
+            Main.dragType = 'songMy'
+            Main.pageY = e.pageY
+        } else if (Main.isMyCreate == false) {
+            Main.dragType = 'song'
+        }
+    }
+}
+
 const pseudoDragBeginn = (event:MouseEvent) => {
     if(event.button !== 0)return
-    window.addEventListener('mousemove', fnMouseDragMoving)
+    // window.addEventListener('mousemove', fnMouseDragMoving)
     window.addEventListener("mouseup", fnMouseDrag)
-
+    Main.dragMouse = true
+    Main.dragMessage = props.title
+    Main.dragIndex = Number(props.index)
+    dragId.value = props.id
     console.log('拖动元素');
 }
 

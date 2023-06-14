@@ -349,20 +349,25 @@ export const createWindow = (path?:string):BrowserWindow=>{
           {name:'视频资源',extensions:['mp4']}
         ],
         properties:['openFile','promptToCreate']
-      }).then((obj)=>{
+      }).then(async(obj)=>{
         const {canceled,filePaths} = obj
         if(!canceled){
           const filePath = filePaths[0]
-          fs.readFile(filePath,(err,data)=>{
-            if(!err){
-              if(!extname(filePath).endsWith('mp4'))event.reply('file-ready', {liu:data,extname:extname(filePath)})
-              else {
-                event.reply('mp4-ready',{flag:false})
+          await new Promise<any>((resolve, reject) => {
+            fs.readFile(filePath,(err,data)=>{
+              if(!err){
+                if(!extname(filePath).endsWith('mp4'))event.reply('file-ready', {liu:data,extname:extname(filePath)})
+                else {
+                  event.reply('mp4-ready',{flag:false,filePath})
+                }
+                resolve('ok')
+              }else{
+                console.log(err);
+                reject(err)
               }
-            }else{
-              console.log(err);
-            }
+            })
           })
+
           //打包环境与开发环境
           let basePath = ''
           if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

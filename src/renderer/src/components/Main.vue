@@ -142,7 +142,12 @@
         <!-- <router-view></router-view> -->
         <router-view v-slot="{ Component }">
           <keep-alive>
-              <component v-if="$route.meta.keepAlive" :is="Component" />
+              <component v-if="$route.meta.keepAlive && $route.name == 'PersonalCenter' " :is="Component" />
+          </keep-alive>
+        </router-view>
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+              <component v-if="$route.meta.keepAlive && $route.name == 'personalFM' " :is="Component" />
           </keep-alive>
         </router-view>
         <router-view v-if="!$route.meta.keepAlive" />

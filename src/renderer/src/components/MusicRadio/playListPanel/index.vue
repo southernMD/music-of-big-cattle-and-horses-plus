@@ -17,7 +17,9 @@
             <div class="bottom" id="play-list-Panel-bottom">
                 <LineMusic v-for="(value, index) in  list" :showIndex="false" :title="value.name" :singer="value.ar"
                     :time="value.dt" :id="value.id" :index="index" :key="value.id" :tns="value?.tns"
-                    :alia="value?.alia" :oneselfColor="false" type="radio">
+                    :alia="value?.alia" :oneselfColor="false" type="radio" :dataType="getDataType(value.id,value.localPath)"
+                    :path="value.localPath"
+                    >
                     <template #default>
                         <i class="iconfont icon-youjiantou" v-if="Main.playing == value.id"></i>
                     </template>
@@ -30,14 +32,14 @@
 
 <script lang="ts" setup>
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
-import { getCurrentInstance, ComponentInternalInstance, toRef } from 'vue';
-import { useMain } from '@renderer/store';
+import { getCurrentInstance, ComponentInternalInstance, toRef, watch } from 'vue';
+import { useMain,useGlobalVar } from '@renderer/store';
 const $el = getCurrentInstance() as ComponentInternalInstance
 const $emit = defineEmits(['close','stopPlay','startAll'])
 const Main = useMain();
-
+const globalVar = useGlobalVar()
 let list = toRef(Main, 'playingList')
-
+console.log(list);
 const clearList = ()=>{
     Main.playingList = []
     Main.playingPrivileges = []
@@ -57,6 +59,25 @@ useClickElsewhereToClose(deleteDilog, $emit, "playlistIcon")
 
 const startAll = ()=>{
     $emit('startAll')
+}
+
+watch(()=>globalVar.clearList,()=>{
+    if(globalVar.clearList == true){
+        clearList()
+        globalVar.clearList = false
+    }
+})
+
+const getDataType = (id,path)=>{
+    if(id > 0){
+        if(path != undefined){
+            return 'songPanelLocal'
+        }else{
+            return 'songPanel'
+        }
+    }else{
+        return 'songPanelnor'
+    }
 }
 </script>
 

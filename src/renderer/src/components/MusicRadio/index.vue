@@ -74,7 +74,7 @@
 
                     <i class="iconfont" :class="[iconWay[wayIndex]]" :title="iconWayWrite[wayIndex]" @click="nextWay"
                         v-if="Main.songType !== 'FM'"></i>
-                    <i class="iconfont icon-lajixiang" v-else title="垃圾桶" @click="rubish"></i>
+                    <!-- <i class="iconfont icon-lajixiang" v-else title="垃圾桶" @click="rubish"></i> -->
                 </div>
                 <div class="before" @click="prevSongThor" :title="`上一首（${globalVar.setting.quick[1]}）`">
                     <i class="iconfont icon-shangyishou"></i>
@@ -2018,7 +2018,7 @@ const getText = (message:string)=>{
 const willStartListId = ref()
 const startAll = ()=>{
     startDialogFlag.value = true
-    willStartListId.value = Main.playingList.map(it=>it.id)
+    willStartListId.value = Main.playingList.map(it=>it.id).filter(it=>it > 0)
 }
 
 watch(()=>globalVar.setting.opencanvas,()=>{

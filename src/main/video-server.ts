@@ -11,21 +11,25 @@ export default async(window:BrowserWindow) =>{
     app.use(cors())
     let ffmpegCommand:any = null;
     app.get('/video', (req, res) => {
+        let {path} = req.query
+        console.log(path);
         let pathSrc = ''
         if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-            pathSrc = '../../resources/background.mp4'
+            pathSrc = join(__dirname,'../../resources/background.mp4') 
             ffmpeg.setFfmpegPath(ffmpegPath.path);
-          } else {
-            pathSrc = '../../../app.asar.unpacked/resources/background.mp4'
+        } else {
+            pathSrc = join(__dirname,'../../../app.asar.unpacked/resources/background.mp4') 
             ffmpeg.setFfmpegPath(join(__dirname,'../../../app.asar.unpacked/node_modules/@ffmpeg-installer/win32-x64/ffmpeg.exe'));
-          }
+        }
+        //@ts-ignore
+        if(path != 'undefined')pathSrc = path
         // if (ffmpegCommand !== null) {
         //     ffmpegCommand.kill();
         //     ffmpegCommand = null;
         // }
         let total = '0'
-        ffmpegCommand = ffmpeg(join(__dirname,pathSrc))
-            .input(join(__dirname,pathSrc))
+        ffmpegCommand = ffmpeg(pathSrc)
+            .input(pathSrc)
             .nativeFramerate()
             .videoCodec('libx264')
             .audioCodec('aac')
@@ -41,11 +45,16 @@ export default async(window:BrowserWindow) =>{
                 console.log(Math.ceil(pickTime(timemark)/pickTime(total)*100));
             })
             .on('error', function (err) {
-                console.log('An error occurred: ' + err.message);
-                // window.webContents.send('ffmpeg-path',{p:ffmpegPath.path,d:__dirname,err:err.message})
+                console.log(err);
+                if(!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')){
+                    console.log('An error occurred: ' + err.message);
+                    window.webContents.send('ffmpeg-error')
+                }
+
             })
             .on('end', function () {
                 window.webContents.send('loading-mp4',{p:100})
+                ffmpegCommand.kill()
                 console.log('Processing finished !');
             }).on('codecData',({duration})=>{
                 total = duration

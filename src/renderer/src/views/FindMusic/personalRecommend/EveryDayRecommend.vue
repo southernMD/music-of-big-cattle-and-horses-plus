@@ -151,9 +151,10 @@ const playThis = async()=>{
                 }
             }
             if(flag){
-                Main.playingList.splice(Main.playingindex - 1,0,everyDaySong.value[index.value])
-                Main.playingPrivileges.splice(Main.playingindex - 1,0,everyDaySong.value[index.value].privilege)
+                Main.playingList.splice(Main.playingindex ,0,everyDaySong.value[index.value])
+                Main.playingPrivileges.splice(Main.playingindex ,0,everyDaySong.value[index.value].privilege)
                 Main.playing = everyDaySong.value[index.value].id as number
+                Main.playingindex++
                 Main.playStatus = 'play'
             }else{
                 Main.playingindex = I + 1

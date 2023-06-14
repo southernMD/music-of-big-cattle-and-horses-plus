@@ -18,10 +18,10 @@
                     </div>
                 </div>
                 <div class="btns" v-if="$route.query.id != BasicApi.profile!.userId">
-                    <div>
+                    <!-- <div>
                         <i class="iconfont icon-xinfeng"></i>
                         <span>发私信</span>
-                    </div>
+                    </div> -->
                     <div @click="followUser">
                         <i class="iconfont icon-big-gou" v-if="personalMessage.followed"></i>
                         <i class="iconfont icon-jiahao_o" v-else></i>

@@ -1400,6 +1400,7 @@ interface V {
         updataUrl:string
         newVersion:string
     }
+    clearList:boolean
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1454,7 +1455,7 @@ export const useGlobalVar = defineStore('globalVar', {
                 defaultMusic:false,
                 quitmodel:false,
                 playWay:false,
-                quick:['Ctrl + P','Ctrl + Left','Cti+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L','Ctrl + D'],
+                quick:['Ctrl + P','Ctrl + Left','Ctrl+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L','Ctrl + D'],
                 quickGlobal:['Ctrl + Alt + P','Ctrl + Alt + Left','Ctrl + Alt + Right','Ctrl + Alt + Up','Ctrl + Alt + Down','Ctrl + Alt + M','Ctrl + Alt + L','Ctrl + Alt + D'],
                 closeGlWay:false,
                 errGlobal:[],
@@ -1479,7 +1480,8 @@ export const useGlobalVar = defineStore('globalVar', {
                 version:'',
                 updataUrl:'',
                 newVersion:''
-            }
+            },
+            clearList:false
         }
     },
     actions:{

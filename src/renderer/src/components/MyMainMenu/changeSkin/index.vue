@@ -133,6 +133,13 @@ const recover = ()=>{
     s.style.backgroundImage = ''
 }
 
+window.electron.ipcRenderer.on('ffmpeg-error',()=>{
+    recover()
+    globalVar.loadMessageDefault = '加载视频出错请重试'
+    globalVar.loadMessageDefaultFlag = true
+    globalVar.loadMessageDefaultType = 'error'
+})
+
 
 </script>
 

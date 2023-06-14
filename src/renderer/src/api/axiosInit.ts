@@ -1,10 +1,7 @@
 import request from "axios";
 
 const axios = request.create({
-    // baseURL:'http://120.48.43.32:3000',
     baseURL:'http://cloud-music.pl-fe.cn/',
-    // baseURL:'http://localhost:3000',
-    // baseURL:'https://5rg9702841.goho.co'
 }) 
 
 //请求拦截器，在发起请求前做一些事情

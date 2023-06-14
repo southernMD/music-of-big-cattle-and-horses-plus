@@ -114,28 +114,30 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
 onMounted(()=>{
     window.electron.ipcRenderer.sendSync('renderer-ready')
 })
-window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag }) => {
+window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
     if (!flag) globalVar.loadingMp4Bk = true
     const port = window.electron.ipcRenderer.sendSync('vedio-server-port');
     nextTick(()=>{
         const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-        v.src = `http://127.0.0.1:${port}/video`
+        v.src = `http://127.0.0.1:${port}/video?path=${filePath}`
         v.play()
         const h = document.getElementById('mainBackground') as HTMLImageElement
         h.src = ''
     })
-    // fetch(`http://127.0.0.1:2233/video`).then((response) => {
-    //     return response.arrayBuffer()
-    // }).then((buffer) => {
-    //     console.log(buffer);
-    //     const url = URL.createObjectURL(new Blob([buffer], {
-    //         type: "video/m3u8"
-    //     }))
-    //     const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-    //     v.src = url
-    //     v.play()
-    //     const h = document.getElementById('mainBackground') as HTMLImageElement
-    //     h.src = ''
+    fetch(`http://127.0.0.1:${port}/video?path=${filePath}`).then((response) => {
+        return response.arrayBuffer()
+    }).then((buffer) => {
+        console.log(buffer);
+        const url = URL.createObjectURL(new Blob([buffer], {
+            type: "video/m3u8"
+        }))
+        const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
+        v.src = url
+        v.play()
+        const h = document.getElementById('mainBackground') as HTMLImageElement
+        h.src = ''
+    })
+
         MainMenu.colorBlock = '.mp4'
         nextTick(()=>{
             document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)

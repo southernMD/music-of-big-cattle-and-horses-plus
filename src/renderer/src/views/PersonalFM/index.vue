@@ -19,9 +19,9 @@
                         <div title="喜欢">
                             <i class="iconfont icon-aixin"></i>
                         </div>
-                        <div title="垃圾箱" @click="rubbish">
+                        <!-- <div title="垃圾箱" @click="rubbish">
                             <i class="iconfont icon-lajixiang"></i>
-                        </div>
+                        </div> -->
                         <div @click="throPrev" title="上一首">
                             <i class="iconfont icon-shangyishoushangyige"></i>
                         </div>
