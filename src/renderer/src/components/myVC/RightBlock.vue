@@ -6,7 +6,6 @@
         @click="eventsHandle[index].bind(null,params[index])()"  
         v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
         >
-        {{ type }}
             <div class="icon">
                 <i class="iconfont" :class="[iconList[index]]"></i>
             </div>
