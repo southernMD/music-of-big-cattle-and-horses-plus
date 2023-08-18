@@ -8,7 +8,7 @@ useColor()
 </script>
 
 <template>
-<div class="contain" v-if="!globalVar.radioReady">大牛马音乐</div>
+<div class="contain" v-if="!globalVar.radioReady && $route.path.includes('/app')">大牛马音乐</div>
 <Suspense>
     <template #default>
         <RouterView></RouterView>
