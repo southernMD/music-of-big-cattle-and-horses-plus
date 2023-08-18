@@ -252,13 +252,7 @@ let t2 = setInterval(() => {
     if (ciId) {
         clearInterval(t2);
     }
-}, 100)
-// let t = setInterval(() => {
-//     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'ciId');
-//     if (ciId) {
-//         clearInterval(t);
-//     }
-// }, 100)
+}, 5000)
 let animationId;
 
 let playingList = toRef(Main, 'playingList')
@@ -307,6 +301,10 @@ watch(playingId, () => {
 
 const likeOrDislike = async () => {
     if(Main.playing < 0) return
+    if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
+        globalVar.flagLogin = true
+        return
+    }
     let likeIndex = likes.value.indexOf(playingId.value)
     if (likeIndex != -1) {
         //取消喜欢
@@ -644,11 +642,7 @@ function base64ToArrayBuffer(base64) {
     }
     return bytes.buffer;
 }
-// let t = setTimeout(async ()=>{
-//             const CiId = await electronIpc.ipcSendSync('getWindowId','Ci');
-//             clearTimeout(t);
-//             electronIpc.ipcSendTo(CiId, 'to-Ci', lyric);
-//         },1000)
+
 watch(lyric, async () => {
     let str = playingList.value[playingindex.value - 1].name + ' - ';
     let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
@@ -1545,11 +1539,12 @@ onMounted(() => {
 })
 const MainMenu = useMainMenu()
 const Width = toRef(MainMenu, 'width')
+onMounted(()=>{
+    canvas.width = Width.value
+})
 watch(Width, () => {
-    nextTick(() => {
-        canvas.width = Width.value
-    })
-}, { immediate: true })
+    canvas.width = Width.value
+})
 let AC: AudioContext;
 let bufferSource: AudioBufferSourceNode;
 let gainNode: GainNode;
@@ -1668,6 +1663,10 @@ const startDialogFlag = ref(false)
 const imgRef = ref<InstanceType<typeof HTMLElement>>()
 const todoHandle = (index)=>{
     if(index == 0){
+        if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
+            globalVar.flagLogin = true
+            return
+        }
         startDialogFlag.value = true
         willStartListId.value = [Main.playing]
     }else if(index == 1){
@@ -2177,6 +2176,10 @@ const addShareImage = ()=>{
 const delimg = (index)=>{
     shareimages.value.splice(index,1)
 }
+
+onMounted(()=>{
+    globalVar.radioReady = true
+})
 </script>
 
 <style lang="less" scoped>

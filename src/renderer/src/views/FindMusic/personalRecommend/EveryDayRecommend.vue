@@ -5,7 +5,7 @@
             <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
         </div>
         <div class="main">
-            <div class="imgae" :data-id="everyDaySong[index].id" data-right="1" data-type="song" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
+            <div class="imgae" :data-id="everyDaySong[index]?.id" data-right="1" data-type="song" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
                 <div class="play animate__animated" @click.self="playThis"
                 :class="{
                     animate__fadeIn:playButtonFlag,
@@ -24,7 +24,7 @@
                 <div class="song-at">
                     <span :class="{noDrag:!Main.dragMouse}" v-for="({},i) in everyDaySong[index]?.ar">
                     {{everyDaySong[index]?.ar[i].name}}
-                    <span v-if="i < everyDaySong[index].ar.length-1" style="
+                    <span v-if="i < everyDaySong[index]?.ar.length-1" style="
                         transform: rotate(-10deg) translateY(-2px);
                         display: inline-block;
                         font-size: 10px;

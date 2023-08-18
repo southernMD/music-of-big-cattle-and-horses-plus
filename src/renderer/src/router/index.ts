@@ -235,9 +235,18 @@ const routes: Array<RouteRecordRaw> = [
         name:'dragMessage',
         component:()=>import('@renderer/views/dragMessage.vue')
     },
+    // {
+    //     path:'/test',
+    //     name:'test',
+    //     component:()=>import('@renderer/views/test.vue')
+    // },
     {
         path:'/',
         redirect:`/app/findMusic/find1`
+    },
+    {
+        path:'/',
+        redirect:`/test`
     }
 ]
  

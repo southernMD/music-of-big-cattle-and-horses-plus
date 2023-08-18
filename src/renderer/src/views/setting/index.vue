@@ -569,8 +569,10 @@ const searchUpdate = async()=>{
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefaultFlag = true
     }else{
+        const v = res.data.name.split('v')[1]
+        console.log(v,globalVar.setting.version);
         // if(res.data.name.endsWith(version.value)){
-        if(res.data.name.endsWith == version.value){
+        if(v <= globalVar.setting.version){
             globalVar.loadMessageDefault = '当前版本已是最新'
             globalVar.loadMessageDefaultFlag = true
         }else{
@@ -582,6 +584,8 @@ const searchUpdate = async()=>{
         }
     }
 }
+
+
 
 </script>
 

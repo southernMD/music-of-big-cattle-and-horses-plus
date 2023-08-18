@@ -17,7 +17,7 @@
             >
         </LineMusic>
     </div>
-    <div class="message" v-show="listLength==0 && !flagError">
+    <div class="message" v-show="loadingFlag && !flagError">
         加载中
     </div>
     <div class="message" v-show="flagError">
@@ -42,10 +42,12 @@ const list:Ref<any[]> = ref([])
 const listCount:Ref<any[]> = ref([])
 const listLength = ref(0)
 const flagError = ref(false)
+const loadingFlag = ref(true)
 onMounted(async()=>{
     try {
         flagError.value = false
         let result 
+        loadingFlag.value = true
         if(localStorage.getItem('NMcookie')){
             result = await NM.reqUserRecord(Number(+$route.query.id!),1);
         }else{
@@ -54,6 +56,7 @@ onMounted(async()=>{
         list.value = result.map(item=>item.song)
         listCount.value = result.map(item=>item.playCount)
         listLength.value = list.value.length  
+        loadingFlag.value = false
     } catch (error) {
         flagError.value = true
     }
@@ -65,6 +68,7 @@ watch(flag,async()=>{
         listCount.value =[]
         listLength.value = 0
         flagError.value = false
+        loadingFlag.value = true
         if(flag.value){
             if(localStorage.getItem('NMcookie')){
                 result = await NM.reqUserRecord(Number(+$route.query.id!),1);
@@ -81,6 +85,7 @@ watch(flag,async()=>{
         list.value = result.map(item=>item.song)
         listCount.value = result.map(item=>item.playCount)
         listLength.value = list.value.length  
+        loadingFlag.value = false
     } catch (error) {
         flagError.value = true
     }

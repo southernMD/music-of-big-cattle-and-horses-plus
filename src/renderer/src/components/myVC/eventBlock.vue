@@ -149,8 +149,8 @@ import { Timeago2 } from '@renderer/utils/dayjs'
 import CommentList from './CommentList.vue'
 import MyDialog from './MyDialog.vue'
 import {throttle} from 'lodash'
-import {regEmoji} from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
+import { regEmoji } from '@renderer/utils/regEmoji'
 const $router = useRouter()
 // import {regEmoji} from '@/utils/regEmoji'
 const fenxiang = ref(true)
@@ -557,6 +557,7 @@ const RegTxt = (msg:string)=>{
     msg = msg.replace(/(@.+?) /g, '<a href="javascript:;">$1</a> ');
     msg = msg.replace(/\/\/(@.+?)：/g, '//<a href="javascript:;">$1</a>：');
     msg = msg.replace(/\n/g, "<br>");
+    msg = regEmoji(msg)
     return msg;
 }
 

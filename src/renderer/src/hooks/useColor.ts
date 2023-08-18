@@ -96,6 +96,7 @@ export default function (): any {
             primaryColor.value = `rgb(236,65,65)`
             MainMenu.iconSrc = "/src/assets/icon.png"
             // document.documentElement.style.setProperty('--fontColorHover',`rgb(255,255,255)`);
+            window.electron.ipcRenderer.send('set-background-color',['rgb(43,43,43)','rgba(255,255,255,.7)'])
         } else {
             document.documentElement.style.setProperty('--radioBkColor', `rgb(255,255,255)`);
             document.documentElement.style.setProperty('--otherBkColor', `rgb(255,255,255)`);
@@ -176,6 +177,7 @@ export default function (): any {
             }else{
                 document.documentElement.style.setProperty('--fontColorOneself', `rgba(255,255,255,.7)`);
             }
+            window.electron.ipcRenderer.send('set-background-color',['rgb(255,255,255)','rgba(0,0,0,.7)'])
         }
         if (newValue === 'NMred') {
             MainMenu.iconSrc = "/src/assets/icon.png"

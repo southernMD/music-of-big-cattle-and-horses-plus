@@ -166,9 +166,10 @@ let playingList = toRef(Main, "playingList");
 let detailStatus = toRef(Main, "detailStatus");
 let playingId = toRef(Main, "playing");
 const NMcookie = ref(true)
-onMounted(()=>{
+watch(detailStatus,()=>{
   if(localStorage.getItem('NMcookie'))NMcookie.value = false
 })
+
 defineProps<{
   currentTime: number;
   lyricOffset: number;

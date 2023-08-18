@@ -20,18 +20,39 @@ import { exec, spawn } from 'child_process'
 import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
 import log from 'electron-log'
-import e from 'express'
-export const createWindow = (path?:string):BrowserWindow=>{
+export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     let X: number, Y: number; //鼠标基于显示器的坐标
     let screenMove: any = null;  //鼠标移动监听
     const primaryDisplay = screen.getPrimaryDisplay()
     const { width, height } = primaryDisplay.workAreaSize
-    // Create the browser window.
+    let basePath = ''
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      basePath = '../../resources'
+    } else {
+      basePath = '../../../app.asar.unpacked/resources'
+    }
+    let fontColor
+    const background = await new Promise<string>((resolve, reject) => {
+      fs.readFile(join(__dirname,basePath,'color.json'), 'utf8', (err, jsonString) => {
+        if (err) {
+          // 文件不存在，创建文件并写入内容
+          fs.writeFileSync(join(__dirname,basePath,'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
+          fontColor = "rgba(0,0,0,.7)"
+          resolve("rgb(255,255,255)")
+        } else {
+          // 文件存在，输出文件内容
+          fontColor = JSON.parse(jsonString).color
+          resolve(JSON.parse(jsonString).background)
+        }
+      });
+    })
+
+    console.log('主题颜色是',background);
     const mainWindow = new BrowserWindow({
       width: 1020,
       height: 670,
-      // backgroundColor: '#00000000',
+      backgroundColor: background,
       frame: false, //隐藏默认控件
       resizable: false,
       maxHeight: 670,
@@ -918,7 +939,20 @@ export const createWindow = (path?:string):BrowserWindow=>{
       })
 
     })
-    
+    //记忆启动色
+    ipcMain.on('set-background-color',({},arr)=>{
+      console.log(arr[0],arr[1]);
+      let basePath
+      if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+        basePath = '../../resources'
+      } else {
+        basePath = '../../../app.asar.unpacked/resources'
+      }
+      fs.writeFileSync(join(__dirname,basePath,'color.json'),`{"background":"${arr[0]}","color":"${arr[1]}"}`)
+    })
+    ipcMain.on('get-background-color',(event)=>{
+      event.returnValue = {background,fontColor}
+    })
     return mainWindow
 }
 

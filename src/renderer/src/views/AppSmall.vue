@@ -1,6 +1,6 @@
 <template>
     <div class="AppSmall">
-        <img src="" alt="" id="mainBackground">
+        <img src="" id="mainBackground" style="display: none;">
         <video src="" id="mainBackgroundVideo" :muted="true" loop type="video/mp4"></video>
         <MyMainMenu></MyMainMenu>
         <!-- <LoadingBig></LoadingBig> -->
@@ -47,10 +47,20 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject } from 'vue'
+import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect } from 'vue'
 import { useMainMenu, useGlobalVar, useBasicApi, useMain,useNM } from '@renderer/store'
-import MusicRadio from '@renderer/components/MusicRadio/index.vue'
-import useColor from '@renderer/hooks/useColor';
+const MusicRadio = ref()
+const MyMainMenu = ref()
+const Main = ref()
+onMounted(()=>{
+    MusicRadio.value = defineAsyncComponent(() =>
+    import('@renderer/components/MusicRadio/index.vue'))
+    MyMainMenu.value = defineAsyncComponent(() =>
+    import('@renderer/components/MyMainMenu/index.vue'))
+    Main.value = defineAsyncComponent(() =>
+    import('@renderer/components/Main.vue'))
+})
+
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
@@ -66,7 +76,6 @@ const downloadQueue = shallowRef(new PromiseQueue({ concurrency: 3 }))
 globalVar.setting.version = window.electron.ipcRenderer.sendSync('app-version')
 
 provide('downloadQueue', downloadQueue)
-useColor()
 onMounted(() => {
     globalVar.oneself = Number(localStorage.getItem('oneself')) as 0 | 1
 })
@@ -88,6 +97,7 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
                 if (h) {
                     BKbase64.value = newUrl as string
                     h.src = newUrl
+                    h.style.display = 'block'
                     clearInterval(t)
                 }
             }, 500)
@@ -122,6 +132,7 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
         v.src = `http://127.0.0.1:${port}/video?path=${filePath}`
         v.play()
         const h = document.getElementById('mainBackground') as HTMLImageElement
+        h.style.display = 'none'
         h.src = ''
     })
     fetch(`http://127.0.0.1:${port}/video?path=${filePath}`).then((response) => {
@@ -135,6 +146,7 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
         v.src = url
         v.play()
         const h = document.getElementById('mainBackground') as HTMLImageElement
+        h.style.display = 'none'
         h.src = ''
     })
 
@@ -163,6 +175,7 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
         const newUrl = this.result;
         const h: any = document.getElementById('mainBackground') as HTMLImageElement
         h.src = newUrl
+        h.style.display = 'block'
         const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
         v.pause();
         v.src = ''
@@ -226,7 +239,6 @@ const p3 = BasicApi.reqDjProgramToplist(10)
 const p4 = BasicApi.reqPlayListTags()
 await Promise.allSettled([p1, p2, p3, p4])
 MainPinia.reqPersonal_fm()
-
 const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
 globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
 globalVar.fontList.unshift({name:'默认'})
@@ -404,7 +416,7 @@ let t = setInterval(() => {
     if (dragMessageId) {
         clearInterval(t);
     }
-}, 100)
+}, 5000)
 watch(draggable, (newValue, oldValue) => {
     console.log(newValue, oldValue);
     if (newValue == true) {
@@ -497,22 +509,21 @@ const quick = toRef(globalVar.setting,'quick')
 if(quick.value.length == 0)quick.value = ['Ctrl + P','Ctrl + Left','Ctrl+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L']
 if(quickGlobal.value.length == 0)quickGlobal.value = ['Ctrl + Alt + P','Ctrl + Alt + Left','Ctrl + Alt + Right','Ctrl + Alt + Up','Ctrl + Alt + Down','Ctrl + Alt + M','Ctrl + Alt + L']
 if(errGlobal.value.length == 0)errGlobal.value = [false,false,false,false,false,false,false]
-let timeoutId:any  = null 
 watch(quickGlobal,()=>{
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-        window.electron.ipcRenderer.invoke('set-global-op',toRaw(quickGlobal.value)).then((ress)=>{
-            console.log(ress);
-            ress.forEach((val,index)=>{
-                if(!val)errGlobal.value[index] = true
-                else errGlobal.value[index] = false
-            })
+    setQuickButton()
+},{deep:true})
+onMounted(()=>{
+    setQuickButton()
+})
+const setQuickButton = ()=>{
+    window.electron.ipcRenderer.invoke('set-global-op',toRaw(quickGlobal.value)).then((ress)=>{
+        console.log(ress);
+        ress.forEach((val,index)=>{
+            if(!val)errGlobal.value[index] = true
+            else errGlobal.value[index] = false
         })
-      timeoutId = null;
-    }, 1000);
-},{deep:true,immediate:true})
+    })
+}
 
 if(globalVar.setting.downloadPath == ''){
     window.electron.ipcRenderer.invoke('get-download-path').then((data) => {
@@ -532,7 +543,7 @@ let t3 =setInterval(()=>{
     if(ciId.value != undefined){
         clearInterval(t3)
     }
-},100)
+},5000)
 
 window.electron.ipcRenderer.on('lrc-ready',()=>{
     console.log('lrc准备完毕');
@@ -626,5 +637,6 @@ video {
     text-align: center;
     color: @font-color;
 }
+
 
 </style>

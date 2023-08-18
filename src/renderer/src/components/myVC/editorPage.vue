@@ -105,7 +105,6 @@ const getBgImageSize = () => {
             initY.value = (pickImgEl.clientHeight - bgImageHeight * scale.value) * parseFloat(bgPosition[1]) / 100;
             bgWidth.value = bgImageWidth * scale.value; //选框的大小
             bgHeight.value = bgImageHeight * scale.value;
-            console.log(scale.value);
             //   console.log(x,y,bgImageWidth * scale,bgImageHeight * scale);
             const WHValue = Math.min(bgWidth.value, bgHeight.value)
             pickRef.value!.style.left = initX.value + 'px'
@@ -655,5 +654,6 @@ function base64ImgtoFile(dataurl, filename = 'file') {
             }
         }
     }
-}</style>
+}
+</style>
   <!--90 60 235  -->

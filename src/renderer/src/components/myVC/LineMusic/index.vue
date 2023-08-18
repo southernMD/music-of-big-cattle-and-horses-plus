@@ -156,7 +156,6 @@ name += el.name
 })
 name = name + ' - ' + props.title
 
-
 const cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
 const myPath = ref('')
 watch(()=>props.path,()=>{
@@ -494,37 +493,38 @@ const gotoPlay = (e: MouseEvent) => {
                         Main.songType = 'song'
                         heartJust()
                         return;
-                    }
-                    if(globalVar.setting.playWay){
-                        let result
-                        if(localStorage.getItem('NMcookie')){
-                            result = (await NM.reqPlaylistTrackAll(playListid.value)).data;
-                        }else{
-                            result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
-                        }
-                        Main.playingList = result.songs
-                        Main.playingPrivileges = result.privileges
-                        Main.playingindex = props.index as number
-                        Main.playing = props.id as number
-                        Main.beforePlayListId = playListid.value
-                        Main.playStatus = 'play'
-                        Main.songType = 'song'
                     }else{
-                        let result = (await Main.reqSongDetail([props.id])).data
-                        if(Main.playingindex == -1){
+                        if(globalVar.setting.playWay){
+                            let result
+                            if(localStorage.getItem('NMcookie')){
+                                result = (await NM.reqPlaylistTrackAll(playListid.value)).data;
+                            }else{
+                                result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                            }
                             Main.playingList = result.songs
                             Main.playingPrivileges = result.privileges
-                            Main.playingindex = 1
-                            Main.playing = props.id
+                            Main.playingindex = props.index as number
+                            Main.playing = props.id as number
+                            Main.beforePlayListId = playListid.value
                             Main.playStatus = 'play'
                             Main.songType = 'song'
                         }else{
-                            Main.playingList.splice(Main.playingindex,0,...result.songs)
-                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                            Main.playingindex++
-                            Main.playing = props.id
-                            Main.playStatus = 'play'
-                            Main.songType = 'song'
+                            let result = (await Main.reqSongDetail([props.id])).data
+                            if(Main.playingindex == -1){
+                                Main.playingList = result.songs
+                                Main.playingPrivileges = result.privileges
+                                Main.playingindex = 1
+                                Main.playing = props.id
+                                Main.playStatus = 'play'
+                                Main.songType = 'song'
+                            }else{
+                                Main.playingList.splice(Main.playingindex,0,...result.songs)
+                                Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                                Main.playingindex++
+                                Main.playing = props.id
+                                Main.playStatus = 'play'
+                                Main.songType = 'song'
+                            }
                         }
                     }
                     console.log(Main.beforePlayListId, Main.playListId[0]);

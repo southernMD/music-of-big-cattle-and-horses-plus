@@ -237,7 +237,7 @@ export const useBasicApi = defineStore('BaseApi', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //我收藏的dj
@@ -249,7 +249,7 @@ export const useBasicApi = defineStore('BaseApi', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //歌曲的tags
@@ -503,7 +503,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error');
+                // alert('error');
             }
         },
         //调用后可获取歌单详情动态部分,如评论数,是否收藏,播放数
@@ -529,7 +529,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //获取歌词
@@ -540,7 +540,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //喜欢这首歌的人也听
@@ -551,7 +551,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         async reqSimiPlaylist(id: number): Promise<any> {
@@ -561,7 +561,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         ///song/detail获取一首歌的详情
@@ -572,7 +572,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -584,7 +584,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -596,7 +596,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -609,7 +609,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -621,7 +621,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //对歌单添加或删除歌曲
@@ -645,7 +645,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //调整歌单顺序
@@ -656,7 +656,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //心动模式
@@ -667,7 +667,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //喜欢歌曲
@@ -733,7 +733,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //垃圾桶
@@ -744,7 +744,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //下载url
@@ -755,7 +755,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //search
@@ -1007,7 +1007,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error');
+                // alert('error');
             }
         },
         //获取专辑评论
@@ -1018,7 +1018,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1030,7 +1030,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1041,7 +1041,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1053,7 +1053,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1065,7 +1065,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1401,6 +1401,7 @@ interface V {
         newVersion:string
     }
     clearList:boolean
+    radioReady:boolean
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1481,7 +1482,8 @@ export const useGlobalVar = defineStore('globalVar', {
                 updataUrl:'',
                 newVersion:''
             },
-            clearList:false
+            clearList:false,
+            radioReady:false
         }
     },
     actions:{
@@ -1674,7 +1676,7 @@ export const useNM = defineStore('NM',{
                     resolve(result)
                 })
             } else {
-                alert('error');
+                // alert('error');
             }
         },
         async reqPlayListCreate(name:string,privacy?:number){
@@ -1748,7 +1750,7 @@ export const useNM = defineStore('NM',{
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         async reqUserUpdate(form:any){
@@ -1804,7 +1806,7 @@ export const useNM = defineStore('NM',{
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //公开隐私歌单
@@ -1974,7 +1976,7 @@ export const useNM = defineStore('NM',{
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1998,7 +2000,7 @@ export const useNM = defineStore('NM',{
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },

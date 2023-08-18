@@ -43,7 +43,7 @@ if (!isAppAlreadyRunning) {
       optimizer.watchWindowShortcuts(window)
     })
     // httpSever()
-    videoServer(createWindow(path))
+    videoServer(await createWindow(path))
     lrcwindow()
     dragWindw()
     //托盘事件

@@ -1,21 +1,35 @@
 <script setup lang="ts">
-// import AppSmall from './components/AppSmall.vue'
+import { useGlobalVar } from './store';
+import useColor from '@renderer/hooks/useColor';
+const {background,fontColor} = window.electron.ipcRenderer.sendSync('get-background-color')
+console.log(background,fontColor);
+const globalVar = useGlobalVar()
+useColor()
 </script>
 
 <template>
+<div class="contain" v-if="!globalVar.radioReady">大牛马音乐</div>
 <Suspense>
     <template #default>
         <RouterView></RouterView>
     </template>
-    <template #fallback>
-        加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中
-        加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中
-        加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中
-        加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中
-        加载中加载中加载中加载中加载中加载中加载中加载中加载中加载中
-    </template>
 </Suspense>
 </template>
 
-<style lang="less">
+<style lang="less" scoped>
+.contain{
+    width: 100vw;
+    height: 100vh;
+    background-color: v-bind('background');
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 13;
+    position: absolute;
+    font-size: 50px;
+    color: v-bind('fontColor');
+    font-family: '方正准圆简体';
+    user-select: none;
+    letter-spacing:10px
+}
 </style>

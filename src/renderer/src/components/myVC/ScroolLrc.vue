@@ -241,7 +241,6 @@ const $tly = (index: number) => {
     }
     return
 };
-let beforeOffset = ref(0);
 let suoFlag = toRef(globalVar,'lrcScrollSuo');
 
 watch(playingTime, () => {
@@ -264,7 +263,7 @@ watch(playingTime, () => {
         let dom = document.querySelector(".playingColor") as HTMLElement;
         let line = $el.refs.line as HTMLElement;
         if (dom && line) {
-          let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight / 2;
+          let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight;
           if(suoFlag.value && flag.value){
             scrollbarRef.value!.scrollTo({
               top: newOffset
