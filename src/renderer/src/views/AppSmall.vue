@@ -49,17 +49,23 @@
 <script setup lang="ts">
 import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect } from 'vue'
 import { useMainMenu, useGlobalVar, useBasicApi, useMain,useNM } from '@renderer/store'
-const MusicRadio = ref()
-const MyMainMenu = ref()
-const Main = ref()
-onMounted(()=>{
-    MusicRadio.value = defineAsyncComponent(() =>
+// const MusicRadio = shallowRef()
+// const MyMainMenu = shallowRef()
+// const Main = shallowRef()
+// onMounted(()=>{
+//     MusicRadio.value = defineAsyncComponent(() =>
+//     import('@renderer/components/MusicRadio/index.vue'))
+//     MyMainMenu.value = defineAsyncComponent(() =>
+//     import('@renderer/components/MyMainMenu/index.vue'))
+//     Main.value = defineAsyncComponent(() =>
+//     import('@renderer/components/Main.vue'))
+// })
+const MusicRadio = defineAsyncComponent(() =>
     import('@renderer/components/MusicRadio/index.vue'))
-    MyMainMenu.value = defineAsyncComponent(() =>
+const MyMainMenu = defineAsyncComponent(() =>
     import('@renderer/components/MyMainMenu/index.vue'))
-    Main.value = defineAsyncComponent(() =>
+const Main = defineAsyncComponent(() =>
     import('@renderer/components/Main.vue'))
-})
 
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
@@ -206,28 +212,29 @@ if (!sessionStorage.getItem('youkeCookie')) {
     }
 }
 let cookie = localStorage.getItem('cookieUser')
-if (localStorage.getItem('NMcookie')) {
-    NM.reqLogin().then(()=>{
-        NM.reqUserPlaylist(BasicApi.profile?.userId)
-        NM.reqUserLike(BasicApi.profile?.userId)
-        NM.reqUserSubcount()
-        NM.reqartistSublist()
-        NM.reqalbumSublist()
-        NM.requserFollows(BasicApi.profile?.userId,99999999,0)
-    })
-}
-else if (!(cookie == '' || cookie == null || cookie == undefined)) {
-    BasicApi.reqLogin(cookie as string).then(() => {
-        MainPinia.reqUserPlaylist(BasicApi.account?.id)
-        MainPinia.reqUserLike(BasicApi.account?.id)
-        BasicApi.reqStartDj()
-        BasicApi.reqCreateDj(BasicApi.account?.id)
-        MainPinia.reqUserSubcount()
-        BasicApi.reqartistSublist()
-        BasicApi.reqalbumSublist()
-        BasicApi.requserFollows(BasicApi.account!.id)
-    })
-}
+// if (localStorage.getItem('NMcookie')) {
+//     NM.reqLogin().then(()=>{
+//         NM.reqUserPlaylist(BasicApi.profile?.userId)
+//         NM.reqUserLike(BasicApi.profile?.userId)
+//         NM.reqUserSubcount()
+//         NM.reqartistSublist()
+//         NM.reqalbumSublist()
+//         NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+//     })
+// }
+// else if (!(cookie == '' || cookie == null || cookie == undefined)) {
+//     BasicApi.reqLogin(cookie as string).then(() => {
+//         MainPinia.reqUserPlaylist(BasicApi.account?.id)
+//         MainPinia.reqUserLike(BasicApi.account?.id)
+//         BasicApi.reqStartDj()
+//         BasicApi.reqCreateDj(BasicApi.account?.id)
+//         MainPinia.reqUserSubcount()
+//         BasicApi.reqartistSublist()
+//         BasicApi.reqalbumSublist()
+//         BasicApi.requserFollows(BasicApi.account!.id)
+//     })
+// }
+const p0 = localStorage.getItem('NMcookie')? NM.reqLogin():BasicApi.reqLogin(cookie as string)
 const p1 = BasicApi.reqRecommendSongs()
 let p2
 if(localStorage.getItem('NMcookie')){
@@ -235,10 +242,27 @@ if(localStorage.getItem('NMcookie')){
 }else{
     p2 = BasicApi.reqRecommendPlayList()
 }
-const p3 = BasicApi.reqDjProgramToplist(10)
+// const p3 = BasicApi.reqDjProgramToplist(10)
 const p4 = BasicApi.reqPlayListTags()
-await Promise.allSettled([p1, p2, p3, p4])
-MainPinia.reqPersonal_fm()
+await Promise.allSettled([p0,p1, p2, p4])
+onMounted(async()=>{
+    if(localStorage.getItem('NMcookie')){
+        NM.reqUserPlaylist(BasicApi.profile?.userId)
+        NM.reqUserLike(BasicApi.profile?.userId)
+        NM.reqUserSubcount()
+        NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+    }else if(!(cookie == '' || cookie == null || cookie == undefined)){
+        MainPinia.reqUserPlaylist(BasicApi.account?.id)
+        MainPinia.reqUserLike(BasicApi.account?.id)
+        // BasicApi.reqStartDj()
+        // BasicApi.reqCreateDj(BasicApi.account?.id)
+        MainPinia.reqUserSubcount()
+        BasicApi.requserFollows(BasicApi.account!.id)
+    }
+})
+
+
+
 const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
 globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
 globalVar.fontList.unshift({name:'默认'})

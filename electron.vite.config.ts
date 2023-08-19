@@ -5,12 +5,20 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import eslintPlugin from 'vite-plugin-eslint'
+import { terser } from 'rollup-plugin-terser';
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin(),bytecodePlugin()],
     build: {
       rollupOptions: {
         external: ['express'],
+        plugin:[
+          terser({
+            compress: {
+              drop_console: true
+            }
+          }),
+        ]
       }
     }
   },
@@ -39,6 +47,11 @@ export default defineConfig({
       //   include: ['src/**/*.ts', 'src/**/*.vue', 'src/*.ts', 'src/*.vue'],
       //   lintOnStart: false
       // }),
+      terser({
+        compress: {
+          drop_console: true
+        }
+      }),
       AutoImport({
         resolvers: [ElementPlusResolver()]
       }),

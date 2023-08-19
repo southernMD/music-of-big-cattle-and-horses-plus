@@ -1402,6 +1402,7 @@ interface V {
     }
     clearList:boolean
     radioReady:boolean
+    lrcFlag:boolean
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1483,7 +1484,8 @@ export const useGlobalVar = defineStore('globalVar', {
                 newVersion:''
             },
             clearList:false,
-            radioReady:false
+            radioReady:false,
+            lrcFlag:false
         }
     },
     actions:{

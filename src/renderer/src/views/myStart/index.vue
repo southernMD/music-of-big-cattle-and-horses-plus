@@ -16,9 +16,12 @@
 import Tag from '@renderer/components/myVC/Tag.vue';
 import { useRouter,useRoute } from 'vue-router';
 import {ref,Ref} from 'vue'
+import { useBasicApi,useNM} from '@renderer/store';
 const flagList:Ref<boolean[]> = ref([])
 const $router = useRouter()
 const $route = useRoute()
+const BasicApi = useBasicApi()
+const NM = useNM()
 if($route.name == 'startAl'){
     flagList.value = [true,false]
 }else if($route.name == 'startHS'){
@@ -30,6 +33,11 @@ const go = (index,name)=>{
     $router.push({
         name:name,
     })
+}
+if(localStorage.getItem('NMcookie')){
+    await Promise.all([NM.reqartistSublist(),NM.reqalbumSublist()])
+}else{
+    await Promise.all([BasicApi.reqartistSublist(),BasicApi.reqalbumSublist()])
 }
 </script>
 

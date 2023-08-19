@@ -61,7 +61,8 @@ import { ref, toRef, Ref, getCurrentInstance, ComponentInternalInstance, watch, 
 import { useMain, useMainMenu, useElectronToApp,useGlobalVar } from "@renderer/store";
 import { dayjsMMSS } from '@renderer/utils/dayjs'
 import { ElScrollbar } from "element-plus";
-
+import { useRoute } from 'vue-router';
+const $route = useRoute()
 const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
 const mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Main');
 const Main = useMain();
@@ -243,6 +244,7 @@ const $tly = (index: number) => {
 };
 let suoFlag = toRef(globalVar,'lrcScrollSuo');
 
+const  smallFlag = ref(true)
 watch(playingTime, () => {
   if(props.type == Main.songType){
     if(playingTime.value == 0 && suoFlag.value){
@@ -263,8 +265,8 @@ watch(playingTime, () => {
         let dom = document.querySelector(".playingColor") as HTMLElement;
         let line = $el.refs.line as HTMLElement;
         if (dom && line) {
-          let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight;
-          if(suoFlag.value && flag.value){
+          let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight / 2;
+          if((suoFlag.value && flag.value) || smallFlag.value){
             scrollbarRef.value!.scrollTo({
               top: newOffset
             });
@@ -319,6 +321,33 @@ watch(yinOryi,()=>{
   console.log(toRaw(yinOryi.value));
   window.electron.ipcRenderer.sendTo(ciId,'yin-or-yi',toRaw(yinOryi.value))
 },{immediate:true,deep:true})
+
+//隐藏时切换模式
+//smallFlag.value = true为直接跳转
+document.addEventListener('visibilitychange',()=>{
+  console.log($route.name,);
+    if(document.hidden || Main.detailStatus != 'open' && !document.hidden  && $route.name != 'personalFM')smallFlag.value = true
+    else smallFlag.value = false
+})
+watch(()=>Main.detailStatus,()=>{
+  setTimeout(()=>{
+    if(Main.detailStatus == 'open'){
+      smallFlag.value = false
+    }else{
+      smallFlag.value = true
+    }
+  },250)
+})
+watch(()=>Main.songType,()=>{
+  console.log(Main.songType);
+  if(Main.songType == 'FM'){
+    smallFlag.value = false
+  }else if(Main.songType != 'FM' && Main.detailStatus != 'open'){
+    smallFlag.value = true
+  }else{
+    smallFlag.value = false
+  }
+})
 </script>
 
 <style lang="less" scoped>

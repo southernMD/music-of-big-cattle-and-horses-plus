@@ -21,6 +21,9 @@
                             <div class="image-slot">
                             </div>
                         </template>
+                        <template #placeholder>
+                            <img src="/src/assets/icon.png" alt="">
+                        </template>
                     </el-image >
                     <div class="t">
                         <div class="title">

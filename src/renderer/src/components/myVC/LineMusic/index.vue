@@ -261,6 +261,8 @@ const replaceLocationed = () => {
 
 const $emit = defineEmits(['warpPlace', 'localPlay','recordPlay','shorPlayList'])
 const fnMouseDrag = async (e: any) => {
+    clearTimeout(mousedownTimer)
+    console.log('取消mousedownTimer');
     window.removeEventListener('mouseup', fnMouseDrag)
     // window.removeEventListener('mousemove', fnMouseDragMoving)
     for (let i = 0; i < e.path.length; i++) {
@@ -383,16 +385,22 @@ const fnMouseEnter = (e:MouseEvent)=>{
         }
     }
 }
-
+let mousedownTimer
 const pseudoDragBeginn = (event:MouseEvent) => {
     if(event.button !== 0)return
+    if(event.detail !== 1)return
+    console.log('pseudoDragBeginn函数调用',);
     // window.addEventListener('mousemove', fnMouseDragMoving)
-    window.addEventListener("mouseup", fnMouseDrag)
-    Main.dragMouse = true
-    Main.dragMessage = props.title
-    Main.dragIndex = Number(props.index)
-    dragId.value = props.id
-    console.log('拖动元素');
+    mousedownTimer = setTimeout(() => {
+        // 检查鼠标按下的时间是否超过 0.5 秒
+        window.addEventListener("mouseup", fnMouseDrag)
+        Main.dragMouse = true
+        Main.dragMessage = props.title
+        Main.dragIndex = Number(props.index)
+        dragId.value = props.id
+        console.log('拖动元素');
+    }, 500); // 设置计时器时间为 0.5 秒
+
 }
 
 function searchFather(d: HTMLElement | undefined): HTMLElement | undefined{
@@ -474,6 +482,8 @@ const heartJust = async () => {
 
 const gotoPlay = (e: MouseEvent) => {
     if(e.button !== 0)return 
+    clearTimeout(mousedownTimer)
+    if(!globalVar.radioReady)return
     if (!props.local) {
         let _this = $el.refs['line-music'] as HTMLElement
         if (!_this) return
@@ -518,16 +528,22 @@ const gotoPlay = (e: MouseEvent) => {
                                 Main.playStatus = 'play'
                                 Main.songType = 'song'
                             }else{
-                                Main.playingList.splice(Main.playingindex,0,...result.songs)
-                                Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                                Main.playingindex++
-                                Main.playing = props.id
+                                const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                                if(ifId == -1){
+                                    Main.playingList.splice(Main.playingindex,0,...result.songs)
+                                    Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                                    Main.playingindex++
+                                    Main.playing = props.id
+                                }else{
+                                    Main.playing = props.id
+                                    Main.playingindex = ifId + 1
+                                }
                                 Main.playStatus = 'play'
                                 Main.songType = 'song'
                             }
                         }
                     }
-                    console.log(Main.beforePlayListId, Main.playListId[0]);
+                    console.log(Main.beforePlayListId, Main.playListId);
                     heartJust()
                 }else if($route.query.type == '专辑'){
                     if(globalVar.setting.playWay){
@@ -549,10 +565,16 @@ const gotoPlay = (e: MouseEvent) => {
                             Main.playStatus = 'play'
                             Main.songType = 'song'
                         }else{
-                            Main.playingList.splice(Main.playingindex,0,...result.songs)
-                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                            Main.playingindex++
-                            Main.playing = props.id
+                            const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                            if(ifId == -1){
+                                Main.playingList.splice(Main.playingindex,0,...result.songs)
+                                Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                                Main.playingindex++
+                                Main.playing = props.id
+                            }else{
+                                Main.playing = props.id
+                                Main.playingindex = ifId + 1
+                            }
                             Main.playStatus = 'play'
                             Main.songType = 'song'
                         }
@@ -584,10 +606,16 @@ const gotoPlay = (e: MouseEvent) => {
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }else{
-                        Main.playingList.splice(Main.playingindex,0,...result.songs)
-                        Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                        Main.playingindex++
-                        Main.playing = props.id
+                        const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                        if(ifId == -1){
+                            Main.playingList.splice(Main.playingindex,0,...result.songs)
+                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                            Main.playingindex++
+                            Main.playing = props.id
+                        }else{
+                            Main.playing = props.id
+                            Main.playingindex = ifId + 1
+                        }
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }
@@ -626,10 +654,16 @@ const gotoPlay = (e: MouseEvent) => {
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }else{
-                        Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(props.index!-1,props.index)) 
-                        Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege])
-                        Main.playingindex++
-                        Main.playing = props.id
+                        const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                        if(ifId == -1){
+                            Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(props.index!-1,props.index)) 
+                            Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege])
+                            Main.playingindex++
+                            Main.playing = props.id
+                        }else{
+                            Main.playing = props.id
+                            Main.playingindex = ifId + 1
+                        }
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }

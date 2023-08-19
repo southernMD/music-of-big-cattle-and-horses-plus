@@ -247,12 +247,16 @@ let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbof
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
 let ciId
-let t2 = setInterval(() => {
+await new Promise((reslove)=>{
+    let t2 = setInterval(() => {
     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
-    if (ciId) {
-        clearInterval(t2);
-    }
-}, 5000)
+        if (ciId) {
+            reslove('ok')
+            clearInterval(t2);
+        }
+    }, 5000)
+})
+
 let animationId;
 
 let playingList = toRef(Main, 'playingList')

@@ -453,6 +453,7 @@ const changeLrcFamily = (ms)=>{
 
 const changeLrcSize = (ms)=>{
     globalVar.setting.lrcSize = +ms.name
+    globalVar.lrcFlag = true
     window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',+ms.name)
     txtRef.value.style.setProperty('--fontSizeLrc',  ms.name + 'px');
 }

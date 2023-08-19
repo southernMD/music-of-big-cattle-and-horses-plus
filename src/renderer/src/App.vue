@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {ref} from 'vue'
 import { useGlobalVar } from './store';
 import useColor from '@renderer/hooks/useColor';
 const {background,fontColor} = window.electron.ipcRenderer.sendSync('get-background-color')
@@ -8,7 +9,7 @@ useColor()
 </script>
 
 <template>
-<div class="contain" v-if="!globalVar.radioReady && $route.path.includes('/app')">大牛马音乐</div>
+<div class="contain" v-if="!globalVar.radioReady && $route.path.includes('/app') && !globalVar.lrcFlag">大牛马音乐</div>
 <Suspense>
     <template #default>
         <RouterView></RouterView>

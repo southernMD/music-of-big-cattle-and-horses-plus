@@ -112,7 +112,7 @@ let playingId = toRef(Main, 'playing')
 let FMindex = toRef(Main, 'FMindex')
 let playingPrivileges = toRef(Main, 'playingPrivileges')
 let playStatus = toRef(Main, 'playStatus')
-
+await Main.reqPersonal_fm()
 watch(playStatus, () => {
     if (playStatus.value == 'play' && Main.songType == 'FM') {
         FMplayFlag.value = true
