@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="DJblock-list">
-            <HBlock v-for="val in createDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
+            <HBlock @click="goDj(val.id,true,index,val.programCount)" v-for="val,index in createDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
         </div>
         <div class="second-title">
             <div class="left">
@@ -24,14 +24,16 @@
             </div>
         </div>
         <div class="DJblock-list">
-            <HBlock v-for="val in startDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
+            <HBlock @click="goDj(val.id,false,index,val.programCount)" v-for="val,index in startDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
         </div>
     </div>
 </template>
 
 <script lang='ts' setup>
-import { getCurrentInstance,toRef, ComponentInternalInstance } from 'vue'
+import { getCurrentInstance,toRef, ComponentInternalInstance,onMounted } from 'vue'
 import { useMain,useBasicApi } from '@renderer/store';
+import { useRouter } from 'vue-router';
+const $router = useRouter()
 const Main = useMain()
 const $el = getCurrentInstance() as ComponentInternalInstance
 const BasicApi = useBasicApi()
@@ -42,7 +44,22 @@ const sendUrl = (e: Event) => {
     let t: HTMLElement = $el.refs.page as HTMLElement
     window.electron.ipcRenderer.send('new-window', t.getAttribute('href'))
 }
+onMounted(async()=>{
+    await Promise.all([ BasicApi.reqStartDj(),BasicApi.reqCreateDj(BasicApi.account?.id)])
+})
 
+const goDj = (id,my,index,programCount)=>{
+    $router.push({
+        name:'djPlaylist',
+        query:{
+            type:'播客',
+            id,
+            my,
+            index,
+            count:programCount
+        }
+    })
+}
 
 
 </script>

@@ -918,4 +918,48 @@ export const githubUpdate = ()=>{
         return null
     }
 }
-
+//电台详情
+export const djDetail = (rid)=>{
+    return axios({
+        url:`/dj/detail?rid=${rid}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//电台列表
+export const djProgram = (rid,limit,offset)=>{
+    return axios({
+        url:`/dj/program?rid=${rid}&limit=${limit}&offset=${offset}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//节目详情
+export const djProgramDetail = (id)=>{
+    return axios({
+        url:`/dj/program/detail?id=${id}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//节目评论
+export const commentDj = (id:number,limit?:number,offset?:number,before?:number)=>{
+    let baseUrl = `/comment/dj?time=${new Date().getTime()}`
+    if(limit)baseUrl+=`&limit=${limit}`
+    if(offset)baseUrl+=`&offset=${offset}`
+    if(before)baseUrl+=`&before=${before}`
+    if(id)baseUrl+=`&id=${id}`
+    return axios({
+        url:baseUrl,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')|| sessionStorage.getItem('youkeCookie')
+        }
+    })
+}

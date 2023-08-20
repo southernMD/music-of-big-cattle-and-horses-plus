@@ -5,7 +5,7 @@
                 <div v-show="Main.detailStatus == 'close'">
                     <div class="image" @mouseover="musicDetail" @mouseout="musicDetailLeave" title="展开音乐详情页"
                         @click="showDetail">
-                        <el-image draggable="false" :src="playingList[playingindex - 1]?.al?.picUrl" fit="cover">
+                        <el-image draggable="false" :src="playingList[playingindex - 1]?.al?.picUrl ?? playingList[playingindex - 1]?.coverUrl" fit="cover">
                         </el-image>
                         <div class="mask">
                             <i class="iconfont icon-xialajiantou1" v-if="Main.songType !== 'FM'"></i>
@@ -24,15 +24,30 @@
                                     }})</span>
                                 </div>
                             </div>
-                            <i v-if="likeFlag" class="iconfont icon-aixin" @click="likeOrDislike"></i>
-                            <i v-else class="iconfont icon-aixin_fill" @click="likeOrDislike"></i>
+                            <div v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'">
+                                <i v-if="likeFlag" class="iconfont icon-aixin" @click="likeOrDislike"></i>
+                                <i v-else class="iconfont icon-aixin_fill" @click="likeOrDislike"></i>
+                            </div>
+                            <div v-else >
+                                <i v-if="likeFlag" style="color: var(--fontColor);" class="iconfont icon-dianzan"  @click="likeOrDislike"></i>
+                                <i v-else style="color: var(--primaryColor);" class="iconfont icon-dianzan" @click="likeOrDislike"></i>
+                            </div>
                         </div>
                         <div class="singer" @mouseover="rushSinger('singerTxt')" @click="goHandSong">
                             <span id="singerTxt" >
-                                <span v-for="({}, index) in playingList[playingindex - 1]?.ar"
+                                <span v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'" v-for="({}, index) in playingList[playingindex - 1]?.ar"
                                     :key="playingList[playingindex - 1]?.ar[index]?.id">
                                     <span :data-id="playingList[playingindex - 1]?.ar[index]?.id">{{ playingList[playingindex - 1]?.ar[index].name }}</span>
                                     <span v-if="index != playingList[playingindex - 1]?.ar.length - 1" 
+                                    style="transform: rotate(-10deg) translateY(-2px);
+                                    display: inline-block;
+                                    font-size: 10px;
+                                    padding-right: 3px;
+                                    ">/</span>
+                                </span>
+                                <span v-else v-for="(val, index) in playingList[playingindex - 1]?.mainSong?.artists" :key="index">
+                                    <span :data-id="val?.id">{{ val?.name }}</span>
+                                    <span v-if="index != playingList[playingindex - 1]?.mainSong?.artists.length - 1" 
                                     style="transform: rotate(-10deg) translateY(-2px);
                                     display: inline-block;
                                     font-size: 10px;
@@ -51,12 +66,15 @@
                     </div>
                     <div class="right" :class="{'right-contsee':Main.playing < 0}" >
                         <!-- :likeJust()?'icon-aixin_fill':'icon-aixin' -->
-                        <div class="todo"  @click="likeOrDislike" :class="{ noDrag: !Main.dragMouse }">
+                        <div v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'" class="todo"  @click="likeOrDislike" :class="{ noDrag: !Main.dragMouse }">
                             <i v-if="likeFlag" class="iconfont icon-aixin"></i>
                             <i v-else class="iconfont icon-aixin_fill"></i>
                         </div>
-                        <div class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
+                        <div v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'" class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
                             <i class="iconfont" :class="[leftIcon[index + 1]]"></i>
+                        </div>
+                        <div v-else class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
+                            <i class="iconfont" :class="[leftIcon2[index]]"></i>
                         </div>
                     </div>
                 </div>
@@ -112,7 +130,7 @@
                     :max-have="playingPrivileges[playingindex - 1].maxBrLevel"
                     :max-level="playingPrivileges[playingindex - 1].plLevel" :now-level="nowLevel" @show="changeSpanLevel"
                     @close="showLevelFlag = false"></SmallBlock>
-                <div class="bk" :class="{ 'bk-oneself': globalVar.oneself }">
+                <div class="bk" :class="{ 'bk-oneself': globalVar.oneself }" v-if="Main.songType != 'DJ'">
                     <span draggable="false">{{ levelName }}</span>
                 </div>
             </div>
@@ -245,6 +263,7 @@ const ifNM = ref(false)
 if(localStorage.getItem('NMcookie'))ifNM.value = true
 let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbofang', 'icon-shunxubofang'])
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
+const leftIcon2 = ['icon-dianzan', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
 let ciId
 await new Promise((reslove)=>{
@@ -549,22 +568,35 @@ const normalPlayWay = async()=>{
         audio = document.querySelector('audio') as HTMLAudioElement
         audio.currentTime = 0
         audio.pause()
-        let result: any = await Main.reqSongUrl(playingId.value)
-        lyric.value = (await Main.reqLyric(playingId.value)).data
-        await musicCanSee(result.data.data[0].url, 0, 0)
-        SongUrl.value = result.data.data[0].url
-        nextTick(() => {
-            stopOrPlayFlag.value = false
-            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
-            audio.play()
-        })
-        nowLevel.value = 'standard'
-        levelName.value = '标准'
-        //喜欢这首歌的人也听与包含这首歌的歌单
-        simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
-        simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
-        console.log(simiSong, simiPlaylist);
+        if(Main.songType != 'DJ'){
+            let result: any = await Main.reqSongUrl(playingId.value)
+            lyric.value = (await Main.reqLyric(playingId.value)).data
+            await musicCanSee(result.data.data[0].url, 0, 0)
+            SongUrl.value = result.data.data[0].url
+            nextTick(() => {
+                stopOrPlayFlag.value = false
+                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
+                audio.play()
+            })
+            nowLevel.value = 'standard'
+            levelName.value = '标准'
+            //喜欢这首歌的人也听与包含这首歌的歌单
+            simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
+            simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
+        }else{
+            let result: any = await Main.reqSongUrl(playingId.value)
+            await musicCanSee(result.data.data[0].url, 0, 0)
+            SongUrl.value = result.data.data[0].url
+            nextTick(() => {
+                stopOrPlayFlag.value = false
+                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
+                audio.play()
+            })
+            nowLevel.value = 'DJ'
+            levelName.value = '电台'
+        }
     }
 }
 //获取播放url
@@ -633,7 +665,7 @@ watch(playingId, async ({},oldValue) => {
             if (index != singerArr.length - 1) str += ' / '
         })
         console.log('这个是主进程的名字',str);
-        window.electron.ipcRenderer.send('change-play-thum', str)
+        window.electron.ipcRenderer.send('change-play-thum', str.replace(/<\/?[^>]+(>|$)/g, ''))
         window.electron.ipcRenderer.send('render-play')
     })
 })
@@ -656,8 +688,6 @@ watch(lyric, async () => {
     })
     window.electron.ipcRenderer.sendTo(ciId, 'to-title', str);
     window.electron.ipcRenderer.sendTo(ciId, 'to-Ci', lyric.value);
-    ElectronToApp.lrcArry = lyric.value
-
 })
 
 

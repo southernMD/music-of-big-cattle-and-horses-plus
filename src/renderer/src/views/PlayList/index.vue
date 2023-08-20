@@ -7,14 +7,14 @@
                 <div class="title">
                     <div class="Btag">{{ $route.query.type }}</div>
                     <span>{{ playList[index]?.name }}</span>
-                    <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true' && index!=0" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
+                    <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true' && index!=0 && $route.query.type != '播客'" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
                 </div>
-                <div class="author" v-if="route.query.type == '歌单'">
-                    <el-image @click="goPersonal" fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl">
+                <div class="author" v-if="route.query.type == '歌单' || route.query.type == '播客'">
+                    <el-image @click="goPersonal" fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl ?? playList[index]?.dj?.avatarUrl">
                     </el-image>
                     <span @click="goPersonal" class="author-name"
                         :class="{ noDrag: !Main.dragMouse, 'author-name-oneself': globalVar.oneself == 1 }">{{
-                            playList[index]?.creator?.nickname }}</span>
+                            playList[index]?.creator?.nickname ?? playList[index]?.dj?.nickname }}</span>
                     <span class="createtime" :class="{ 'createtime-oneself': globalVar.oneself == 1 }">{{
                         dayjsStamp(+playList[index]?.createTime) }}创建</span>
                 </div>
@@ -41,7 +41,7 @@
                             noDrag: !Main.dragMouse && !isStartStyle() 
                             ,noClick:!Main.dragMouse && isStartStyle() }">
                             <i class="iconfont icon-wenjian">
-                                <i class="iconfont icon-gou" v-if="(dynamic?.subscribed ?? dynamic?.isSub)"></i>
+                                <i class="iconfont icon-gou" v-if="(dynamic?.subed ?? dynamic?.subscribed ?? dynamic?.isSub)"></i>
                                 <i class="iconfont icon-jiahao_o" v-else></i>
                             </i>
                         </div>
@@ -49,14 +49,14 @@
                             noDrag: !Main.dragMouse,
                             noClick: isStartStyle()
                         }">
-                            <span v-if="(dynamic?.subscribed ?? dynamic?.isSub)">已</span>
-                            <span>收藏<span v-if="!($route.query.type == '专辑' && ifNM)">({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span></span>
+                            <span v-if="(dynamic?.subed ?? dynamic?.subscribed ?? dynamic?.isSub )">已</span>
+                            <span>收藏<span v-if="!(($route.query.type == '专辑' || $route.query.type == '播客') && ifNM)">({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span></span>
                         </div>
                     </div>
                     <div @click="sharePlayList" class="fengxiang h" v-if="!suoFlag" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
                         <i class="iconfont icon-fenxiang"></i>
                         <div class="txt">
-                            <span>分享<span v-if="!($route.query.type == '专辑' && ifNM)">({{ numberSimp(dynamic?.shareCount) }})</span></span>
+                            <span>分享<span v-if="!(($route.query.type == '专辑' || $route.query.type == '播客') && ifNM)">({{ numberSimp(dynamic?.shareCount) }})</span></span>
                         </div>
                     </div>
                     <div class="download h" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }"
@@ -123,25 +123,39 @@
                         }}</span>
                     </div>
                 </div>
+                <div class="small" v-else-if="route.query.type == '播客'">
+                    <div class="describe">
+                        <span class="border-title-bk">
+                            <span class="border-title">{{playList[index]?.category}}</span>
+                        </span>
+                        <span class="txt txt-dj" :class="{ 'txt-oneself': globalVar.oneself }" ref="description"
+                            v-html="playList[index]?.desc">
+                        </span>
+                        <div class="open-jiantou" v-if="openJiantou" :class="{ noDrag: !Main.dragMouse }">
+                            <i class="iconfont icon-xiajiantou" v-if="openDescribeFlag" @click="openDescribe"></i>
+                            <i class="iconfont icon-shangjiantou" v-else @click="openDescribe"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="bottom">
             <div class="choice">
                 <div class="tags-three">
                     <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
-                        message="歌曲列表" :ifClick="flagList[0]" :big="true" @click="goRoute('songPlaylist'); changeTag(0)">
+                        :message="$route.query.type !== '播客'?'歌曲列表':`声音(${numberSimp(playList[index]?.programCount)})`" :ifClick="flagList[0]" :big="true" @click="goRoute($route.name == 'songPlaylist'?'songPlaylist':'djPlaylist'); changeTag(0)">
                     </Tag>
-                    <Tag class="tag-play" v-if="!($route.query.type == '专辑' && ifNM)" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
+                    <Tag class="tag-play" v-if="!($route.query.type == '专辑' && ifNM) && $route.query.type != '播客'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
                         :message="`评论(${dynamic?.commentCount})`" :ifClick="flagList[1]" :big="true"
                         @click="goRoute('commentPlaylist'); changeTag(1)">
                     </Tag>
-                    <Tag class="tag-play" v-if="$route.query.type == '歌单'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="收藏者"
+                    <Tag class="tag-play" v-if="$route.query.type == '歌单' || $route.query.type == '播客'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="收藏者"
                         :ifClick="flagList[2]" :big="true" @click="goRoute('whoStartPlaylist'); changeTag(2)"></Tag>
                     <Tag class="tag-play" v-if="$route.query.type == '专辑'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="专辑详情"
                     :ifClick="flagList[2]" :big="true" @click="goRoute('ZhuanJiDetail',playList[index].description); changeTag(2)"></Tag>
                 </div>
-                <div class="search" v-show="$route.name == 'songPlaylist' ">
-                    <input type="text" v-model="searchKey" :placeholder="`搜索${$route.query.type}内音乐`" :class="{
+                <div class="search" v-show="$route.name == 'songPlaylist' ||$route.name == 'djPlaylist'">
+                    <input type="text" v-model="searchKey" :placeholder="`搜索${$route.query.type}内${$route.query.type !== '播客'?'音乐':'声音'}`" :class="{
                         noDragInput: !Main.dragMouse,
                         dragMouseStyleNo: Main.dragMouse
                     }" @keydown.stop>
@@ -205,7 +219,7 @@ const changeTag = (index: number) => {
 let flagList = ref([false, false, false])
 let Rn = toRef(route, 'name')
 watch(Rn, () => {
-    if (route.name == 'songPlaylist') {
+    if (route.name == 'songPlaylist' || route.name == 'djPlaylist') {
         changeTag(0)
     } else if (route.name == 'commentPlaylist') {
         changeTag(1)
@@ -240,16 +254,16 @@ const goRoute = (name: string,message?:string) => {
             router.removeRoute('whoStartPlaylist')
         }
     }
-    if(name == 'ZhuanJiDetail'){
+    if(name == 'djPlaylist'){
+        console.log(Object.assign(route.query,{count:playList.value[index.value].programCount}))
         router.replace({
-            name, query: route.query
+            name, query: Object.assign(route.query,{count:playList.value[index.value].programCount})
         })
     }else{
         router.replace({
             name, query: route.query
         })
     }
-
 }
 
 //播放全部按钮
@@ -313,11 +327,20 @@ let playList = ref()
 let isMy = toRef(Main, 'isMy')
 //是搜索还是我的(搜索就是不是我的)
 watch(isMy, () => {
-    if (isMy.value == 'true') {
-        playList.value = Main.playList
-    } else {
-        playList.value = Main.searchList
+    if(route.query.type == '播客'){
+        if (isMy.value == 'true') {
+            playList.value = BasicApi.createDjArr
+        }else{
+            playList.value = BasicApi.startDjArr
+        }
+    }else{
+        if (isMy.value == 'true') {
+            playList.value = Main.playList
+        } else {
+            playList.value = Main.searchList
+        }
     }
+
 }, { immediate: true })
 
 let mainColor = toRef(MainMenu, 'colorBlock')
@@ -352,6 +375,7 @@ let dynamic = ref({
     isSub: false,
     subTime: 0,
     subCount: 729,
+    subed:false
 })
 
 const isStartStyle = () => {
@@ -394,89 +418,88 @@ watch(routeQuery, async () => {
     let Rn = route.name as string
     isMy.value = route.query.my as string || 'true'
     console.log(isMy.value);
-    if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
-        nextTick(() => {
-            //样式修改
-            description.value.style.whiteSpace = 'nowrap'
-            openDescribeFlag.value = true
-            openJiantou.value = false
-            let widthBox = description.value?.offsetWidth
-            let widthscrool = description.value?.scrollWidth
-            if (widthscrool > widthBox) {
-                openJiantou.value = true
-            } else {
-                openJiantou.value = false
-            }
-        })
-
-        index.value = route.query.index
-        id.value = route.query.id
-        console.log(route.query.id,route.query.index);
-        //注入
-        songNumber.value = playList.value[index.value].trackCount
-        tags.value = playList.value[index.value].tags
-        if(localStorage.getItem('NMcookie')){
-            dynamic.value = await NM.reqPlaylistDetailDynamic(id.value) as any;
+    if(route.name == 'djPlaylist' && route.query.type == '播客'){
+        const djMessage = await Main.reqDjDetail(route.query.id)
+        dynamic.value.playCount = djMessage.playCount
+        dynamic.value.commentCount = djMessage.commentCount
+        dynamic.value.shareCount = djMessage.shareCount
+        dynamic.value.subCount = djMessage.subCount
+        dynamic.value.subed = djMessage.subed
+        songNumber.value = djMessage.programCount
+        if(isMy.value as string == 'true'){
+            //创建的播客
+            playList.value = BasicApi.createDjArr
         }else{
-            dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
+            //收藏的播客
+            playList.value = BasicApi.startDjArr
         }
-        // console.log(dynamic);
-        // console.log(await Main.reqPlaylistTrackAll(id.value));
-        // startStyle();
-        //隐私判断
-        if (playList.value[index.value].privacy == 10) {
-            suoFlag.value = true
-        } else {
-            suoFlag.value = false
-        }
-        Main.isMyCreate = true
-        // let arr: Array<HTMLElement> = document.querySelectorAll('.tag-play') as any;
-        // for (let i = 0; i < arr.length; i++) {
-        //     let child = arr[i].firstChild as HTMLElement
-        //     let line = arr[i].lastChild as HTMLElement
-        //     if (i == 0) {
-        //         child.style.fontSize = '20px'
-        //         child.style.fontWeight = 'bolder'
-        //         line.style.backgroundColor = 'var(--primaryColor)'
-        //     } else {
-        //         child.style.fontSize = '14px'
-        //         child.style.fontWeight = 'normal'
-        //         line.style.backgroundColor = 'rgba(0,0,0,0)'
-        //     }
-        // }
+        index.value = route.query.index
+    }else{
+        if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
+            nextTick(() => {
+                //样式修改
+                description.value.style.whiteSpace = 'nowrap'
+                openDescribeFlag.value = true
+                openJiantou.value = false
+                let widthBox = description.value?.offsetWidth
+                let widthscrool = description.value?.scrollWidth
+                if (widthscrool > widthBox) {
+                    openJiantou.value = true
+                } else {
+                    openJiantou.value = false
+                }
+            })
 
-    } else if (route.name == 'songPlaylist' && route.query.my as string != 'true') {
-        if(route.query.type == '歌单'){
-            if(localStorage.getItem('NMcookie')){
-                dynamic.value = await NM.reqPlaylistDetailDynamic(route.query.id) as any;
-                Main.searchList = [(await NM.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
-            }else{
-                dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
-                Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
-            }
-            console.log(Main.searchList);
-            index.value = 0
-            playList.value = Main.searchList
+            index.value = route.query.index
+            id.value = route.query.id
+            console.log(route.query.id,route.query.index);
+            //注入
             songNumber.value = playList.value[index.value].trackCount
             tags.value = playList.value[index.value].tags
-            id.value = route.query.id
-            Main.isMyCreate = false
-        }else if(route.query.type == '专辑'){
-            dynamic.value = (await Main.reqAlbumDetailDynamic(route.query.id as unknown as number)).data
-            console.log(dynamic.value );
-            let result = (await Main.reqAlbum(route.query.id as unknown as number)).data
-            Main.searchList = [result?.album]
-            alsongs.value = result?.songs
-            index.value = 0
-            playList.value = Main.searchList
-            songNumber.value = playList.value[index.value]?.size
-            tags.value = []
-            id.value = route.query.id
-            Main.isMyCreate = false
-            suoFlag.value = false
+            if(localStorage.getItem('NMcookie')){
+                dynamic.value = await NM.reqPlaylistDetailDynamic(id.value) as any;
+            }else{
+                dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
+            }
+            //隐私判断
+            if (playList.value[index.value].privacy == 10) {
+                suoFlag.value = true
+            } else {
+                suoFlag.value = false
+            }
+            Main.isMyCreate = true
+        } else if (route.name == 'songPlaylist' && route.query.my as string != 'true') {
+            if(route.query.type == '歌单'){
+                if(localStorage.getItem('NMcookie')){
+                    dynamic.value = await NM.reqPlaylistDetailDynamic(route.query.id) as any;
+                    Main.searchList = [(await NM.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+                }else{
+                    dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
+                    Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+                }
+                console.log(Main.searchList);
+                index.value = 0
+                playList.value = Main.searchList
+                songNumber.value = playList.value[index.value].trackCount
+                tags.value = playList.value[index.value].tags
+                id.value = route.query.id
+                Main.isMyCreate = false
+            }else if(route.query.type == '专辑'){
+                dynamic.value = (await Main.reqAlbumDetailDynamic(route.query.id as unknown as number)).data
+                console.log(dynamic.value );
+                let result = (await Main.reqAlbum(route.query.id as unknown as number)).data
+                Main.searchList = [result?.album]
+                alsongs.value = result?.songs
+                index.value = 0
+                playList.value = Main.searchList
+                songNumber.value = playList.value[index.value]?.size
+                tags.value = []
+                id.value = route.query.id
+                Main.isMyCreate = false
+                suoFlag.value = false
+            }
         }
     }
-
 }, { immediate: true })
 provide('alsongs', alsongs)
 
@@ -514,12 +537,22 @@ const clearSearch = () => {
 
 
 router.afterEach((to) => {
-    if (to.query.my == 'true') {
-        isMy.value = 'true'
-        playList.value = Main.playList
-    } else {
-        isMy.value = 'false'
-        playList.value = Main.searchList
+    if(route.query.type == '播客'){
+        if (to.query.my == 'true') {
+            playList.value = BasicApi.createDjArr
+            isMy.value = 'true'
+        }else{
+            isMy.value = 'false'
+            playList.value = BasicApi.startDjArr
+        }
+    }else{
+        if (to.query.my == 'true') {
+            isMy.value = 'true'
+            playList.value = Main.playList
+        } else {
+            isMy.value = 'false'
+            playList.value = Main.searchList
+        }
     }
 })
 
@@ -730,7 +763,7 @@ const goPersonal = ()=>{
     router.push({
         name:'PersonalCenter',
         query:{
-            id:playList.value[index.value]?.creator?.userId
+            id:playList.value[index.value]?.creator?.userId ?? playList.value[index.value]?.dj?.userId 
         }
     })
 }
@@ -1292,6 +1325,24 @@ const canclePrivacy = ()=>{
                         height: 20px;
                         margin-right: 0px;
                     }
+                    &>.border-title-bk{
+                        display: flex;
+                        align-items: center;
+                        height: 25px;
+                        margin-right: 10px;
+                        width: auto;
+                        white-space: nowrap;
+                        &>.border-title{
+                            color: @small-font-red;
+                            font-size: 14px;
+                            border: 1px solid @small-font-red;
+                            padding: 2px 3px 3px 3px;
+                            border-radius: 0.2em;
+                            user-select: none;
+                            height:14px
+                        }
+                    }
+
 
                     >.txt {
                         margin-top: 5px;
@@ -1304,6 +1355,9 @@ const canclePrivacy = ()=>{
                         line-height: 25px;
                         margin-top: -1px;
                         // transform: translateY(-5px);
+                    }
+                    >.txt-dj{
+                        color: @font-color;
                     }
 
                     >.txt-oneself {

@@ -348,6 +348,16 @@ watch(()=>Main.songType,()=>{
     smallFlag.value = false
   }
 })
+watch(()=>$route.name,()=>{
+  console.log($route.name);
+  if($route.name == 'personalFM'){
+    setTimeout(()=>{
+      smallFlag.value = false
+    },250)
+  }else if($route.name != 'personalFM' && Main.songType == 'FM'){
+    smallFlag.value = true
+  }
+})
 </script>
 
 <style lang="less" scoped>

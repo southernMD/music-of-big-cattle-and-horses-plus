@@ -15,8 +15,8 @@
                 </div>
             </div>
             <div class="bottom" id="play-list-Panel-bottom">
-                <LineMusic v-for="(value, index) in  list" :showIndex="false" :title="value.name" :singer="value.ar"
-                    :time="value.dt" :id="value.id" :index="index" :key="value.id" :tns="value?.tns"
+                <LineMusic v-for="(value, index) in  list" :showIndex="false" :title="value.name" :singer="value.ar ?? value.mainSong.artists"
+                    :time="value.dt ?? value.mainSong.bMusic.playTime" :id="value.id" :index="index" :key="value.id" :tns="value?.tns"
                     :alia="value?.alia" :oneselfColor="false" type="radio" :dataType="getDataType(value.id,value.localPath)"
                     :path="value.localPath"
                     >

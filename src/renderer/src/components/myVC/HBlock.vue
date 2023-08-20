@@ -5,10 +5,24 @@
     :data-right="1"
     :data-txt="dataTxt"
     :data-pic="url"
+    @dblclick.stop="playDj"
     >
         <div class="left" :class="{ruName:type == 'searchUser'}">
-            <el-image :class="{ru:type == 'searchUser'}" :src="url" style="width: 60px; height: 60px"></el-image>
-            <div class="n" :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
+            <div class="index" v-if="type == 'DJprograme'">
+                <i v-if="Main.playing == id && Main.playStatus == 'play'" class="iconfont icon-shengyin_shiti"></i>
+                <i v-else-if="Main.playing == id && Main.playStatus == 'stop'" class="iconfont icon-shengyin03-mianxing"></i>
+                <div v-else class="index-number">{{showIndex }}</div>
+            </div>
+            <el-image @click.stop="playDj" :class="{ru:type == 'searchUser'}" :src="url" style="width: 60px; height: 60px">
+                <template #error>
+                    <el-image src="/src/assets/image/cloudmusic_5e9Ef54bbN.png"  style="width: 60px; height: 60px"></el-image>
+                </template>
+            </el-image>
+            <div class="n" :class="{
+                name:type =='DJ' || 'showPersonal',
+                'name-singer':type == 'singer' || 'ZhuanJi' || 'playList',
+                'name-dj':type == 'DJprograme'
+                }">
                 <span v-html="Name"></span>
             </div>
         </div>
@@ -55,6 +69,23 @@
         <div class="signature"  v-if="type == 'searchUser'">
             <div> {{ signature }}</div>
         </div>
+        <div class="right Djprograme" v-if="type == 'DJprograme'">
+            <div class="playCount"  >
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount as number) }}
+            </div>
+            <div class="sub">
+                <i class="iconfont icon-dianzan" v-if="!subscribed"></i>
+                <i class="iconfont icon-dianzan_kuai" v-else></i>
+                {{ numberSimp(likedCount as number) }}
+            </div>
+            <div class="time">
+                {{dayjsStamp(createTime!)}}
+            </div>
+            <div class="songTime">
+                {{dayjsMMSS(songTime) }}
+            </div>
+        </div>
     </div>
 </template>
 
@@ -62,7 +93,7 @@
 import {ref,watch} from 'vue'
 import { useMain ,useGlobalVar} from '@renderer/store';
 import {numberSimp} from '@renderer/utils/numberSimp'
-import { dayjsStamp } from '@renderer/utils/dayjs';
+import { dayjsStamp,dayjsMMSS } from '@renderer/utils/dayjs';
 import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()
@@ -87,13 +118,20 @@ const props = defineProps<{
     'start' | 
     'startal' |
     'startSongHand'|
-    'searchUser' 
+    'searchUser' |
+    'DJprograme'
     time?:number
     creators?:any[]
     signature?:string
-    dataType:string
+    dataType?:string
+    likedCount?:number
+    subscribed?:boolean
+    createTime?:number
+    songTime?:number
+    index?:number
+    showIndex?:number
 }>()
-const $emit = defineEmits(['playAll','goAr'])
+const $emit = defineEmits(['playAll','goAr','playDj'])
 const playAll = ()=>{
     $emit('playAll',props.id)
 }
@@ -115,6 +153,10 @@ watch(()=>props.type,()=>{
         dataTxt.value = `歌单:${props.Name} by ${props.creator.nickname}`
     }
 },{immediate:true})
+
+const playDj = ()=>{
+    $emit('playDj',props.id,props.index)
+}
 </script>
 
 <style lang='less' scoped>
@@ -130,9 +172,9 @@ watch(()=>props.type,()=>{
         justify-content: flex-start;
         align-items: center;
         // padding-left: 30px;
-
+        width: 55%;
+        min-width: 300px;
         .name {
-            width: 380px;
             overflow-x: hidden;
             text-overflow: ellipsis;
             padding-left: 10px;
@@ -146,7 +188,6 @@ watch(()=>props.type,()=>{
         }
         .name-singer{
             font-size: 14px;
-            width: 380px;
             overflow-x: hidden;
             text-overflow: ellipsis;
             margin-left: 10px;
@@ -154,6 +195,7 @@ watch(()=>props.type,()=>{
             display: flex;
             align-items: center;
             user-select: none;
+            max-width: calc(100% - 120px);
             >span{
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -182,6 +224,21 @@ watch(()=>props.type,()=>{
                 border-radius: 50%;
             }
         }
+        >.index{
+            width: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: @small-font-color;
+            margin-right: -20px;
+            font-size: 12px;
+            .iconfont{
+                color: @primary-color;
+            }
+        }
+        .name-dj{
+            width: 60%;
+        }
     }
     .ruName{
         .n{
@@ -194,11 +251,9 @@ watch(()=>props.type,()=>{
         display: flex;
         align-items: center;
         margin-right: 30px;
-
+        width: 45%;
         .one {
-            margin-right: 150px;
-            min-width: 50px;
-            width: 100px;
+            width: 50%;
             font-size: 12px;
             color: @small-font-color;
             user-select: none;
@@ -213,8 +268,7 @@ watch(()=>props.type,()=>{
         }
 
         .two {
-            margin-right: 50px;
-            min-width: 50px;
+            width: 50%;
             font-size: 12px;
             width: auto;
             color: @small-font-color;
@@ -339,6 +393,30 @@ watch(()=>props.type,()=>{
             text-overflow: ellipsis;
             align-self: flex-end;
             text-align:right;
+        }
+    }
+    .Djprograme{
+        width: 40%;
+        font-size: 12px;
+        color: @small-font-color;
+        >.playCount{
+            width: 20%;
+            >.icon-gf-play{
+                font-size: 10px;
+                height: 12px;
+                border: 1px solid @small-font-color;
+                border-radius: 2em;
+                padding: 2px;
+            }
+        }
+        >.sub{
+            width: 25%;
+        }
+        >.time{
+            width: 35%;
+        }
+        >.songTime{
+            width: 20%;
         }
     }
     &:hover {

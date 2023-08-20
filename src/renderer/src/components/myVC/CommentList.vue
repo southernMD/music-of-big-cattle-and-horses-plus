@@ -161,6 +161,16 @@ watch(nowPage, async () => {
       let result = (await Main.reqCommentAlbum(id.value, 20, (nowPage.value - 1) * 20)).data
       comments.value = result.comments;
       commentFlag.value = true
+    }else if(type.value == 4){
+      commentFlag.value = false
+      let result = (await Main.reqCommentDj(id.value, 20, (nowPage.value - 1) * 20)).data
+      comments.value = result.comments;
+      commentFlag.value = true
+      if(nowPage.value == 1){
+        globalVar.scrollToTop = true
+      }else{
+        globalVar.changeMainScroll = -(globalVar.mainScroll - offsetVal.value!.offsetTop)
+      }
     }
 })
 

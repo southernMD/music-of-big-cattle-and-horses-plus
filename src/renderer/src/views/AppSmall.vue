@@ -254,8 +254,6 @@ onMounted(async()=>{
     }else if(!(cookie == '' || cookie == null || cookie == undefined)){
         MainPinia.reqUserPlaylist(BasicApi.account?.id)
         MainPinia.reqUserLike(BasicApi.account?.id)
-        // BasicApi.reqStartDj()
-        // BasicApi.reqCreateDj(BasicApi.account?.id)
         MainPinia.reqUserSubcount()
         BasicApi.requserFollows(BasicApi.account!.id)
     }

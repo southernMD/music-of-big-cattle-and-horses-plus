@@ -167,11 +167,7 @@ if(localStorage.getItem('NMcookie'))ifNM.value = true
 const leftRef = ref<(InstanceType<typeof HTMLElement>)>()
 
 let eventRes 
-if(localStorage.getItem('NMcookie')){
-    eventRes = await NM.reqMyEvent()
-}else{
-    eventRes = await Main.reqMyEvent()
-}
+
 const eventResolve = (val)=>{
     const event:any[] = val.event
     event.sort((a,b)=>{
@@ -196,7 +192,12 @@ const eventResolve = (val)=>{
         observer.observe(lastChild)
     })
 }
-onMounted(()=>{
+onMounted(async()=>{
+    if(localStorage.getItem('NMcookie')){
+        eventRes = await NM.reqMyEvent()
+    }else{
+        eventRes = await Main.reqMyEvent()
+    }
     eventResolve(eventRes)
 })
 

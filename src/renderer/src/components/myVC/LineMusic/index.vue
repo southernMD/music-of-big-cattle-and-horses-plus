@@ -45,14 +45,14 @@
                 <div class="limit" :class="{ 'limit-oneself': globalVar.oneself && oneselfColor != false }">
                     <span :class="{ red: Main.playing == id && (Main.beforePlayListId == playListid || type == 'radio') }"
                         v-html="title"></span>
-                    <span class="small" v-if="tns?.length" v-html="`&nbsp;(${tns[0]})`"></span>
-                    <span class="small" v-else-if="alia?.length" v-html="`&nbsp;(${alia[0]})`"></span>
+                    <span class="small" v-if="tns?.length" v-html="`&nbsp;(${tns?.[0]})`"></span>
+                    <span class="small" v-else-if="alia?.length" v-html="`&nbsp;(${alia?.[0]})`"></span>
                     <span class="tag" v-if="!(downloadId.includes(id)) && !(!ifDownload) && ( lately)">本地</span>
                 </div>
             </div>
             <div class="song-hand"  v-if="!record && !onlyTime" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
                 <div class="limit" :class="{ noDrag: !Main.dragMouse }">
-                    <span  v-if="singer![0]?.name"  class="span-singer" v-for="({}, index) in singer"
+                    <span  v-if="singer?.[0]?.name"  class="span-singer" v-for="({}, index) in singer"
                         :data-singerId="singer![index]?.id">
                         <Singer :id="singer![index]?.id"  :name="singer![index]?.name" :index="index" :singerLen="singer.length - 1"></Singer>
                     </span>
@@ -131,17 +131,19 @@ const props = defineProps<{
 }>()
 
 const bufferpic = ref('')
-const reader = new FileReader();
-reader.readAsDataURL(new Blob([props.imageBuffer!], { type: 'image/jpeg' }));
-new Promise<any>((resolve, reject) => {
-    reader.onloadend = () => {
-        const base64String = reader.result;
-        resolve(base64String);
-    };
-    reader.onerror = reject;
-}).then((base64:any)=>{
-    bufferpic.value = base64
-})
+if(props.imageBuffer){
+    const reader = new FileReader();
+    reader.readAsDataURL(new Blob([props.imageBuffer!], { type: 'image/jpeg' }));
+    new Promise<any>((resolve, reject) => {
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            resolve(base64String);
+        };
+        reader.onerror = reject;
+    }).then((base64:any)=>{
+        bufferpic.value = base64
+    })
+}
 
 
 //leftblock传过来的id，限自己的歌单的id
@@ -149,14 +151,17 @@ let playListid = inject<Ref<number>>('playListId') as Ref<number>
 let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 const ifDownload = ref(false)
 let name = ''
-
-props.singer.forEach((el, index) => {
-name += el.name
+let cleanFileName = ''
+console.log(props,'你为什么回触发');
+if(props.singer){
+    props.singer.forEach((el, index) => {
+        name += el.name
     if (index != props.singer!.length - 1) name += ','
 })
 name = name + ' - ' + props.title
+cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
+}
 
-const cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
 const myPath = ref('')
 watch(()=>props.path,()=>{
     myPath.value = props.path + ''
@@ -419,6 +424,7 @@ onMounted(()=>{
     changColor()
 })
 const changColor = () => {
+    clearTimeout(mousedownTimer)
     let arr = document.querySelectorAll('.line-music') as unknown as Array<HTMLElement>
     for (let i = 0; i < arr.length; i++) {
         if ((i + 1) % 2 == 0) {
@@ -481,6 +487,7 @@ const heartJust = async () => {
 
 
 const gotoPlay = (e: MouseEvent) => {
+    console.log('不会触发了把');
     if(e.button !== 0)return 
     clearTimeout(mousedownTimer)
     if(!globalVar.radioReady)return

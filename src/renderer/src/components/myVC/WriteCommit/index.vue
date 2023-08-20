@@ -81,7 +81,9 @@ window.electron.ipcRenderer.on('to-changeFished-finshed',()=>{
     reSizePositon();
 })
 onMounted(()=>{
-    getFocus()
+    if($route.name != 'personalFM'){
+        getFocus()
+    }
     reSizePositon();
 })
 

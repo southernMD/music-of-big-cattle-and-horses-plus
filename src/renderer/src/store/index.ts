@@ -40,7 +40,11 @@ import {
     eventDel,
     artistTopSong,
     Scrobble,
-    checkMusic
+    checkMusic,
+    djDetail,
+    djProgram,
+    djProgramDetail,
+    commentDj
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
@@ -1284,6 +1288,38 @@ export const useMain = defineStore('Main', {
             return new Promise<any>((resolve, reject) => {
                 resolve(result.data.success)
             })
+        },
+        //电台详情
+        async reqDjDetail(rid){
+            let result = await djDetail(rid)
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.data.data)
+            })
+        },
+        //电台列表
+        async reqdjProgram(rid,limit,offset){
+            let result = await djProgram(rid,limit,offset)
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.data.programs)
+            })
+        },
+        async djProgramDetail(id){
+            let result = await djProgramDetail(id)
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.data.program)
+            })
+        },
+        //获取DJ评论
+        async reqCommentDj(id: number, limit?: number, offset?: number, before?: number): Promise<any> {
+            let result = await commentDj(id, limit, offset, before);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                // alert('error')
+                console.log(result);
+            }
         },
         init() {
             this.leftClickColor = '',

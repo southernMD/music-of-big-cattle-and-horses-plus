@@ -52,6 +52,11 @@ const routes: Array<RouteRecordRaw> = [
                         component:()=>import('@renderer/views/PlayList/Song/index.vue'),
                     },
                     {
+                        path:'dj',
+                        name:'djPlaylist',
+                        component:()=>import('@renderer/views/PlayList/Dj/index.vue'),
+                    },
+                    {
                         path:'comment',
                         name:'commentPlaylist',
                         component:()=>import('@renderer/views/PlayList/Comment/index.vue'),

@@ -2,7 +2,7 @@
   <!-- <el-config-provider size="small" :z-index="3000" :locale="zhCn"> -->
   <!-- </el-config-provider> -->
   <div class="main" :class="{'main-oneself':globalVar.oneself == 1,'red-line':MainMenu.colorBlock == 'NMblack'}" >
-    <el-scrollbar ref="scrollbarRefLeft" @scroll="barLeft">
+    <el-scrollbar ref="scrollbarRefLeft" @scroll="barLeft" style="width: 200px;">
       <aside @mouseover="leftOver" :class="{'aside-right-color-oneself':globalVar.oneself == 1}">
         <div class="top">
           <LeftBlock message="发现音乐" :big="true" name="findMusic">
@@ -38,7 +38,7 @@
                 <i class="iconfont icon-yun_o"></i>
               </template>
             </LeftBlock>
-            <LeftBlock  v-if="false" message="我的播客" :big="false" name="mydj" >
+            <LeftBlock  v-if="!isNM" message="我的播客" :big="false" name="mydj" >
               <template #default>
                 <i class="iconfont icon-changpian"></i>
               </template>
@@ -194,6 +194,9 @@ const findMusicRouteName = ['personalRecommend']
 const downloadMusic = ['下载管理', '本地音乐']
 const downloadMusicRouteName = ['downloaded', 'local']
 let clickFlag = ref([true, false, false])
+const isNM = ref(false)
+if(localStorage.getItem('NMcookie'))isNM.value = true
+else isNM.value = false
 watch(route,()=>{
   messageList.value.length = 0
   routeName.value.length = 0
