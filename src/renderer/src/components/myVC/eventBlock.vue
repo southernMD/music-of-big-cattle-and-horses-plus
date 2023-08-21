@@ -264,6 +264,7 @@ const typeChange = ()=>{
         shareCover.value = valI.value.program?.coverUrl
         shareTitle.value = valI.value.program?.name
         smallMessage.value = [valI.value.program?.radio?.name]
+        shareId.value = valI.value.program?.id
     }else if(typeI.value == 31){
 
     }else if(typeI.value == 36){
@@ -600,6 +601,27 @@ const shareHandle = async()=>{
                 id:shareId.value
             }
         })
+    }else if(typeI.value== 28 || typeI.value==17){
+        const result = (await Main.djProgramDetail(shareId.value))
+        console.log(result);
+        let index = 0
+        if (Main.playingindex == -1) index = 0
+        else index = Main.playingindex
+        Main.playingList.splice(index, 0, result)
+        Main.playingPrivileges.splice(index, 0, {
+            id:result.mainSong.id,
+            maxBrLevel: "DJ",
+            playMaxBrLevel: "DJ",
+            downloadMaxBrLevel: "DJ",
+            plLevel: "DJ",
+            dlLevel: "DJ",
+            flLevel: "DJ",
+        })
+        console.log(result.mainSong.id);
+        Main.playingindex = index + 1
+        Main.playing =  result.mainSong.id
+        Main.playStatus = 'play'
+        Main.songType = 'DJ'
     }
 }
 const goZhuanFa = ()=>{

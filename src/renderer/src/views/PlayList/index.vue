@@ -428,12 +428,17 @@ watch(routeQuery, async () => {
         songNumber.value = djMessage.programCount
         if(isMy.value as string == 'true'){
             //创建的播客
-            playList.value = BasicApi.createDjArr
+            if(+route.query.index! > BasicApi.createDjArr.length - 1){
+                playList.value = BasicApi.startDjArr
+                index.value = +route.query.index! - BasicApi.createDjArr.length
+            }else{
+                playList.value = BasicApi.createDjArr
+                index.value = route.query.index
+            }
         }else{
-            //收藏的播客
-            playList.value = BasicApi.startDjArr
+            playList.value = [djMessage]
+            index.value = 0
         }
-        index.value = route.query.index
     }else{
         if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
             nextTick(() => {

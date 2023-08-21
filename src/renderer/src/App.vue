@@ -6,6 +6,9 @@ const {background,fontColor} = window.electron.ipcRenderer.sendSync('get-backgro
 console.log(background,fontColor);
 const globalVar = useGlobalVar()
 useColor()
+window.addEventListener('keydown',(e)=>{
+    e.preventDefault()
+})
 </script>
 
 <template>

@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="DJblock-list">
-            <HBlock @click="goDj(val.id,true,index,val.programCount)" v-for="val,index in createDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
+            <HBlock @click="goDj(val.id,index,val.programCount)" v-for="val,index in createDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
         </div>
         <div class="second-title">
             <div class="left">
@@ -24,7 +24,7 @@
             </div>
         </div>
         <div class="DJblock-list">
-            <HBlock @click="goDj(val.id,false,index,val.programCount)" v-for="val,index in startDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
+            <HBlock @click="goDj(val.id,index + createDjArr.length,val.programCount)" v-for="val,index in startDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
         </div>
     </div>
 </template>
@@ -48,13 +48,13 @@ onMounted(async()=>{
     await Promise.all([ BasicApi.reqStartDj(),BasicApi.reqCreateDj(BasicApi.account?.id)])
 })
 
-const goDj = (id,my,index,programCount)=>{
+const goDj = (id,index,programCount)=>{
     $router.push({
         name:'djPlaylist',
         query:{
             type:'播客',
             id,
-            my,
+            my:'true',
             index,
             count:programCount
         }

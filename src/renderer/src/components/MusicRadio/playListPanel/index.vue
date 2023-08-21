@@ -16,12 +16,17 @@
             </div>
             <div class="bottom" id="play-list-Panel-bottom">
                 <LineMusic v-for="(value, index) in  list" :showIndex="false" :title="value.name" :singer="value.ar ?? value.mainSong.artists"
-                    :time="value.dt ?? value.mainSong.bMusic.playTime" :id="value.id" :index="index" :key="value.id" :tns="value?.tns"
-                    :alia="value?.alia" :oneselfColor="false" type="radio" :dataType="getDataType(value.id,value.localPath)"
+                    :time="value.dt ?? value.mainSong.bMusic.playTime" :id="value.mainSong?value.mainSong.id:value.id" :index="index" :key="value.id" :tns="value?.tns"
+                    :alia="value?.alia" :oneselfColor="false" type="radio" :dataType="getDataType(value.id,value.localPath,(value.mainSong ?? value.programId)== undefined)"
                     :path="value.localPath"
+                    :djName="value.mainSong?.artists?.[0]?.name"
+                    :djId="value.dj?.userId"
+                    :djprogramid="value.mainSong?value?.id:undefined"
+                    :radioid="value.mainSong?value?.radio.id:undefined"
+                    :djprogramName="value.mainSong?value?.dj.brand:undefined"
                     >
                     <template #default>
-                        <i class="iconfont icon-youjiantou" v-if="Main.playing == value.id"></i>
+                        <i class="iconfont icon-youjiantou" v-if="Main.playing == value.id || Main.playing == value.mainSong?.id"></i>
                     </template>
                 </LineMusic>
             </div>
@@ -68,15 +73,23 @@ watch(()=>globalVar.clearList,()=>{
     }
 })
 
-const getDataType = (id,path)=>{
-    if(id > 0){
-        if(path != undefined){
-            return 'songPanelLocal'
+const getDataType = (id,path,flag)=>{
+    if(flag){
+        if(id > 0){
+            if(path != undefined){
+                return 'songPanelLocal'
+            }else{
+                return 'songPanel'
+            }
         }else{
-            return 'songPanel'
+            return 'songPanelnor'
         }
     }else{
-        return 'songPanelnor'
+        if(path != undefined){
+            return 'songPanelLocalDJ'
+        }else{
+            return 'songPanelDJ'
+        }
     }
 }
 </script>

@@ -117,7 +117,13 @@ const playDj = (id,index)=>{
   console.log('触发playDj');
   //全部
   if(globalVar.setting.playWay){
-
+    Main.playingList = djList
+    Main.playingPrivileges = djList.map((item)=>emptyDjObject(item.id))
+    Main.playingindex = index
+    Main.playStatus = 'play'
+    Main.songType = 'DJ'
+    Main.playing = id
+    Main.beforePlayListId = +$route.query.id!
   }else{
     if(Main.playingindex == -1){
       Main.playingList = [djList[index - 1]]
@@ -127,7 +133,7 @@ const playDj = (id,index)=>{
       Main.songType = 'DJ'
       Main.playing = id
     }else{
-      const ifId = Main.playingList.map((item)=>item.id).findIndex((ido)=>ido == id)
+      const ifId = Main.playingList.map((item)=>item.mainSong?.id).findIndex((ido)=>ido == id)
       if(ifId == -1){
         Main.playingList.splice(Main.playingindex,0,djList[index - 1])
         Main.playingPrivileges.splice(Main.playingindex,0,emptyDjObject(id))

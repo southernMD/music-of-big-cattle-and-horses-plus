@@ -55,7 +55,12 @@ const $router = useRouter()
 const $route = useRoute()
 const NM = useNM()
 const cid = ref(+$route.query.cid!)
+//如果是声音的查看音乐的id在$route.query.djprogramid中,djprogramid在$route.query.id中
 const sid = ref(+$route.query.id!)
+const programId = ref(+$route.query.programId!)
+if( !isNaN(programId.value)){
+    sid.value = programId.value
+}
 const songMessage = reactive<{
     url:string,
     name:string,

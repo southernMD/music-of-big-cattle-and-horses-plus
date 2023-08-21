@@ -165,6 +165,8 @@ const loadComment = async()=>{
         }else{
             result = (await Main.reqCommentMusic(Number(routeId.value),20,0)).data
         }
+    }else if($route.query.type == '声音'){
+        result = (await Main.reqCommentDj(Number(routeId.value),20,0)).data
     }
     hotComments.value = result.hotComments;
     comments.value = result.comments;
@@ -194,6 +196,7 @@ watch(Rn,async()=>{
 const CPtype = computed(()=>{
     if($route.query.type == '歌单') return 2
     else if($route.query.type == '专辑') return 3
+    else if($route.query.type == '声音') return 4
     else return 0
 })
 

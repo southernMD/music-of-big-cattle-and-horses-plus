@@ -562,6 +562,8 @@ const normalPlayWay = async()=>{
             globalVar.loadMessageDefault = '对象不可用'
             globalVar.loadMessageDefaultType = 'error'
             globalVar.loadMessageDefaultFlag = true
+            Main.playingList.splice(Main.playingindex-1,1)
+            Main.playingPrivileges.splice(Main.playingindex-1,1)
             nextSongThor()
             return
         }
@@ -659,7 +661,7 @@ watch(playingId, async ({},oldValue) => {
             }
         }
         let str = playingList.value[playingindex.value - 1].name + ' - ';
-        let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
+        let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
         singerArr.forEach((element, index) => {
             str += element.name
             if (index != singerArr.length - 1) str += ' / '
@@ -1075,12 +1077,15 @@ const prevSong = () => {
             Main.FMindex--
         }
     } else {
+        if(Main.playingList.length == 0)return
         originalsongIndex.value++
         if (wayIndex.value == 2) {
             randIndex.value--;
             if (randIndex.value == -1) {
                 playingindex.value = rand(1, playingList.value.length, playingindex.value)
-                playingId.value = playingList.value[playingindex.value - 1].id
+                playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+                playingList.value[playingindex.value - 1].id:
+                playingList.value[playingindex.value - 1].mainSong.id
                 randQueue.unshift(playingindex.value)
                 randIndex.value++;
             }
@@ -1091,7 +1096,11 @@ const prevSong = () => {
                 playingindex.value = playingList.value.length
             }
         }
-        playingId.value = playingList.value[playingindex.value - 1].id
+
+        playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+        playingList.value[playingindex.value - 1].id:
+        playingList.value[playingindex.value - 1].mainSong.id
+
         playStatus.value = 'play'
 
     }
@@ -1101,13 +1110,18 @@ const nextSong = () => {
     if (Main.songType == 'FM') {
         Main.FMindex++
     } else {
+        if(Main.playingList.length == 0)return
         originalsongIndex.value++
         if (wayIndex.value == 2) {
             randIndex.value++;
             if (randIndex.value == randQueue.length) {
                 let randNum = rand(1, playingList.value.length, playingindex.value)
                 playingindex.value = randNum
-                playingId.value = playingList.value[playingindex.value - 1].id
+
+                playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+                playingList.value[playingindex.value - 1].id:
+                playingList.value[playingindex.value - 1].mainSong.id
+
                 randQueue.push(playingindex.value)
             }
             playingindex.value = randQueue[randIndex.value]
@@ -1117,7 +1131,11 @@ const nextSong = () => {
                 playingindex.value = 1
             }
         }
-        playingId.value = playingList.value[playingindex.value - 1].id
+
+        playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+        playingList.value[playingindex.value - 1].id:
+        playingList.value[playingindex.value - 1].mainSong.id
+
         playStatus.value = 'play'
     }
 

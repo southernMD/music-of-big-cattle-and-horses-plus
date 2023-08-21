@@ -33,7 +33,15 @@
             :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag"
             @close="globalVar.loadMessageDefaultFlag = false"></Loading>
         <Teleport to="body">
-            <rightBlock :index="index" :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" :type="type" :rightFlag="rightFlag"></rightBlock>
+            <rightBlock :index="index" :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" 
+            :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" 
+            :type="type" :rightFlag="rightFlag"
+            :djName="djName"
+            :djId="djId"
+            :djprogramid="djprogramid"
+            :djprogramName="djprogramName"
+            :radioid="radioid"
+            ></rightBlock>
         </Teleport>
         <MyDialog :flag="updateFlag" @closeDialog="closeUpdate" @confirm="confirmUpdate" @cancel="cancleUpdate" confirmName="现在更新">
             <template #header>
@@ -491,6 +499,12 @@ const download = ref('')
 const path = ref('')
 const commentType = ref('')
 const index = ref('')
+const djName = ref('')
+const djId = ref('')
+const djprogramid = ref('')
+const djprogramName = ref('')
+const radioid = ref('')
+
 window.addEventListener('contextmenu', (event) => {
   rightFlag.value = false 
   event.preventDefault(); // 阻止默认的右键菜单弹出
@@ -508,6 +522,12 @@ window.addEventListener('contextmenu', (event) => {
         commentType.value =  doms[i].getAttribute('data-commentType')! ?? ''
         evid.value =  doms[i].getAttribute('data-evid')! ?? ''
         index.value =  doms[i].getAttribute('data-index')! ?? ''
+        djName.value =  doms[i].getAttribute('data-djName')! ?? ''
+        djId.value =  doms[i].getAttribute('data-djId')! ?? ''
+        djprogramid.value =  doms[i].getAttribute('data-djprogramid')! ?? ''
+        djprogramName.value =  doms[i].getAttribute('data-djprogramname')! ?? ''
+        radioid.value =  doms[i].getAttribute('data-radioid')! ?? ''
+        
         const x = event.clientX; // 鼠标点击位置相对于浏览器窗口左上角的横坐标
         const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
         eventBlockLeft.value = x

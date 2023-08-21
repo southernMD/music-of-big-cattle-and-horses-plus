@@ -962,7 +962,14 @@ const pares163Key = (comment:string)=>{
   //@ts-ignore
   const aesd = aes128ecbDecipher.update(key, 'base64') + aes128ecbDecipher.final(); // Base64 解码，AES 解密
   if(aesd.startsWith('dj')){
-    return JSON.parse(aesd.substring(aesd.indexOf(':')+1)).mainMusic // 移除 music: 并解析 JSON
+    const djMessage = JSON.parse(aesd.substring(aesd.indexOf(':')+1))
+    return Object.assign(djMessage.mainMusic,{
+      programId:djMessage.programId,
+      djId: djMessage.djId,
+      djName: djMessage.djName,
+      programName: djMessage.programName,
+      brand: djMessage.brand,
+    }) // 移除 music: 并解析 JSON
   }else if(aesd.startsWith('music')){
     return JSON.parse(aesd.substring(aesd.indexOf(':')+1)) // 移除 music: 并解析 JSON
   }else{

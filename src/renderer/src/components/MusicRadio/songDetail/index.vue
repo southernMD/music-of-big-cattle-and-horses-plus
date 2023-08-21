@@ -115,7 +115,7 @@
             <i v-if="!ifShowRight" class="iconfont icon-zuoxiangshuangjiantou"></i>
           </div>
         </div>
-        <div class="music music-DJ" v-show="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'">
+        <div class="music music-DJ" v-if="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'">
           <div class="left-DJ">
             <el-image :src="playingList[playingindex - 1]?.coverUrl" style="width: 270px; height: 270px;">
               <template #placeholder>

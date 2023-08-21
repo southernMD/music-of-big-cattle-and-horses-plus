@@ -2,6 +2,7 @@
 
   <div class="rightBlock" ref="rightBlockRef" v-show="flag && rightFlag">
     <div class="list">
+        {{ type }}
         <div class="op" @mouseenter="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')?showStartList():hideStartList()" 
         @click="eventsHandle[index].bind(null,params[index])()"  
         v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
@@ -65,7 +66,13 @@ const props = defineProps<{
     path:string | null | undefined
     commentType:string | null | undefined
     evid:string | null | undefined
+    djName:string | null | undefined
+    djId:string | null | undefined
+    djprogramid:string | null | undefined
+    djprogramName:string | null | undefined
+    radioid:string | null | undefined
 }>()
+
 const flag = ref(false)
 const rightBlockRef = ref<InstanceType<typeof HTMLElement>>()
 watchEffect(()=>{
@@ -284,6 +291,30 @@ const buildList = ()=>{
                 iconList.value.push(...['icon-tianjiawenjian','icon-fenxiang1','icon-wenjian','icon-lajixiang'])
                 eventsHandle.value.push(...[function(){},share,openFile,deleteFromList])
                 params.value.push(...[props.id,props.id,props.path,props.index])
+            }else if(props.type.endsWith('DJ')){
+                messageList.value.push(...[`主播：${props.djName}`,`来自：${props.djprogramName}`,'分享'])
+                ifBorderBottom.value.push(...[false,true,false])
+                iconList.value.push(...['icon-gerenzhongxin-wodexinxi','icon-relevance','icon-fenxiang1'])
+                eventsHandle.value.push(...[DJPersonalpage,DJprogrampage,share])
+                params.value.push(...[props.djId,props.radioid,props.djprogramid])
+                if(props.type.includes('Local')){
+                    messageList.value.push(...['打开文件所在目录'])
+                    ifBorderBottom.value.push(...[true])
+                    iconList.value.push(...['icon-wenjian'])
+                    eventsHandle.value.push(...[openFile])
+                    params.value.push(...[props.path])
+                }else{
+                    messageList.value.push(...['下载'])
+                    ifBorderBottom.value.push(...[true])
+                    iconList.value.push(...['icon-xiazai1'])
+                    eventsHandle.value.push(...[download])
+                    params.value.push(...[props.id])
+                }
+                messageList.value.push('从列表中删除')
+                ifBorderBottom.value.push(false)
+                iconList.value.push('icon-lajixiang')
+                params.value.push(props.index)
+                eventsHandle.value.push(deleteFromList)
             }else{
                 messageList.value.push(...['收藏','分享','下载','从列表中删除'])
                 ifBorderBottom.value.push(...[false,false,true,false])
@@ -388,12 +419,22 @@ const look = (id:string)=>{
             }
         })
     }else if(props.type.startsWith('song')){
-        $router.push({
-            name:'SongComments',
-            query:{
-                id,type:'歌曲'
-            }
-        })
+        if(props.type.includes('DJ')){
+            $router.push({
+                name:'SongComments',
+                query:{
+                    id:props.djprogramid,type:'声音',programId:id
+                }
+            })
+        }else{
+            $router.push({
+                name:'SongComments',
+                query:{
+                    id,type:'歌曲'
+                }
+            })
+        }
+
     }
 }
 
@@ -498,11 +539,37 @@ const play = async(id:string)=>{
             }else{
                 window.electron.ipcRenderer.send('right-click',{flag:true,path:props.path})
             }
+        }else if(props.type.startsWith('songPanel')){
+            console.log('songPanel','songPanel','songPanel');
+            Main.playing = +id 
+            Main.playingindex = +props.index! + 1
+            Main.playStatus = 'play'
+            if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
+                Main.songType = 'DJ'
+            }else{
+                Main.songType = 'song'
+            }
         }
     }
-    Main.songType = 'song'
+    if(!props.type.startsWith('songPanel'))Main.songType = 'song'
 }
-
+    // if(flag){
+    //     if(id > 0){
+    //         if(path != undefined){
+    //             return 'songPanelLocal'
+    //         }else{
+    //             return 'songPanel'
+    //         }
+    //     }else{
+    //         return 'songPanelnor'
+    //     }
+    // }else{
+    //     if(path != undefined){
+    //         return 'songPanelLocalDJ'
+    //     }else{
+    //         return 'songPanelDJ'
+    //     }
+    // }
 const nextPlay = async(id:string)=>{
     console.log(Main.playingindex);
     if(props.type.startsWith('playList')){
@@ -628,7 +695,11 @@ const share = (id:string)=>{
     }else if(props.type.startsWith('al')){
         globalVar.share.type = 'album'
     }else if(props.type.startsWith('song') && !props.type.startsWith('songHand')){
-        globalVar.share.type = 'song'
+        if(props.type.endsWith('DJ')){
+            globalVar.share.type = 'djprogram'
+        }else{
+            globalVar.share.type = 'song'
+        }
     }else if(props.type.startsWith('songHand')){
         globalVar.share.type = 'artist'
     }else if(props.type.startsWith('FM')){
@@ -1226,13 +1297,22 @@ const hideStartList = ()=>{
 }
 
 const deleteFromList = (index)=>{
+    console.log(index,Main.playingindex - 1); //0,0
     if(index == Main.playingindex - 1){
         Main.playingList.splice(index,1)
-        Main.playingPrivileges.slice(index,1)
-        if(Main.playingList.length != 0)Main.playing = Main.playingList[Main.playingindex - 1].id
+        Main.playingPrivileges.splice(index,1)
+        if(Main.playingList.length != 0){
+            if(Main.playingindex == Main.playingList.length + 1)Main.playingindex-- //1,2
+            console.log(Main.playingPrivileges,Main.playingList,Main.playingindex - 1);
+            if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
+                Main.playing = Main.playingList[Main.playingindex - 1].mainSong.id
+            }else{
+                Main.playing = Main.playingList[Main.playingindex - 1].id
+            }
+        }
     }else{
         Main.playingList.splice(index,1)
-        Main.playingPrivileges.slice(index,1)
+        Main.playingPrivileges.splice(index,1)
         if(index <  Main.playingindex - 1){
             Main.playingindex--
         }
@@ -1241,6 +1321,29 @@ const deleteFromList = (index)=>{
         globalVar.clearList = true
     }
 }
+
+const DJPersonalpage = (id)=>{
+    $router.push({
+        name:'PersonalCenter',
+        query:{
+            id
+        }
+    })
+}
+
+const DJprogrampage = (id)=>{
+    console.log(id,props.radioid);
+    $router.push({
+        name:'djPlaylist',
+        query:{
+            type:'播客',
+            id,
+            my:'false',
+            count:undefined
+        }
+    })
+}
+
 
 </script>
 
@@ -1274,6 +1377,9 @@ const deleteFromList = (index)=>{
             .msg{
                 width: calc(100% - 45px);
                 font-size: 14px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .i{
                 padding-right: 10px;

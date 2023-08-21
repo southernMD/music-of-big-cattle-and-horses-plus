@@ -9,6 +9,11 @@
     :data-txt="`单曲:${title} - ${singer?.map(it=>it.name).join('/')}`"
     :data-download="!(downloadId.includes(id)) && !(!ifDownload) || myPath != 'undefined'"
     :data-path="myPath"
+    :data-djName="djName"
+    :data-djId="djId"
+    :data-djprogramid="djprogramid"
+    :data-djprogramName="djprogramName"
+    :data-radioid="radioid"
     :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
         dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid < 0 && Main.dragMouse || Main.dragType != 'songMy' && Main.dragMouse,
@@ -128,6 +133,11 @@ const props = defineProps<{
     onlyTime?:boolean//只要时间
     dataType?:string
     imageBuffer?:Uint8Array
+    djprogramid?:number
+    djId?:number
+    djName?:string
+    djprogramName?:string
+    radioid?:number
 }>()
 
 const bufferpic = ref('')
@@ -591,6 +601,11 @@ const gotoPlay = (e: MouseEvent) => {
                 Main.playing = props.id as number
                 Main.playingindex = props.index as number + 1
                 Main.playStatus = 'play'
+                if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
+                    Main.songType = 'DJ'
+                }else{
+                    Main.songType = 'song'
+                }
             } else if (father.getAttribute('id') === 'every-day') {
                 if(globalVar.setting.playWay){
                     Main.playingList = BasicApi.everyDaySong
