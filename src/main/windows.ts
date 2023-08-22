@@ -33,21 +33,35 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
       basePath = '../../../app.asar.unpacked/resources'
     }
     let fontColor
-    const background = await new Promise<string>((resolve, reject) => {
+    let downloadPath
+    const background = await new Promise<string>((res, reject) => {
       fs.readFile(join(__dirname,basePath,'color.json'), 'utf8', (err, jsonString) => {
         if (err) {
           // 文件不存在，创建文件并写入内容
           fs.writeFileSync(join(__dirname,basePath,'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
           fontColor = "rgba(0,0,0,.7)"
-          resolve("rgb(255,255,255)")
+          downloadPath = resolve('download')
+          res("rgb(255,255,255)")
         } else {
           // 文件存在，输出文件内容
           fontColor = JSON.parse(jsonString).color
-          resolve(JSON.parse(jsonString).background)
+          downloadPath = JSON.parse(jsonString).dowloadPath
+          res(JSON.parse(jsonString).background)
         }
       });
     })
-
+    downloadPath = await new Promise<string>((res, reject) => {
+      fs.readFile(join(__dirname,basePath,'dowloadPath.json'), 'utf8', (err, jsonString) => {
+        if (err) {
+          // 文件不存在，创建文件并写入内容
+          fs.writeFileSync(join(__dirname,basePath,'dowloadPath.json'), `{"dowloadPath":"${resolve("download").replaceAll("\\","\\\\")}"}`, 'utf8');
+          res(resolve('download'))
+        } else {
+          res(JSON.parse(jsonString).dowloadPath.replaceAll('\\\\','\\'))
+        }
+      })
+    })
+    console.log('下载目录是',downloadPath);
     console.log('主题颜色是',background);
     const mainWindow = new BrowserWindow({
       width: 1020,
@@ -447,7 +461,6 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
         // 三、销毁窗口 id
         removeWindowId('Main');
     })
-    let downloadPath = resolve('download')
     ipcMain.on('save-music',(e,{arrayBuffer,name,id3})=>{
       const buffer = Buffer.from(arrayBuffer);
       const imageUrl = id3.image
@@ -487,8 +500,10 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
 
     })
     ipcMain.on('get-download-list',(e)=>{
+      console.log(downloadPath,'空的你在搞笑么');
       if (fs.existsSync(downloadPath)) {
         const Files = fs.readdirSync(downloadPath)
+        console.log(Files,'空的你在搞笑么');
         e.reply('look-download-list',Files)
       }else {
         e.reply('look-download-list',[])
@@ -543,10 +558,10 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
     
     //获取默认下载目录路径
     ipcMain.handle('get-download-path',()=>{
-      return resolve('download')
+      return downloadPath ?? resolve('download')
     })
 
-    ipcMain.on('change-download-path',({},path)=>{
+    ipcMain.handle('change-download-path',({},path)=>{
       watcher.off('unlink', delMusic);
       watcher.off('add', addMuisc);
       watcher.off('unlinkDir', delDir);
@@ -559,6 +574,7 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
           watcher.on('unlink', delMusic);
           watcher.on('add', addMuisc);
           watcher.on('unlinkDir', delDir);
+          return 'ok'
         })
       }
     })
@@ -584,6 +600,7 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
       if(paths == undefined){
         return {canceled:true,path:[]}
       }else{
+        fs.writeFileSync(join(__dirname,basePath,'dowloadPath.json'), `{"dowloadPath":"${paths[0].replaceAll("\\","\\\\")}"}`, 'utf8');
         return { canceled: false, path: paths };
       }
     })

@@ -359,6 +359,25 @@ const buildList = ()=>{
             params.value.push(props.index)
             eventsHandle.value.push(delfromlately)
         }
+    }else if(props.type.startsWith('DJprograme')){
+        messageList.value.push(...['查看评论','播放','下一首播放','分享'])
+        ifBorderBottom.value.push(...[false,false,true,false])
+        iconList.value.push(...['icon-chakan','icon-bofang_o','icon-nextplay','icon-fenxiang1'])
+        params.value.push(...[props.id,props.id,props.id,props.djprogramid])
+        eventsHandle.value.push(...[look,play,nextPlay,share])
+        if(props.type.endsWith('Local')){
+            messageList.value.push('打开文件所在目录')
+            ifBorderBottom.value.push(false)
+            iconList.value.push(...['icon-wenjian'])
+            eventsHandle.value.push(openFile)
+            params.value.push(props.path)
+        }else{
+            messageList.value.push('下载')
+            ifBorderBottom.value.push(false)
+            iconList.value.push('icon-xiazai1')
+            params.value.push(props.id)
+            eventsHandle.value.push(download)
+        }
     }
     eventLength.value = messageList.value.length
 }
@@ -434,7 +453,13 @@ const look = (id:string)=>{
                 }
             })
         }
-
+    }else if(props.type.startsWith('DJprograme')){
+        $router.push({
+            name:'SongComments',
+            query:{
+                id:props.djprogramid,type:'声音',programId:id
+            }
+        })
     }
 }
 
@@ -550,8 +575,27 @@ const play = async(id:string)=>{
                 Main.songType = 'song'
             }
         }
+    }else if(props.type.startsWith('DJprograme')){
+        let result = await Main.djProgramDetail(props.djprogramid)
+        if(Main.playingindex == -1)Main.playingindex = 0
+        Main.playingList.splice(Main.playingindex,0,result)
+        Main.playingPrivileges.splice(Main.playingindex,0,{
+            id,
+            maxBrLevel: "DJ",
+            playMaxBrLevel: "DJ",
+            downloadMaxBrLevel: "DJ",
+            plLevel: "DJ",
+            dlLevel: "DJ",
+            flLevel: "DJ",
+        })
+        Main.playingindex++
+        Main.playing = +id
+        Main.playStatus = 'play'
+        globalVar.closePointOutMessage = '已经开始播放'
+        globalVar.closePointOut = true
+        Main.songType = 'DJ'
     }
-    if(!props.type.startsWith('songPanel'))Main.songType = 'song'
+    if(!props.type.startsWith('songPanel') || !props.type.startsWith('DJprograme'))Main.songType = 'song'
 }
     // if(flag){
     //     if(id > 0){
@@ -686,6 +730,21 @@ const nextPlay = async(id:string)=>{
                 // globalVar.playLoacalIndex = -id
             }
         }
+    }else if(props.type.startsWith('DJprograme')){
+        let result = await Main.djProgramDetail(props.djprogramid)
+        if(Main.playingindex == -1)Main.playingindex = 0
+        Main.playingList.splice(Main.playingindex,0,result)
+        Main.playingPrivileges.splice(Main.playingindex,0,{
+            id,
+            maxBrLevel: "DJ",
+            playMaxBrLevel: "DJ",
+            downloadMaxBrLevel: "DJ",
+            plLevel: "DJ",
+            dlLevel: "DJ",
+            flLevel: "DJ",
+        })
+        globalVar.closePointOutMessage = '已经添加到播放列表'
+        globalVar.closePointOut = true
     }
 }
 
@@ -704,7 +763,11 @@ const share = (id:string)=>{
         globalVar.share.type = 'artist'
     }else if(props.type.startsWith('FM')){
         globalVar.share.type = 'song'
+    }else if(props.type.startsWith('DJprograme')){
+        globalVar.share.type = 'djprogram'
     }
+    console.log(id);
+    
     globalVar.shareDialogFlag = true
     globalVar.share.id = +id
     globalVar.share.message = props.shareTxt as string
@@ -812,6 +875,17 @@ const delPlayList = async(id)=>{
                 Main.createPlay--
                 globalVar.loadMessageDefault = '删除成功'
                 globalVar.loadMessageDefaultFlag = true
+                if($route.name == 'songPlaylist' && index < +$route.query.index!){
+                    $router.replace({
+                        name:'songPlaylist',
+                        query:{
+                            my:'true',
+                            id:Main.playList[+$route.query.index! - 1].id,
+                            index:+$route.query.index! - 1,
+                            type:'歌单'
+                        }
+                    })
+                }
             }else{
                 globalVar.loadMessageDefault = '删除失败'
                 globalVar.loadMessageDefaultType = 'error'

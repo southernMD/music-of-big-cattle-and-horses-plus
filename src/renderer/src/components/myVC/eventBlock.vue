@@ -192,8 +192,8 @@ watch(()=>props,()=>{
 const typeMap = new Map([
 [18,'分享单曲'],
 [19,'分享专辑'],
-[28,'分享电台节目'],
-[17, '分享电台节目'],
+[28,'分享播客'],
+[17, '分享声音'],
 [22,'转发'],
 [35,'发布动态'],
 [13,'分享歌单'],
@@ -258,14 +258,23 @@ const typeChange = ()=>{
         }else{
             DEL_OR.value = true
         }
-    }else if(typeI.value== 28 || typeI.value==17){
+    }else if(typeI.value==17){
+        //电台节目
         tagName.value = '电台'
         console.log(msg.value);
         shareCover.value = valI.value.program?.coverUrl
         shareTitle.value = valI.value.program?.name
         smallMessage.value = [valI.value.program?.radio?.name]
         shareId.value = valI.value.program?.id
-    }else if(typeI.value == 31){
+    }else if(typeI.value== 28){
+        console.log(valI.value);
+        tagName.value = valI.value.djRadio.category
+        shareCover.value = valI.value.djRadio?.picUrl
+        shareTitle.value = valI.value.djRadio?.name
+        smallMessage.value = [`by ${valI.value.djRadio?.dj.nickname}`]
+        shareId.value = valI.value.djRadio?.id
+    }
+    else if(typeI.value == 31){
 
     }else if(typeI.value == 36){
         tagName.value = '歌手'
@@ -601,7 +610,7 @@ const shareHandle = async()=>{
                 id:shareId.value
             }
         })
-    }else if(typeI.value== 28 || typeI.value==17){
+    }else if(typeI.value==17){
         const result = (await Main.djProgramDetail(shareId.value))
         console.log(result);
         let index = 0
@@ -622,6 +631,15 @@ const shareHandle = async()=>{
         Main.playing =  result.mainSong.id
         Main.playStatus = 'play'
         Main.songType = 'DJ'
+    }else if(typeI.value== 28){
+        $router.push({
+            name:'djPlaylist',
+            query:{
+                type:'播客',
+                id:shareId.value,
+                my:'false',
+            }
+        })
     }
 }
 const goZhuanFa = ()=>{

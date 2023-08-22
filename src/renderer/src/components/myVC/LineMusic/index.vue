@@ -38,9 +38,9 @@
                 <i class="iconfont icon-aixin_fill xin" :class="{ noDrag: !Main.dragMouse }" v-show="ifLike() && !lately"
                     @click="likeOrDislike"></i>
                 <i class="iconfont icon-xiazai1" :class="{ noDrag: !Main.dragMouse }" @click="download(id)"
-                    v-if="(!ifDownload && !downloadId.includes(id) || myPath == 'undefined') && !local && !lately"></i>
+                    v-if="(!ifDownload && !downloadId.includes(id)|| myPath == 'undefined' && !downloadId.includes(id)) && !local && !lately"></i>
                 <canvas id="loadingCanvas" width="25" height="25" ref="loadingCanvas"
-                    v-show="downloadId.includes(id) && !local  && !lately && loadingValue.get(id) && loadingValue.get(id)?.[0] > 0"></canvas>
+                    v-show="downloadId.includes(id) && !local  && !lately && loadingValue.get(id) && loadingValue.get(id)?.[0]! > 0"></canvas>
                 <i class="iconfont icon-zhengque" v-if="(!(downloadId.includes(id)) && !(!ifDownload) || myPath != 'undefined') && !local  && !lately"
                     :class="{ noDrag: !Main.dragMouse }"></i>
                 <!-- <canvas id="loadingCanvas" width="18" height="18" ref="loadingCanvas"
@@ -162,16 +162,15 @@ let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 const ifDownload = ref(false)
 let name = ''
 let cleanFileName = ''
-console.log(props,'你为什么回触发');
 if(props.singer){
     props.singer.forEach((el, index) => {
         name += el.name
-    if (index != props.singer!.length - 1) name += ','
-})
+        if (index != props.singer!.length - 1) name += ','
+    })
+}
 name = name + ' - ' + props.title
 cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
-}
-
+console.log(cleanFileName,downloadList.value,'&^%$%^&*()(*&^%^&&&&&&&&&&&&&&&&&&)');
 const myPath = ref('')
 watch(()=>props.path,()=>{
     myPath.value = props.path + ''

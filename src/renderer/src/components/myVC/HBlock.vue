@@ -5,6 +5,8 @@
     :data-right="1"
     :data-txt="dataTxt"
     :data-pic="url"
+    :data-djprogramid="djprogramid"
+    :data-path="path"
     @dblclick.stop="playDj"
     >
         <div class="left" :class="{ruName:type == 'searchUser'}">
@@ -130,6 +132,9 @@ const props = defineProps<{
     songTime?:number
     index?:number
     showIndex?:number
+    djprogramid?:number
+    djName?:string
+    path?:string
 }>()
 const $emit = defineEmits(['playAll','goAr','playDj'])
 const playAll = ()=>{
@@ -151,6 +156,8 @@ watch(()=>props.type,()=>{
         dataTxt.value = `专辑:${props.Name} - ${props.ZhunaJi}`
     }else if(props.type == 'showPersonal'){
         dataTxt.value = `歌单:${props.Name} by ${props.creator.nickname}`
+    }else if(props.type == 'DJprograme'){
+        dataTxt.value = `声音:${props.Name} - ${props.djName}`
     }
 },{immediate:true})
 

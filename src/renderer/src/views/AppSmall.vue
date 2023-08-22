@@ -431,6 +431,7 @@ const getUrl = async (controller: AbortController) => {
 const downloadList = ref([])
 window.electron.ipcRenderer.send('get-download-list')
 window.electron.ipcRenderer.on('look-download-list', ({ }, args: any[]) => {
+    console.log('这里是下载的列表',args);
     //@ts-ignore
     downloadList.value = args.map((it: string) => it.split('.mp3')[0])
 })
@@ -532,7 +533,7 @@ window.addEventListener('contextmenu', (event) => {
         const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
         eventBlockLeft.value = x
         eventBlockTop.value = y
-        rightFlag.value = true 
+        if(type.value.length!=0)rightFlag.value = true 
         console.log(id.value,evid.value);
         break
     }
@@ -573,9 +574,10 @@ if(globalVar.setting.downloadPath == ''){
     })
 }
 
-watch(()=>globalVar.setting.downloadPath,()=>{
+watch(()=>globalVar.setting.downloadPath,async()=>{
     if(globalVar.setting.downloadPath != ''){
-        window.electron.ipcRenderer.send('change-download-path',globalVar.setting.downloadPath)
+        await window.electron.ipcRenderer.invoke('change-download-path',globalVar.setting.downloadPath)
+        window.electron.ipcRenderer.send('get-download-list')
     }
 },{immediate:true})
 
@@ -651,6 +653,11 @@ const confirmUpdate = ()=>{
 const cancleUpdate = ()=>{
     updateFlag.value = false
 }
+
+watch(()=>globalVar.downloadId,()=>{
+    console.log(globalVar.downloadId,'下载id列表变化');
+    
+})
 
 </script>
 

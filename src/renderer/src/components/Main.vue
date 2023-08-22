@@ -355,6 +355,17 @@ const createPlayList = async()=>{
       globalVar.loadDefault = false
       globalVar.loadMessageDefault = '创建歌单成功'
       globalVar.loadMessageDefaultFlag = true
+      if(route.name == 'songPlaylist'){
+        $router.replace({
+          name:'songPlaylist',
+          query:{
+            my:'true',
+            id:Main.playList[+route.query.index! + 1].id,
+            index:+route.query.index! + 1,
+            type:'歌单'
+          }
+        })
+      }
     }
     Main.playListId.splice(1,0,result.id)
     Main.playList.splice(1,0,result)

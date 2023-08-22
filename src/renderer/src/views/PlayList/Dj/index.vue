@@ -12,6 +12,10 @@
       :index="index + 1 + (nowPage - 1)*100"
       :showIndex="index + 1 + (nowPage - 1)*100"
       :key="djListShow[index]?.mainSong?.id"
+      :djprogramid="djListShow[index].id"
+      :djName="djListShow[index].dj.nickname"
+      :path="djListShow[index].path"
+      :dataType="djListShow[index].path?'DJprogrameLocal':'DJprograme'"
       type="DJprograme"
       @playDj="playDj"
       ></HBlock>
@@ -27,10 +31,14 @@
       :index="djListShowCopy[index]?.indexList"
       :showIndex="index + 1"
       :key="djListShowCopy[index]?.mainSong?.id"
+      :djprogramid="djListShowCopy[index].id"
+      :djName="djListShowCopy[index].dj.nickname"
+      :path="djListShowCopy[index].path"
+      :dataType="djListShowCopy[index].path?'DJprogrameLocal':'DJprograme'"
       type="DJprograme"
       @playDj="playDj"
       ></HBlock>
-      <div class="pagination" v-show="searchKey.length != 0">
+      <div class="pagination" v-show="searchKey.length == 0">
           <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
               :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
       </div>
@@ -40,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref,toRaw,watch,nextTick,inject,Ref} from 'vue'
+import {ref,toRaw,watch,nextTick,inject,Ref,toRef} from 'vue'
 import { useMain,useGlobalVar} from '@renderer/store';
 import { throttle } from 'lodash'
 import {useRoute} from 'vue-router'
@@ -56,7 +64,29 @@ const loading = ref(true)
 const djListShowLength = ref(0)
 const djCopyListShowLength = ref(0)
 
+
+const downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
+console.log(downloadList);
+const getPath = async(Name,djName)=>{
+  const name = (djName + ' - ' + Name).replace(/[\\/:\*\?"<>\|]/g, "");
+  console.log(name);
+  if(downloadList.value.includes(name)){
+      const replyMessage = await window.electron.ipcRenderer.invoke('get-song-path',name)
+      console.log(replyMessage);
+      return replyMessage
+  }else{
+    return undefined
+  }
+}
+const foundDownloadVoice = (arr:any[])=>{
+   return Promise.all(arr.map(async(item)=>{
+    item['path'] = await getPath(item.name,item.dj.nickname)
+    return item
+  })) 
+}
+
 djList = await Main.reqdjProgram($route.query.id,100,0) ?? []
+djList = await foundDownloadVoice(djList)
 djListShow.value = JSON.parse(JSON.stringify(djList))
 
 djListShowLength.value = djList.length
@@ -74,7 +104,10 @@ watch(nowPage,async()=>{
   if(!numberMemory.has(nowPage.value)){
     loading.value = true
     const newValue = await Main.reqdjProgram($route.query.id,100, (nowPage.value - 1)*100)
-    if(newValue) djList.push(...newValue)
+    if(newValue) {
+      djList.push(...newValue)
+      djList = await foundDownloadVoice(djList)
+    }
     numberMemory.add(nowPage.value)
   }
   console.log(djList);
@@ -159,6 +192,10 @@ const emptyDjObject = (id)=>{
     flLevel: "DJ",
   }
 }
+
+
+
+
 </script>
 
 <style scoped lang="less">

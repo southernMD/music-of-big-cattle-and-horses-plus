@@ -2069,7 +2069,8 @@ const getText = (message:string)=>{
 const willStartListId = ref()
 const startAll = ()=>{
     startDialogFlag.value = true
-    willStartListId.value = Main.playingList.map(it=>it.id).filter(it=>it > 0)
+    console.log(Main.playingList.filter(it=>it.id > 0 && it.mainSong == undefined).map(it=>it.id));
+    willStartListId.value = Main.playingList.filter(it=>it.id > 0 && it.mainSong == undefined).map(it=>it.id)
 }
 
 watch(()=>globalVar.setting.opencanvas,()=>{

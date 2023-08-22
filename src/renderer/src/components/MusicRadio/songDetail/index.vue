@@ -130,7 +130,7 @@
             <div class="contain">
               <div class="DJname">{{ playingList[playingindex - 1]?.dj.brand }}</div>
               <div class="startNumber">{{ playingList[playingindex - 1]?.radio.subCount }}人收藏</div>
-              <el-scrollbar>
+              <el-scrollbar style="width: 100%;">
                 <div class="desc" v-html="playingList[playingindex - 1]?.description.replace(/\n/g, '<br>')">
                 </div>
               </el-scrollbar>

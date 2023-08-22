@@ -50,7 +50,7 @@
                             noClick: isStartStyle()
                         }">
                             <span v-if="(dynamic?.subed ?? dynamic?.subscribed ?? dynamic?.isSub )">已</span>
-                            <span>收藏<span v-if="!(($route.query.type == '专辑' || $route.query.type == '播客') && ifNM)">({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span></span>
+                            <span>收藏<span v-if="!(($route.query.type == '专辑' || $route.query.type == '播客') && ifNM)">({{ numberSimp(($route.query.type == '播客'?dynamic?.subCount:dynamic?.bookedCount ?? dynamic?.subCount)) }})</span></span>
                         </div>
                     </div>
                     <div @click="sharePlayList" class="fengxiang h" v-if="!suoFlag" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
@@ -60,7 +60,9 @@
                         </div>
                     </div>
                     <div class="download h" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }"
-                        @click="dowloadAll">
+                        @click="dowloadAll"
+                        v-if="$route.query.type != '播客'"
+                        >
                         <i class="iconfont icon-xiazai"></i>
                         <div class="txt">
                             <span>下载全部</span>
@@ -269,6 +271,7 @@ const goRoute = (name: string,message?:string) => {
 //播放全部按钮
 const playAll = async () => {
     let result 
+    console.log('playAll');
     if(route.query.type == '歌单'){
         if(localStorage.getItem('NMcookie')){
             result = (await NM.reqPlaylistTrackAll(id.value)).data;
@@ -287,10 +290,28 @@ const playAll = async () => {
         Main.playingindex = 1
         Main.playing = result.songs[0].id
         Main.beforePlayListId = id.value
+    }else if(route.query.type == '播客'){
+        result = (await Main.reqdjProgram(route.query.id,10000000,0));
+        Main.playingList = result
+        Main.playingPrivileges = result.map((item=>emptyDjObject(item.id)))
+        Main.playingindex = 1
+        Main.playing = result[0].mainSong.id
+        Main.songType = 'DJ'
     }
     Main.playStatus = 'play'
     globalVar.closePointOutMessage = '已经开始播放'
     globalVar.closePointOut = true
+}
+const emptyDjObject = (id)=>{
+  return {
+    id,
+    maxBrLevel: "DJ",
+    playMaxBrLevel: "DJ",
+    downloadMaxBrLevel: "DJ",
+    plLevel: "DJ",
+    dlLevel: "DJ",
+    flLevel: "DJ",
+  }
 }
 
 //添加所有的音乐
@@ -308,12 +329,23 @@ const addAll = async () => {
         }else if(route.query.type == '专辑'){
             result = (await Main.reqAlbumTrackAll(id.value)).data;
         }
-        result.songs.forEach((element: any, index: number) => {
-            if (Main.playingList.every((base) => base.id != element.id)) {
-                Main.playingList.push(element)
-                Main.playingPrivileges.push(result.privileges[index])
-            }
-        });
+        if(route.query.type != '播客'){
+            result.songs.forEach((element: any, index: number) => {
+                if (Main.playingList.every((base) => base.id != element.id)) {
+                    Main.playingList.push(element)
+                    Main.playingPrivileges.push(result.privileges[index])
+                }
+            });
+        }else{
+            result = (await Main.reqdjProgram(route.query.id,10000000,0))
+            console.log(result);
+            result.forEach((element: any) => {
+                if (Main.playingList.every((base) => base.mainSong.id != element.mainSong?.id)) {
+                    Main.playingList.push(element)
+                    Main.playingPrivileges.push(emptyDjObject(element.id))
+                }
+            });
+        }
         globalVar.closePointOutMessage = '已添加到播放列表'
         globalVar.closePointOut = true
     }
@@ -377,9 +409,31 @@ let dynamic = ref({
     subCount: 729,
     subed:false
 })
+watch(route,()=>{
+    dynamic.value = {
+        commentCount: 0,
+        shareCount: 0,
+        playCount: 0,
+        bookedCount: 0,
+        subscribed: false,
+        remarkName: null,
+        gradeStatus: 0,
+        remixVideo: null,
+        code: 0,
+        onSale: false,
+        albumGameInfo: null,
+        likedCount: 0,
+        isSub: false,
+        subTime: 0,
+        subCount: 729,
+        subed:false
+    }
+})
 
 const isStartStyle = () => {
-    return route.query.type == '歌单' && playList.value[index.value]?.creator.userId == BasicApi.profile?.userId
+    if(route.query.type == '歌单')return playList.value[index.value]?.creator.userId == BasicApi.profile?.userId
+    else if (route.query.type == '播客') return playList.value[index.value]?.dj.userId == BasicApi.profile?.userId
+    else return false
 }
 
 // const startStyle = () => {
@@ -785,6 +839,8 @@ const sharePlayList = ()=>{
     else if(route.query.type == '专辑'){
         const ar = playList.value[index.value]?.artists.map(item=>item.name).join('/')
         globalVar.share.message = `${route.query.type}：${playList.value[index.value].name} - ${ar}`
+    }else if(route.query.type == '播客'){
+        globalVar.share.message = `${route.query.type}：${playList.value[index.value].name} - ${playList.value[index.value].dj.nickname}`
     }
     globalVar.share.imgUrl = playList.value[index.value]?.coverImgUrl ?? playList.value[index.value]?.picUrl
 }
