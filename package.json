@@ -1,6 +1,6 @@
 {
   "name": "bingNMmusic",
-  "version": "0.0.8-beta",
+  "version": "0.0.9-beta",
   "description": "An MusicPlayer application with Vue-ts and Electron",
   "main": "./out/main/index.js",
   "author": "southernmd",
