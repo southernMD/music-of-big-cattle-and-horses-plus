@@ -13,16 +13,29 @@ const props = defineProps<{
     name:any,
     singerLen:any,
     id:number
+    type?:string
 }>()
 const go = ()=>{
     if(props.id != 0){
         Main.detailStatus = 'close'
-        $router.push({
-            name:'SongHand',
-            query:{
-                id:props.id
-            }
-        })
+        if(props.type != 'DJ'){
+            $router.push({
+                name:'SongHand',
+                query:{
+                    id:props.id
+                }
+            })
+        }else{
+            $router.push({
+                name:'djPlaylist',
+                query:{
+                    type:'播客',
+                    id:props.id,
+                    my:'false',
+                }
+            })
+        }
+
     }
 
 }

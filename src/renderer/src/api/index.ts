@@ -446,8 +446,11 @@ export const SongDlUrl = (id:number,br:number)=>{
 //搜索
 
 export const Search = (key:string,type?:string,limit?:number,offset?:number)=>{
+    let url
+    if(type != '2000')url = `/cloudsearch?keywords=${key}`
+    else url = `/search?keywords=${key}`
     return axios({
-        url:`/cloudsearch?keywords=${key}`,
+        url,
         method:'POST',
         params:{
             type,limit,offset,
@@ -924,7 +927,7 @@ export const githubUpdate = ()=>{
 //电台详情
 export const djDetail = (rid)=>{
     return axios({
-        url:`/dj/detail?rid=${rid}`,
+        url:`/dj/detail?rid=${rid}&time=${new Date().getTime()}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser')
@@ -934,7 +937,7 @@ export const djDetail = (rid)=>{
 //电台列表
 export const djProgram = (rid,limit,offset)=>{
     return axios({
-        url:`/dj/program?rid=${rid}&limit=${limit}&offset=${offset}`,
+        url:`/dj/program?rid=${rid}&limit=${limit}&offset=${offset}&time=${new Date().getTime()}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser')
@@ -944,7 +947,7 @@ export const djProgram = (rid,limit,offset)=>{
 //节目详情
 export const djProgramDetail = (id)=>{
     return axios({
-        url:`/dj/program/detail?id=${id}`,
+        url:`/dj/program/detail?id=${id}&time=${new Date().getTime()}`,
         method:'POST',
         data:{
             cookie:localStorage.getItem('cookieUser')
@@ -965,4 +968,26 @@ export const commentDj = (id:number,limit?:number,offset?:number,before?:number)
             cookie:localStorage.getItem('cookieUser')|| sessionStorage.getItem('youkeCookie')
         }
     })
+}
+
+//收藏电台
+export const djSub = (id,t:0|1)=>{
+    return axios({
+        url:`/dj/sub?rid=${id}&t=${t}&time=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//电台订阅者
+export const djsuber = (id,limit,time)=>{
+    return axios({
+        url:`/dj/subscriber?id=${id}&time=${time}&limit=${limit}&t=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+    
 }

@@ -138,7 +138,10 @@
           </div>
         </div>
         <CommentList :commentFlag="commentFlag" :nowPage="nowPage" :hotComments="hotComments" :moreHot="moreHot"
-          :total="total" :comments="comments" :totalPage="totalPage" :id="playingId" :type="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'?4:0"></CommentList>
+          :total="total" :comments="comments" :totalPage="totalPage" :id="playingId" 
+          :type="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'?4:0"
+          :djprogramid="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'?Main.playingList[playingindex - 1].id:undefined"
+          ></CommentList>
         <transition-group name="showWrite">
           <FloatTag @click="openCommentDialog" :key="1" v-show="showSroll" :align="'center'" :bottom="'80px'" :size="'12px'" :width="'150px'"
             :height="'30px'" :option="'write'" @write="write">

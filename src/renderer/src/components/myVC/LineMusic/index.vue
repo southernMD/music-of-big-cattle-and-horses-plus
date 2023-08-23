@@ -57,7 +57,10 @@
             </div>
             <div class="song-hand"  v-if="!record && !onlyTime" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
                 <div class="limit" :class="{ noDrag: !Main.dragMouse }">
-                    <span  v-if="singer?.[0]?.name"  class="span-singer" v-for="({}, index) in singer"
+                    <span v-if="djId" style="padding-left: 5px;">
+                        <Singer :id="radioid!"  :name="djprogramName" :index="0" :singerLen="0" type="DJ"></Singer>
+                    </span>
+                    <span  v-else-if="singer?.[0]?.name"  class="span-singer" v-for="({}, index) in singer"
                         :data-singerId="singer![index]?.id">
                         <Singer :id="singer![index]?.id"  :name="singer![index]?.name" :index="index" :singerLen="singer.length - 1"></Singer>
                     </span>

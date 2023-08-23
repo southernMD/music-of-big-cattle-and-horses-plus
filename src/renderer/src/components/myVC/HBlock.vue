@@ -77,7 +77,7 @@
                 {{ numberSimp(playCount as number) }}
             </div>
             <div class="sub">
-                <i class="iconfont icon-dianzan" v-if="!subscribed"></i>
+                <i class="iconfont icon-dianzan" v-if="!liked"></i>
                 <i class="iconfont icon-dianzan_kuai" v-else></i>
                 {{ numberSimp(likedCount as number) }}
             </div>
@@ -85,8 +85,28 @@
                 {{dayjsStamp(createTime!)}}
             </div>
             <div class="songTime">
-                {{dayjsMMSS(songTime) }}
+                {{dayjsMMSS(songTime!) }}
             </div>
+        </div>
+        <div class="right searchDj" v-if="type == 'searchDj'">
+            <div class="playCount"  >
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount as number) }}
+            </div>
+            <div class="number">
+                声音{{numberSimp(songNumber as number)}}
+            </div>
+            <div class="author" @click.stop> <span>by {{ creator.nickname}}</span></div>
+        </div>
+        <div class="right searchDj" v-if="type == 'searchDjprogram'">
+            <div class="playCount"  >
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount as number) }}
+            </div>
+            <div class="number">
+                {{dayjsMMSS(songTime!) }}
+            </div>
+            <div class="author" @click.stop> <span>by {{ creator.nickname}}</span></div>
         </div>
     </div>
 </template>
@@ -121,13 +141,15 @@ const props = defineProps<{
     'startal' |
     'startSongHand'|
     'searchUser' |
-    'DJprograme'
+    'DJprograme' |
+    'searchDj' |
+    'searchDjprogram'
     time?:number
     creators?:any[]
     signature?:string
     dataType?:string
     likedCount?:number
-    subscribed?:boolean
+    liked?:boolean
     createTime?:number
     songTime?:number
     index?:number
@@ -156,7 +178,7 @@ watch(()=>props.type,()=>{
         dataTxt.value = `专辑:${props.Name} - ${props.ZhunaJi}`
     }else if(props.type == 'showPersonal'){
         dataTxt.value = `歌单:${props.Name} by ${props.creator.nickname}`
-    }else if(props.type == 'DJprograme'){
+    }else if(props.type == 'DJprograme' ||props.type == 'searchDjprogram' ){
         dataTxt.value = `声音:${props.Name} - ${props.djName}`
     }
 },{immediate:true})
@@ -418,6 +440,9 @@ const playDj = ()=>{
         }
         >.sub{
             width: 25%;
+            .icon-dianzan_kuai{
+                color: var(--primaryColor);
+            }
         }
         >.time{
             width: 35%;
@@ -425,6 +450,39 @@ const playDj = ()=>{
         >.songTime{
             width: 20%;
         }
+    }
+    .searchDj{
+        font-size: 12px;
+        color: @small-font-color;
+        >.playCount{
+            width: 20%;
+            >.icon-gf-play{
+                font-size: 10px;
+                height: 12px;
+                border: 1px solid @small-font-color;
+                border-radius: 2em;
+                padding: 2px;
+            }
+        }
+        .number {
+            width: 20%;
+            font-size: 12px;
+            color: @small-font-color;
+            user-select: none;
+        }
+        .author{
+            >span{
+                width: 100px;
+                display: inline-block;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                &:hover{
+                    color:@small-font-color-hover
+                }
+            }
+        }
+
     }
     &:hover {
         background-color: @line-color-hover !important;

@@ -1016,7 +1016,7 @@ export const lrcwindow = (): any => {
         preload: join(__dirname, "../preload/index.js"),
       },
   })
-  child.webContents.toggleDevTools()
+  // child.webContents.toggleDevTools()
   //注册名称
   child.webContents.on('did-finish-load', () => {
       // 二、注册窗口id

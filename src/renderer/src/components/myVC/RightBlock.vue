@@ -2,7 +2,6 @@
 
   <div class="rightBlock" ref="rightBlockRef" v-show="flag && rightFlag">
     <div class="list">
-        {{ type }}
         <div class="op" @mouseenter="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')?showStartList():hideStartList()" 
         @click="eventsHandle[index].bind(null,params[index])()"  
         v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 

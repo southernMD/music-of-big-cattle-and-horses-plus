@@ -853,47 +853,59 @@ const start = async()=>{
     }
     if(isStartStyle())return
     else{
-        if(dynamic.value?.subscribed ?? dynamic.value?.isSub){
+        if(dynamic?.value.subed ?? dynamic.value?.subscribed ?? dynamic.value?.isSub){
             //取消收藏
             console.log(dynamic.value?.subscribed); //歌单
             console.log(dynamic.value?.isSub); //专辑
+            console.log(dynamic?.value.subed);//声音
             try {
                 globalVar.loadDefault = true
                 let flag = false
-                if(dynamic.value?.subscribed != undefined){
-                    if(localStorage.getItem('NMcookie')){
-                        flag =  await NM.reqPlaylistSubscribe(2,id.value)
-                    }else{
-                        flag =  await Main.reqPlaylistSubscribe(2,id.value)
+                if(dynamic?.value.subed){
+                    flag =  await Main.reqdjSub(route.query.id,2)
+                }else{
+                    if(dynamic.value?.subscribed != undefined){
+                        if(localStorage.getItem('NMcookie')){
+                            flag =  await NM.reqPlaylistSubscribe(2,id.value)
+                        }else{
+                            flag =  await Main.reqPlaylistSubscribe(2,id.value)
+                        }
+                    }
+                    else {
+                        if(localStorage.getItem('NMcookie')){
+                            flag = await NM.reqAlbumSub(2,id.value)
+                        }else{
+                            flag = await Main.reqAlbumSub(2,id.value)
+                        }
                     }
                 }
-                else {
-                    if(localStorage.getItem('NMcookie')){
-                        flag = await NM.reqAlbumSub(2,id.value)
-                    }else{
-                        flag = await Main.reqAlbumSub(2,id.value)
-                    }
-                }
+
                 console.log(flag);
                 globalVar.loadDefault = false
                 if(flag){
                     globalVar.loadMessageDefault = '取消收藏成功'
                     globalVar.loadMessageDefaultFlag = true
-                    if(dynamic.value?.subscribed != undefined){
-                        dynamic.value.bookedCount--
-                        Main.startPlay--
-                        dynamic.value!.subscribed = false
-                        if(localStorage.getItem('NMcookie')){
-                            NM.reqUserPlaylist(BasicApi.profile!.userId)
-                        }else{
-                            Main.reqUserPlaylist(BasicApi.profile!.userId)
-                        }
-                    }else{
+                    if(dynamic?.value.subed === true){
                         dynamic.value.subCount--
-                        dynamic.value!.isSub = false
-                        BasicApi.startalbum = BasicApi.startalbum.filter((it)=>{
-                            return it.id != id.value
-                        })
+                        Main.startPlay--
+                        dynamic.value.subed = false
+                    }else{
+                        if(dynamic.value?.subscribed != undefined){
+                            dynamic.value.bookedCount--
+                            Main.startPlay--
+                            dynamic.value!.subscribed = false
+                            if(localStorage.getItem('NMcookie')){
+                                NM.reqUserPlaylist(BasicApi.profile!.userId)
+                            }else{
+                                Main.reqUserPlaylist(BasicApi.profile!.userId)
+                            }
+                        }else{
+                            dynamic.value.subCount--
+                            dynamic.value!.isSub = false
+                            BasicApi.startalbum = BasicApi.startalbum.filter((it)=>{
+                                return it.id != id.value
+                            })
+                        }
                     }
                 }else{
                     globalVar.loadMessageDefault = '取消收藏失败'
@@ -913,18 +925,22 @@ const start = async()=>{
             try {
                 globalVar.loadDefault = true
                 let flag = false
-                if(dynamic.value?.subscribed != undefined){
-                    if(localStorage.getItem('NMcookie')){
-                        flag =  await NM.reqPlaylistSubscribe(1,id.value)
-                    }else{
-                        flag =  await Main.reqPlaylistSubscribe(1,id.value)
+                if(dynamic?.value.subed === false){
+                    flag =  await Main.reqdjSub(route.query.id,1)
+                }else{
+                    if(dynamic.value?.subscribed != undefined){
+                        if(localStorage.getItem('NMcookie')){
+                            flag =  await NM.reqPlaylistSubscribe(1,id.value)
+                        }else{
+                            flag =  await Main.reqPlaylistSubscribe(1,id.value)
+                        }
                     }
-                }
-                else {
-                    if(localStorage.getItem('NMcookie')){
-                        flag =  await NM.reqAlbumSub(1,id.value)
-                    }else{
-                        flag = await Main.reqAlbumSub(1,id.value)
+                    else {
+                        if(localStorage.getItem('NMcookie')){
+                            flag =  await NM.reqAlbumSub(1,id.value)
+                        }else{
+                            flag = await Main.reqAlbumSub(1,id.value)
+                        }
                     }
                 }
                 console.log(flag);
@@ -932,24 +948,30 @@ const start = async()=>{
                 if(flag){
                     globalVar.loadMessageDefault = '收藏成功'
                     globalVar.loadMessageDefaultFlag = true
-                    if(dynamic.value?.subscribed != undefined){
-                        dynamic.value.bookedCount++
-                        Main.startPlay++
-                        dynamic.value!.subscribed = true
-                        if(localStorage.getItem('NMcookie')){
-                            NM.reqUserPlaylist(BasicApi.profile!.userId)
-                        }else{
-                            Main.reqUserPlaylist(BasicApi.profile!.userId)
-                        }
-                    }else{
+                    if(dynamic?.value.subed === false){
                         dynamic.value.subCount++
-                        dynamic.value!.isSub = true
-                        if(localStorage.getItem('NMcookie')){
-                            await NM.reqalbumSublist(1)
+                        Main.startPlay++
+                        dynamic.value.subed = true
+                    }else{
+                        if(dynamic.value?.subscribed != undefined){
+                            dynamic.value.bookedCount++
+                            Main.startPlay++
+                            dynamic.value!.subscribed = true
+                            if(localStorage.getItem('NMcookie')){
+                                NM.reqUserPlaylist(BasicApi.profile!.userId)
+                            }else{
+                                Main.reqUserPlaylist(BasicApi.profile!.userId)
+                            }
                         }else{
-                            await BasicApi.reqalbumSublist(1)
+                            dynamic.value.subCount++
+                            dynamic.value!.isSub = true
+                            if(localStorage.getItem('NMcookie')){
+                                await NM.reqalbumSublist(1)
+                            }else{
+                                await BasicApi.reqalbumSublist(1)
+                            }
+                            
                         }
-                        
                     }
                 }else{
                     globalVar.loadMessageDefault = '收藏失败'

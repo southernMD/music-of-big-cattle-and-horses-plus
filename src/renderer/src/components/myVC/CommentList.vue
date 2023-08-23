@@ -16,6 +16,7 @@
                 :resourceId="threadId ?? id"
                 :type="type"
                 :oneselfComment="oneself && globalVar.oneself"
+                :djprogramid="djprogramid"
                 ></Comment>
             </div>
             </div>
@@ -38,6 +39,7 @@
                   :resourceId="threadId ?? id"
                   :type="type"
                   :oneselfComment="oneself && globalVar.oneself"
+                  :djprogramid="djprogramid"
                   ></Comment>
               </div>
             </div>
@@ -76,6 +78,7 @@ const props = defineProps<{
     type:number
     threadId?:any
     oneself:number
+    djprogramid?:number
 }>()
 
 let nowPage = toRef($el.props,'nowPage') as Ref<number>

@@ -29,8 +29,8 @@
                                 <i v-else class="iconfont icon-aixin_fill" @click="likeOrDislike"></i>
                             </div>
                             <div v-else >
-                                <i v-if="likeFlag" style="color: var(--fontColor);" class="iconfont icon-dianzan"  @click="likeOrDislike"></i>
-                                <i v-else style="color: var(--primaryColor);" class="iconfont icon-dianzan" @click="likeOrDislike"></i>
+                                <i v-if="!DjLike" style="color: var(--fontColor);" class="iconfont icon-dianzan"  @click="likeOrDislikeRadio"></i>
+                                <i v-else style="color: var(--primaryColor);" class="iconfont icon-dianzan" @click="likeOrDislikeRadio"></i>
                             </div>
                         </div>
                         <div class="singer" @mouseover="rushSinger('singerTxt')" @click="goHandSong">
@@ -45,7 +45,7 @@
                                     padding-right: 3px;
                                     ">/</span>
                                 </span>
-                                <span v-else v-for="(val, index) in playingList[playingindex - 1]?.mainSong?.artists" :key="index">
+                                <!-- <span v-else v-for="(val, index) in playingList[playingindex - 1]?.mainSong?.artists" :key="index">
                                     <span :data-id="val?.id">{{ val?.name }}</span>
                                     <span v-if="index != playingList[playingindex - 1]?.mainSong?.artists.length - 1" 
                                     style="transform: rotate(-10deg) translateY(-2px);
@@ -53,7 +53,8 @@
                                     font-size: 10px;
                                     padding-right: 3px;
                                     ">/</span>
-                                </span>
+                                </span> -->
+                                <span v-else :data-id="playingList[playingindex - 1]?.radio.id">{{ playingList[playingindex - 1]?.radio.name }}</span>
                             </span>
                         </div>
                     </div>
@@ -70,11 +71,15 @@
                             <i v-if="likeFlag" class="iconfont icon-aixin"></i>
                             <i v-else class="iconfont icon-aixin_fill"></i>
                         </div>
+                        <div v-else class="todo" @click="likeOrDislikeRadio()" :class="{ noDrag: !Main.dragMouse }">
+                            <i v-if="!DjLike" style="color: var(--fontColor);" class="iconfont icon-dianzan"  ></i>
+                            <i v-else style="color: var(--primaryColor);" class="iconfont icon-dianzan" ></i>
+                        </div>
                         <div v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'" class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
                             <i class="iconfont" :class="[leftIcon[index + 1]]"></i>
                         </div>
-                        <div v-else class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
-                            <i class="iconfont" :class="[leftIcon2[index]]"></i>
+                        <div v-else class="todo" v-for="({}, index) in 2" @click="todoHandle(index);" :class="{ noDrag: !Main.dragMouse }">
+                            <i class="iconfont" :class="[leftIcon2[index + 1]]"></i>
                         </div>
                     </div>
                 </div>
@@ -684,7 +689,7 @@ function base64ToArrayBuffer(base64) {
 watch(lyric, async () => {
     let str = playingList.value[playingindex.value - 1].name + ' - ';
     let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-    singerArr.forEach((element, index) => {
+    singerArr?.forEach((element, index) => {
         str += element.name
         if (index != singerArr.length - 1) str += ' / '
     })
@@ -1502,7 +1507,8 @@ const keyDownWatch = (e: KeyboardEvent) => {
         //-10%
         reduce_10_volum()
     }else if(press == globalVar.setting.quick[5]){
-        likeOrDislike()
+        if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ')likeOrDislikeRadio()
+        else likeOrDislike()
     }else if(press == globalVar.setting.quick[6]){
         openCi()
     }
@@ -1564,7 +1570,8 @@ onMounted(() => {
     })
     window.electron.ipcRenderer.on('main-like',()=>{
         if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
-            likeOrDislike()
+            if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ')likeOrDislikeRadio()
+            else likeOrDislike()
         }
     })
     window.electron.ipcRenderer.on('main-open-ci',()=>{
@@ -1698,15 +1705,28 @@ watch(SongUrl,()=>{
 })
 const goHandSong = (e:MouseEvent)=>{
     const dom = e.target as HTMLElement
+    console.log(playingList.value[Main.playingindex - 1]);
+    
     console.log(dom.getAttribute('data-id'));
     const id = dom.getAttribute('data-id')
     if(id){
-        $router.push({
-            name:'SongHand',
-            query:{
-                id
-            }
-        })
+        if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ'){
+            $router.push({
+                name:'SongHand',
+                query:{
+                    id
+                }
+            })
+        }else{
+            $router.push({
+                name:'djPlaylist',
+                query:{
+                    type:'播客',
+                    id,
+                    my:'false',
+                }
+            })
+        }
     }
 }
 
@@ -1714,23 +1734,36 @@ const goHandSong = (e:MouseEvent)=>{
 const startDialogFlag = ref(false)
 const imgRef = ref<InstanceType<typeof HTMLElement>>()
 const todoHandle = (index)=>{
-    if(index == 0){
-        if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
-            globalVar.flagLogin = true
-            return
+    if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ'){
+        if(index == 0){
+            if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
+                globalVar.flagLogin = true
+                return
+            }
+            startDialogFlag.value = true
+            willStartListId.value = [Main.playing]
+        }else if(index == 1){
+            download(Main.playing)
+        }else if(index == 2){
+            const ar = Main.playingList[Main.playingindex - 1].ar.map(it=>it.name).join('/')
+            globalVar.share.message = `单曲：${Main.playingList[Main.playingindex - 1].name}-${ar}`
+            globalVar.share.imgUrl = Main.playingList[Main.playingindex - 1].al.picUrl
+            globalVar.share.id = Main.playing
+            globalVar.share.type = 'song'
+            senddongtaiFlag.value = true
         }
-        startDialogFlag.value = true
-        willStartListId.value = [Main.playing]
-    }else if(index == 1){
-        download(Main.playing)
-    }else if(index == 2){
-        const ar = Main.playingList[Main.playingindex - 1].ar.map(it=>it.name).join('/')
-        globalVar.share.message = `单曲：${Main.playingList[Main.playingindex - 1].name}-${ar}`
-        globalVar.share.imgUrl = Main.playingList[Main.playingindex - 1].al.picUrl
-        globalVar.share.id = Main.playing
-        globalVar.share.type = 'song'
-        senddongtaiFlag.value = true
+    }else{
+        if(index == 0){
+            download(Main.playing)
+        }else if(index == 1){
+            globalVar.share.message = `声音：${Main.playingList[Main.playingindex - 1].name}-${Main.playingList[Main.playingindex - 1].dj.nickname}`
+            globalVar.share.imgUrl = Main.playingList[Main.playingindex - 1].coverUrl
+            globalVar.share.id = Main.playingList[Main.playingindex - 1].id
+            globalVar.share.type = 'djprogram'
+            senddongtaiFlag.value = true
+        }
     }
+
 }
 
 watch(()=>globalVar.share.imgUrl,()=>{
@@ -1966,8 +1999,8 @@ const confirmComment = async()=>{
             }else{
                 result = (await Main.reqcomment({
                     t:2,
-                    type:0,
-                    id:Main.playing,
+                    type:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?4:0,
+                    id:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?Main.playingList[Main.playingindex - 1].id:Main.playing,
                     content:commitMessage.value,
                     commentId:replayId.value
                 })).data
@@ -2012,8 +2045,8 @@ const confirmComment = async()=>{
             }else{
                 result = (await Main.reqcomment({
                     t:1,
-                    type:0,
-                    id:Main.playing,
+                    type:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?4:0,
+                    id:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?Main.playingList[Main.playingindex - 1].id:Main.playing,
                     content:commitMessage.value,
                 })).data
             }
@@ -2233,6 +2266,28 @@ const delimg = (index)=>{
 onMounted(()=>{
     globalVar.radioReady = true
 })
+const DjLike = ref(false)
+watch(playingId,()=>{
+    DjLike.value = playingList.value[playingindex.value - 1].liked 
+})
+const likeOrDislikeRadio = async()=>{
+    if(Main.playing < 0) return
+    if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
+        globalVar.flagLogin = true
+        return
+    }
+    let programId = Main.playingList[Main.playingindex - 1].id
+    if(!DjLike.value){
+        await Main.reqLikeResource(programId,4,1)
+        DjLike.value = true
+        //点赞
+        playingList.value[playingindex.value - 1].liked = true
+    }else{
+        await Main.reqLikeResource(programId,4,0)
+        DjLike.value = false
+        playingList.value[playingindex.value - 1].liked = false
+    }
+}
 </script>
 
 <style lang="less" scoped>

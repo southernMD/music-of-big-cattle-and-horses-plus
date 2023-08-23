@@ -2,7 +2,7 @@
     <div class="comment-li" 
     :data-right="userId == BasicApi.profile?.userId" 
     data-type="commentMy" 
-    :data-id="`${commentId},${resourceId}`"
+    :data-id="`${commentId},${type==4?djprogramid:resourceId}`"
     :data-commentType="type"
     >
         <div class="comment-li-bk">
@@ -69,6 +69,7 @@ const props = defineProps<{
     type : 0 | 1 | 2 | 3 |4 | 5 | 6 | 7
     resourceId:number | string
     oneselfComment:boolean
+    djprogramid?:number
 }>()
 
 const fenxiang = inject('fenxiang',false)
@@ -98,7 +99,11 @@ const dianzan = async()=>{
     if(props.type == 6 ){
         t = {threadId:props.resourceId}
     }else{
-        t = {id:props.resourceId}
+        if(props.type == 4){
+            t= {id:props.djprogramid}
+        }else{
+            t = {id:props.resourceId}
+        }
     }
     if(!liked2.value){
         //去点赞

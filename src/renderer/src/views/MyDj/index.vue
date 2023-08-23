@@ -16,7 +16,15 @@
             </div>
         </div>
         <div class="DJblock-list">
-            <HBlock @click="goDj(val.id,index,val.programCount)" v-for="val,index in createDjArr" :url="val?.picUrl" type="DJ" :Name="val?.name" :startNumber="val?.subCount" :songNumber="val?.programCount" :key="val?.id"></HBlock>
+            <HBlock
+            @click="goDj(val.id,index,val.programCount)" v-for="val,index in createDjArr" 
+            :url="val?.picUrl" 
+            type="DJ" 
+            :Name="val?.name" 
+            :startNumber="val?.subCount" 
+            :songNumber="val?.programCount" 
+            :key="val?.id"
+            ></HBlock>
         </div>
         <div class="second-title">
             <div class="left">

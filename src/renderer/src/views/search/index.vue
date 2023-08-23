@@ -18,8 +18,9 @@ import Tag from '@renderer/components/myVC/Tag.vue'
 import { useRoute, useRouter, RouteParamsRaw } from 'vue-router';
 import { useMain } from '@renderer/store';
 // const TagList = ['单曲','歌手','专辑','歌单','歌词','播客','声音','用户']
-const TagList = ['单曲', '歌手', '专辑', '歌单', '歌词', '用户']
-const TagName = ['1', '100', '10', '1000', '1006', '1002']
+const isNM = localStorage.getItem('NMcookie') != null
+const TagList = isNM?['单曲', '歌手', '专辑', '歌单', '歌词', '用户']:['单曲', '歌手', '专辑', '歌单', '歌词','播客','声音', '用户']
+const TagName = isNM?['1', '100', '10', '1000', '1006','1002']:['1', '100', '10', '1000', '1006','1009','2000','1002']
 //1: 单曲, 10: 专辑, 100: 歌手, 1000: 歌单, 1002: 用户, 1006: 歌词, 1009: 电台, 1014: 视频, 1018:综合, 2000:声音
 const $router = useRouter()
 const $route = useRoute()

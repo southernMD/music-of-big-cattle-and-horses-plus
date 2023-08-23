@@ -29,17 +29,24 @@
   const limit = ref(20)
   const offset = ref(0)
   const id = ref(+$route.query.id!)
+  const time = ref(0)
   const load = async()=>{
     if(more.value){
       let result
       if($route.query.nm == 'true'){
         result = await NM.reqPlaylistSubscribers(id.value,limit.value,offset.value)
       }else{
-        result = await Main.reqPlaylistSubscribers(id.value,limit.value,offset.value)
+        if($route.query.type == '播客'){
+          result = await Main.reqdjsuber(id.value,limit.value,time.value)
+          time.value = result.time
+        }else{
+          result = await Main.reqPlaylistSubscribers(id.value,limit.value,offset.value)
+        }
       }
+      console.log(result);
       offset.value+=limit.value
       more.value = result.more
-      let lists = result.list as Array<any>
+      let lists = result.list ?? result.subscribers as Array<any>
       list.value.push(...lists)
       observer.disconnect()
       nextTick(()=>{

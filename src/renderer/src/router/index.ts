@@ -154,6 +154,16 @@ const routes: Array<RouteRecordRaw> = [
                         name:'1006',
                         component:()=>import('@renderer/views/search/1006/index.vue'),
                     },
+                    {
+                        path:'1009',
+                        name:'1009',
+                        component:()=>import('@renderer/views/search/1009/index.vue'),
+                    },
+                    {
+                        path:'2000',
+                        name:'2000',
+                        component:()=>import('@renderer/views/search/2000/index.vue'),
+                    },
                 ]
             },
             {

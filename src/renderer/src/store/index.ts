@@ -44,7 +44,9 @@ import {
     djDetail,
     djProgram,
     djProgramDetail,
-    commentDj
+    commentDj,
+    djSub,
+    djsuber
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
@@ -772,6 +774,8 @@ export const useMain = defineStore('Main', {
             if(type=='1000')this.searchNumber = result.data.result.playlistCount
             if(type=='1006')this.searchNumber = result.data.result.songCount
             if(type=='1002')this.searchNumber = result.data.result.userprofileCount
+            if(type=='1009')this.searchNumber = result.data.result.djRadiosCount
+            if(type=='2000')this.searchNumber = result.data.data.totalCount
             if(this.searchNumber != 0){
                 return new Promise<any>((resolve, reject) => {
                     if(type=='1')resolve(result.data.result.songs)
@@ -780,6 +784,8 @@ export const useMain = defineStore('Main', {
                     if(type=='1000')resolve(result.data.result.playlists)
                     if(type=='1006')resolve(result.data.result.songs)
                     if(type=='1002')resolve(result.data.result.userprofiles)
+                    if(type=='1009')resolve(result.data.result.djRadios)
+                    if(type=='2000')resolve(result.data.data.resources)
                 })
             }else{
                 return new Promise<any>((resolve, reject) => {
@@ -1319,6 +1325,39 @@ export const useMain = defineStore('Main', {
             } else {
                 // alert('error')
                 console.log(result);
+            }
+        },
+        //收藏dj
+        async reqdjSub(id,t){
+            let result = await djSub(id,t)
+            if (result.data.code == 200) {
+                return new Promise<boolean>((resolve) => {
+                    resolve(true)
+                })
+            } else {
+                return new Promise<boolean>((resolve) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqdjsuber(id,limit,time){
+            let result = await djsuber(id,limit,time)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve({
+                        more:result.data.hasMore,
+                        list:result.data.subscribers,
+                        time:result.data.time
+                    })
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve({
+                        more:result.data.hasMore,
+                        list:result.data.subscribers,
+                        time:result.data.time
+                    })
+                })
             }
         },
         init() {
