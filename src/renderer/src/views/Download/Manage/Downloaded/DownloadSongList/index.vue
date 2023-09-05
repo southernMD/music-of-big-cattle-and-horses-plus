@@ -65,7 +65,7 @@ const getSinger = (names: string | string[], ids: string): any[] => {
     let namesList = names as string[]
     if(typeof(names) == 'string')namesList = names.split('/')
     const idsList = ids.split(',')
-    namesList.forEach(({ }, index) => {
+    namesList?.forEach(({ }, index) => {
         arr.push({ id: +idsList[index], name: namesList[index] })
     })
     return arr

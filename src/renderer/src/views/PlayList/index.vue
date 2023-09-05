@@ -145,7 +145,7 @@
             <div class="choice">
                 <div class="tags-three">
                     <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
-                        :message="$route.query.type !== '播客'?'歌曲列表':`声音(${numberSimp(playList[index]?.programCount)})`" :ifClick="flagList[0]" :big="true" @click="goRoute($route.name == 'songPlaylist'?'songPlaylist':'djPlaylist'); changeTag(0)">
+                        :message="$route.query.type !== '播客'?'歌曲列表':`声音(${numberSimp(playList[index]?.programCount)})`" :ifClick="flagList[0]" :big="true" @click="goRoute($route.query.type !== '播客'?'songPlaylist':'djPlaylist'); changeTag(0)">
                     </Tag>
                     <Tag class="tag-play" v-if="!($route.query.type == '专辑' && ifNM) && $route.query.type != '播客'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
                         :message="`评论(${dynamic?.commentCount})`" :ifClick="flagList[1]" :big="true"

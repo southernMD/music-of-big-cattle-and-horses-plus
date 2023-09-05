@@ -747,6 +747,7 @@ const loadingValue = toRef(globalVar, 'loadingValue')
 onMounted(() => {
     nextTick(() => {
         const canvas = $el.refs.loadingCanvas as HTMLCanvasElement
+        if(!canvas)return
         const context = canvas.getContext('2d') as CanvasRenderingContext2D
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;

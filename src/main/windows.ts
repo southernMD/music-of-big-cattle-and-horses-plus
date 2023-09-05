@@ -503,7 +503,6 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
       console.log(downloadPath,'空的你在搞笑么');
       if (fs.existsSync(downloadPath)) {
         const Files = fs.readdirSync(downloadPath)
-        console.log(Files,'空的你在搞笑么');
         e.reply('look-download-list',Files)
       }else {
         e.reply('look-download-list',[])
@@ -511,6 +510,7 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
     })
     ipcMain.on('get-download-list-detail',(e)=>{
       if (fs.existsSync(downloadPath)) {
+        console.log(downloadPath);
         const Files = fs.readdirSync(downloadPath)
         const detail:any[] = []
         Files.forEach((item)=>{

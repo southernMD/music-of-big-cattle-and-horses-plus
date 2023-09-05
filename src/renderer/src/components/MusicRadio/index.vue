@@ -256,6 +256,7 @@ import { useElectronToApp } from '@renderer/store/index'
 import PlayListPanel from './playListPanel/index.vue';
 import SongDetail from './songDetail/index.vue';
 import MyDialog from '../myVC/MyDialog.vue';
+import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const globalVar = useGlobalVar();
@@ -320,6 +321,7 @@ watch(likes, () => {
 },{deep:true})
 
 watch(playingId, () => {
+    if(playingId.value == -1)return
     if (likes.value.includes(playingId.value)) {
         likeFlag.value = false
     } else {
@@ -501,6 +503,7 @@ const loaclPlayWay = async()=>{
     ]);
         console.log(lyricData.data);
         lyric.value = lyricData.data;
+        sendLyric()
         simiSong.value = simiSongData.data.songs;
         simiPlaylist.value = simiPlaylistData.data.playlists;
     }
@@ -542,13 +545,11 @@ const loaclMusicCanSee = (base64)=>{
             analyser.connect(AC.destination);
             bufferSource.buffer = AudioBuffer;
             bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
             bufferSource.connect(gainNode)
             gainNode.connect(AC.destination);
             gainNode.gain.setValueAtTime(-1, AC.currentTime)
             // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
             // color.addColorStop(0, 'rgba(102, 204, 255,1)');
-            drawIndex.value++
             cancelAnimationFrame(animationId)
             draw()
             const t = setTimeout(() => {
@@ -578,7 +579,9 @@ const normalPlayWay = async()=>{
         if(Main.songType != 'DJ'){
             let result: any = await Main.reqSongUrl(playingId.value)
             lyric.value = (await Main.reqLyric(playingId.value)).data
+            sendLyric()
             await musicCanSee(result.data.data[0].url, 0, 0)
+            // musicCanSeeNew(result.data.data[0].url, 0, 0)
             SongUrl.value = result.data.data[0].url
             nextTick(() => {
                 stopOrPlayFlag.value = false
@@ -593,7 +596,10 @@ const normalPlayWay = async()=>{
             simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
         }else{
             let result: any = await Main.reqSongUrl(playingId.value)
+            lyric.value = {lrc:{lyric:''}}
+            sendLyric()
             await musicCanSee(result.data.data[0].url, 0, 0)
+            // musicCanSeeNew(result.data.data[0].url, 0, 0)
             SongUrl.value = result.data.data[0].url
             nextTick(() => {
                 stopOrPlayFlag.value = false
@@ -616,6 +622,7 @@ const br = (str: string) => {
 }
 
 watch(playingId, async ({},oldValue) => {
+    if(playingId.value == -1)return
     nextTick(async ()=>{
         console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
         console.log(Main.beforePlayListId,Main.playing);
@@ -686,7 +693,7 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-watch(lyric, async () => {
+const sendLyric = ()=>{
     let str = playingList.value[playingindex.value - 1].name + ' - ';
     let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
     singerArr?.forEach((element, index) => {
@@ -695,7 +702,7 @@ watch(lyric, async () => {
     })
     window.electron.ipcRenderer.sendTo(ciId, 'to-title', str);
     window.electron.ipcRenderer.sendTo(ciId, 'to-Ci', lyric.value);
-})
+}
 
 
 //audio初始化
@@ -736,7 +743,6 @@ onMounted(async () => {
                     bufferSource.connect(gainNode)
                     gainNode.connect(AC.destination);
                     gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                    drawIndex.value++
                     cancelAnimationFrame(animationId)
                     draw()
                 }
@@ -810,11 +816,9 @@ onMounted(async () => {
                 bufferSource.connect(analyser);
                 bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
                 bufferSource.start();
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
                 bufferSource.connect(gainNode)
                 gainNode.connect(AC.destination);
                 gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                drawIndex.value++
                 cancelAnimationFrame(animationId)
                 draw()
             }
@@ -904,11 +908,9 @@ const audioPlayEnd = () => {
         bufferSource.connect(analyser);
         bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
         bufferSource.start(0, Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01);
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
         bufferSource.connect(gainNode)
         gainNode.connect(AC.destination);
         gainNode.gain.setValueAtTime(-1, AC.currentTime)
-        drawIndex.value++
         cancelAnimationFrame(animationId)
         draw()
     }
@@ -946,7 +948,6 @@ const clickAudioPlay = (e: MouseEvent) => {
             suoFlag.value = true;
             audio.currentTime = wh / line.offsetWidth * audio.duration
             clickCanvas(wh)
-            // musicCanSee(SongUrl.value,currentTime,0)
         } else {
             suo.value = true;
         }
@@ -971,7 +972,6 @@ const clickCanvas = (wh)=>{
         bufferSource.connect(gainNode)
         gainNode.connect(AC.destination);
         gainNode.gain.setValueAtTime(-1, AC.currentTime)
-        drawIndex.value++
         cancelAnimationFrame(animationId)
         draw()
     }
@@ -1410,6 +1410,7 @@ const changeSpanLevel = async (level: string, level2: string) => {
     let result: any = await Main.reqSongUrl(playingId.value, nowLevel.value)
     nextTick(async () => {
         await musicCanSee(result.data.data[0].url, t, 100)
+        // musicCanSeeNew(result.data.data[0].url, t, 100)
         SongUrl.value = result.data.data[0].url
         audio = document.querySelector('audio') as HTMLAudioElement
         console.log(Number(speedPower.value.substring(0, speedPower.value.length - 1)), 'DAJSIDHAYUCGAWJHUYADGA');
@@ -1609,7 +1610,7 @@ let bufferSource: AudioBufferSourceNode;
 let gainNode: GainNode;
 let analyser: AnalyserNode;
 let musicBuffer: AudioBuffer
-let dataArray: Uint8Array
+let dataArray: Uint8Array = new Uint8Array()
 let loadingCanSeeUrl: boolean = false
 const musicCanSee = (url: string, offset: number, timer: number) => {
     if(globalVar.setting.opencanvas){
@@ -1635,13 +1636,11 @@ const musicCanSee = (url: string, offset: number, timer: number) => {
                     analyser.connect(AC.destination);
                     bufferSource.buffer = AudioBuffer;
                     bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                    dataArray = new Uint8Array(analyser.frequencyBinCount);
                     bufferSource.connect(gainNode)
                     gainNode.connect(AC.destination);
                     gainNode.gain.setValueAtTime(-1, AC.currentTime)
                     // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
                     // color.addColorStop(0, 'rgba(102, 204, 255,1)');
-                    drawIndex.value++
                     cancelAnimationFrame(animationId)
                     draw()
                     resolve('ok')
@@ -1656,23 +1655,86 @@ const musicCanSee = (url: string, offset: number, timer: number) => {
     }
     return
 }
-const drawIndex = ref(0)
+const musicCanSeeNew = (url: string, offset: number, timer: number) => {
+    if(globalVar.setting.opencanvas){
+        if (bufferSource) bufferSource.stop()
+        const myWorker =  new musicCanSeeWorker()
+        let workerFirst = true
+        AC = new AudioContext()
+        gainNode = AC.createGain()
+        analyser = AC.createAnalyser();
+        loadingCanSeeUrl = true
+        // myWorker.postMessage({ url,range });
+        myWorker.postMessage({ url });
+        myWorker.addEventListener('message', workerMessageFn);
+        function workerMessageFn(event){
+            const {musiceUintPiece,st} = event.data
+            // if(workerIntercept && st !== 'end')return
+            // workerIntercept = true
+            // console.log(st);
+            // console.log(st === 'start');
+            console.log(st,'message来了',musiceUintPiece);
+            AC.decodeAudioData(musiceUintPiece.buffer).then((AudioBuffer) => {
+                console.log('AudioBuffer解析完成');
+                if (bufferSource) {
+                    bufferSource.stop();
+                }
+                musicBuffer = AudioBuffer
+                bufferSource = AC.createBufferSource();
+                analyser.fftSize = 256;
+                bufferSource.connect(analyser);
+                analyser.connect(AC.destination);
+                bufferSource.buffer = AudioBuffer;
+                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                bufferSource.connect(gainNode)
+                gainNode.connect(AC.destination);
+                // gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
+                // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+                cancelAnimationFrame(animationId)
+                draw()
+                if(workerFirst){
+                    workerFirst = false
+                    const t = setTimeout(() => {
+                        console.log('bufferSource启动',AC.currentTime);
+                        bufferSource.start(0, offset)
+                        loadingCanSeeUrl = false
+                        clearTimeout(t)
+                    }, timer)
+                }else{
+                    console.log('bufferSource重新启动',AC.currentTime);
+                    bufferSource.start(0, offset + AC.currentTime)
+                    musicBuffer = AudioBuffer
+                }
+                if(st === 'end'){
+                    console.log('bufferSource完成启动',AC.currentTime);
+                    bufferSource.start(0, offset + AC.currentTime)
+                    musicBuffer = AudioBuffer
+                    myWorker.removeEventListener('message',workerMessageFn)
+                }
+            })
+        }
+    }
+    return
+}
+
+
+
 function draw() {
     if(!globalVar.setting.opencanvas){
         canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
         cancelAnimationFrame(animationId)
         return
     }
-    console.log(drawIndex.value);
     let oW = canvas.width;
     let oH = canvas.height;
     animationId = requestAnimationFrame(draw)
     canvasCTX.clearRect(0, 0, oW, oH);
     let barHeight;
-    canvasCTX.clearRect(0, 0, oW, oH);
-    for (let i = 0; i < dataArray.length; i++) {
+    dataArray = new Uint8Array(analyser.frequencyBinCount)
+    analyser?.getByteFrequencyData(dataArray)
+    for (let i = 0; i < dataArray?.length; i++) {
         barHeight = dataArray[i]
-        analyser.getByteFrequencyData(dataArray)
         // 绘制向上的线条
         if(globalVar.setting.canvasColor) canvasCTX.fillStyle = document.documentElement.style.getPropertyValue('--primaryColor')
         else canvasCTX.fillStyle = globalVar.setting.canvasColorRGB 
@@ -1680,6 +1742,7 @@ function draw() {
         canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight / 4 + 30);
     }
 }
+
 watch(playStatus,(newValue,oldValue)=>{
     console.log(newValue,oldValue);
     if(playStatus.value == 'stop'){
@@ -2268,6 +2331,7 @@ onMounted(()=>{
 })
 const DjLike = ref(false)
 watch(playingId,()=>{
+    if(playingId.value == -1)return
     DjLike.value = playingList.value[playingindex.value - 1].liked 
 })
 const likeOrDislikeRadio = async()=>{

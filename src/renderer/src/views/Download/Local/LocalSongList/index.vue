@@ -81,7 +81,7 @@ const getSinger = (index:number,names: string | string[], detail: {description: 
         let namesList = names as string[]
         if(typeof(names)=='string') namesList = names.split('/')
         const idsList = detail?.value.split(',')
-        namesList.forEach(({ }, index) => {
+        namesList?.forEach(({ }, index) => {
             arr.push({ id: +idsList[index], name: namesList[index] })
         })
         return arr
