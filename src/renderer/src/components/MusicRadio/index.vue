@@ -257,6 +257,9 @@ import PlayListPanel from './playListPanel/index.vue';
 import SongDetail from './songDetail/index.vue';
 import MyDialog from '../myVC/MyDialog.vue';
 import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
+
+let myWorker:null | Worker = null
+let myWorkerFull:null | Worker = null
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const globalVar = useGlobalVar();
@@ -580,8 +583,8 @@ const normalPlayWay = async()=>{
             let result: any = await Main.reqSongUrl(playingId.value)
             lyric.value = (await Main.reqLyric(playingId.value)).data
             sendLyric()
-            await musicCanSee(result.data.data[0].url, 0, 0)
-            // musicCanSeeNew(result.data.data[0].url, 0, 0)
+            // await musicCanSee(result.data.data[0].url, 0, 0)
+            musicCanSeeNew(result.data.data[0].url, 0, 0)
             SongUrl.value = result.data.data[0].url
             nextTick(() => {
                 stopOrPlayFlag.value = false
@@ -598,8 +601,8 @@ const normalPlayWay = async()=>{
             let result: any = await Main.reqSongUrl(playingId.value)
             lyric.value = {lrc:{lyric:''}}
             sendLyric()
-            await musicCanSee(result.data.data[0].url, 0, 0)
-            // musicCanSeeNew(result.data.data[0].url, 0, 0)
+            // await musicCanSee(result.data.data[0].url, 0, 0)
+            musicCanSeeNew(result.data.data[0].url, 0, 0)
             SongUrl.value = result.data.data[0].url
             nextTick(() => {
                 stopOrPlayFlag.value = false
@@ -955,25 +958,90 @@ const clickAudioPlay = (e: MouseEvent) => {
 
 }
 
+let clickWillUseLen:number = 0
+let myWorkerFullFlag = false 
 const clickCanvas = (wh)=>{
     if(globalVar.setting.opencanvas){
         const currentTime = AC.currentTime;
-        AC = new AudioContext()
-        gainNode = AC.createGain()
-        analyser = AC.createAnalyser();
-        bufferSource.stop(currentTime);
-        bufferSource.disconnect()
-        bufferSource = AC.createBufferSource()
-        bufferSource.buffer = musicBuffer
-        bufferSource.connect(AC.destination)
-        bufferSource.connect(analyser);
-        bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-        bufferSource.start(0, wh / line.offsetWidth * audio.duration);
-        bufferSource.connect(gainNode)
-        gainNode.connect(AC.destination);
-        gainNode.gain.setValueAtTime(-1, AC.currentTime)
-        cancelAnimationFrame(animationId)
-        draw()
+        if(myWorker && !myWorkerFullFlag){
+            if(!myWorkerFull){
+                myWorkerFull = new musicCanSeeWorker()
+                myWorkerFull.postMessage({ url:SongUrl.value})
+                myWorkerFull.addEventListener('message',(event)=>{
+                    const {musiceUintPiece,st} = event.data
+                    if(st === 'end'){
+                        AC.decodeAudioData(musiceUintPiece.buffer).then((AudioBuffer) => {
+                            myWorkerFullFlag = true
+                            musicBuffer = AudioBuffer
+                            myWorkerFull!.terminate()
+                            myWorkerFull = null
+                        })
+                    }
+                })
+            }
+            myWorker.terminate()
+            myWorker = new musicCanSeeWorker()
+            const range = wh / line.offsetWidth * clickWillUseLen
+            console.log(range);
+            myWorker.postMessage({ url:SongUrl.value,range:Math.floor(range),time:5000 })
+            let workerFirst = true
+            myWorker.addEventListener('message',(event)=>{
+                const {musiceUintPiece,st,len} = event.data
+                console.log(len,'*&^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
+                AC.decodeAudioData(musiceUintPiece.buffer).then((AudioBuffer) => {
+                    console.log('AudioBuffer解析完成');
+                    if (bufferSource) {
+                        bufferSource.stop();
+                    }
+                    // musicBuffer = AudioBuffer
+                    bufferSource = AC.createBufferSource();
+                    analyser.fftSize = 256;
+                    bufferSource.connect(analyser);
+                    analyser.connect(AC.destination);
+                    bufferSource.buffer = AudioBuffer;
+                    bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                    bufferSource.connect(gainNode)
+                    gainNode.connect(AC.destination);
+                    gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                    cancelAnimationFrame(animationId)
+                    draw()
+                    if(workerFirst){
+                        workerFirst = false
+                        console.log('bufferSource启动',currentTime);
+                        bufferSource.start(0)
+                    }else{
+                        console.log('bufferSource重新启动',AC.currentTime);
+                        bufferSource.start(0, AC.currentTime - currentTime)
+                        // musicBuffer = AudioBuffer
+                    }
+                    if(st === 'end'){
+                        console.log('bufferSource完成启动',AC.currentTime);
+                        bufferSource.start(0, AC.currentTime - currentTime)
+                        // musicBuffer = AudioBuffer
+                        myWorker!.terminate()
+                        myWorker = null
+                    }
+                })
+            })
+
+        }else{
+            AC = new AudioContext()
+            gainNode = AC.createGain()
+            analyser = AC.createAnalyser();
+            bufferSource.stop(currentTime);
+            bufferSource.disconnect()
+            bufferSource = AC.createBufferSource()
+            bufferSource.buffer = musicBuffer
+            bufferSource.connect(AC.destination)
+            bufferSource.connect(analyser);
+            bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            bufferSource.start(0, wh / line.offsetWidth * audio.duration);
+            bufferSource.connect(gainNode)
+            gainNode.connect(AC.destination);
+            gainNode.gain.setValueAtTime(-1, AC.currentTime)
+            cancelAnimationFrame(animationId)
+            draw()
+        }
     }
 }
 
@@ -1409,8 +1477,8 @@ const changeSpanLevel = async (level: string, level2: string) => {
     let t = audio.currentTime
     let result: any = await Main.reqSongUrl(playingId.value, nowLevel.value)
     nextTick(async () => {
-        await musicCanSee(result.data.data[0].url, t, 100)
-        // musicCanSeeNew(result.data.data[0].url, t, 100)
+        // await musicCanSee(result.data.data[0].url, t, 100)
+        musicCanSeeNew(result.data.data[0].url, t, 100)
         SongUrl.value = result.data.data[0].url
         audio = document.querySelector('audio') as HTMLAudioElement
         console.log(Number(speedPower.value.substring(0, speedPower.value.length - 1)), 'DAJSIDHAYUCGAWJHUYADGA');
@@ -1658,7 +1726,13 @@ const musicCanSee = (url: string, offset: number, timer: number) => {
 const musicCanSeeNew = (url: string, offset: number, timer: number) => {
     if(globalVar.setting.opencanvas){
         if (bufferSource) bufferSource.stop()
-        const myWorker =  new musicCanSeeWorker()
+        if(myWorker) myWorker.terminate()
+        if(myWorkerFull){
+            myWorkerFull.terminate()
+            myWorkerFull = null
+        }
+        myWorkerFullFlag = false
+        myWorker =  new musicCanSeeWorker()
         let workerFirst = true
         AC = new AudioContext()
         gainNode = AC.createGain()
@@ -1668,12 +1742,10 @@ const musicCanSeeNew = (url: string, offset: number, timer: number) => {
         myWorker.postMessage({ url });
         myWorker.addEventListener('message', workerMessageFn);
         function workerMessageFn(event){
-            const {musiceUintPiece,st} = event.data
-            // if(workerIntercept && st !== 'end')return
-            // workerIntercept = true
-            // console.log(st);
-            // console.log(st === 'start');
-            console.log(st,'message来了',musiceUintPiece);
+            const {musiceUintPiece,st,len} = event.data
+            if(st === 'start'){
+                clickWillUseLen = len
+            }
             AC.decodeAudioData(musiceUintPiece.buffer).then((AudioBuffer) => {
                 console.log('AudioBuffer解析完成');
                 if (bufferSource) {
@@ -1688,9 +1760,7 @@ const musicCanSeeNew = (url: string, offset: number, timer: number) => {
                 bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
                 bufferSource.connect(gainNode)
                 gainNode.connect(AC.destination);
-                // gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
-                // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+                gainNode.gain.setValueAtTime(-1, AC.currentTime)
                 cancelAnimationFrame(animationId)
                 draw()
                 if(workerFirst){
@@ -1708,9 +1778,11 @@ const musicCanSeeNew = (url: string, offset: number, timer: number) => {
                 }
                 if(st === 'end'){
                     console.log('bufferSource完成启动',AC.currentTime);
+                    myWorkerFullFlag = true
                     bufferSource.start(0, offset + AC.currentTime)
                     musicBuffer = AudioBuffer
-                    myWorker.removeEventListener('message',workerMessageFn)
+                    myWorker!.terminate()
+                    myWorker = null
                 }
             })
         }

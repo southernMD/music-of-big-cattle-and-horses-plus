@@ -10,11 +10,17 @@ function sendMusiceUintPiece() {
 
 addEventListener('message', (event) => {
     const url = event.data.url;
-    postMessage({musiceUintPiece,st});
-    t = setInterval(sendMusiceUintPiece, 1000);
-    fetch(url, { mode: 'cors' })
+    const range:undefined | number = event.data.range
+    const time:undefined | number = event.data.time ?? 1000
+    t = setInterval(sendMusiceUintPiece, time);
+    fetch(url, { mode: 'cors',
+        headers:{
+            Range:range ? `bytes=${range}-` :  'bytes=0-'
+        }
+    })
     .then((response) => {
         const reader = response.body?.getReader() as ReadableStreamDefaultReader<Uint8Array>
+        postMessage({musiceUintPiece,st,len:Number(response.headers.get('Content-Length'))});
         st = "loading"
         return new ReadableStream({
             start(controller) {
