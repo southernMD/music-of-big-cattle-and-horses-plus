@@ -54,7 +54,7 @@
             </div>
             <div class="st-bt">
                 <el-checkbox v-model="globalVar.setting.opencanvas" label="开启音频可视化" size="large" />
-                <span>（关闭后可以加快加载速度）</span>
+                <span>（切换音质后会丢失几秒）</span>
             </div>
             <div class="el">
                 <el-radio-group  v-model="globalVar.setting.canvasColor" class="ml-4">

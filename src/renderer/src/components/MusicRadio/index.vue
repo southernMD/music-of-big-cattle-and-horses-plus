@@ -1473,23 +1473,31 @@ const changeSpanLevel = async (level: string, level2: string) => {
     levelName.value = level
     nowLevel.value = level2
     audio = document.querySelector('audio') as HTMLAudioElement
-    changPlayStatus();
     let t = audio.currentTime
     let result: any = await Main.reqSongUrl(playingId.value, nowLevel.value)
+    SongUrl.value = result.data.data[0].url
     nextTick(async () => {
         // await musicCanSee(result.data.data[0].url, t, 100)
         musicCanSeeNew(result.data.data[0].url, t, 100)
-        SongUrl.value = result.data.data[0].url
         audio = document.querySelector('audio') as HTMLAudioElement
-        console.log(Number(speedPower.value.substring(0, speedPower.value.length - 1)), 'DAJSIDHAYUCGAWJHUYADGA');
         bufferSource.playbackRate.value = audio.playbackRate
-        setTimeout(() => {
-            audio.currentTime = t
-            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            changPlayStatus();
-        }, 100)
+        audio.currentTime = t
+        audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+        Main.playStatus = 'play'
+        audio.play()
     })
 }
+
+// SongUrl.value = result.data.data[0].url
+//             nextTick(() => {
+//                 stopOrPlayFlag.value = false
+//                 audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+//                 if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
+//                 audio.play()
+//             })
+//             nowLevel.value = 'standard'
+//             levelName.value = '标准'
+
 
 //修改速度
 let showSpeedFlag = ref(false)
@@ -1784,7 +1792,7 @@ const musicCanSeeNew = (url: string, offset: number, timer: number) => {
                     myWorker!.terminate()
                     myWorker = null
                 }
-            })
+            }).catch(()=>{})
         }
     }
     return
@@ -1815,12 +1823,10 @@ function draw() {
     }
 }
 
-watch(playStatus,(newValue,oldValue)=>{
-    console.log(newValue,oldValue);
+watch(playStatus,()=>{
     if(playStatus.value == 'stop'){
         cancelAnimationFrame(animationId)
     }else{
-        console.log(AC,gainNode,analyser);
         if(AC && gainNode && analyser)draw()
     }
 })

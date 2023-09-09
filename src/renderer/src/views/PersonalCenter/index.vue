@@ -1,5 +1,5 @@
 <template>
-  <div class="personalCenter">
+  <div class="personalCenter" v-if="!loading">
     <div class="top">
         <div class="left">
             <el-image draggable="false" style="width: 180px; height: 180px" :src="personalMessage.avatarUrl">
@@ -83,7 +83,7 @@
             </div>
         </div>
         <div class="list" :class="{Wlist:MainMenu.width > 1020}">
-            <PlayListShow data-right="1" :data-type="personalMessage.dataTypeList[index]" v-show="blockList[0]" v-for="({},index) in personalMessage.MyplayList" 
+            <PlayListShow data-right="1" :data-type="personalMessage.dataTypeList[index]" v-if="blockList[0]" v-for="({},index) in personalMessage.MyplayList" 
                 :url="personalMessage.MyplayList[index].coverImgUrl" 
                 :i="index"
                 :my-index="personalMessage.MyplayList[index].index"
@@ -102,7 +102,7 @@
                     </div>
                 </template>
             </PlayListShow>
-            <HBlock data-right="1" :data-type="personalMessage.dataTypeList[index]" v-show="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
+            <HBlock data-right="1" :data-type="personalMessage.dataTypeList[index]" v-if="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
             :url="personalMessage.MyplayList[index]?.coverImgUrl" 
             :Name="personalMessage.MyplayList[index]?.name"
             :id="personalMessage.MyplayList[index]?.id"
@@ -114,7 +114,10 @@
             @playAll="playAll"
             @click="go({id:personalMessage.MyplayList[index].id,index:personalMessage.MyplayList[index].index,uid:+$route.query.id!})"
             ></HBlock>
-            <HaveSongShow :data-type="personalMessage.dataTypeList[index]" v-show="blockList[2]" v-for="({},index) in personalMessage.MyplayList"
+            <HaveSongShow :data-type="personalMessage.dataTypeList[index]" 
+            v-if="!saveBlock2?blockList[2]:true" 
+            v-show="saveBlock2?blockList[2]:true" 
+            v-for="({},index) in personalMessage.MyplayList"
             :url="personalMessage.MyplayList[index].coverImgUrl" 
             :title="personalMessage.MyplayList[index].name"
             :id="personalMessage.MyplayList[index].id"
@@ -125,7 +128,7 @@
             @go="go"
             type="playList"
             >
-            </HaveSongShow>    
+            </HaveSongShow> 
         </div>
         <div class="pagination">
             <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
@@ -134,6 +137,7 @@
     </div>
     <!-- {{ $route.query.id }} -->
   </div>
+  <div class="loading" v-else>加载中</div>
 </template>
 
 <script setup lang="ts">
@@ -158,6 +162,7 @@ const TagList = ref()
 const blockList = ref()
 const nowPage = ref(1)
 const NM = useNM()
+const loading = ref(true)
 if(sessionStorage.getItem('PersonalCenter') == null){
     TagList.value = [true,false]
     blockList.value = [true,false,false]
@@ -226,7 +231,7 @@ const changePage = ()=>{
     let l = nowPage.value == 1?(nowPage.value-1) * 20:(nowPage.value-1) * 20-1
     if(TagList.value[0] != true)l = (nowPage.value-1) * 20
     let r = nowPage.value == 1 && TagList.value[0] == true?19:l+20
-    personalMessage.MyplayList= BaseList.value.slice(l,r)
+    personalMessage.MyplayList = BaseList.value.slice(l,r)
     if(nowPage.value == 1 && TagList.value[0] == true){
         personalMessage.MyplayList.unshift({
             coverImgUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305041345401.png',
@@ -308,7 +313,9 @@ const init = async() =>{
 
     }
 }
+loading.value = true
 await init()
+loading.value = false
 
 
 
@@ -330,6 +337,7 @@ const playAll = async (id)=>{
         }
         console.log(result);
         const songList = result.map(item=>item.song)
+        if(songList.length == 0)return
         console.log(result,songList);
         Main.playingList = songList
         Main.playingPrivileges = songList.map(item=>item.privilege)
@@ -346,6 +354,7 @@ const playAll = async (id)=>{
         }else{
             result = (await Main.reqPlaylistTrackAll(+id)).data;
         }
+        if(result.songs.length == 0)return
         Main.playingList = result.songs
         Main.playingPrivileges = result.privileges
         Main.playingindex = 1
@@ -388,10 +397,13 @@ const go = ({id,index,uid})=>{
 }
 
 
-
+const saveBlock2 = ref(false)
 const changeBlock = (index:number)=>{
     blockList.value.fill(false)
     blockList.value[index] = true
+    if(index == 2){
+        saveBlock2.value = true
+    }
 }
 
 const editorPersonal = ()=>{
@@ -404,7 +416,10 @@ $router.afterEach(async(to, from, failure) => {
     console.log(to.name, from.name);
     
     if(to.query.id != from.query.id && to.name == from.name && to.name == 'PersonalCenter'){
+        saveBlock2.value = false
+        loading.value = true
         await init()
+        loading.value = false
         changeTag(0,true)
         globalVar.scrollToTop = true
     }
