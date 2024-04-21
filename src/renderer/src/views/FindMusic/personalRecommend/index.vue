@@ -9,7 +9,7 @@
 </template>
 
 <script lang='ts' setup>
-import { onActivated,onMounted } from 'vue'
+import { onActivated,onMounted ,ref} from 'vue'
 import { useRoute } from 'vue-router';
 import EveryDayRecommend from './EveryDayRecommend.vue'
 import EveryDayRecommendPlayList from './EveryDayRecommendPlayList.vue'
