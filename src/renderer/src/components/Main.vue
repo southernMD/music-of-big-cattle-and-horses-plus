@@ -167,7 +167,7 @@
     </template>
     <template #midle>
       <div class="create">
-        <el-input v-model="playListName" placeholder="请输入新歌单标题"></el-input>
+        <el-input ref="inputAddPlayListRef" @focus="inputFn" @blur="inputRemove" v-model="playListName" placeholder="请输入新歌单标题"></el-input>
         <el-checkbox v-model="yinsi" size="large" label="设置为隐私歌单"></el-checkbox>
       </div>
     </template>
@@ -454,6 +454,20 @@ watch(()=>globalVar.changeMainScroll,()=>{
   }
 })
 
+import {modInput} from '../utils/modInput'
+const inputAddPlayListRef = ref()
+
+const onKeyDown = (event: KeyboardEvent) => {
+  playListName.value = modInput(event, inputAddPlayListRef.value.ref, playListName.value);
+}
+
+const inputFn = ()=>{
+  window.addEventListener('keydown',onKeyDown)
+}
+
+const inputRemove = ()=>{
+  window.removeEventListener('keydown',onKeyDown)
+}
 </script>
 
 <style lang="less" scoped>

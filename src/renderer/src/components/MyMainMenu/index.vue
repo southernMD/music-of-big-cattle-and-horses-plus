@@ -19,7 +19,7 @@
                 </div>
                 <div :key="2" class="search" v-show="scrollY == undefined || scrollY < 300">
                     <i class="iconfont icon-search"></i>
-                    <input class="search-input" @input="searchSuggestThrottle" v-model="searchKey" @focus="flagSearch=true" @click="flagSearch=true" @keydown="goSearch" type="text" :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
+                    <input ref="searchInputRef" class="search-input" @input="searchSuggestThrottle" v-model="searchKey" @focus="inputFn();flagSearch=true" @blur="inputRemove" @click="flagSearch=true" @keydown="goSearch" type="text" :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
                     <Teleport to="#header" v-if="flagSearch">
                         <SearchTip @close="flagSearch = false" @changeFlag="flag = true" :listTop="listTop" ></SearchTip>
                     </Teleport>
@@ -80,10 +80,12 @@ import { useRouter, useRoute } from 'vue-router';
 import icon from '@renderer/assets/icon.png'
 import iconRed from '@renderer/assets/iconRed.png'
 import {throttle} from 'lodash'
+import {modInput} from '../../utils/modInput'
 // const ChangeSkin = defineAsyncComponent(() => import('./changeSkin/index.vue'))
 // const PersonalMessage = defineAsyncComponent(() => import('./PersonalMessage/index.vue'))
 // const LoginPage = defineAsyncComponent(() => import('../LoginPage.vue'))
 // const ElectronToApp = useElectronToApp();
+const searchInputRef = ref()
 const BasicApi = useBasicApi();
 const MainMenu = useMainMenu();
 const Main = useMain()
@@ -450,6 +452,18 @@ const goHome = ()=>{
     $router.push({
         path:'/app/findMusic/find1'
     })
+}
+
+const onKeyDown = (event: KeyboardEvent) => {
+    searchKey.value = modInput(event, searchInputRef.value, searchKey.value);
+}
+
+const inputFn = ()=>{
+    window.addEventListener('keydown',onKeyDown)
+}
+
+const inputRemove = ()=>{
+    window.removeEventListener('keydown',onKeyDown)
 }
 </script> 
 
