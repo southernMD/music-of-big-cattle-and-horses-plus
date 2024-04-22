@@ -1290,10 +1290,25 @@ export const useMain = defineStore('Main', {
             }
         },
         async reqCheckMusic(id,br){
-            let result = await checkMusic(id,br)
-            return new Promise<any>((resolve, reject) => {
-                resolve(result.data.success)
-            })
+            try {
+                let result = await checkMusic(id,br)
+                console.log(result,'我是result');
+                if(result.data == null){
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(true)
+                    })
+                }else{
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(result.data.success)
+                    })
+                }
+            } catch (error:any) {
+                if(error.message == 'Request failed with status code 404'){
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(true)
+                    })
+                }
+            }
         },
         //电台详情
         async reqDjDetail(rid){

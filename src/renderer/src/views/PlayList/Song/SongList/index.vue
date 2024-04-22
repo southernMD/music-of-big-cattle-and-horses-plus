@@ -239,6 +239,7 @@ watch(alsongs,()=>{
 })
 
 watch(songNumber,()=>{
+    if(!songNumber)return
     if (songNumber.value <= 500) {
         forLength.value = songNumber.value
     } else {

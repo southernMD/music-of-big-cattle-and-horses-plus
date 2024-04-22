@@ -1,17 +1,17 @@
 <template>
     <div class="LoginPage" @mousedown="move" @mouseup="moveEnd">
         <i class="iconfont icon-guanbi_o" @click="destroyVC"></i>
-            <div class="title">大牛马登录</div>
+            <div class="title" >大牛马登录</div>
             <div>
                 <el-form :model="formLabelAlign" style="max-width: 460px" ref="ruleFormRef" :rules="rules"  @mousedown.stop>
                     <el-form-item prop="name">
-                        <el-input :placeholder="wayName" v-model="formLabelAlign.name" />
+                        <el-input ref="inputRef1" :placeholder="wayName" v-model="formLabelAlign.name" @focus="inputFn(1)" @blur="inputRemove(1)"/>
                     </el-form-item>
                     <el-form-item prop="password">
-                        <el-input placeholder="密码" show-password type="password" v-model="formLabelAlign.password" @input="clearValid('password')" />
+                        <el-input ref="inputRef2" placeholder="密码" show-password type="password" v-model="formLabelAlign.password" @input="clearValid('password')" @focus="inputFn(2)" @blur="inputRemove(2)"/>
                     </el-form-item>
                     <el-form-item prop="code">
-                        <el-input placeholder="验证码" v-model="formLabelAlign.code" v-show="way" class="yanzhen" @input="clearValid('code')">
+                        <el-input ref="inputRef3" placeholder="验证码" v-model="formLabelAlign.code" v-show="way" class="yanzhen" @input="clearValid('code')" @focus="inputFn(3)" @blur="inputRemove(3)">
                             <template #prepend style="font-size: 12px;">
                                 <div @click="sendCode(ruleFormRef)" style="width:60px; text-align: center;">{{ autoTime }}</div>
                             </template>
@@ -36,12 +36,15 @@ import { getCurrentInstance, ComponentInternalInstance, ref, Ref, onMounted, wat
 import { useRouter } from 'vue-router';
 import {NMCode,NMReg,NMlogin} from '@renderer/api/niuma'
 import { type FormInstance, type FormRules } from 'element-plus'
-
+import {modInput} from '../utils/modInput'
 const BasicApi = useBasicApi();
 const Main = useMain();
 const NM = useNM();
 const $router = useRouter()
 const globalVar = useGlobalVar()
+const inputRef1 = ref()
+const inputRef2 = ref()
+const inputRef3 = ref()
 let moveFlag: Ref<boolean> = ref(false)
 
 let flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
@@ -283,6 +286,38 @@ const submit = async(formEl: FormInstance | undefined)=>{
 }
 const clearValid = (str:string)=>{
     ruleFormRef.value?.clearValidate(str)
+}
+
+const onKeyDown = (event: KeyboardEvent) => {
+    formLabelAlign.name = modInput(event, inputRef1.value.ref, formLabelAlign.name);
+}
+
+const onKeyDown2 = (event: KeyboardEvent) => {
+    formLabelAlign.password = modInput(event, inputRef2.value.ref, formLabelAlign.password);
+}
+
+const onKeyDown3 = (event: KeyboardEvent) => {
+    formLabelAlign.code = modInput(event, inputRef3.value.ref, formLabelAlign.code);
+}
+
+const inputFn = (p:number)=>{
+    if(p == 1){
+        window.addEventListener('keydown',onKeyDown)
+    }else if(p == 2){
+        window.addEventListener('keydown',onKeyDown2)
+    }else if(p == 3){
+        window.addEventListener('keydown',onKeyDown3)
+    }
+}
+
+const inputRemove = (p:number)=>{
+    if(p == 1){
+        window.removeEventListener('keydown',onKeyDown)
+    }else if(p == 2){
+        window.removeEventListener('keydown',onKeyDown2)
+    }else if(p == 3){
+        window.removeEventListener('keydown',onKeyDown3)
+    }
 }
 </script>
 

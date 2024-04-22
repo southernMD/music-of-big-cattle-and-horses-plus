@@ -114,7 +114,10 @@ const routes: Array<RouteRecordRaw> = [
                 children: [
                     { path: 'startAl', name: 'startAl', component: () => import('@renderer/views/myStart/StZhuanJi/index.vue') },
                     { path: 'startHS', name: 'startHS', component: () => import('@renderer/views/myStart/StHandSong/index.vue') }
-                ]
+                ],
+                meta:{
+                    keepAlive:true
+                }
             },
             {
                 path:`search`,
