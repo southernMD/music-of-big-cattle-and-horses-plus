@@ -567,15 +567,15 @@ const loaclMusicCanSee = (base64)=>{
 
 const normalPlayWay = async()=>{
     if (playingId.value != -1) {
-        if(!await Main.reqCheckMusic(Main.playing,br(nowLevel.value))){
-            globalVar.loadMessageDefault = '对象不可用'
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefaultFlag = true
-            Main.playingList.splice(Main.playingindex-1,1)
-            Main.playingPrivileges.splice(Main.playingindex-1,1)
-            nextSongThor()
-            return
-        }
+        // if(!await Main.reqCheckMusic(Main.playing,br(nowLevel.value))){
+        //     globalVar.loadMessageDefault = '对象不可用'
+        //     globalVar.loadMessageDefaultType = 'error'
+        //     globalVar.loadMessageDefaultFlag = true
+        //     Main.playingList.splice(Main.playingindex-1,1)
+        //     Main.playingPrivileges.splice(Main.playingindex-1,1)
+        //     nextSongThor()
+        //     return
+        // }
         audio = document.querySelector('audio') as HTMLAudioElement
         audio.currentTime = 0
         audio.pause()

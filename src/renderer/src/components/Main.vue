@@ -11,8 +11,8 @@
           </LeftBlock>
           <LeftBlock message="关注" :big="true" name="follow">
           </LeftBlock>
-          <!-- <LeftBlock message="私人FM" :big="true" name="personalFM">
-          </LeftBlock> -->
+          <LeftBlock message="私人FM" :big="true" name="personalFM">
+          </LeftBlock>
         </div>
         <div class="middle">
           <div class="title" :class="{'oneself-title':globalVar.oneself == 1}">
@@ -38,11 +38,11 @@
                 <i class="iconfont icon-yun_o"></i>
               </template>
             </LeftBlock>
-            <!-- <LeftBlock  v-if="!isNM" message="我的播客" :big="false" name="mydj" >
+            <LeftBlock  v-if="!isNM" message="我的播客" :big="false" name="mydj" >
               <template #default>
                 <i class="iconfont icon-changpian"></i>
               </template>
-            </LeftBlock> -->
+            </LeftBlock>
             <LeftBlock v-if="BasicApi?.profile?.userId" message="我的收藏" :big="false" name="myStart">
               <template #default>
                 <i class="iconfont icon-wodeshoucang"></i>

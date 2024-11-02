@@ -1,7 +1,9 @@
 import request from "axios";
 
 const axios = request.create({
-    baseURL:'http://cloud-music.pl-fe.cn/',
+    // baseURL:'http://cloud-music.pl-fe.cn/',
+    baseURL:'https://netease-cloud-music-api-ruby-five.vercel.app/',
+    
 }) 
 
 //请求拦截器，在发起请求前做一些事情

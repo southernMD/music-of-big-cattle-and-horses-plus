@@ -5,3 +5,5 @@ out
 .vscode
 download
 download2
+resources\background.*
+*.nmd2
