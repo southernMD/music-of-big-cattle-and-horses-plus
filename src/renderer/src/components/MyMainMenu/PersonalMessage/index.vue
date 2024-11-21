@@ -1,5 +1,5 @@
 <template>
-    <div class="bk" @dblclick.stop  id="bkUserMessage" ref="bk">
+    <div class="bk" id="bkUserMessage" ref="bk">
         <div class="top">
             <div class="dongtai" @click="goEvents">
                 <div class="number">{{ BasicApi.profile?.eventCount }}</div>

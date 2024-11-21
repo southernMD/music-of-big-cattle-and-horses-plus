@@ -22,7 +22,7 @@ import moveFileWorker from './moveFile?nodeWorker'
 import log from 'electron-log'
 export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
     let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
-    let X: number, Y: number; //鼠标基于显示器的坐标
+    // let X: number, Y: number; //鼠标基于显示器的坐标
     let screenMove: any = null;  //鼠标移动监听
     const primaryDisplay = screen.getPrimaryDisplay()
     const { width, height } = primaryDisplay.workAreaSize
@@ -68,8 +68,10 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
       height: 670,
       backgroundColor: background,
       frame: false, //隐藏默认控件
-      resizable: false,
-      maxHeight: 670,
+      // resizable: false,
+      // maxHeight: 670,
+      minHeight:670,
+      minWidth:1020,
       title: '大牛马音乐',
       // autoHideMenuBar: true,
       icon:iconW,
@@ -351,21 +353,21 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
         mainWindow.setBounds({ x: 0, y: 0, width, height })
         mainWindow.webContents.send('to-changeFished-finshed')
     })
-    ipcMain.on('move-screen', (e, obj) => {
-      let { mouseX, mouseY } = obj //鼠标按下时的坐标
-      let { x, y } = mainWindow.getBounds();  //左上点坐标
-      console.log('按下时',screenMove);
-      if(!screenMove){
-          console.log('beginmoving');
-          screenMove = setInterval(() => {
-              X = screen.getCursorScreenPoint().x
-              Y = screen.getCursorScreenPoint().y
-              let nW = mainWindow.getContentBounds().width
-              let nH = mainWindow.getContentBounds().height
-              mainWindow.setContentBounds({width:nW,height:nH,x:x + (X - (mouseX + x)),y:y + (Y - (mouseY + y))})
-          }, 10)
-      }
-    })
+    // ipcMain.on('move-screen', (e, obj) => {
+    //   let { mouseX, mouseY } = obj //鼠标按下时的坐标
+    //   let { x, y } = mainWindow.getBounds();  //左上点坐标
+    //   console.log('按下时',screenMove);
+    //   if(!screenMove){
+    //       console.log('beginmoving');
+    //       screenMove = setInterval(() => {
+    //           X = screen.getCursorScreenPoint().x
+    //           Y = screen.getCursorScreenPoint().y
+    //           let nW = mainWindow.getContentBounds().width
+    //           let nH = mainWindow.getContentBounds().height
+    //           mainWindow.setContentBounds({width:nW,height:nH,x:x + (X - (mouseX + x)),y:y + (Y - (mouseY + y))})
+    //       }, 10)
+    //   }
+    // })
     ipcMain.on('cancel-screen', () => {
       console.log('endmoving');
       clearInterval(screenMove)

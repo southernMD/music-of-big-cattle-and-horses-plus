@@ -1,5 +1,5 @@
 <template>
-    <div class="bk" @dblclick.stop id="bkChangeSkin">
+    <div class="bk" id="bkChangeSkin">
         <div class="list">
             <Tag message="主题" :ifClick="flagList[0]" @click="changeTag(0)" name="zhuti"></Tag>
             <Tag message="纯色" :ifClick="flagList[1]" @click="changeTag(1)" name="cunse"></Tag>
