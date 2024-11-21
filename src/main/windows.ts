@@ -342,15 +342,18 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
       mainWindow.minimize();
     })
     ipcMain.on('to-middle', (e) => {
-        mainWindow.setContentBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
-        mainWindow.setBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
-        mainWindow.webContents.send('to-changeFished-finshed')
+      // console.log("??????");
+      // mainWindow.setContentBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
+      // mainWindow.setBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
+      mainWindow.restore()
+      mainWindow.webContents.send('to-changeFished-finshed')
     })
     ipcMain.on('to-big', () => {
-        windowX = mainWindow.getBounds().x
-        windowY = mainWindow.getBounds().y
-        mainWindow.setContentBounds({ x: 0, y: 0, width, height })
-        mainWindow.setBounds({ x: 0, y: 0, width, height })
+        // windowX = mainWindow.getBounds().x
+        // windowY = mainWindow.getBounds().y
+        // mainWindow.setContentBounds({ x: 0, y: 0, width, height })
+        // mainWindow.setBounds({ x: 0, y: 0, width, height })
+        mainWindow.maximize()
         mainWindow.webContents.send('to-changeFished-finshed')
     })
     // ipcMain.on('move-screen', (e, obj) => {

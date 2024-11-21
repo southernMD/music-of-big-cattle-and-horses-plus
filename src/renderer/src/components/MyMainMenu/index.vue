@@ -125,12 +125,29 @@ defineProps<{
 //         model.value = true
 //     }
 // })
+onMounted(()=>{
+    window.addEventListener("resize",()=>{
+        console.log("resize",window.innerWidth,window.innerHeight);
+        
+        MainMenu.width = window.innerWidth
+        MainMenu.Height = window.innerHeight
+    })
+})
+
 watch(model, () => {
     setTimeout(() => {
         MainMenu.width = window.innerWidth
         MainMenu.Height = window.innerHeight
     }, 100)
 }, { immediate: true })
+
+watch(()=>[MainMenu.width,MainMenu.Height],()=>{
+    if(MainMenu.width >= 1036 && MainMenu.Height >= 686){
+        model.value = true 
+    }else{
+        model.value = false
+    }
+})
 
 const prev = () => {
     if ($route.name == 'moreComment' && +$route.query.type! == 0 && Main.songType != 'FM' && Main.playing == +$route.query.id!) Main.detailStatus = 'open'
@@ -150,7 +167,7 @@ const guanbi = () => {
 
 //中化
 const zhonghua = () => {
-    model.value = false
+    // model.value = false
     window.electron.ipcRenderer.send('to-middle')
     if (flagMessage.value) {
         let t = setTimeout(() => {
@@ -163,7 +180,7 @@ const zhonghua = () => {
 
 //最大化
 const zuidahua = () => {
-    model.value = true
+    // model.value = true
     window.electron.ipcRenderer.send('to-big')
     if (flagMessage.value) {
         let t = setTimeout(() => {
@@ -182,14 +199,14 @@ const zuixiaohua = () => {
 //2024/11/21已经废弃准备采用-webkit-app-region
 //https://www.electronjs.org/zh/docs/latest/tutorial/window-customization#%E8%AE%BE%E7%BD%AE%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%AF%E6%8B%96%E5%8A%A8%E5%8C%BA%E5%9F%9F
 //双击最大化 待优化
-const dbBig = (e: Event) => {
-    // const header: HTMLElement = $el.refs.header as HTMLElement
-    if (model.value === false) {
-        zuidahua();
-    } else {
-        zhonghua();
-    }
-}
+// const dbBig = (e: Event) => {
+//     // const header: HTMLElement = $el.refs.header as HTMLElement
+//     if (model.value === false) {
+//         zuidahua();
+//     } else {
+//         zhonghua();
+//     }
+// }
 
 // //单击拖动
 // const dragWin = (e: any) => {
