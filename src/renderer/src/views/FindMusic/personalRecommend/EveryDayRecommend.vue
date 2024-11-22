@@ -65,7 +65,6 @@ import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()
 const baseApi = useBasicApi()
-const globalVar = useGlobalVar()
 const $el = getCurrentInstance() as ComponentInternalInstance 
 const globalVar = useGlobalVar()
 let everyDaySong = toRef(baseApi,'everyDaySong')
