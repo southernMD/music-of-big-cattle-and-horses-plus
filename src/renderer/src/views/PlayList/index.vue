@@ -7,16 +7,16 @@
                 <div class="title">
                     <div class="Btag">{{ $route.query.type }}</div>
                     <span>{{ playList[index]?.name }}</span>
-                    <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true'" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
+                    <i class="iconfont icon-xiugaioryijian" v-if="isMy == 'true' && index!=0 && $route.query.type != '播客'" :class="{ noDrag: !Main.dragMouse }" @click="gotoUpdatePlayList()"></i>
                 </div>
-                <div class="author" v-if="route.query.type == '歌单'">
-                    <el-image @click="goPersonal" fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl">
+                <div class="author" v-if="route.query.type == '歌单' || route.query.type == '播客'">
+                    <el-image @click="goPersonal" fit="cover" style="width: 25px; height: 25px" :src="playList[index]?.creator?.avatarUrl ?? playList[index]?.dj?.avatarUrl">
                     </el-image>
                     <span @click="goPersonal" class="author-name"
                         :class="{ noDrag: !Main.dragMouse, 'author-name-oneself': globalVar.oneself == 1 }">{{
-                            playList[index]?.creator?.nickname }}</span>
+                            playList[index]?.creator?.nickname ?? playList[index]?.dj?.nickname }}</span>
                     <span class="createtime" :class="{ 'createtime-oneself': globalVar.oneself == 1 }">{{
-                        dayjsStamp(playList[index]?.createTime) }}创建</span>
+                        dayjsStamp(+playList[index]?.createTime) }}创建</span>
                 </div>
                 <div class="button">
                     <div class="playAll">
@@ -31,9 +31,9 @@
                     <div class="start" id="startSelf" v-if="!suoFlag" @click="start" :class="
                         {
                             h: !isStartStyle(),
-                            'start-color-black-stop': isStartStyle() && mainColor == 'NMblack',
-                            'start-color-red-stop': isStartStyle() && mainColor != 'NMblack',
-                            'start-color-black': !isStartStyle() && mainColor == 'NMblack',
+                            'start-color-black-stop': isStartStyle() && (mainColor == 'NMblack' || globalVar.oneself),
+                            'start-color-red-stop': isStartStyle() && mainColor != 'NMblack' ,
+                            'start-color-black': !isStartStyle() && (mainColor == 'NMblack' || globalVar.oneself),
                             'start-color-red': !isStartStyle() && mainColor != 'NMblack',
                             'h-oneself': globalVar.oneself == 1 && !isStartStyle()
                         }">
@@ -41,7 +41,7 @@
                             noDrag: !Main.dragMouse && !isStartStyle() 
                             ,noClick:!Main.dragMouse && isStartStyle() }">
                             <i class="iconfont icon-wenjian">
-                                <i class="iconfont icon-gou" v-if="(dynamic?.subscribed ?? dynamic?.isSub)"></i>
+                                <i class="iconfont icon-gou" v-if="(dynamic?.subed ?? dynamic?.subscribed ?? dynamic?.isSub)"></i>
                                 <i class="iconfont icon-jiahao_o" v-else></i>
                             </i>
                         </div>
@@ -49,18 +49,20 @@
                             noDrag: !Main.dragMouse,
                             noClick: isStartStyle()
                         }">
-                            <span v-if="(dynamic?.subscribed ?? dynamic?.isSub)">已</span>
-                            <span>收藏({{ numberSimp((dynamic?.bookedCount ?? dynamic?.subCount)) }})</span>
+                            <span v-if="(dynamic?.subed ?? dynamic?.subscribed ?? dynamic?.isSub )">已</span>
+                            <span>收藏<span v-if="!(($route.query.type == '专辑' || $route.query.type == '播客') && ifNM)">({{ numberSimp(($route.query.type == '播客'?dynamic?.subCount:dynamic?.bookedCount ?? dynamic?.subCount)) }})</span></span>
                         </div>
                     </div>
                     <div @click="sharePlayList" class="fengxiang h" v-if="!suoFlag" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }">
                         <i class="iconfont icon-fenxiang"></i>
                         <div class="txt">
-                            <span>分享({{ numberSimp(dynamic?.shareCount) }})</span>
+                            <span>分享<span v-if="!(($route.query.type == '专辑' || $route.query.type == '播客') && ifNM)">({{ numberSimp(dynamic?.shareCount) }})</span></span>
                         </div>
                     </div>
                     <div class="download h" :class="{ noDrag: !Main.dragMouse, 'h-oneself': globalVar.oneself == 1 }"
-                        @click="dowloadAll">
+                        @click="dowloadAll"
+                        v-if="$route.query.type != '播客'"
+                        >
                         <i class="iconfont icon-xiazai"></i>
                         <div class="txt">
                             <span>下载全部</span>
@@ -123,25 +125,39 @@
                         }}</span>
                     </div>
                 </div>
+                <div class="small" v-else-if="route.query.type == '播客'">
+                    <div class="describe">
+                        <span class="border-title-bk">
+                            <span class="border-title">{{playList[index]?.category}}</span>
+                        </span>
+                        <span class="txt txt-dj" :class="{ 'txt-oneself': globalVar.oneself }" ref="description"
+                            v-html="playList[index]?.desc">
+                        </span>
+                        <div class="open-jiantou" v-if="openJiantou" :class="{ noDrag: !Main.dragMouse }">
+                            <i class="iconfont icon-xiajiantou" v-if="openDescribeFlag" @click="openDescribe"></i>
+                            <i class="iconfont icon-shangjiantou" v-else @click="openDescribe"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="bottom">
             <div class="choice">
                 <div class="tags-three">
                     <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
-                        message="歌曲列表" :ifClick="flagList[0]" :big="true" @click="goRoute('songPlaylist'); changeTag(0)">
+                        :message="$route.query.type !== '播客'?'歌曲列表':`声音(${numberSimp(playList[index]?.programCount)})`" :ifClick="flagList[0]" :big="true" @click="goRoute($route.query.type !== '播客'?'songPlaylist':'djPlaylist'); changeTag(0)">
                     </Tag>
-                    <Tag class="tag-play" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
+                    <Tag class="tag-play" v-if="!($route.query.type == '专辑' && ifNM) && $route.query.type != '播客'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }"
                         :message="`评论(${dynamic?.commentCount})`" :ifClick="flagList[1]" :big="true"
                         @click="goRoute('commentPlaylist'); changeTag(1)">
                     </Tag>
-                    <Tag class="tag-play" v-if="$route.query.type == '歌单'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="收藏者"
+                    <Tag class="tag-play" v-if="$route.query.type == '歌单' || $route.query.type == '播客'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="收藏者"
                         :ifClick="flagList[2]" :big="true" @click="goRoute('whoStartPlaylist'); changeTag(2)"></Tag>
                     <Tag class="tag-play" v-if="$route.query.type == '专辑'" :oneself="1" :class="{ 'tag-play-oneself': globalVar.oneself == 1 }" message="专辑详情"
                     :ifClick="flagList[2]" :big="true" @click="goRoute('ZhuanJiDetail',playList[index].description); changeTag(2)"></Tag>
                 </div>
-                <div class="search" v-show="$route.name == 'songPlaylist' ">
-                    <input type="text" v-model="searchKey" :placeholder="`搜索${$route.query.type}内音乐`" :class="{
+                <div class="search" v-show="$route.name == 'songPlaylist' ||$route.name == 'djPlaylist'">
+                    <input type="text" v-model="searchKey" :placeholder="`搜索${$route.query.type}内${$route.query.type !== '播客'?'音乐':'声音'}`" :class="{
                         noDragInput: !Main.dragMouse,
                         dragMouseStyleNo: Main.dragMouse
                     }" @keydown.stop>
@@ -175,7 +191,7 @@ import {
     toRefs, reactive, getCurrentInstance, ComponentInternalInstance, inject, ShallowRef
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
-import { useMain, useBasicApi, useMainMenu, useGlobalVar } from '@renderer/store';
+import { useMain, useBasicApi, useMainMenu, useGlobalVar,useNM } from '@renderer/store';
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
@@ -186,8 +202,10 @@ const route = useRoute();
 const router = useRouter();
 const MainMenu = useMainMenu();
 const globalVar = useGlobalVar();
+const NM = useNM()
 const $el = getCurrentInstance() as ComponentInternalInstance;
-
+const ifNM = ref(false)
+if(localStorage.getItem('NMcookie'))ifNM.value = true
 const changeTag = (index: number) => {
     flagList.value.forEach((value, i) => {
         if (i == index) {
@@ -203,7 +221,7 @@ const changeTag = (index: number) => {
 let flagList = ref([false, false, false])
 let Rn = toRef(route, 'name')
 watch(Rn, () => {
-    if (route.name == 'songPlaylist') {
+    if (route.name == 'songPlaylist' || route.name == 'djPlaylist') {
         changeTag(0)
     } else if (route.name == 'commentPlaylist') {
         changeTag(1)
@@ -238,23 +256,28 @@ const goRoute = (name: string,message?:string) => {
             router.removeRoute('whoStartPlaylist')
         }
     }
-    if(name == 'ZhuanJiDetail'){
+    if(name == 'djPlaylist'){
+        console.log(Object.assign(route.query,{count:playList.value[index.value].programCount}))
         router.replace({
-            name, query: route.query
+            name, query: Object.assign(route.query,{count:playList.value[index.value].programCount})
         })
     }else{
         router.replace({
             name, query: route.query
         })
     }
-
 }
 
 //播放全部按钮
 const playAll = async () => {
     let result 
+    console.log('playAll');
     if(route.query.type == '歌单'){
-        result = (await Main.reqPlaylistTrackAll(id.value)).data;
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqPlaylistTrackAll(id.value)).data;
+        }else{
+            result = (await Main.reqPlaylistTrackAll(id.value)).data;
+        }
         Main.playingList = result.songs
         Main.playingPrivileges = result.privileges
         Main.playingindex = 1
@@ -267,18 +290,28 @@ const playAll = async () => {
         Main.playingindex = 1
         Main.playing = result.songs[0].id
         Main.beforePlayListId = id.value
+    }else if(route.query.type == '播客'){
+        result = (await Main.reqdjProgram(route.query.id,10000000,0));
+        Main.playingList = result
+        Main.playingPrivileges = result.map((item=>emptyDjObject(item.id)))
+        Main.playingindex = 1
+        Main.playing = result[0].mainSong.id
+        Main.songType = 'DJ'
     }
     Main.playStatus = 'play'
-    let str = result.songs[0].name + ' - ';
-    let singerArr = result.songs[0].ar as unknown as Array<any>
-    singerArr.forEach((element, index) => {
-        str += element.name
-        if (index != singerArr.length - 1) str += ' / '
-    })
-    window.electron.ipcRenderer.send('change-play-thum', str)
-    window.electron.ipcRenderer.send('render-play')
     globalVar.closePointOutMessage = '已经开始播放'
     globalVar.closePointOut = true
+}
+const emptyDjObject = (id)=>{
+  return {
+    id,
+    maxBrLevel: "DJ",
+    playMaxBrLevel: "DJ",
+    downloadMaxBrLevel: "DJ",
+    plLevel: "DJ",
+    dlLevel: "DJ",
+    flLevel: "DJ",
+  }
 }
 
 //添加所有的音乐
@@ -288,16 +321,31 @@ const addAll = async () => {
     } else {
         let result
         if(route.query.type == '歌单'){
-            result = (await Main.reqPlaylistTrackAll(id.value)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(id.value)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(id.value)).data;
+            }
         }else if(route.query.type == '专辑'){
             result = (await Main.reqAlbumTrackAll(id.value)).data;
         }
-        result.songs.forEach((element: any, index: number) => {
-            if (Main.playingList.every((base) => base.id != element.id)) {
-                Main.playingList.push(element)
-                Main.playingPrivileges.push(result.privileges[index])
-            }
-        });
+        if(route.query.type != '播客'){
+            result.songs.forEach((element: any, index: number) => {
+                if (Main.playingList.every((base) => base.id != element.id)) {
+                    Main.playingList.push(element)
+                    Main.playingPrivileges.push(result.privileges[index])
+                }
+            });
+        }else{
+            result = (await Main.reqdjProgram(route.query.id,10000000,0))
+            console.log(result);
+            result.forEach((element: any) => {
+                if (Main.playingList.every((base) => base.mainSong.id != element.mainSong?.id)) {
+                    Main.playingList.push(element)
+                    Main.playingPrivileges.push(emptyDjObject(element.id))
+                }
+            });
+        }
         globalVar.closePointOutMessage = '已添加到播放列表'
         globalVar.closePointOut = true
     }
@@ -311,11 +359,20 @@ let playList = ref()
 let isMy = toRef(Main, 'isMy')
 //是搜索还是我的(搜索就是不是我的)
 watch(isMy, () => {
-    if (isMy.value == 'true') {
-        playList.value = Main.playList
-    } else {
-        playList.value = Main.searchList
+    if(route.query.type == '播客'){
+        if (isMy.value == 'true') {
+            playList.value = BasicApi.createDjArr
+        }else{
+            playList.value = BasicApi.startDjArr
+        }
+    }else{
+        if (isMy.value == 'true') {
+            playList.value = Main.playList
+        } else {
+            playList.value = Main.searchList
+        }
     }
+
 }, { immediate: true })
 
 let mainColor = toRef(MainMenu, 'colorBlock')
@@ -341,7 +398,6 @@ let dynamic = ref({
     bookedCount: 0,
     subscribed: false,
     remarkName: null,
-    followed: 0,
     gradeStatus: 0,
     remixVideo: null,
     code: 0,
@@ -351,10 +407,33 @@ let dynamic = ref({
     isSub: false,
     subTime: 0,
     subCount: 729,
+    subed:false
+})
+watch(route,()=>{
+    dynamic.value = {
+        commentCount: 0,
+        shareCount: 0,
+        playCount: 0,
+        bookedCount: 0,
+        subscribed: false,
+        remarkName: null,
+        gradeStatus: 0,
+        remixVideo: null,
+        code: 0,
+        onSale: false,
+        albumGameInfo: null,
+        likedCount: 0,
+        isSub: false,
+        subTime: 0,
+        subCount: 729,
+        subed:false
+    }
 })
 
 const isStartStyle = () => {
-    return route.query.type == '歌单' && playList.value[index.value]?.creator.userId == BasicApi.account?.id
+    if(route.query.type == '歌单')return playList.value[index.value]?.creator.userId == BasicApi.profile?.userId
+    else if (route.query.type == '播客') return playList.value[index.value]?.dj.userId == BasicApi.profile?.userId
+    else return false
 }
 
 // const startStyle = () => {
@@ -393,76 +472,93 @@ watch(routeQuery, async () => {
     let Rn = route.name as string
     isMy.value = route.query.my as string || 'true'
     console.log(isMy.value);
-    if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
-        nextTick(() => {
-            //样式修改
-            description.value.style.whiteSpace = 'nowrap'
-            openDescribeFlag.value = true
-            openJiantou.value = false
-            let widthBox = description.value?.offsetWidth
-            let widthscrool = description.value?.scrollWidth
-            if (widthscrool > widthBox) {
-                openJiantou.value = true
-            } else {
-                openJiantou.value = false
+    if(route.name == 'djPlaylist' && route.query.type == '播客'){
+        const djMessage = await Main.reqDjDetail(route.query.id)
+        dynamic.value.playCount = djMessage.playCount
+        dynamic.value.commentCount = djMessage.commentCount
+        dynamic.value.shareCount = djMessage.shareCount
+        dynamic.value.subCount = djMessage.subCount
+        dynamic.value.subed = djMessage.subed
+        songNumber.value = djMessage.programCount
+        if(isMy.value as string == 'true'){
+            //创建的播客
+            if(+route.query.index! > BasicApi.createDjArr.length - 1){
+                playList.value = BasicApi.startDjArr
+                index.value = +route.query.index! - BasicApi.createDjArr.length
+            }else{
+                playList.value = BasicApi.createDjArr
+                index.value = route.query.index
             }
-        })
-
-        index.value = route.query.index
-        id.value = route.query.id
-        console.log(route.query.id,route.query.index);
-        //注入
-        songNumber.value = playList.value[index.value].trackCount
-        tags.value = playList.value[index.value].tags
-        dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
-        // console.log(dynamic);
-        // console.log(await Main.reqPlaylistTrackAll(id.value));
-        // startStyle();
-        //隐私判断
-        if (playList.value[index.value].privacy == 10) {
-            suoFlag.value = true
-        } else {
-            suoFlag.value = false
-        }
-        // let arr: Array<HTMLElement> = document.querySelectorAll('.tag-play') as any;
-        // for (let i = 0; i < arr.length; i++) {
-        //     let child = arr[i].firstChild as HTMLElement
-        //     let line = arr[i].lastChild as HTMLElement
-        //     if (i == 0) {
-        //         child.style.fontSize = '20px'
-        //         child.style.fontWeight = 'bolder'
-        //         line.style.backgroundColor = 'var(--primaryColor)'
-        //     } else {
-        //         child.style.fontSize = '14px'
-        //         child.style.fontWeight = 'normal'
-        //         line.style.backgroundColor = 'rgba(0,0,0,0)'
-        //     }
-        // }
-
-    } else if (route.name == 'songPlaylist' && route.query.my as string != 'true') {
-        if(route.query.type == '歌单'){
-            dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
-            Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+        }else{
+            playList.value = [djMessage]
             index.value = 0
-            playList.value = Main.searchList
+        }
+    }else{
+        if (Rn.endsWith('Playlist') && isMy.value as string == 'true') {
+            nextTick(() => {
+                //样式修改
+                description.value.style.whiteSpace = 'nowrap'
+                openDescribeFlag.value = true
+                openJiantou.value = false
+                let widthBox = description.value?.offsetWidth
+                let widthscrool = description.value?.scrollWidth
+                if (widthscrool > widthBox) {
+                    openJiantou.value = true
+                } else {
+                    openJiantou.value = false
+                }
+            })
+
+            index.value = route.query.index
+            id.value = route.query.id
+            console.log(route.query.id,route.query.index);
+            //注入
             songNumber.value = playList.value[index.value].trackCount
             tags.value = playList.value[index.value].tags
-            id.value = route.query.id
-        }else if(route.query.type == '专辑'){
-            dynamic.value = (await Main.reqAlbumDetailDynamic(route.query.id as unknown as number)).data
-            console.log(dynamic.value );
-            let result = (await Main.reqAlbum(route.query.id as unknown as number)).data
-            Main.searchList = [result?.album]
-            alsongs.value = result?.songs
-            index.value = 0
-            playList.value = Main.searchList
-            songNumber.value = playList.value[index.value]?.size
-            tags.value = []
-            id.value = route.query.id
+            if(localStorage.getItem('NMcookie')){
+                dynamic.value = await NM.reqPlaylistDetailDynamic(id.value) as any;
+            }else{
+                dynamic.value = await Main.reqPlaylistDetailDynamic(id.value) as any;
+            }
+            //隐私判断
+            if (playList.value[index.value].privacy == 10) {
+                suoFlag.value = true
+            } else {
+                suoFlag.value = false
+            }
+            Main.isMyCreate = true
+        } else if (route.name == 'songPlaylist' && route.query.my as string != 'true') {
+            if(route.query.type == '歌单'){
+                if(localStorage.getItem('NMcookie')){
+                    dynamic.value = await NM.reqPlaylistDetailDynamic(route.query.id) as any;
+                    Main.searchList = [(await NM.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+                }else{
+                    dynamic.value = await Main.reqPlaylistDetailDynamic(route.query.id as unknown as number) as any;
+                    Main.searchList = [(await Main.reqPlaylistDetail(route.query.id as unknown as number)).data?.playlist]
+                }
+                console.log(Main.searchList);
+                index.value = 0
+                playList.value = Main.searchList
+                songNumber.value = playList.value[index.value].trackCount
+                tags.value = playList.value[index.value].tags
+                id.value = route.query.id
+                Main.isMyCreate = false
+            }else if(route.query.type == '专辑'){
+                dynamic.value = (await Main.reqAlbumDetailDynamic(route.query.id as unknown as number)).data
+                console.log(dynamic.value );
+                let result = (await Main.reqAlbum(route.query.id as unknown as number)).data
+                Main.searchList = [result?.album]
+                alsongs.value = result?.songs
+                index.value = 0
+                playList.value = Main.searchList
+                songNumber.value = playList.value[index.value]?.size
+                tags.value = []
+                id.value = route.query.id
+                Main.isMyCreate = false
+                suoFlag.value = false
+            }
         }
-
     }
-
 }, { immediate: true })
 provide('alsongs', alsongs)
 
@@ -500,12 +596,22 @@ const clearSearch = () => {
 
 
 router.afterEach((to) => {
-    if (to.query.my == 'true') {
-        isMy.value = 'true'
-        playList.value = Main.playList
-    } else {
-        isMy.value = 'false'
-        playList.value = Main.searchList
+    if(route.query.type == '播客'){
+        if (to.query.my == 'true') {
+            playList.value = BasicApi.createDjArr
+            isMy.value = 'true'
+        }else{
+            isMy.value = 'false'
+            playList.value = BasicApi.startDjArr
+        }
+    }else{
+        if (to.query.my == 'true') {
+            isMy.value = 'true'
+            playList.value = Main.playList
+        } else {
+            isMy.value = 'false'
+            playList.value = Main.searchList
+        }
     }
 })
 
@@ -683,7 +789,11 @@ const add = ()=>{
 const confirm = async(tag)=>{
     console.log(tag);
     try {
-        await Main.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
+        if(localStorage.getItem('NMcookie')){
+            await NM.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
+        }else{
+            await Main.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
+        }
         tags.value = Main.playList[index.value].tags
         globalVar.loadMessageDefault = '保存成功!'
         globalVar.loadMessageDefaultFlag = true
@@ -712,12 +822,16 @@ const goPersonal = ()=>{
     router.push({
         name:'PersonalCenter',
         query:{
-            id:playList.value[index.value]?.creator?.userId
+            id:playList.value[index.value]?.creator?.userId ?? playList.value[index.value]?.dj?.userId 
         }
     })
 }
 
 const sharePlayList = ()=>{
+    if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
+        globalVar.flagLogin = true
+        return
+    }
     globalVar.shareDialogFlag = true
     globalVar.share.id = id.value
     globalVar.share.type = route.query.type=='歌单'? 'playlist':'album'
@@ -725,38 +839,73 @@ const sharePlayList = ()=>{
     else if(route.query.type == '专辑'){
         const ar = playList.value[index.value]?.artists.map(item=>item.name).join('/')
         globalVar.share.message = `${route.query.type}：${playList.value[index.value].name} - ${ar}`
+    }else if(route.query.type == '播客'){
+        globalVar.share.message = `${route.query.type}：${playList.value[index.value].name} - ${playList.value[index.value].dj.nickname}`
     }
     globalVar.share.imgUrl = playList.value[index.value]?.coverImgUrl ?? playList.value[index.value]?.picUrl
 }
 
 const start = async()=>{
     console.log(dynamic);
+    if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
+        globalVar.flagLogin = true
+        return
+    }
     if(isStartStyle())return
     else{
-        if(dynamic.value?.subscribed ?? dynamic.value?.isSub){
+        if(dynamic?.value.subed ?? dynamic.value?.subscribed ?? dynamic.value?.isSub){
             //取消收藏
             console.log(dynamic.value?.subscribed); //歌单
             console.log(dynamic.value?.isSub); //专辑
+            console.log(dynamic?.value.subed);//声音
             try {
                 globalVar.loadDefault = true
                 let flag = false
-                if(dynamic.value?.subscribed != undefined)flag =  await Main.reqPlaylistSubscribe(2,id.value)
-                else flag = await Main.reqAlbumSub(2,id.value)
+                if(dynamic?.value.subed){
+                    flag =  await Main.reqdjSub(route.query.id,2)
+                }else{
+                    if(dynamic.value?.subscribed != undefined){
+                        if(localStorage.getItem('NMcookie')){
+                            flag =  await NM.reqPlaylistSubscribe(2,id.value)
+                        }else{
+                            flag =  await Main.reqPlaylistSubscribe(2,id.value)
+                        }
+                    }
+                    else {
+                        if(localStorage.getItem('NMcookie')){
+                            flag = await NM.reqAlbumSub(2,id.value)
+                        }else{
+                            flag = await Main.reqAlbumSub(2,id.value)
+                        }
+                    }
+                }
+
                 console.log(flag);
                 globalVar.loadDefault = false
                 if(flag){
                     globalVar.loadMessageDefault = '取消收藏成功'
                     globalVar.loadMessageDefaultFlag = true
-                    if(dynamic.value?.subscribed != undefined){
-                        dynamic.value.bookedCount--
-                        dynamic.value!.subscribed = false
-                        Main.reqUserPlaylist(BasicApi.profile!.userId)
-                    }else{
+                    if(dynamic?.value.subed === true){
                         dynamic.value.subCount--
-                        dynamic.value!.isSub = false
-                        BasicApi.startalbum = BasicApi.startalbum.filter((it)=>{
-                            return it.id != id.value
-                        })
+                        Main.startPlay--
+                        dynamic.value.subed = false
+                    }else{
+                        if(dynamic.value?.subscribed != undefined){
+                            dynamic.value.bookedCount--
+                            Main.startPlay--
+                            dynamic.value!.subscribed = false
+                            if(localStorage.getItem('NMcookie')){
+                                NM.reqUserPlaylist(BasicApi.profile!.userId)
+                            }else{
+                                Main.reqUserPlaylist(BasicApi.profile!.userId)
+                            }
+                        }else{
+                            dynamic.value.subCount--
+                            dynamic.value!.isSub = false
+                            BasicApi.startalbum = BasicApi.startalbum.filter((it)=>{
+                                return it.id != id.value
+                            })
+                        }
                     }
                 }else{
                     globalVar.loadMessageDefault = '取消收藏失败'
@@ -776,21 +925,53 @@ const start = async()=>{
             try {
                 globalVar.loadDefault = true
                 let flag = false
-                if(dynamic.value?.subscribed != undefined)flag =  await Main.reqPlaylistSubscribe(1,id.value)
-                else flag = await Main.reqAlbumSub(1,id.value)
+                if(dynamic?.value.subed === false){
+                    flag =  await Main.reqdjSub(route.query.id,1)
+                }else{
+                    if(dynamic.value?.subscribed != undefined){
+                        if(localStorage.getItem('NMcookie')){
+                            flag =  await NM.reqPlaylistSubscribe(1,id.value)
+                        }else{
+                            flag =  await Main.reqPlaylistSubscribe(1,id.value)
+                        }
+                    }
+                    else {
+                        if(localStorage.getItem('NMcookie')){
+                            flag =  await NM.reqAlbumSub(1,id.value)
+                        }else{
+                            flag = await Main.reqAlbumSub(1,id.value)
+                        }
+                    }
+                }
                 console.log(flag);
                 globalVar.loadDefault = false
                 if(flag){
                     globalVar.loadMessageDefault = '收藏成功'
                     globalVar.loadMessageDefaultFlag = true
-                    if(dynamic.value?.subscribed != undefined){
-                        dynamic.value.bookedCount++
-                        dynamic.value!.subscribed = true
-                        Main.reqUserPlaylist(BasicApi.profile!.userId)
-                    }else{
+                    if(dynamic?.value.subed === false){
                         dynamic.value.subCount++
-                        dynamic.value!.isSub = true
-                        await BasicApi.reqalbumSublist(1)
+                        Main.startPlay++
+                        dynamic.value.subed = true
+                    }else{
+                        if(dynamic.value?.subscribed != undefined){
+                            dynamic.value.bookedCount++
+                            Main.startPlay++
+                            dynamic.value!.subscribed = true
+                            if(localStorage.getItem('NMcookie')){
+                                NM.reqUserPlaylist(BasicApi.profile!.userId)
+                            }else{
+                                Main.reqUserPlaylist(BasicApi.profile!.userId)
+                            }
+                        }else{
+                            dynamic.value.subCount++
+                            dynamic.value!.isSub = true
+                            if(localStorage.getItem('NMcookie')){
+                                await NM.reqalbumSublist(1)
+                            }else{
+                                await BasicApi.reqalbumSublist(1)
+                            }
+                            
+                        }
                     }
                 }else{
                     globalVar.loadMessageDefault = '收藏失败'
@@ -817,7 +998,12 @@ const closePrivacy = (done : ()=>void)=>{
 }
 const confirmPrivacy = async()=>{
     globalVar.loadDefault = true
-    let flag = await  Main.reqPlaylistPrivacy(id.value)
+    let flag
+    if(localStorage.getItem('NMcookie')){
+        flag = await NM.reqPlaylistPrivacy(id.value)
+    }else{
+        flag = await Main.reqPlaylistPrivacy(id.value)
+    }
     globalVar.loadDefault = false
     if(flag){
         globalVar.loadMessageDefault = '歌单已公开'
@@ -1078,7 +1264,7 @@ const canclePrivacy = ()=>{
 
                 .fengxiang {
                     margin-left: 10px;
-                    min-width: 100px;
+                    min-width: 75px;
                     width: auto;
                     height: 32px;
                     border-radius: 2em;
@@ -1098,7 +1284,7 @@ const canclePrivacy = ()=>{
 
                         >span {
                             display: block;
-                            width: 75px;
+                            padding-right: 10px;
                         }
                     }
                 }
@@ -1222,6 +1408,24 @@ const canclePrivacy = ()=>{
                         height: 20px;
                         margin-right: 0px;
                     }
+                    &>.border-title-bk{
+                        display: flex;
+                        align-items: center;
+                        height: 25px;
+                        margin-right: 10px;
+                        width: auto;
+                        white-space: nowrap;
+                        &>.border-title{
+                            color: @small-font-red;
+                            font-size: 14px;
+                            border: 1px solid @small-font-red;
+                            padding: 2px 3px 3px 3px;
+                            border-radius: 0.2em;
+                            user-select: none;
+                            height:14px
+                        }
+                    }
+
 
                     >.txt {
                         margin-top: 5px;
@@ -1234,6 +1438,9 @@ const canclePrivacy = ()=>{
                         line-height: 25px;
                         margin-top: -1px;
                         // transform: translateY(-5px);
+                    }
+                    >.txt-dj{
+                        color: @font-color;
                     }
 
                     >.txt-oneself {

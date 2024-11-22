@@ -1,5 +1,5 @@
 <template>
-  <div class="personalCenter">
+  <div class="personalCenter" v-if="!loading">
     <div class="top">
         <div class="left">
             <el-image draggable="false" style="width: 180px; height: 180px" :src="personalMessage.avatarUrl">
@@ -18,10 +18,10 @@
                     </div>
                 </div>
                 <div class="btns" v-if="$route.query.id != BasicApi.profile!.userId">
-                    <div>
+                    <!-- <div>
                         <i class="iconfont icon-xinfeng"></i>
                         <span>发私信</span>
-                    </div>
+                    </div> -->
                     <div @click="followUser">
                         <i class="iconfont icon-big-gou" v-if="personalMessage.followed"></i>
                         <i class="iconfont icon-jiahao_o" v-else></i>
@@ -83,7 +83,7 @@
             </div>
         </div>
         <div class="list" :class="{Wlist:MainMenu.width > 1020}">
-            <PlayListShow data-right="1" :data-type="personalMessage.dataTypeList[index]" v-show="blockList[0]" v-for="({},index) in personalMessage.MyplayList" 
+            <PlayListShow data-right="1" :data-type="personalMessage.dataTypeList[index]" v-if="blockList[0]" v-for="({},index) in personalMessage.MyplayList" 
                 :url="personalMessage.MyplayList[index].coverImgUrl" 
                 :i="index"
                 :my-index="personalMessage.MyplayList[index].index"
@@ -102,7 +102,7 @@
                     </div>
                 </template>
             </PlayListShow>
-            <HBlock data-right="1" :data-type="personalMessage.dataTypeList[index]" v-show="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
+            <HBlock data-right="1" :data-type="personalMessage.dataTypeList[index]" v-if="blockList[1]" v-for="({},index) in personalMessage.MyplayList"
             :url="personalMessage.MyplayList[index]?.coverImgUrl" 
             :Name="personalMessage.MyplayList[index]?.name"
             :id="personalMessage.MyplayList[index]?.id"
@@ -114,7 +114,10 @@
             @playAll="playAll"
             @click="go({id:personalMessage.MyplayList[index].id,index:personalMessage.MyplayList[index].index,uid:+$route.query.id!})"
             ></HBlock>
-            <HaveSongShow :data-type="personalMessage.dataTypeList[index]" v-show="blockList[2]" v-for="({},index) in personalMessage.MyplayList"
+            <HaveSongShow :data-type="personalMessage.dataTypeList[index]" 
+            v-if="!saveBlock2?blockList[2]:true" 
+            v-show="saveBlock2?blockList[2]:true" 
+            v-for="({},index) in personalMessage.MyplayList"
             :url="personalMessage.MyplayList[index].coverImgUrl" 
             :title="personalMessage.MyplayList[index].name"
             :id="personalMessage.MyplayList[index].id"
@@ -125,7 +128,7 @@
             @go="go"
             type="playList"
             >
-            </HaveSongShow>    
+            </HaveSongShow> 
         </div>
         <div class="pagination">
             <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
@@ -134,12 +137,13 @@
     </div>
     <!-- {{ $route.query.id }} -->
   </div>
+  <div class="loading" v-else>加载中</div>
 </template>
 
 <script setup lang="ts">
 import {computed, nextTick, reactive, ref,Ref, watch, watchEffect} from 'vue'
 import { useRoute,useRouter } from 'vue-router';
-import { useBasicApi,useMain,useGlobalVar, useMainMenu } from '@renderer/store';
+import { useBasicApi,useMain,useGlobalVar, useMainMenu, useNM } from '@renderer/store';
 import icon from '@renderer/assets/icon.png'
 import Tag from '@renderer/components/myVC/Tag.vue';
 import PlayListShow from '@renderer/components/myVC/PlayListShow.vue';
@@ -157,6 +161,8 @@ const describe = ref()
 const TagList = ref()
 const blockList = ref()
 const nowPage = ref(1)
+const NM = useNM()
+const loading = ref(true)
 if(sessionStorage.getItem('PersonalCenter') == null){
     TagList.value = [true,false]
     blockList.value = [true,false,false]
@@ -225,7 +231,7 @@ const changePage = ()=>{
     let l = nowPage.value == 1?(nowPage.value-1) * 20:(nowPage.value-1) * 20-1
     if(TagList.value[0] != true)l = (nowPage.value-1) * 20
     let r = nowPage.value == 1 && TagList.value[0] == true?19:l+20
-    personalMessage.MyplayList= BaseList.value.slice(l,r)
+    personalMessage.MyplayList = BaseList.value.slice(l,r)
     if(nowPage.value == 1 && TagList.value[0] == true){
         personalMessage.MyplayList.unshift({
             coverImgUrl:'https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305041345401.png',
@@ -265,7 +271,7 @@ const changeTag = (index:number,flag:boolean)=>{
 
 }
 const init = async() =>{
-    if($route.query.id == BasicApi.profile!.userId){
+    if($route.query.id == BasicApi.profile?.userId){
         personalMessage.name = BasicApi.profile!.nickname
         //@ts-ignore
         $route.query.name = personalMessage.name
@@ -278,8 +284,14 @@ const init = async() =>{
         playList.value = Main.playList
     }else{
         try {
-            const p1 = BasicApi.reqDetail($route.query.id!)
-            const p2 = Main.reqUserPlaylist($route.query.id!+'')
+            let p1,p2
+            if(!localStorage.getItem('NMcookie')){
+                p1 = BasicApi.reqDetail($route.query.id!)
+                p2 = Main.reqUserPlaylist($route.query.id!+'')
+            }else{
+                p1 = NM.reqDetail($route.query.id!)
+                p2 = NM.reqUserPlaylist($route.query.id!+'')
+            }
             let results = await Promise.all([p1,p2])
             personalMessage.name = results[0].data.profile!.nickname
             //@ts-ignore
@@ -289,7 +301,6 @@ const init = async() =>{
             personalMessage.like = results[0].data.profile!.follows
             personalMessage.follow = results[0].data.profile!.eventCount
             personalMessage.describe = results[0].data.profile!.signature
-            console.log(BasicApi.followsId,results[0].data.profile!.userId);
             personalMessage.followed = BasicApi.followsId.includes(results[0].data.profile!.userId)
             createPlay.value = results[0].data.profile!.playlistCount  - 1
             playList.value = results[1].data.playlist
@@ -302,7 +313,9 @@ const init = async() =>{
 
     }
 }
+loading.value = true
 await init()
+loading.value = false
 
 
 
@@ -316,9 +329,15 @@ watch(nowPage,()=>{
 })
 const playAll = async (id)=>{
     if(id == -5){
-        const result = await Main.reqUserRecord(+$route.query.id!,1);
+        let result
+        if(localStorage.getItem('NMcookie')){
+            result = await NM.reqUserRecord(+$route.query.id!,1);
+        }else{
+            result = await Main.reqUserRecord(+$route.query.id!,1);
+        }
         console.log(result);
         const songList = result.map(item=>item.song)
+        if(songList.length == 0)return
         console.log(result,songList);
         Main.playingList = songList
         Main.playingPrivileges = songList.map(item=>item.privilege)
@@ -326,32 +345,22 @@ const playAll = async (id)=>{
         Main.playing = songList[0].id as number
         Main.beforePlayListId = -5
         Main.playStatus = 'play'
-        let str = songList[0].name +' - ';
-        let singerArr = songList[0].ar as unknown as Array<any>
-        singerArr.forEach((element,index)=>{
-            str+=element.name
-            if(index != singerArr.length - 1)str+=' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum',str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else{
-        let result = (await Main.reqPlaylistTrackAll(id)).data;
+        let result
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqPlaylistTrackAll(+id)).data;
+        }else{
+            result = (await Main.reqPlaylistTrackAll(+id)).data;
+        }
+        if(result.songs.length == 0)return
         Main.playingList = result.songs
         Main.playingPrivileges = result.privileges
         Main.playingindex = 1
         Main.playing = result.songs[0].id as number
         Main.beforePlayListId = id
         Main.playStatus = 'play'
-        let str = result.songs[0].name +' - ';
-        let singerArr = result.songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element,index)=>{
-            str+=element.name
-            if(index != singerArr.length - 1)str+=' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum',str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }
@@ -363,14 +372,16 @@ const go = ({id,index,uid})=>{
             $router.push({
                 name:'songPlaylist',
                 query:{
-                    id,my:'true',index,type:'歌单'
+                    id,my:'true',index,type:'歌单',
+                    nm:localStorage.getItem('NMcookie')?'true':'false'
                 }
             })
         }else{
             $router.push({
                 name:'songPlaylist',
                 query:{
-                    id,my:'false',index,type:'歌单'
+                    id,my:'false',index,type:'歌单',
+                    nm:localStorage.getItem('NMcookie')?'true':'false'
                 }
             })
         }
@@ -386,10 +397,13 @@ const go = ({id,index,uid})=>{
 }
 
 
-
+const saveBlock2 = ref(false)
 const changeBlock = (index:number)=>{
     blockList.value.fill(false)
     blockList.value[index] = true
+    if(index == 2){
+        saveBlock2.value = true
+    }
 }
 
 const editorPersonal = ()=>{
@@ -402,7 +416,10 @@ $router.afterEach(async(to, from, failure) => {
     console.log(to.name, from.name);
     
     if(to.query.id != from.query.id && to.name == from.name && to.name == 'PersonalCenter'){
+        saveBlock2.value = false
+        loading.value = true
         await init()
+        loading.value = false
         changeTag(0,true)
         globalVar.scrollToTop = true
     }
@@ -442,16 +459,25 @@ const followUser = async()=>{
     try {
         let flag
         //取关
-        if(personalMessage.followed)flag  = await Main.reqFollow($route.query.id,2)
-        else flag = await Main.reqFollow($route.query.id,1)
+        if(localStorage.getItem('NMcookie')){
+            if(personalMessage.followed)flag  = await NM.reqFollow($route.query.id,2)
+            else flag = await NM.reqFollow($route.query.id,1)
+        }else{
+            if(personalMessage.followed)flag  = await Main.reqFollow($route.query.id,2)
+            else flag = await Main.reqFollow($route.query.id,1)
+        }
         if(flag){
             if(personalMessage.followed){
                 globalVar.loadMessageDefault = '取关成功'
                 BasicApi.followsId = BasicApi.followsId.filter(it=>it != +$route.query.id!)
+                BasicApi.profile!.follows--
+                personalMessage.fans--
             }
             else{
                 globalVar.loadMessageDefault = '关注成功'
                 BasicApi.followsId.push(+$route.query.id!)
+                BasicApi.profile!.follows++
+                personalMessage.fans++
             }
             personalMessage.followed =!personalMessage.followed
         }else{

@@ -20,6 +20,7 @@
         <Teleport to="body">
             <Emoji v-show="emoji" :top="topValue" :left="leftValue" @close="emoji = false" :flag="emoji" @sendEmojiStr="sendEmojiStr"></Emoji>
         </Teleport>
+        <slot name="share"></slot>
        <!-- <img :src="getAssetsFile('emoji_1.svg')" alt=""> -->
     </div>
 </template>
@@ -80,7 +81,9 @@ window.electron.ipcRenderer.on('to-changeFished-finshed',()=>{
     reSizePositon();
 })
 onMounted(()=>{
-    getFocus()
+    if($route.name != 'personalFM'){
+        getFocus()
+    }
     reSizePositon();
 })
 
@@ -166,6 +169,7 @@ defineExpose({textarea,getFocus})
                 bottom: 7px;
                 right: 6px;
                 font-size: 12px;
+                color: @font-color;
             }
         }
 

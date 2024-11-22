@@ -12,7 +12,7 @@ export default function (): any {
             newValue = localStorage.getItem('colorBlock') as string
             MainMenu.iconSrc = "/src/assets/icon.png"
         }
-        if (newValue === 'NMblack'  || globalVar.oneself && flag++ == 0) {
+        if (newValue === 'NMblack'  || globalVar.oneself) {
             if(!globalVar.oneself)document.documentElement.style.setProperty('--broundColor', `rgba(34,34,37,1)`);
             // if(globalVar.oneself)document.documentElement.style.setProperty('--broundColor', `rgba(34,34,37,.8)`);
             document.documentElement.style.setProperty('--radioBkColor', `rgb(34,34,37)`);
@@ -87,9 +87,16 @@ export default function (): any {
             document.documentElement.style.setProperty('--rightButtonhover', `rgb(74, 74, 74)`);
             document.documentElement.style.setProperty('--quickBk', `rgb(56, 56, 56)`);
             document.documentElement.style.setProperty('--quickBkStop', `rgb(46, 46, 46)`);
+            document.documentElement.style.setProperty('--followRightBk', `rgb(46, 46, 46)`);
+            if(!globalVar.oneself){
+                document.documentElement.style.setProperty('--fontColorOneself', `rgba(255,255,255,.7)`);
+            }else{
+                document.documentElement.style.setProperty('--fontColorOneself', `rgba(255,255,255,.7)`);
+            }
             primaryColor.value = `rgb(236,65,65)`
             MainMenu.iconSrc = "/src/assets/icon.png"
             // document.documentElement.style.setProperty('--fontColorHover',`rgb(255,255,255)`);
+            window.electron.ipcRenderer.send('set-background-color',['rgb(43,43,43)','rgba(255,255,255,.7)'])
         } else {
             document.documentElement.style.setProperty('--radioBkColor', `rgb(255,255,255)`);
             document.documentElement.style.setProperty('--otherBkColor', `rgb(255,255,255)`);
@@ -162,8 +169,15 @@ export default function (): any {
             document.documentElement.style.setProperty('--smallChoiceBlockColorClick', `rgb(191, 191, 191)`);
             document.documentElement.style.setProperty('--myDialogBk', `rgb(255, 255, 255)`);
             document.documentElement.style.setProperty('--rightButtonhover', `rgb(242, 242, 242)`);
-           document.documentElement.style.setProperty('--quickBk', `rgb(255, 255, 255)`);
+            document.documentElement.style.setProperty('--quickBk', `rgb(255, 255, 255)`);
             document.documentElement.style.setProperty('--quickBkStop', `rgb(223, 225, 226)`);
+            document.documentElement.style.setProperty('--followRightBk', `rgb(245, 245, 247)`);
+            if(!globalVar.oneself){
+                document.documentElement.style.setProperty('--fontColorOneself', `rgba(0,0,0,.7)`);
+            }else{
+                document.documentElement.style.setProperty('--fontColorOneself', `rgba(255,255,255,.7)`);
+            }
+            window.electron.ipcRenderer.send('set-background-color',['rgb(255,255,255)','rgba(0,0,0,.7)'])
         }
         if (newValue === 'NMred') {
             MainMenu.iconSrc = "/src/assets/icon.png"

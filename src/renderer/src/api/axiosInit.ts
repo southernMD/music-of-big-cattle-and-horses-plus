@@ -1,10 +1,9 @@
 import request from "axios";
 
 const axios = request.create({
-    // baseURL:'http://120.48.43.32:3000',
-    baseURL:'http://cloud-music.pl-fe.cn/',
-    // baseURL:'http://localhost:3000',
-    // baseURL:'https://5rg9702841.goho.co'
+    // baseURL:'http://cloud-music.pl-fe.cn/',
+    baseURL:'https://netease-cloud-music-api-ruby-five.vercel.app/',
+    timeout: 30000
 }) 
 
 //请求拦截器，在发起请求前做一些事情
@@ -22,6 +21,7 @@ axios.interceptors.response.use((response) =>{
 
 const niuMaAxios = request.create({
     baseURL:'http://localhost:3000'
+    // baseURL: (await request.get('https://app-update-address.glitch.me/axios_path')).data
 })
 
 

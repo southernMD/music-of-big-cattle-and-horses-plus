@@ -9,7 +9,7 @@
         || ($route.query.name as unknown as string == name && name !=undefined)
         || (name !=undefined && $route.fullPath?.includes(name) ) ) && globalVar.oneself == 1
         ,big:big == true && name !=undefined && ($route.query.name as unknown as string == name || $route.fullPath?.includes(name) ),
-        dragMouseStyleAdd:MainPinia.dragMouse && id != undefined && index!=undefined && index <= MainPinia.createPlay && MainPinia.dragType == 'songMy' ,
+        dragMouseStyleAdd:MainPinia.dragMouse && id != undefined && index!=undefined && index <= MainPinia.createPlay && MainPinia.dragType.startsWith('song'),
         noDrag:!MainPinia.dragMouse ,
         dragMouseStyleCan:MainPinia.dragMouse && MainPinia.dragType.startsWith('playList') && name == undefined && index != undefined && 
         MainPinia.dragIndex != index && index != 0 && MainPinia.dragIndex != 0 &&
@@ -19,7 +19,7 @@
         bottomColor:bottomColorFlag && MainPinia.dragIndex != 0,
         'left-block-oneself':globalVar.oneself == 1
         }" @click="go" @mousedown="movePlayListBegin"
-        @mousemove="overMouse" @mouseout="outMouse"
+        @mouseover="overMouse" @mouseout="outMouse"
         >
         <slot></slot>
         <div>{{ message }}</div>
@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useMain,useGlobalVar, useBasicApi } from '@renderer/store'
+import { useMain,useGlobalVar, useBasicApi,useNM } from '@renderer/store'
 import { toRef, watch, ref, getCurrentInstance,ComponentInternalInstance } from 'vue';
 // import $route from '@/router'
 import { useRouter,useRoute } from 'vue-router';
@@ -37,6 +37,7 @@ const $route = useRoute();
 const MainPinia = useMain();
 const globalVar = useGlobalVar();
 const BasicApi = useBasicApi()
+const NM = useNM()
 const props = defineProps<{
     message: string   //标题信息
     big:boolean         //点击是否放大
@@ -105,7 +106,11 @@ const moveingPlayListEnd = async()=>{
         del = copyPlayList.splice(MainPinia.dragIndex,1)
         copyPlayList.splice(addInde,0,del[0])
         globalVar.loadDefault = true
-        await MainPinia.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
+        if(!localStorage.getItem('NMcookie')){
+            await MainPinia.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
+        }else{
+            await NM.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
+        }
         globalVar.loadDefault = false
         MainPinia.playList = copyPlayList
         //你现在浏览的是要拖动的        
@@ -137,20 +142,24 @@ const go = async () => {
     console.log('触发go事件');
     console.log(props.name,'&^$&*%^(*&)*(&*&*^&%&*())');
     clickFlag.value = true;
-    if(!localStorage.getItem('cookieUser') && !props.name){
+    if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') && !props.name ){
         globalVar.flagLogin = true
     }
     if(props.id){
         let id = props.id as number
+        let query = {
+            id,
+            index:props.index as number,
+            my:MainPinia.playList[props.index!].creator.userId 
+            == BasicApi.profile!.userId?'true':'false',
+            type:'歌单',
+        }
+        if(localStorage.getItem('NMcookie')){
+            query = Object.assign(query,{nm:'true'})
+        }
         $router.push({
             name:'songPlaylist',
-            query:{
-                id,
-                index:props.index as number,
-                my:MainPinia.playList[props.index!].creator.userId 
-                == BasicApi.profile!.userId?'true':'false',
-                type:'歌单'
-            }
+            query
         })
         console.log(props.index);
         

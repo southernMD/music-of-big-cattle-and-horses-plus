@@ -1,5 +1,6 @@
 <template>
-    <header type="true" id="header" ref="header" @dblclick="dbBig" @mousedown.stop="dragWin"
+    <!-- <header type="true" id="header" ref="header" @dblclick="dbBig" @mousedown.stop="dragWin" -->
+    <header type="true" id="header" ref="header" 
         :class="{ changeFontColor: changefontColor && MainMenu.colorBlock != 'NMblack' }">
         <div class="left">
             <el-image v-show="!songMenu" draggable="false" style="width: 25px; height: 25px" :src="iconSrc">
@@ -7,19 +8,23 @@
                     <el-image draggable="false" :src="icon" style="width: 25px; height: 25px"></el-image>
                 </template>
             </el-image>
-            <span v-show="!songMenu" class="title" :class="{ noDrag: !Main.dragMouse }">大牛马音乐plus</span>
+            <span v-show="!songMenu" class="title" :class="{ noDrag: !Main.dragMouse }" @click="goHome">大牛马音乐only</span>
             <i v-show="songMenu" title="收起音乐详情页" class="iconfont icon-xiangxiajiantou" @click="Main.detailStatus = 'close'"
                 :class="{ noDrag: !Main.dragMouse }"></i>
             <transition-group name="hideSearch">
                 <div :key="1" class="option" v-show="scrollY == undefined || scrollY < 300">
-                    <i class="iconfont icon-arrow-left-bold bold" @click="prev" @dblclick.stop
+                    <!-- <i class="iconfont icon-arrow-left-bold bold" @click="prev" @dblclick.stop
+                        :class="{ noDrag: !Main.dragMouse }"></i> -->
+                        <i class="iconfont icon-arrow-left-bold bold" @click="prev" 
                         :class="{ noDrag: !Main.dragMouse }"></i>
-                    <i class="iconfont icon-arrow-right-bold bold" @click="next" @dblclick.stop
+                    <i class="iconfont icon-arrow-right-bold bold" @click="next"
                         :class="{ noDrag: !Main.dragMouse }"></i>
+                        <!-- <i class="iconfont icon-arrow-right-bold bold" @click="next" @dblclick.stop
+                        :class="{ noDrag: !Main.dragMouse }"></i> -->
                 </div>
                 <div :key="2" class="search" v-show="scrollY == undefined || scrollY < 300">
                     <i class="iconfont icon-search"></i>
-                    <input class="search-input" @input="searchSuggestThrottle" v-model="searchKey" @focus="flagSearch=true" @click="flagSearch=true" @keydown="goSearch" type="text" :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
+                    <input ref="searchInputRef" class="search-input" @input="searchSuggestThrottle" v-model="searchKey" @focus="inputFn();flagSearch=true" @blur="inputRemove" @click="flagSearch=true" @keydown="goSearch" type="text" :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
                     <Teleport to="#header" v-if="flagSearch">
                         <SearchTip @close="flagSearch = false" @changeFlag="flag = true" :listTop="listTop" ></SearchTip>
                     </Teleport>
@@ -35,7 +40,7 @@
                         <el-image draggable="false" :src="icon" style="width: 30px; height: 30px"></el-image>
                     </template>
                 </el-image>
-                <div @dblclick.stop :class="{ noDrag: !Main.dragMouse }">
+                <div  :class="{ noDrag: !Main.dragMouse }">
                     <span class="userName">{{ BasicApi.profile?.nickname || '未登陆' }}</span>
                     <i class="iconfont icon-xiajiantou"></i>
                 </div>
@@ -44,10 +49,10 @@
                 </Teleport>
             </div>
             <div class="other" ref="other">
-                <i v-show="!songMenu" @click.stop="changeSkin" @dblclick.stop class="iconfont icon-huanfu"
+                <i v-show="!songMenu" @click.stop="changeSkin"  class="iconfont icon-huanfu"
                     :class="{ noDrag: !Main.dragMouse }"></i>
                 <i class="iconfont icon-setting" @click="setting" :class="{ noDrag: !Main.dragMouse }"></i>
-                <i class="iconfont icon-xinfeng" :class="{ noDrag: !Main.dragMouse }"></i>
+                <i class="iconfont icon-xinfeng" v-if="false" :class="{ noDrag: !Main.dragMouse }"></i>
                 <Teleport to="#header" v-if="flagSkin">
                     <ChangeSkin :l="LeftValue" @close="flagSkin = false" @click.stop></ChangeSkin>
                 </Teleport>
@@ -80,10 +85,12 @@ import { useRouter, useRoute } from 'vue-router';
 import icon from '@renderer/assets/icon.png'
 import iconRed from '@renderer/assets/iconRed.png'
 import {throttle} from 'lodash'
+import {modInput} from '../../utils/modInput'
 // const ChangeSkin = defineAsyncComponent(() => import('./changeSkin/index.vue'))
 // const PersonalMessage = defineAsyncComponent(() => import('./PersonalMessage/index.vue'))
 // const LoginPage = defineAsyncComponent(() => import('../LoginPage.vue'))
 // const ElectronToApp = useElectronToApp();
+const searchInputRef = ref()
 const BasicApi = useBasicApi();
 const MainMenu = useMainMenu();
 const Main = useMain()
@@ -94,9 +101,11 @@ const $route = useRoute();
 let model: Ref<boolean> = toRef(MainMenu, 'model')
 let flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 // let time: any = null;
-let moveFlag: Ref<boolean> = ref(false)
-let mouseX: number = 0;
-let mouseY: number = 0;
+
+// let moveFlag: Ref<boolean> = ref(false)
+// let mouseX: number = 0;
+// let mouseY: number = 0;
+
 let flagMessage: Ref<boolean> = ref(false)
 let flagSkin: Ref<boolean> = ref(false)
 let iconSrc = toRef(MainMenu, 'iconSrc')
@@ -116,12 +125,29 @@ defineProps<{
 //         model.value = true
 //     }
 // })
+onMounted(()=>{
+    window.addEventListener("resize",()=>{
+        console.log("resize",window.innerWidth,window.innerHeight);
+        
+        MainMenu.width = window.innerWidth
+        MainMenu.Height = window.innerHeight
+    })
+})
+
 watch(model, () => {
     setTimeout(() => {
         MainMenu.width = window.innerWidth
         MainMenu.Height = window.innerHeight
     }, 100)
 }, { immediate: true })
+
+watch(()=>[MainMenu.width,MainMenu.Height],()=>{
+    if(MainMenu.width >= 1036 && MainMenu.Height >= 686){
+        model.value = true 
+    }else{
+        model.value = false
+    }
+})
 
 const prev = () => {
     if ($route.name == 'moreComment' && +$route.query.type! == 0 && Main.songType != 'FM' && Main.playing == +$route.query.id!) Main.detailStatus = 'open'
@@ -141,7 +167,7 @@ const guanbi = () => {
 
 //中化
 const zhonghua = () => {
-    model.value = false
+    // model.value = false
     window.electron.ipcRenderer.send('to-middle')
     if (flagMessage.value) {
         let t = setTimeout(() => {
@@ -154,7 +180,7 @@ const zhonghua = () => {
 
 //最大化
 const zuidahua = () => {
-    model.value = true
+    // model.value = true
     window.electron.ipcRenderer.send('to-big')
     if (flagMessage.value) {
         let t = setTimeout(() => {
@@ -170,46 +196,46 @@ const zuixiaohua = () => {
     window.electron.ipcRenderer.send('to-small')
 }
 
+//2024/11/21已经废弃准备采用-webkit-app-region
+//https://www.electronjs.org/zh/docs/latest/tutorial/window-customization#%E8%AE%BE%E7%BD%AE%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%AF%E6%8B%96%E5%8A%A8%E5%8C%BA%E5%9F%9F
 //双击最大化 待优化
-const dbBig = (e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // const header: HTMLElement = $el.refs.header as HTMLElement
-    if (model.value === false) {
-        zuidahua();
-    } else {
-        zhonghua();
-    }
-}
+// const dbBig = (e: Event) => {
+//     // const header: HTMLElement = $el.refs.header as HTMLElement
+//     if (model.value === false) {
+//         zuidahua();
+//     } else {
+//         zhonghua();
+//     }
+// }
 
-//单击拖动
-const dragWin = (e: any) => {
-    console.log('e.path.length', e.path.length);
-    if (e.path.length == 8 || e.path.length == 7 || ((e.path.length == 9 || e.path.length == 10) && Main.detailStatus == 'open')) {
-        moveFlag.value = true;
-        mouseX = e.pageX
-        mouseY = e.pageY
-        // console.log('mousedown');
+// //单击拖动
+// const dragWin = (e: any) => {
+//     console.log('e.path.length', e.path.length);
+//     if (e.path.length == 8 || e.path.length == 7 || ((e.path.length == 9 || e.path.length == 10) && Main.detailStatus == 'open')) {
+//         moveFlag.value = true;
+//         mouseX = e.pageX
+//         mouseY = e.pageY
+//         // console.log('mousedown');
 
-        window.addEventListener('mouseup', destroyDragWin);
-    }
-}
+//         window.addEventListener('mouseup', destroyDragWin);
+//     }
+// }
 
-watch(moveFlag, (newValue) => {
-    if (newValue && !model.value) {
-        window.electron.ipcRenderer.send('move-screen', { mouseX, mouseY })
-    } else {
-        window.electron.ipcRenderer.send('cancel-screen')
-    }
-})
+// watch(moveFlag, (newValue) => {
+//     if (newValue && !model.value) {
+//         window.electron.ipcRenderer.send('move-screen', { mouseX, mouseY })
+//     } else {
+//         window.electron.ipcRenderer.send('cancel-screen')
+//     }
+// })
 
-const destroyDragWin = () => {
-    moveFlag.value = false;
-    // console.log('mouseup');
-    window.removeEventListener('mouseup', destroyDragWin);
-}
+// const destroyDragWin = () => {
+//     moveFlag.value = false;
+//     // console.log('mouseup');
+//     window.removeEventListener('mouseup', destroyDragWin);
+// }
 
-// //右上角的叉点击
+// //右上角的叉点击，退出面板页面已经被废弃
 // interface T {
 //     ifToClose: boolean
 // }
@@ -445,6 +471,24 @@ const setting = ()=>{
         name:'setting'
     })
 }
+
+const goHome = ()=>{
+    $router.push({
+        path:'/app/findMusic/find1'
+    })
+}
+
+const onKeyDown = (event: KeyboardEvent) => {
+    searchKey.value = modInput(event, searchInputRef.value, searchKey.value);
+}
+
+const inputFn = ()=>{
+    window.addEventListener('keydown',onKeyDown)
+}
+
+const inputRemove = ()=>{
+    window.removeEventListener('keydown',onKeyDown)
+}
 </script> 
 
 <style lang="less" scoped>
@@ -497,8 +541,10 @@ header {
     align-items: center;
     flex-wrap: wrap;
     position: relative;
+    -webkit-app-region: drag;
 
     .left {
+        -webkit-app-region: no-drag;
         display: flex;
         align-items: center;
 
@@ -574,6 +620,8 @@ header {
     .right {
         display: flex;
         align-items: center;
+        -webkit-app-region: no-drag;
+
 
         canvas {
             margin-right: 15px;

@@ -8,7 +8,7 @@
         </div>
         <div class="msg2" v-show="ifZhuanfu" v-html="RegTxt(msg)" @click="goPersonalX">
         </div>
-        <div class="base" ref="base" :class="{zhuanfa:ifZhuanfu}" @click.self="ifZhuanfu?goZhuanFa():()=>{} ">
+        <div class="base" v-if="!DEL_OR" ref="base" :class="{zhuanfa:ifZhuanfu}" @click.self="ifZhuanfu?goZhuanFa():()=>{} ">
             <div class="msg2">
                 <span class="name" @click="goPersonal(val.event.user.userId)" v-if="ifZhuanfu">@{{ props.val.event.user.nickname }}</span> 
                 <span v-if="ifZhuanfu">{{ `${typeMap.get(typeI)}：` }}</span>
@@ -21,11 +21,14 @@
                             <div class="image-slot">
                             </div>
                         </template>
+                        <template #placeholder>
+                            <img src="/src/assets/icon.png" alt="">
+                        </template>
                     </el-image >
                     <div class="t">
                         <div class="title">
                             <span class="tag">{{ tagName }}</span>
-                            {{shareTitle}}
+                            <span class="shareTitle">{{shareTitle}}</span>
                             <span class="otherms" v-if="otherMessage.length != 0">{{ otherMessage }}</span></div>
                         <div class="other">
                             <span v-for="it,index in smallMessage">
@@ -47,7 +50,7 @@
                         </div>
                         <div class="content">{{ valI.resource.resourceName }}</div>
                     </div>
-                    <div class="b" v-else>
+                    <div class="b del_commit" v-else>
                         该评论已经删除
                     </div>
                 </div>
@@ -92,6 +95,9 @@
                 <i class="line">|</i>
                 <i class="iconfont icon-pinglun" @click="!ifZhuanfu?showPing():()=>{}"><span>{{ infoI.commentCount?`(${infoI.commentCount})`:'' }}</span></i>
             </div>
+        </div>
+        <div class="base zhuanfa" v-else>
+            <div class="del">该动态已经删除</div>
         </div>
         <div class="option" v-if="ifZhuanfu">
             <i class="iconfont icon-dianzan" v-if="!infoW.liked" @click="throttleDianzan(threadId,1,'W')"><span>{{ infoW.likedCount?`(${infoW.likedCount})`:'' }}</span></i>
@@ -141,16 +147,17 @@
 
 <script setup lang="ts">
 import {ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, provide, ref, toRaw, watch} from 'vue'
-import {useMain,useGlobalVar, useBasicApi} from '@renderer/store'
+import {useMain,useGlobalVar, useBasicApi,useNM} from '@renderer/store'
 import { Timeago2 } from '@renderer/utils/dayjs'
 import CommentList from './CommentList.vue'
 import MyDialog from './MyDialog.vue'
 import {throttle} from 'lodash'
-import {regEmoji} from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
+import { regEmoji } from '@renderer/utils/regEmoji'
 const $router = useRouter()
 // import {regEmoji} from '@/utils/regEmoji'
 const fenxiang = ref(true)
+const NM = useNM()
 const BasicApi = useBasicApi()
 provide('fenxiang', fenxiang)
 const props = defineProps<{
@@ -177,14 +184,16 @@ watch(()=>props,()=>{
     typeI.value = props.type
     infoI.value = Object.assign({}, props.info)
     infoW.value = Object.assign({}, props.info)
+    infoI.value.liked = Boolean(infoI.value.liked)
+    infoW.value.liked = Boolean(infoW.value.liked)
     threadIdI.value = props.threadId
 },{immediate:true,deep:true})
 
 const typeMap = new Map([
 [18,'分享单曲'],
 [19,'分享专辑'],
-[28,'分享电台节目'],
-[17, '分享电台节目'],
+[28,'分享播客'],
+[17, '分享声音'],
 [22,'转发'],
 [35,'发布动态'],
 [13,'分享歌单'],
@@ -203,6 +212,7 @@ const smallMessage:Ref<string[]> = ref([])
 //是不是转发
 const ifZhuanfu = ref(false)
 const shareId = ref()
+const DEL_OR = ref(false)
 const typeChange = ()=>{
     if(typeI.value == 18){
         tagName.value = '歌曲'
@@ -236,21 +246,43 @@ const typeChange = ()=>{
         smallMessage.value = ['视频暂不支持播放']
     }else if(typeI.value== 22){
         ifZhuanfu.value = true
-        valI.value = JSON.parse(props.val.event.json)
-        console.log(valI.value);
-        picsI.value = props.val.event.pics
-        typeI.value = props.val.event.type
-        infoI.value = Object.assign({}, props.val.event.info) 
-        threadIdI.value = props.val.event.threadId
-        typeChange()
-    }else if(typeI.value== 28 || typeI.value==17){
+        if(props.val.event != null){
+            valI.value = props.val.event.json instanceof Object?props.val.event.json:JSON.parse(props.val.event.json)
+            console.log(valI.value);
+            picsI.value = props.val.event.pics
+            typeI.value = props.val.event.type
+            infoI.value = Object.assign({}, props.val.event.info) 
+            infoI.value.liked = Boolean(infoI.value.liked)
+            threadIdI.value = props.val.event.threadId
+            typeChange()
+        }else{
+            DEL_OR.value = true
+        }
+    }else if(typeI.value==17){
+        //电台节目
         tagName.value = '电台'
         console.log(msg.value);
         shareCover.value = valI.value.program?.coverUrl
         shareTitle.value = valI.value.program?.name
         smallMessage.value = [valI.value.program?.radio?.name]
-    }else if(typeI.value == 31){
+        shareId.value = valI.value.program?.id
+    }else if(typeI.value== 28){
+        console.log(valI.value);
+        tagName.value = valI.value.djRadio.category
+        shareCover.value = valI.value.djRadio?.picUrl
+        shareTitle.value = valI.value.djRadio?.name
+        smallMessage.value = [`by ${valI.value.djRadio?.dj.nickname}`]
+        shareId.value = valI.value.djRadio?.id
+    }
+    else if(typeI.value == 31){
 
+    }else if(typeI.value == 36){
+        tagName.value = '歌手'
+        console.log(valI.value.resource,'歌手');
+        shareCover.value = valI.value.resource.picUrl
+        shareTitle.value = valI.value.resource.name
+        smallMessage.value = valI.value.resource.alias
+        shareId.value = valI.value.resource.id
     }
 }
 const dataType = ref('')
@@ -263,6 +295,8 @@ watch(()=>typeI,()=>{
         dataType.value = 'sharePlayList'
     }else if( typeI.value == 19){
         dataType.value = 'shareAl'
+    }else if(typeI.value == 36){
+        dataType.value = 'shareAr'
     }
     if(props.user.userId == BasicApi.profile!.userId){
         dataType.value+='shareMy'
@@ -284,15 +318,27 @@ const subCommit = async()=>{
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
             globalVar.loadMessageDefaultFlag = true
         }else{
-            let obj:comment.sendComment = {
-                t:2,
-                type:6,
-                threadId:props.threadId,
-                content:commitMessage.value.split(`回复${replayName.value}:`)[1],
-                commentId:replayId.value
+            let obj:comment.sendComment,result
+            if(localStorage.getItem('NMcookie')){
+                obj = {
+                    t:2,
+                    type:6,
+                    id:props.threadId,
+                    content:commitMessage.value.split(`回复${replayName.value}:`)[1],
+                    commentId:replayId.value
+                }
+                result = (await NM.reqcomment(obj)).data;
+            }else{
+                obj = {
+                    t:2,
+                    type:6,
+                    threadId:props.threadId,
+                    content:commitMessage.value.split(`回复${replayName.value}:`)[1],
+                    commentId:replayId.value
+                }
+                result = (await Main.reqcomment(obj)).data;
             }
             console.log(obj);
-            let result = (await Main.reqcomment(obj)).data;
             console.log(result);
             if(result.code == 200){
                 globalVar.loadMessageDefaultFlag = true;
@@ -323,13 +369,24 @@ const subCommit = async()=>{
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
             globalVar.loadMessageDefaultFlag = true
         }else{
-            let obj:comment.sendComment = {
-                t:1,
-                type:6,
-                threadId:props.threadId,
-                content:commitMessage.value
+            let obj:comment.sendComment,result;
+            if(localStorage.getItem('NMcookie')){
+                obj = {
+                    t:1,
+                    type:6,
+                    id:props.threadId,
+                    content:commitMessage.value
+                }
+                result = (await NM.reqcomment(obj)).data;
+            }else{
+                obj = {
+                    t:1,
+                    type:6,
+                    threadId:props.threadId,
+                    content:commitMessage.value
+                }
+                result = (await Main.reqcomment(obj)).data;
             }
-            let result = (await Main.reqcomment(obj)).data;
             if(result.code == 200){
                 globalVar.loadMessageDefault = '评论成功！'
                 globalVar.loadMessageDefaultFlag = true
@@ -482,7 +539,12 @@ let nowPage = ref(1);
 let moreHot = ref(false)
 const loadComment = async()=>{
     commentFlag.value = false
-    let result = (await Main.reqMyEventComment(props.threadId,20,0))
+    let result
+    if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqMyEventComment(props.threadId,20,0))
+    }else{
+        result = (await Main.reqMyEventComment(props.threadId,20,0))
+    }
     hotComments.value = result.hotComments;
     comments.value = result.comments;
     total.value = result.total
@@ -508,6 +570,7 @@ const RegTxt = (msg:string)=>{
     msg = msg.replace(/(@.+?) /g, '<a href="javascript:;">$1</a> ');
     msg = msg.replace(/\/\/(@.+?)：/g, '//<a href="javascript:;">$1</a>：');
     msg = msg.replace(/\n/g, "<br>");
+    msg = regEmoji(msg)
     return msg;
 }
 
@@ -540,6 +603,43 @@ const shareHandle = async()=>{
                 id:shareId.value,type:"歌单",my:'false'
             }
         })
+    }else if(typeI.value == 36){
+        $router.push({
+            name:'SongHand',
+            query:{
+                id:shareId.value
+            }
+        })
+    }else if(typeI.value==17){
+        const result = (await Main.djProgramDetail(shareId.value))
+        console.log(result);
+        let index = 0
+        if (Main.playingindex == -1) index = 0
+        else index = Main.playingindex
+        Main.playingList.splice(index, 0, result)
+        Main.playingPrivileges.splice(index, 0, {
+            id:result.mainSong.id,
+            maxBrLevel: "DJ",
+            playMaxBrLevel: "DJ",
+            downloadMaxBrLevel: "DJ",
+            plLevel: "DJ",
+            dlLevel: "DJ",
+            flLevel: "DJ",
+        })
+        console.log(result.mainSong.id);
+        Main.playingindex = index + 1
+        Main.playing =  result.mainSong.id
+        Main.playStatus = 'play'
+        Main.songType = 'DJ'
+    }else if(typeI.value== 28){
+        $router.push({
+            name:'djPlaylist',
+            query:{
+                type:'播客',
+                id:shareId.value,
+                my:'false',
+            }
+        })
     }
 }
 const goZhuanFa = ()=>{
@@ -550,12 +650,19 @@ const dianzan = async(id:string,t:1|2,T:'I'|'W')=>{
     let info:any;
     if(T== 'I')info = infoI
     else info = infoW
-    if(await Main.reqLikeResource(id,6,t)){
+    let flag 
+    if(localStorage.getItem('NMcookie')){
+        flag = await NM.reqLikeResource(id,t)
+    }else{
+        flag = await Main.reqLikeResource(id,6,t)
+    }
+    if(flag){
         if(t == 2)info.value.likedCount--
         else info.value.likedCount++
         info.value.liked = !info.value.liked
     }else{
         globalVar.loadMessageDefaultFlag = true
+        globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefault = '点赞失败'
     }
 }
@@ -594,12 +701,25 @@ const confirm = async()=>{
     zhuanfuFlag.value = false
     globalVar.loadDefault = true
     let result 
-    if(way.value == 'w')result =  await Main.reqEventForward(props.user.userId,props.id,zhuanfaMessage.value)
-    else result =  await Main.reqEventForward( props.val.event.user.userId, props.val.event.id,zhuanfaMessage.value)
+    if(way.value == 'w'){
+        if(localStorage.getItem('NMcookie')){
+            result = await NM.reqEventForward(props.user.userId,props.id,zhuanfaMessage.value)
+        }else{
+            result = await Main.reqEventForward(props.user.userId,props.id,zhuanfaMessage.value)
+        }
+    }
+    else {
+        if(localStorage.getItem('NMcookie')){
+            result =  await NM.reqEventForward( props.val.event.user.userId, props.val.event.id,zhuanfaMessage.value)
+        }else{
+            result =  await Main.reqEventForward( props.val.event.user.userId, props.val.event.id,zhuanfaMessage.value)
+        }
+    }
     globalVar.loadDefault = false
     if(result.code == 200){
         globalVar.loadMessageDefaultFlag = true
         globalVar.loadMessageDefault = '转发成功'
+        BasicApi.profile!.eventCount++
     }else{
         globalVar.loadMessageDefaultFlag = true
         globalVar.loadMessageDefault = '转发失败'
@@ -675,7 +795,7 @@ const goPersonalX = async(e)=>{
 }
 
 const goSongComments = (cid,sonJSON)=>{
-    const sid = JSON.parse(sonJSON).id
+    const sid = sonJSON instanceof Object?sonJSON.id:JSON.parse(sonJSON).id
     $router.push({
         name:'SongComments',
         query:{
@@ -822,6 +942,9 @@ watch(replayFlag,()=>{
                                 color: @small-font-color;
                                 display: inline-block;
                             }
+                            .shareTitle{
+                                color: @font-color;
+                            }
                             .otherms{
                                 width: 50%;
                                 white-space: nowrap;
@@ -851,7 +974,7 @@ watch(replayFlag,()=>{
                         }
                     }
                     .shareSong{
-                        min-height: 80px;
+                        // min-height: 80px;
                         height: auto;
                         display: flex;
                         flex-direction: column;
@@ -883,6 +1006,12 @@ watch(replayFlag,()=>{
                                     font-size: 20px;
                                 }
                             }
+                        }
+                        .del_commit{
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            font-size: 12px;
                         }
                     }
                 }
@@ -997,6 +1126,13 @@ watch(replayFlag,()=>{
                             margin-left: 5px;
                         }
                     }
+                }
+                .del{
+                    height: 30px;
+                    font-size: 12px ;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
             }
             >.comment-list{

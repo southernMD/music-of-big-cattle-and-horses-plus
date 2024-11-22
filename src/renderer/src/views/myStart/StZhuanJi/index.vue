@@ -8,7 +8,7 @@
                 <i class="iconfont icon-guanbi_o" v-else @click="clearSearch" :class="{ noDrag: !Main.dragMouse }"></i>
             </div>
         </div>
-        <div class="list">
+        <div class="list" :class="{'list-oneself':globalVar.oneself}">
             <HBlock v-show="searchKey.length == 0" 
                 v-for="val in list" 
                 type="startal"
@@ -40,12 +40,13 @@
 
 <script setup lang="ts">
 import { ref, watch, Ref,toRef } from 'vue'
-import { useMain, useBasicApi } from '@renderer/store'
+import { useMain, useBasicApi ,useGlobalVar} from '@renderer/store'
 import { useRouter } from 'vue-router'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
 import { throttle } from 'lodash'
 const Main = useMain()
 const $router = useRouter()
+const globalVar = useGlobalVar()
 const BasicApi = useBasicApi()
 const searchKey = ref('')
 const clearSearch = () => {

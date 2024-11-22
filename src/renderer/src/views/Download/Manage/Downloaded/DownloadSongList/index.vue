@@ -65,7 +65,7 @@ const getSinger = (names: string | string[], ids: string): any[] => {
     let namesList = names as string[]
     if(typeof(names) == 'string')namesList = names.split('/')
     const idsList = ids.split(',')
-    namesList.forEach(({ }, index) => {
+    namesList?.forEach(({ }, index) => {
         arr.push({ id: +idsList[index], name: namesList[index] })
     })
     return arr
@@ -117,9 +117,14 @@ const pushPlayList = async(flag:1 | undefined,list2 = Array.from(list.value))=>{
 }
 
 const localPlay = async({index,id})=>{
-    if(globalVar.setting.playWay)await pushPlayList(undefined)  //替换
-    else await pushPlayList(1,[list.value[index - 1]])
-    Main.playingindex = index
+    if(globalVar.setting.playWay){//替换
+        await pushPlayList(undefined)
+        Main.playingindex = index
+    }  
+    else {
+        await pushPlayList(1,[list.value[index - 1]])
+        Main.playingindex = Main.playingindex == -1?1:Main.playingindex+1
+    }
     Main.playStatus = 'play'
     Main.songType = 'song'
     if(globalVar.setting.playWay)Main.beforePlayListId = 0

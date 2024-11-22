@@ -5,7 +5,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'fs'
 import os from 'os'
 import videoServer from './video-server'
-import httpSever from './http/app'
+// import httpSever from './http/app'
 import {createWindow,lrcwindow,dragWindw} from './windows'
 import log from 'electron-log'
 // import *  as bytenode from 'bytenode'
@@ -43,7 +43,7 @@ if (!isAppAlreadyRunning) {
       optimizer.watchWindowShortcuts(window)
     })
     // httpSever()
-    videoServer(createWindow(path))
+    videoServer(await createWindow(path))
     lrcwindow()
     dragWindw()
     //托盘事件

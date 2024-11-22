@@ -1,11 +1,11 @@
 <template>
+
   <div class="rightBlock" ref="rightBlockRef" v-show="flag && rightFlag">
     <div class="list">
         <div class="op" @mouseenter="messageList[index].endsWith('收藏') && ((type.startsWith('song') && ! type.startsWith('songHand'))|| type == 'shareSong' || type == 'FM' || type == 'top50')?showStartList():hideStartList()" 
         @click="eventsHandle[index].bind(null,params[index])()"  
         v-for="val,index in eventLength"  :class="{'op-border':ifBorderBottom[index]}" 
         >
-        <!-- -->
             <div class="icon">
                 <i class="iconfont" :class="[iconList[index]]"></i>
             </div>
@@ -41,10 +41,11 @@
 <script setup lang="ts">
 import { watch,watchEffect,ref, nextTick,Ref, inject, ShallowRef, toRef, computed } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
-import { useMain ,useGlobalVar,useBasicApi} from '@renderer/store'
+import { useMain ,useGlobalVar,useBasicApi,useNM} from '@renderer/store'
 import PromiseQueue, { QueueAddOptions } from 'p-queue'
 import { Queue, RunFunction } from 'p-queue/dist/queue';
 const Main = useMain()
+const NM = useNM()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const $router = useRouter()
@@ -64,7 +65,13 @@ const props = defineProps<{
     path:string | null | undefined
     commentType:string | null | undefined
     evid:string | null | undefined
+    djName:string | null | undefined
+    djId:string | null | undefined
+    djprogramid:string | null | undefined
+    djprogramName:string | null | undefined
+    radioid:string | null | undefined
 }>()
+
 const flag = ref(false)
 const rightBlockRef = ref<InstanceType<typeof HTMLElement>>()
 watchEffect(()=>{
@@ -212,7 +219,7 @@ const buildList = ()=>{
             iconList.value = ['icon-lajixiang']
             params.value.push(...[props.evid])
             eventsHandle.value.push(...[delev])
-        }else {
+        }else if(!props.type.startsWith('shareAr')){
             messageList.value.push(...['播放','下一首播放'])
             ifBorderBottom.value.push(...[false,false])
             iconList.value.push(...['icon-bofang_o','icon-nextplay'])
@@ -259,6 +266,62 @@ const buildList = ()=>{
             params.value.push(...[props.id,props.index,props.index,props.id,props.id,props.path,props.path])
             eventsHandle.value.push(...[look,play,nextPlay,function(){},share,openFile,delDownload])
         }
+    }else if(props.type.startsWith('songPanel')){
+        if(props.type.endsWith('nor')){
+            messageList.value.push(...['播放'])
+            ifBorderBottom.value.push(...[true])
+            iconList.value.push(...['icon-bofang_o'])
+            params.value.push(...[props.id])
+            eventsHandle.value.push(...[play])
+            messageList.value.push('打开文件所在目录','从列表中删除')
+            ifBorderBottom.value.push(...[true,false])
+            iconList.value.push(...['icon-wenjian','icon-lajixiang'])
+            eventsHandle.value.push(openFile,deleteFromList)
+            params.value.push(...[props.path,props.index])
+        }else{
+            messageList.value.push(...['查看评论','播放'])
+            ifBorderBottom.value.push(...[false,true])
+            iconList.value.push(...['icon-chakan','icon-bofang_o'])
+            params.value.push(...[props.id,props.id])
+            eventsHandle.value.push(...[look,play])
+            if(props.type.endsWith('Local')){
+                messageList.value.push(...['收藏','分享','打开文件所在目录','从列表中删除'])
+                ifBorderBottom.value.push(...[false,false,true,false])
+                iconList.value.push(...['icon-tianjiawenjian','icon-fenxiang1','icon-wenjian','icon-lajixiang'])
+                eventsHandle.value.push(...[function(){},share,openFile,deleteFromList])
+                params.value.push(...[props.id,props.id,props.path,props.index])
+            }else if(props.type.endsWith('DJ')){
+                messageList.value.push(...[`主播：${props.djName}`,`来自：${props.djprogramName}`,'分享'])
+                ifBorderBottom.value.push(...[false,true,false])
+                iconList.value.push(...['icon-gerenzhongxin-wodexinxi','icon-relevance','icon-fenxiang1'])
+                eventsHandle.value.push(...[DJPersonalpage,DJprogrampage,share])
+                params.value.push(...[props.djId,props.radioid,props.djprogramid])
+                if(props.type.includes('Local')){
+                    messageList.value.push(...['打开文件所在目录'])
+                    ifBorderBottom.value.push(...[true])
+                    iconList.value.push(...['icon-wenjian'])
+                    eventsHandle.value.push(...[openFile])
+                    params.value.push(...[props.path])
+                }else{
+                    messageList.value.push(...['下载'])
+                    ifBorderBottom.value.push(...[true])
+                    iconList.value.push(...['icon-xiazai1'])
+                    eventsHandle.value.push(...[download])
+                    params.value.push(...[props.id])
+                }
+                messageList.value.push('从列表中删除')
+                ifBorderBottom.value.push(false)
+                iconList.value.push('icon-lajixiang')
+                params.value.push(props.index)
+                eventsHandle.value.push(deleteFromList)
+            }else{
+                messageList.value.push(...['收藏','分享','下载','从列表中删除'])
+                ifBorderBottom.value.push(...[false,false,true,false])
+                iconList.value.push(...['icon-tianjiawenjian','icon-fenxiang1','icon-xiazai1','icon-lajixiang'])
+                eventsHandle.value.push(...[function(){},share,download,deleteFromList])
+                params.value.push(...[props.id,props.id,props.id,props.index])
+            }
+        }
     }else if(props.type.startsWith('song')){
         messageList.value.push(...['查看评论','播放','下一首播放','收藏','分享'])
         ifBorderBottom.value.push(...[false,false,true,false,false])
@@ -294,6 +357,25 @@ const buildList = ()=>{
             iconList.value.push('icon-lajixiang')
             params.value.push(props.index)
             eventsHandle.value.push(delfromlately)
+        }
+    }else if(props.type.startsWith('DJprograme')){
+        messageList.value.push(...['查看评论','播放','下一首播放','分享'])
+        ifBorderBottom.value.push(...[false,false,true,false])
+        iconList.value.push(...['icon-chakan','icon-bofang_o','icon-nextplay','icon-fenxiang1'])
+        params.value.push(...[props.id,props.id,props.id,props.djprogramid])
+        eventsHandle.value.push(...[look,play,nextPlay,share])
+        if(props.type.endsWith('Local')){
+            messageList.value.push('打开文件所在目录')
+            ifBorderBottom.value.push(false)
+            iconList.value.push(...['icon-wenjian'])
+            eventsHandle.value.push(openFile)
+            params.value.push(props.path)
+        }else{
+            messageList.value.push('下载')
+            ifBorderBottom.value.push(false)
+            iconList.value.push('icon-xiazai1')
+            params.value.push(props.id)
+            eventsHandle.value.push(download)
         }
     }
     eventLength.value = messageList.value.length
@@ -355,10 +437,26 @@ const look = (id:string)=>{
             }
         })
     }else if(props.type.startsWith('song')){
+        if(props.type.includes('DJ')){
+            $router.push({
+                name:'SongComments',
+                query:{
+                    id:props.djprogramid,type:'声音',programId:id
+                }
+            })
+        }else{
+            $router.push({
+                name:'SongComments',
+                query:{
+                    id,type:'歌曲'
+                }
+            })
+        }
+    }else if(props.type.startsWith('DJprograme')){
         $router.push({
             name:'SongComments',
             query:{
-                id,type:'歌曲'
+                id:props.djprogramid,type:'声音',programId:id
             }
         })
     }
@@ -368,14 +466,22 @@ const play = async(id:string)=>{
     if(props.type.startsWith('playList')){
         let result 
         if(['playListMy','playListLike','playListSearchMy','playListStart','playList'].includes(props.type)){
-            result = (await Main.reqPlaylistTrackAll(id)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(id)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(id)).data;
+            }
             Main.playingList = result.songs
             Main.playingPrivileges = result.privileges
             Main.playingindex = 1
             Main.playing = result.songs[0].id as number
             Main.beforePlayListId = +id
         }else if(['playListRank'].includes(props.type)){
-            result = await Main.reqUserRecord(+$route.query.id!,1);
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(+$route.query.id!,1);
+            }else{
+                result = await Main.reqUserRecord(+$route.query.id!,1);
+            }
             const songList = result.map(item=>item.song)
             Main.playingList = songList
             Main.playingPrivileges = songList.map(item=>item.privilege)
@@ -384,20 +490,16 @@ const play = async(id:string)=>{
             Main.beforePlayListId = -5
         }
         Main.playStatus = 'play'
-        let str = result.songs[0].name + ' - ';
-        let singerArr = result.songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else if(props.type.startsWith('share')){
         let result 
         if(props.type.startsWith('sharePlayList') ){
-            result = (await Main.reqPlaylistTrackAll(+id)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(+id)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(+id)).data;
+            }
             Main.playingList = result.songs
             Main.playingPrivileges = result.privileges
             Main.playingindex = 1
@@ -419,14 +521,6 @@ const play = async(id:string)=>{
             Main.beforePlayListId = +id
         }
         Main.playStatus = 'play'
-        let str = result.songs[0].name + ' - ';
-        let singerArr = result.songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else if(props.type == 'top50'){
@@ -437,14 +531,6 @@ const play = async(id:string)=>{
         Main.playing = songs[0].id as number
         Main.beforePlayListId = +id
         Main.playStatus = 'play'
-        let str = songs[0].name + ' - ';
-        let singerArr = songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已经开始播放'
         globalVar.closePointOut = true
     }else if(props.type.startsWith('song')){
@@ -477,11 +563,56 @@ const play = async(id:string)=>{
             }else{
                 window.electron.ipcRenderer.send('right-click',{flag:true,path:props.path})
             }
+        }else if(props.type.startsWith('songPanel')){
+            console.log('songPanel','songPanel','songPanel');
+            Main.playing = +id 
+            Main.playingindex = +props.index! + 1
+            Main.playStatus = 'play'
+            if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
+                Main.songType = 'DJ'
+            }else{
+                Main.songType = 'song'
+            }
         }
+    }else if(props.type.startsWith('DJprograme')){
+        let result = await Main.djProgramDetail(props.djprogramid)
+        if(Main.playingindex == -1)Main.playingindex = 0
+        Main.playingList.splice(Main.playingindex,0,result)
+        Main.playingPrivileges.splice(Main.playingindex,0,{
+            id,
+            maxBrLevel: "DJ",
+            playMaxBrLevel: "DJ",
+            downloadMaxBrLevel: "DJ",
+            plLevel: "DJ",
+            dlLevel: "DJ",
+            flLevel: "DJ",
+        })
+        Main.playingindex++
+        Main.playing = +id
+        Main.playStatus = 'play'
+        globalVar.closePointOutMessage = '已经开始播放'
+        globalVar.closePointOut = true
+        Main.songType = 'DJ'
     }
-    Main.songType = 'song'
+    if(!props.type.startsWith('songPanel') || !props.type.startsWith('DJprograme'))Main.songType = 'song'
 }
-
+    // if(flag){
+    //     if(id > 0){
+    //         if(path != undefined){
+    //             return 'songPanelLocal'
+    //         }else{
+    //             return 'songPanel'
+    //         }
+    //     }else{
+    //         return 'songPanelnor'
+    //     }
+    // }else{
+    //     if(path != undefined){
+    //         return 'songPanelLocalDJ'
+    //     }else{
+    //         return 'songPanelDJ'
+    //     }
+    // }
 const nextPlay = async(id:string)=>{
     console.log(Main.playingindex);
     if(props.type.startsWith('playList')){
@@ -491,7 +622,11 @@ const nextPlay = async(id:string)=>{
         }
         let result 
         if(['playListMy','playListLike','playListSearchMy','playListStart','playList',].includes(props.type)){
-            result = (await Main.reqPlaylistTrackAll(id)).data;
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(+id)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(+id)).data;
+            }
             const list:any = []
             const listPrivileges:any = []
             result.songs.forEach((element: any, index: number) => {
@@ -503,7 +638,11 @@ const nextPlay = async(id:string)=>{
             Main.playingList.splice(Main.playingindex,0,...list)
             Main.playingPrivileges.splice(Main.playingindex,0,...listPrivileges)
         }else if(['playListRank'].includes(props.type)){
-            result = await Main.reqUserRecord(+$route.query.id!,1);
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(+$route.query.id!,1);
+            }else{
+                result = await Main.reqUserRecord(+$route.query.id!,1);
+            }
             const list = result.map(item=>item.song)
             const listPrivileges = list.map(item=>item.privilege)
             Main.playingList.splice(Main.playingindex,0,...list)
@@ -520,7 +659,11 @@ const nextPlay = async(id:string)=>{
             let list:any = []
             let listPrivileges:any = []
             if(props.type.startsWith('sharePlayList')){
-                result = (await Main.reqPlaylistTrackAll(+id)).data;
+                if(localStorage.getItem('NMcookie')){
+                    result = (await NM.reqPlaylistTrackAll(+id)).data;
+                }else{
+                    result = (await Main.reqPlaylistTrackAll(+id)).data;
+                }
                 list = result.songs
                 listPrivileges = result.privileges
             }else if(props.type.startsWith('shareSong')){
@@ -586,6 +729,21 @@ const nextPlay = async(id:string)=>{
                 // globalVar.playLoacalIndex = -id
             }
         }
+    }else if(props.type.startsWith('DJprograme')){
+        let result = await Main.djProgramDetail(props.djprogramid)
+        if(Main.playingindex == -1)Main.playingindex = 0
+        Main.playingList.splice(Main.playingindex,0,result)
+        Main.playingPrivileges.splice(Main.playingindex,0,{
+            id,
+            maxBrLevel: "DJ",
+            playMaxBrLevel: "DJ",
+            downloadMaxBrLevel: "DJ",
+            plLevel: "DJ",
+            dlLevel: "DJ",
+            flLevel: "DJ",
+        })
+        globalVar.closePointOutMessage = '已经添加到播放列表'
+        globalVar.closePointOut = true
     }
 }
 
@@ -595,12 +753,20 @@ const share = (id:string)=>{
     }else if(props.type.startsWith('al')){
         globalVar.share.type = 'album'
     }else if(props.type.startsWith('song') && !props.type.startsWith('songHand')){
-        globalVar.share.type = 'song'
+        if(props.type.endsWith('DJ')){
+            globalVar.share.type = 'djprogram'
+        }else{
+            globalVar.share.type = 'song'
+        }
     }else if(props.type.startsWith('songHand')){
         globalVar.share.type = 'artist'
     }else if(props.type.startsWith('FM')){
         globalVar.share.type = 'song'
+    }else if(props.type.startsWith('DJprograme')){
+        globalVar.share.type = 'djprogram'
     }
+    console.log(id);
+    
     globalVar.shareDialogFlag = true
     globalVar.share.id = +id
     globalVar.share.message = props.shareTxt as string
@@ -615,7 +781,13 @@ const dowloadAll = async (id) => {
     // await Promise.all(promises);
     let oldlength = globalVar.downloadList.length
     let songs
-    if(props.type.startsWith('playList')) songs = (await Main.reqPlaylistDetail(id)).data.playlist.tracks
+    if(props.type.startsWith('playList')){
+        if(localStorage.getItem('NMcookie')){
+            songs = (await NM.reqPlaylistTrackAll(id)).data.songs
+        }else{
+            songs = (await Main.reqPlaylistDetail(id)).data.playlist.tracks
+        }
+    }
     else if(props.type.startsWith('al')) songs =  (await Main.reqAlbumTrackAll(id)).data.songs
     songs.forEach((item)=>{
         let name = ''
@@ -688,7 +860,12 @@ const delPlayList = async(id)=>{
     try {
         if(props.type == 'playListMy'){
             globalVar.loadDefault = true
-            let flag = await Main.reqPlaylistDelete(id)
+            let flag 
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqPlaylistDelete(id)
+            }else{
+                flag = await Main.reqPlaylistDelete(id)
+            }
             globalVar.loadDefault = false
             if(flag){
                 const index = Main.playListId.indexOf(+id)
@@ -697,6 +874,17 @@ const delPlayList = async(id)=>{
                 Main.createPlay--
                 globalVar.loadMessageDefault = '删除成功'
                 globalVar.loadMessageDefaultFlag = true
+                if($route.name == 'songPlaylist' && index < +$route.query.index!){
+                    $router.replace({
+                        name:'songPlaylist',
+                        query:{
+                            my:'true',
+                            id:Main.playList[+$route.query.index! - 1].id,
+                            index:+$route.query.index! - 1,
+                            type:'歌单'
+                        }
+                    })
+                }
             }else{
                 globalVar.loadMessageDefault = '删除失败'
                 globalVar.loadMessageDefaultType = 'error'
@@ -704,7 +892,12 @@ const delPlayList = async(id)=>{
             }
         }else if(props.type == 'playListStart'){
             globalVar.loadDefault = true
-            let flag = await Main.reqPlaylistSubscribe(2,id)
+            let flag 
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqPlaylistSubscribe(2,id)
+            }else{
+                flag = await Main.reqPlaylistSubscribe(2,id)
+            }
             globalVar.loadDefault = false
             if(flag){
                 const index = Main.playListId.indexOf(+id)
@@ -865,14 +1058,23 @@ const start = async(id:string)=>{
     try {
         if(props.type.startsWith('playList')){
             globalVar.loadDefault = true
-            let flag = await Main.reqPlaylistSubscribe(1,+id)
+            let flag
+            if(!localStorage.getItem('NMcookie')){
+                flag = await Main.reqPlaylistSubscribe(1,+id)
+            }else{
+                flag = await NM.reqPlaylistSubscribe(1,+id)
+            }
             globalVar.loadDefault = false
             if(flag){
                 const index = Main.playListId.indexOf(+id)
                 Main.playListId.splice(index,1)
                 Main.playList.splice(index,1)
-                Main.startPlay--
-                Main.reqUserPlaylist(BasicApi.profile!.userId)
+                Main.startPlay++
+                if(localStorage.getItem('NMcookie')){
+                    NM.reqUserPlaylist(BasicApi.profile!.userId)
+                }else{
+                    Main.reqUserPlaylist(BasicApi.profile!.userId)
+                }
                 globalVar.loadMessageDefault = '收藏成功'
                 globalVar.loadMessageDefaultFlag = true
             }else{
@@ -881,20 +1083,37 @@ const start = async(id:string)=>{
                 globalVar.loadMessageDefaultFlag = true
             }
         }else if(props.type == 'songHand'){
-            let flag = await Main.reqArtistSub(id,1)
+            let flag
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqArtistSub(id,1)
+            }else{
+                flag = await Main.reqArtistSub(id,1)
+            }
             if(flag){
                 globalVar.loadMessageDefault = '关注成功'
-                BasicApi.reqartistSublist()
-
+                if(localStorage.getItem('NMcookie')){
+                    NM.reqartistSublist()
+                }else{
+                    BasicApi.reqartistSublist()
+                }
             }else{
                 globalVar.loadMessageDefault = '关注失败'
             }
             globalVar.loadMessageDefaultFlag = true
         }else if(props.type == 'al'){
-            let flag = await Main.reqAlbumSub(1,+id)
+            let flag
+            if(localStorage.getItem('NMcookie')){
+                flag = await NM.reqAlbumSub(1,+id)
+            }else{
+                flag = await Main.reqAlbumSub(1,+id)
+            }
             if(flag){
                 globalVar.loadMessageDefault = '收藏成功'
-                BasicApi.reqalbumSublist(1)
+                if(localStorage.getItem('NMcookie')){
+                    NM.reqalbumSublist(1)
+                }else{
+                    BasicApi.reqalbumSublist(1)
+                }
             }else{
                 globalVar.loadMessageDefault = '收藏失败'
             }
@@ -910,7 +1129,12 @@ const start = async(id:string)=>{
 }
 const delstart = async(id)=>{
     if(props.type == 'songHandHad'){
-        let flag = await Main.reqArtistSub(id,2)
+        let flag 
+        if(localStorage.getItem('NMcookie')){
+            flag = await NM.reqArtistSub(id,2)
+        }else{
+            flag = await Main.reqArtistSub(id,2)
+        }
         if(flag){
             globalVar.loadMessageDefault = '取关成功'
             BasicApi.startSongHand = BasicApi.startSongHand.filter(item=>item.id != +id)
@@ -919,7 +1143,12 @@ const delstart = async(id)=>{
         }
         globalVar.loadMessageDefaultFlag = true
     }else if(props.type == 'alHad'){
-        let flag = await  Main.reqAlbumSub(2,+id)
+        let flag
+        if(localStorage.getItem('NMcookie')){
+            flag = await NM.reqAlbumSub(2,+id)
+        }else{
+            flag = await Main.reqAlbumSub(2,+id)
+        }
         if(flag){
             globalVar.loadMessageDefault = '专辑取消收藏成功'
             BasicApi.startalbum = BasicApi.startalbum.filter(item=>item.id != +id)
@@ -955,12 +1184,22 @@ const delComment = async(ids:string)=>{
         }
     }else{
         globalVar.loadDefault = true
-        let res = await Main.reqcomment({
-            t:0,
-            type:+props.commentType!,
-            id:+resId,
-            commentId:+id
-        })
+        let res
+        if(localStorage.getItem('NMcookie')){
+            res = await NM.reqcomment({
+                t:0,
+                type:+props.commentType!,
+                id:+resId,
+                commentId:+id
+            })
+        }else{
+            res = await Main.reqcomment({
+                t:0,
+                type:+props.commentType!,
+                id:+resId,
+                commentId:+id
+            })
+        }
         globalVar.loadDefault = false
         globalVar.loadDefault = false
         if(res.data.code == 200){
@@ -979,14 +1218,20 @@ const delComment = async(ids:string)=>{
 
 const delev = async(id)=>{
     try {
-        let flag = await Main.reqEventDel(id)
+        let flag
+        if(localStorage.getItem('NMcookie')){
+            flag = await NM.reqEventDel(props.evid)
+        }else{
+            flag = await Main.reqEventDel(props.evid)
+        }
         if(flag){
             globalVar.loadMessageDefault = '删除成功'
             globalVar.loadMessageDefaultFlag = true
-            const selectedElements = document.querySelectorAll(`[data-evid="${id}"]`) as unknown as HTMLElement[] 
+            const selectedElements = document.querySelectorAll(`[data-evid="${props.evid}"]`) as unknown as HTMLElement[] 
             selectedElements.forEach((it)=>{
                 it.remove()
             })
+            BasicApi.profile!.eventCount--
         }else{
             globalVar.loadMessageDefault = '删除失败'
             globalVar.loadMessageDefaultFlag = true
@@ -1011,8 +1256,16 @@ const delDownload = async({})=>{
    }
 }
 const delfromPlayList = async({id,index})=>{
-  let res =  await Main.reqPlaylistTracks('del',+$route.query.id!,[id])
-  if(res.data.status == 200){
+    let res 
+    if(localStorage.getItem('NMcookie')){
+        res = await NM.reqPlaylistTracks('del',+$route.query.id!,[id])
+    }else{
+        res = await Main.reqPlaylistTracks('del',+$route.query.id!,[id])
+    }
+    if(res.data.url){
+        Main.playList[+$route.query.index!].coverImgUrl = res.data.url
+    }
+  if(res.data.status == 200 || res.data.code == 200 ||  res.data.body.code == 200){
     globalVar.loadMessageDefault = '删除成功'
     globalVar.loadMessageDefaultFlag = true
     globalVar.delMyPlayListSongIndex = index
@@ -1055,9 +1308,17 @@ const pushInto = async(index,id)=>{
     try {
         if(props.type.startsWith('song') || props.type == 'FM'){
             ids = [+props.id!]
-            let res = await Main.reqPlaylistTracks('add',id,ids)
+            let res 
+            if(localStorage.getItem('NMcookie')){
+                res = await NM.reqPlaylistTracks('add',id,ids)
+            }else{
+                res = await Main.reqPlaylistTracks('add',id,ids)
+            }
+            if(res.data.url){
+                Main.playList[index].coverImgUrl = res.data.url
+            }
             console.log(res.data);
-            if(res.data.body.code == 200){
+            if(res.data.body.code == 200 || (res.data.code == 200 && localStorage.getItem('NMcookie'))){
                 globalVar.loadMessageDefault ='添加成功'
                 globalVar.loadMessageDefaultFlag = true
                 Main.playList[index].trackCount++
@@ -1066,8 +1327,16 @@ const pushInto = async(index,id)=>{
             }
         }else if(props.type.startsWith('top50')){
             ids = (await Main.reqArtistTopSong(+$route.query.id!)).map(it=>it.id)
-            let res = await Main.reqPlaylistTracks('add',id,ids)
-            if(res.data.body.code == 200){
+            let res 
+            if(localStorage.getItem('NMcookie')){
+                res = await NM.reqPlaylistTracks('add',id,ids)
+            }else{
+                res = await Main.reqPlaylistTracks('add',id,ids)
+            }
+            if(res.data.url){
+                Main.playList[index].coverImgUrl = res.data.url
+            }
+            if(res.data.body.code == 200 || (res.data.code == 200 && localStorage.getItem('NMcookie'))){
                 globalVar.loadMessageDefault ='添加成功'
                 globalVar.loadMessageDefaultFlag = true
                 Main.playList[index].trackCount+=ids.length
@@ -1099,6 +1368,55 @@ const create = async()=>{
 const hideStartList = ()=>{
     flagStart.value = false
 }
+
+const deleteFromList = (index)=>{
+    console.log(index,Main.playingindex - 1); //0,0
+    if(index == Main.playingindex - 1){
+        Main.playingList.splice(index,1)
+        Main.playingPrivileges.splice(index,1)
+        if(Main.playingList.length != 0){
+            if(Main.playingindex == Main.playingList.length + 1)Main.playingindex-- //1,2
+            console.log(Main.playingPrivileges,Main.playingList,Main.playingindex - 1);
+            if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
+                Main.playing = Main.playingList[Main.playingindex - 1].mainSong.id
+            }else{
+                Main.playing = Main.playingList[Main.playingindex - 1].id
+            }
+        }
+    }else{
+        Main.playingList.splice(index,1)
+        Main.playingPrivileges.splice(index,1)
+        if(index <  Main.playingindex - 1){
+            Main.playingindex--
+        }
+    }
+    if(Main.playingList.length == 0){
+        globalVar.clearList = true
+    }
+}
+
+const DJPersonalpage = (id)=>{
+    $router.push({
+        name:'PersonalCenter',
+        query:{
+            id
+        }
+    })
+}
+
+const DJprogrampage = (id)=>{
+    console.log(id,props.radioid);
+    $router.push({
+        name:'djPlaylist',
+        query:{
+            type:'播客',
+            id,
+            my:'false',
+            count:undefined
+        }
+    })
+}
+
 
 </script>
 
@@ -1132,6 +1450,9 @@ const hideStartList = ()=>{
             .msg{
                 width: calc(100% - 45px);
                 font-size: 14px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .i{
                 padding-right: 10px;

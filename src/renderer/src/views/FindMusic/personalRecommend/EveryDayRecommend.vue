@@ -1,11 +1,11 @@
 <template>
     <div class="every-day-recommend">
-        <div class="title" :class="{'title-oneself':globalVar.oneself}" @click="go" >
+        <div class="title" @click="go" :class="{'title-oneself':globalVar.oneself}" >
             <span :class="{noDrag:!Main.dragMouse}">每日推荐</span>
             <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
         </div>
         <div class="main">
-            <div class="imgae" :data-id="everyDaySong[index].id" data-right="1" data-type="song" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
+            <div class="imgae" :data-id="everyDaySong[index]?.id" data-right="1" data-type="song" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
                 <div class="play animate__animated" @click.self="playThis"
                 :class="{
                     animate__fadeIn:playButtonFlag,
@@ -24,7 +24,7 @@
                 <div class="song-at">
                     <span :class="{noDrag:!Main.dragMouse}" v-for="({},i) in everyDaySong[index]?.ar">
                     {{everyDaySong[index]?.ar[i].name}}
-                    <span v-if="i < everyDaySong[index].ar.length-1" style="
+                    <span v-if="i < everyDaySong[index]?.ar.length-1" style="
                         transform: rotate(-10deg) translateY(-2px);
                         display: inline-block;
                         font-size: 10px;
@@ -67,7 +67,7 @@ const Main = useMain()
 const baseApi = useBasicApi()
 const globalVar = useGlobalVar()
 const $el = getCurrentInstance() as ComponentInternalInstance 
-
+const globalVar = useGlobalVar()
 let everyDaySong = toRef(baseApi,'everyDaySong')
 
 const playButtonFlag = ref(false)
@@ -141,6 +141,7 @@ const playThis = async()=>{
             Main.playingindex = 1 as number
             Main.playing = everyDaySong.value[index.value].id as number
             Main.playStatus = 'play'
+            Main.songType = 'song'
         }else{
             let I = 0;
             let flag = true;
@@ -151,16 +152,17 @@ const playThis = async()=>{
                 }
             }
             if(flag){
-                Main.playingList.splice(Main.playingindex - 1,0,everyDaySong.value[index.value])
-                Main.playingPrivileges.splice(Main.playingindex - 1,0,everyDaySong.value[index.value].privilege)
+                Main.playingList.splice(Main.playingindex ,0,everyDaySong.value[index.value])
+                Main.playingPrivileges.splice(Main.playingindex ,0,everyDaySong.value[index.value].privilege)
                 Main.playing = everyDaySong.value[index.value].id as number
+                Main.playingindex++
                 Main.playStatus = 'play'
             }else{
                 Main.playingindex = I + 1
                 Main.playing = everyDaySong.value[index.value].id as number
                 Main.playStatus = 'play'
             }
-
+            Main.songType = 'song'
         }
     }
 

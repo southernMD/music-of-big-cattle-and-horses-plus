@@ -2,7 +2,7 @@
     <div class="comment-li" 
     :data-right="userId == BasicApi.profile?.userId" 
     data-type="commentMy" 
-    :data-id="`${commentId},${resourceId}`"
+    :data-id="`${commentId},${type==4?djprogramid:resourceId}`"
     :data-commentType="type"
     >
         <div class="comment-li-bk">
@@ -14,17 +14,20 @@
                 <div class="user">
                     <span class="user-comment">
                         <span class="user-name" @click="go(userId)">{{userNickname}}:&nbsp;</span>
-                        <span class="word" v-html="regEmoji(content)"></span>
+                        <span class="word" v-html="regEmoji(content)" :class="{'word-oneself':oneselfComment}"></span>
                     </span>
                 </div>
                 <div class="reply" v-if="beReplied && beReplied?.length != 0">
-                    <span class="user-comment">
+                    <span class="user-comment" v-if="beReplied?.[0]?.content">
                         <span class="user-name" @click="go(beReplied?.[0]?.user?.userId)">@{{beReplied?.[0]?.user?.nickname}}:&nbsp;</span>
                         <span class="word" v-html="regEmoji(beReplied?.[0]?.content)" ></span>
                     </span>
+                    <span class="user-comment del" v-else>
+                        <span>该评论已删除</span>
+                    </span>
                 </div>
                 <div class="option">
-                    <span class="time">{{!timeStr.includes('-')?timeStr:fixTime}} </span>
+                    <span class="time">{{timeStr && timeStr.includes('-')?timeStr:fixTime}} </span>
                     <span class="icon">
                         <i class="iconfont icon-dianzan" @click="throttleDianzan" v-if="!liked2">&nbsp;<span style="font-size:11px" v-show="likedCount2 != 0">{{likedCount2}}</span></i>
                         <i class="iconfont icon-dianzan_kuai" @click="throttleDianzan" v-else>&nbsp;<span style="font-size:11px">{{likedCount2}}</span></i>
@@ -41,14 +44,15 @@
 
 <script lang='ts' setup>
 import { computed, getCurrentInstance, ComponentInternalInstance, inject, toRef,ref, watchEffect, Ref } from 'vue'
-import { dayjsCN } from '@renderer/utils/dayjs'
+import { Timeago2, dayjsCN } from '@renderer/utils/dayjs'
 import { regEmoji } from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
-import { useMain ,useGlobalVar, useBasicApi} from '@renderer/store'
+import { useMain ,useGlobalVar, useBasicApi,useNM} from '@renderer/store'
 import  {throttle} from 'lodash'
 const Main = useMain()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
+const NM = useNM()
 const $router = useRouter()
 const $el = getCurrentInstance() as ComponentInternalInstance
 const props = defineProps<{
@@ -64,6 +68,8 @@ const props = defineProps<{
     commentId:number
     type : 0 | 1 | 2 | 3 |4 | 5 | 6 | 7
     resourceId:number | string
+    oneselfComment:boolean
+    djprogramid?:number
 }>()
 
 const fenxiang = inject('fenxiang',false)
@@ -75,10 +81,7 @@ watchEffect(()=>{
     likedCount2.value = props.likedCount
 })
 const fixTime = computed<string>(() => {
-    let str = dayjsCN($el.props.time as number);
-    let year = String(new Date().getFullYear());
-    if (str.startsWith(year)) return str.substring(5)
-    else return str
+    return Timeago2(props.time)
 })
 
 const go = (id)=>{
@@ -96,11 +99,20 @@ const dianzan = async()=>{
     if(props.type == 6 ){
         t = {threadId:props.resourceId}
     }else{
-        t = {id:props.resourceId}
+        if(props.type == 4){
+            t= {id:props.djprogramid}
+        }else{
+            t = {id:props.resourceId}
+        }
     }
     if(!liked2.value){
         //去点赞
-        let code = await Main.reqcommentLike(props.commentId,t,1,props.type)
+        let code
+        if(localStorage.getItem('NMcookie')){
+            code = await NM.reqcommentLike(props.commentId,t,1,props.type)
+        }else{
+            code = await Main.reqcommentLike(props.commentId,t,1,props.type)
+        }
         if(code == 200){
             likedCount2.value++ 
             liked2.value = !liked2.value
@@ -111,7 +123,12 @@ const dianzan = async()=>{
             globalVar.loadMessageDefaultFlag = true
         }
     }else{
-        let code = await Main.reqcommentLike(props.commentId,t,0,props.type)
+        let code
+        if(localStorage.getItem('NMcookie')){
+            code = await NM.reqcommentLike(props.commentId,t,0,props.type)
+        }else{
+            code = await Main.reqcommentLike(props.commentId,t,0,props.type)
+        }
         if(code == 200){
             likedCount2.value--
             liked2.value = !liked2.value
@@ -208,6 +225,14 @@ const reply = ()=>{
                     :deep(.word){
                         word-break: break-word;
                     }
+                    :deep(.word-oneself){
+                        color: @font-color-oneself;
+                    }
+                }
+                .del{
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 }
             }
 

@@ -61,10 +61,25 @@ import { ref, toRef, Ref, getCurrentInstance, ComponentInternalInstance, watch, 
 import { useMain, useMainMenu, useElectronToApp,useGlobalVar } from "@renderer/store";
 import { dayjsMMSS } from '@renderer/utils/dayjs'
 import { ElScrollbar } from "element-plus";
-
-const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
-const mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Main');
+import { useRoute } from 'vue-router';
+const $route = useRoute()
 const Main = useMain();
+let ciId = toRef(Main,'ciId') as Ref<number>;
+let mainId = toRef(Main,'mainId') as Ref<number>;
+// let t3 =setInterval(()=>{
+//     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(ciId != undefined){
+//         clearInterval(t3)
+//     }
+// },5000)
+// let t2 =setInterval(()=>{
+//   mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(mainId != undefined){
+//         clearInterval(t2)
+//     }
+// },5000)
+// const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
+// const mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Main');
 const MainMenu = useMainMenu()
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>();
@@ -241,9 +256,9 @@ const $tly = (index: number) => {
     }
     return
 };
-let beforeOffset = ref(0);
 let suoFlag = toRef(globalVar,'lrcScrollSuo');
 
+const  smallFlag = ref(true)
 watch(playingTime, () => {
   if(props.type == Main.songType){
     if(playingTime.value == 0 && suoFlag.value){
@@ -265,7 +280,7 @@ watch(playingTime, () => {
         let line = $el.refs.line as HTMLElement;
         if (dom && line) {
           let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight / 2;
-          if(suoFlag.value && flag.value){
+          if((suoFlag.value && flag.value) || smallFlag.value){
             scrollbarRef.value!.scrollTo({
               top: newOffset
             });
@@ -303,23 +318,60 @@ const isClick = (index:number) => {
 //加0.5
 const jia = () => {
     eqi.value += 0.5
-    window.electron.ipcRenderer.sendTo(ciId, 'lyric-offset-ci', eqi.value)
-    window.electron.ipcRenderer.sendTo(mainId, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
+    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
 }
 
 //减0.5
 const jian = () => {
     eqi.value -= 0.5
-    window.electron.ipcRenderer.sendTo(ciId, 'lyric-offset-ci', eqi.value)
-    window.electron.ipcRenderer.sendTo(mainId, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
+    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
 }
 
 //歌词状态
 // ciId
 watch(yinOryi,()=>{
   console.log(toRaw(yinOryi.value));
-  window.electron.ipcRenderer.sendTo(ciId,'yin-or-yi',toRaw(yinOryi.value))
+  window.electron.ipcRenderer.sendTo(ciId.value,'yin-or-yi',toRaw(yinOryi.value))
 },{immediate:true,deep:true})
+
+//隐藏时切换模式
+//smallFlag.value = true为直接跳转
+document.addEventListener('visibilitychange',()=>{
+  console.log($route.name,);
+    if(document.hidden || Main.detailStatus != 'open' && !document.hidden  && $route.name != 'personalFM')smallFlag.value = true
+    else smallFlag.value = false
+})
+watch(()=>Main.detailStatus,()=>{
+  setTimeout(()=>{
+    if(Main.detailStatus == 'open'){
+      smallFlag.value = false
+    }else{
+      smallFlag.value = true
+    }
+  },250)
+})
+watch(()=>Main.songType,()=>{
+  console.log(Main.songType);
+  if(Main.songType == 'FM'){
+    smallFlag.value = false
+  }else if(Main.songType != 'FM' && Main.detailStatus != 'open'){
+    smallFlag.value = true
+  }else{
+    smallFlag.value = false
+  }
+})
+watch(()=>$route.name,()=>{
+  console.log($route.name);
+  if($route.name == 'personalFM'){
+    setTimeout(()=>{
+      smallFlag.value = false
+    },250)
+  }else if($route.name != 'personalFM' && Main.songType == 'FM'){
+    smallFlag.value = true
+  }
+})
 </script>
 
 <style lang="less" scoped>

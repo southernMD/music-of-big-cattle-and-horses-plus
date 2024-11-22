@@ -1,14 +1,30 @@
 <template>
-    <div class="Hblock" :class="{ noDrag: !Main.dragMouse }" 
+    <div class="Hblock" :class="{ noDrag: !Main.dragMouse ,'Hblock-oneself':globalVar.oneself}" 
     :data-id="id" 
     :data-type="dataType" 
     :data-right="1"
     :data-txt="dataTxt"
     :data-pic="url"
+    :data-djprogramid="djprogramid"
+    :data-path="path"
+    @dblclick.stop="playDj"
     >
         <div class="left" :class="{ruName:type == 'searchUser'}">
-            <el-image :class="{ru:type == 'searchUser'}" :src="url" style="width: 60px; height: 60px"></el-image>
-            <div class="n" :class="{name:type =='DJ' || 'showPersonal','name-singer':type == 'singer' || 'ZhuanJi' || 'playList'}">
+            <div class="index" v-if="type == 'DJprograme'">
+                <i v-if="Main.playing == id && Main.playStatus == 'play'" class="iconfont icon-shengyin_shiti"></i>
+                <i v-else-if="Main.playing == id && Main.playStatus == 'stop'" class="iconfont icon-shengyin03-mianxing"></i>
+                <div v-else class="index-number">{{showIndex }}</div>
+            </div>
+            <el-image @click.stop="playDj" :class="{ru:type == 'searchUser'}" :src="url" style="width: 60px; height: 60px">
+                <template #error>
+                    <el-image src="/src/assets/image/cloudmusic_5e9Ef54bbN.png"  style="width: 60px; height: 60px"></el-image>
+                </template>
+            </el-image>
+            <div class="n" :class="{
+                name:type =='DJ' || 'showPersonal',
+                'name-singer':type == 'singer' || 'ZhuanJi' || 'playList',
+                'name-dj':type == 'DJprograme'
+                }">
                 <span v-html="Name"></span>
             </div>
         </div>
@@ -55,18 +71,55 @@
         <div class="signature"  v-if="type == 'searchUser'">
             <div> {{ signature }}</div>
         </div>
+        <div class="right Djprograme" v-if="type == 'DJprograme'">
+            <div class="playCount"  >
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount as number) }}
+            </div>
+            <div class="sub">
+                <i class="iconfont icon-dianzan" v-if="!liked"></i>
+                <i class="iconfont icon-dianzan_kuai" v-else></i>
+                {{ numberSimp(likedCount as number) }}
+            </div>
+            <div class="time">
+                {{dayjsStamp(createTime!)}}
+            </div>
+            <div class="songTime">
+                {{dayjsMMSS(songTime!) }}
+            </div>
+        </div>
+        <div class="right searchDj" v-if="type == 'searchDj'">
+            <div class="playCount"  >
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount as number) }}
+            </div>
+            <div class="number">
+                声音{{numberSimp(songNumber as number)}}
+            </div>
+            <div class="author" @click.stop> <span>by {{ creator.nickname}}</span></div>
+        </div>
+        <div class="right searchDj" v-if="type == 'searchDjprogram'">
+            <div class="playCount"  >
+                <i class="iconfont icon-gf-play"></i>
+                {{ numberSimp(playCount as number) }}
+            </div>
+            <div class="number">
+                {{dayjsMMSS(songTime!) }}
+            </div>
+            <div class="author" @click.stop> <span>by {{ creator.nickname}}</span></div>
+        </div>
     </div>
 </template>
 
 <script lang='ts' setup>
 import {ref,watch} from 'vue'
-import { useMain } from '@renderer/store';
+import { useMain ,useGlobalVar} from '@renderer/store';
 import {numberSimp} from '@renderer/utils/numberSimp'
-import { dayjsStamp } from '@renderer/utils/dayjs';
+import { dayjsStamp,dayjsMMSS } from '@renderer/utils/dayjs';
 import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()
-
+const globalVar = useGlobalVar()
 const props = defineProps<{
     url: string
     Name: string
@@ -87,13 +140,25 @@ const props = defineProps<{
     'start' | 
     'startal' |
     'startSongHand'|
-    'searchUser' 
+    'searchUser' |
+    'DJprograme' |
+    'searchDj' |
+    'searchDjprogram'
     time?:number
     creators?:any[]
     signature?:string
-    dataType:string
+    dataType?:string
+    likedCount?:number
+    liked?:boolean
+    createTime?:number
+    songTime?:number
+    index?:number
+    showIndex?:number
+    djprogramid?:number
+    djName?:string
+    path?:string
 }>()
-const $emit = defineEmits(['playAll','goAr'])
+const $emit = defineEmits(['playAll','goAr','playDj'])
 const playAll = ()=>{
     $emit('playAll',props.id)
 }
@@ -113,8 +178,14 @@ watch(()=>props.type,()=>{
         dataTxt.value = `专辑:${props.Name} - ${props.ZhunaJi}`
     }else if(props.type == 'showPersonal'){
         dataTxt.value = `歌单:${props.Name} by ${props.creator.nickname}`
+    }else if(props.type == 'DJprograme' ||props.type == 'searchDjprogram' ){
+        dataTxt.value = `声音:${props.Name} - ${props.djName}`
     }
 },{immediate:true})
+
+const playDj = ()=>{
+    $emit('playDj',props.id,props.index)
+}
 </script>
 
 <style lang='less' scoped>
@@ -130,9 +201,9 @@ watch(()=>props.type,()=>{
         justify-content: flex-start;
         align-items: center;
         // padding-left: 30px;
-
+        width: 55%;
+        min-width: 300px;
         .name {
-            width: 380px;
             overflow-x: hidden;
             text-overflow: ellipsis;
             padding-left: 10px;
@@ -146,7 +217,6 @@ watch(()=>props.type,()=>{
         }
         .name-singer{
             font-size: 14px;
-            width: 380px;
             overflow-x: hidden;
             text-overflow: ellipsis;
             margin-left: 10px;
@@ -154,6 +224,7 @@ watch(()=>props.type,()=>{
             display: flex;
             align-items: center;
             user-select: none;
+            max-width: calc(100% - 120px);
             >span{
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -182,6 +253,21 @@ watch(()=>props.type,()=>{
                 border-radius: 50%;
             }
         }
+        >.index{
+            width: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: @small-font-color;
+            margin-right: -20px;
+            font-size: 12px;
+            .iconfont{
+                color: @primary-color;
+            }
+        }
+        .name-dj{
+            width: 60%;
+        }
     }
     .ruName{
         .n{
@@ -194,11 +280,9 @@ watch(()=>props.type,()=>{
         display: flex;
         align-items: center;
         margin-right: 30px;
-
+        width: 45%;
         .one {
-            margin-right: 150px;
-            min-width: 50px;
-            width: 100px;
+            width: 50%;
             font-size: 12px;
             color: @small-font-color;
             user-select: none;
@@ -213,8 +297,7 @@ watch(()=>props.type,()=>{
         }
 
         .two {
-            margin-right: 50px;
-            min-width: 50px;
+            width: 50%;
             font-size: 12px;
             width: auto;
             color: @small-font-color;
@@ -341,8 +424,73 @@ watch(()=>props.type,()=>{
             text-align:right;
         }
     }
+    .Djprograme{
+        width: 40%;
+        font-size: 12px;
+        color: @small-font-color;
+        >.playCount{
+            width: 20%;
+            >.icon-gf-play{
+                font-size: 10px;
+                height: 12px;
+                border: 1px solid @small-font-color;
+                border-radius: 2em;
+                padding: 2px;
+            }
+        }
+        >.sub{
+            width: 25%;
+            .icon-dianzan_kuai{
+                color: var(--primaryColor);
+            }
+        }
+        >.time{
+            width: 35%;
+        }
+        >.songTime{
+            width: 20%;
+        }
+    }
+    .searchDj{
+        font-size: 12px;
+        color: @small-font-color;
+        >.playCount{
+            width: 20%;
+            >.icon-gf-play{
+                font-size: 10px;
+                height: 12px;
+                border: 1px solid @small-font-color;
+                border-radius: 2em;
+                padding: 2px;
+            }
+        }
+        .number {
+            width: 20%;
+            font-size: 12px;
+            color: @small-font-color;
+            user-select: none;
+        }
+        .author{
+            >span{
+                width: 100px;
+                display: inline-block;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                &:hover{
+                    color:@small-font-color-hover
+                }
+            }
+        }
+
+    }
     &:hover {
         background-color: @line-color-hover !important;
+    }
+}
+.Hblock-oneself{
+    &:hover {
+        background-color: rgba(55, 55, 55,.7) !important;
     }
 }
 </style>

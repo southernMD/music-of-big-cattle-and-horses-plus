@@ -53,7 +53,7 @@ const Main = useMain()
 const list: Ref<Map<number,any[]>> = ref(new Map())
 list.value.set(1,await Main.reqSearch($route.query.key as string, '1006', 20, 0))
 watch(() => $route.query.key, async () => {
-  if ($route.name === '1') {
+  if ($route.name === '1006') {
       list.value.clear()
       list.value.set(1,await Main.reqSearch($route.query.key as string, '1006', 20, 0))
       nowPage.value = 1
@@ -159,7 +159,10 @@ const copy = async(lrcList:string[])=>{
             background-color: rgb(55, 55, 55) !important;
         }
     }
-
+    >div{
+      display: flex;
+      align-items: center;
+    }
 }
 
 .search-line-list {

@@ -3,7 +3,7 @@
         <div class="commentList" v-show="commentFlag">
             <div class="hot" v-show="nowPage == 1 && hotComments.length != 0">
             <div class="hot-title">
-                <span>最热评论({{hotComments.length}})</span>
+                <span :class="{'oneself-color':oneself && globalVar.oneself}">最热评论({{hotComments.length}})</span>
             </div>
             <div class="hot-list">
                 <Comment v-for="(value,index) in hotComments" :key="value"
@@ -15,6 +15,8 @@
                 :commentId="hotComments[index]?.commentId"
                 :resourceId="threadId ?? id"
                 :type="type"
+                :oneselfComment="oneself && globalVar.oneself"
+                :djprogramid="djprogramid"
                 ></Comment>
             </div>
             </div>
@@ -25,7 +27,7 @@
             </div>
             <div class="new">
               <div class="new-title" >
-                  <span>最新评论({{total}})</span>
+                  <span :class="{'oneself-color':oneself && globalVar.oneself}">最新评论({{total}})</span>
               </div>
               <div class="new-list">
                   <Comment v-for="(value,index) in comments" :key="value" :userUrl="comments[index]?.user?.avatarUrl"
@@ -36,6 +38,8 @@
                   :commentId="comments[index]?.commentId"
                   :resourceId="threadId ?? id"
                   :type="type"
+                  :oneselfComment="oneself && globalVar.oneself"
+                  :djprogramid="djprogramid"
                   ></Comment>
               </div>
             </div>
@@ -54,13 +58,14 @@
 import {watchEffect} from 'vue'
 import {useMain} from '@renderer/store'
 import {useRouter,useRoute} from 'vue-router';
-import { useGlobalVar } from '@renderer/store';
+import { useGlobalVar,useNM } from '@renderer/store';
 import {getCurrentInstance, watch,ComponentInternalInstance,toRef,Ref,ref, onMounted, nextTick } from 'vue'
 const $el = getCurrentInstance() as ComponentInternalInstance 
 const $router = useRouter()
 const globalVar = useGlobalVar()
 const $route = useRoute()
 const Main = useMain()
+const NM = useNM()
 const props = defineProps<{
     commentFlag:boolean
     nowPage:number
@@ -72,6 +77,8 @@ const props = defineProps<{
     id?:number
     type:number
     threadId?:any
+    oneself:number
+    djprogramid?:number
 }>()
 
 let nowPage = toRef($el.props,'nowPage') as Ref<number>
@@ -118,7 +125,12 @@ const offsetVal = ref<InstanceType<typeof HTMLElement>>()
 watch(nowPage, async () => {
     if(type.value == 0){
         commentFlag.value = false
-        let result = (await Main.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+        let result
+        if(localStorage.getItem('NMcookie')){
+          result = (await NM.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+        }else{
+          result = (await Main.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+        }
         comments.value = result.comments;
         commentFlag.value = true
         if(nowPage.value == 1){
@@ -128,12 +140,22 @@ watch(nowPage, async () => {
         }
     }else if(type.value == 2){
         commentFlag.value = false
-        let result = (await Main.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
+        let result
+        if(localStorage.getItem('NMcookie')){
+          result = (await NM.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
+        }else{
+          result = (await Main.reqCommentPlaylist(id.value, 20, (nowPage.value - 1) * 20)).data
+        }
         comments.value = result.comments;
         commentFlag.value = true
     }else if(type.value == 6){
       commentFlag.value = false
-      let result = (await Main.reqMyEventComment(threadId.value, 20, (nowPage.value - 1) * 20))
+      let result
+      if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqMyEventComment(threadId.value, 20, (nowPage.value - 1) * 20))
+      }else{
+        result = (await Main.reqMyEventComment(threadId.value, 20, (nowPage.value - 1) * 20))
+      }
       comments.value = result.comments;
       commentFlag.value = true
       $emait('scroll')
@@ -142,6 +164,16 @@ watch(nowPage, async () => {
       let result = (await Main.reqCommentAlbum(id.value, 20, (nowPage.value - 1) * 20)).data
       comments.value = result.comments;
       commentFlag.value = true
+    }else if(type.value == 4){
+      commentFlag.value = false
+      let result = (await Main.reqCommentDj(id.value, 20, (nowPage.value - 1) * 20)).data
+      comments.value = result.comments;
+      commentFlag.value = true
+      if(nowPage.value == 1){
+        globalVar.scrollToTop = true
+      }else{
+        globalVar.changeMainScroll = -(globalVar.mainScroll - offsetVal.value!.offsetTop)
+      }
     }
 })
 
@@ -273,4 +305,7 @@ defineExpose({nowPage})
     }
 
   }
+.oneself-color{
+  color: @font-color-oneself !important;
+}
 </style>

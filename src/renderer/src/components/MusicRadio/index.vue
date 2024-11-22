@@ -5,7 +5,7 @@
                 <div v-show="Main.detailStatus == 'close'">
                     <div class="image" @mouseover="musicDetail" @mouseout="musicDetailLeave" title="展开音乐详情页"
                         @click="showDetail">
-                        <el-image draggable="false" :src="playingList[playingindex - 1]?.al?.picUrl" fit="cover">
+                        <el-image draggable="false" :src="playingList[playingindex - 1]?.al?.picUrl ?? playingList[playingindex - 1]?.coverUrl" fit="cover">
                         </el-image>
                         <div class="mask">
                             <i class="iconfont icon-xialajiantou1" v-if="Main.songType !== 'FM'"></i>
@@ -24,12 +24,18 @@
                                     }})</span>
                                 </div>
                             </div>
-                            <i v-if="likeFlag" class="iconfont icon-aixin" @click="likeOrDislike"></i>
-                            <i v-else class="iconfont icon-aixin_fill" @click="likeOrDislike"></i>
+                            <div v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'">
+                                <i v-if="likeFlag" class="iconfont icon-aixin" @click="likeOrDislike"></i>
+                                <i v-else class="iconfont icon-aixin_fill" @click="likeOrDislike"></i>
+                            </div>
+                            <div v-else >
+                                <i v-if="!DjLike" style="color: var(--fontColor);" class="iconfont icon-dianzan"  @click="likeOrDislikeRadio"></i>
+                                <i v-else style="color: var(--primaryColor);" class="iconfont icon-dianzan" @click="likeOrDislikeRadio"></i>
+                            </div>
                         </div>
                         <div class="singer" @mouseover="rushSinger('singerTxt')" @click="goHandSong">
                             <span id="singerTxt" >
-                                <span v-for="({}, index) in playingList[playingindex - 1]?.ar"
+                                <span v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'" v-for="({}, index) in playingList[playingindex - 1]?.ar"
                                     :key="playingList[playingindex - 1]?.ar[index]?.id">
                                     <span :data-id="playingList[playingindex - 1]?.ar[index]?.id">{{ playingList[playingindex - 1]?.ar[index].name }}</span>
                                     <span v-if="index != playingList[playingindex - 1]?.ar.length - 1" 
@@ -39,6 +45,16 @@
                                     padding-right: 3px;
                                     ">/</span>
                                 </span>
+                                <!-- <span v-else v-for="(val, index) in playingList[playingindex - 1]?.mainSong?.artists" :key="index">
+                                    <span :data-id="val?.id">{{ val?.name }}</span>
+                                    <span v-if="index != playingList[playingindex - 1]?.mainSong?.artists.length - 1" 
+                                    style="transform: rotate(-10deg) translateY(-2px);
+                                    display: inline-block;
+                                    font-size: 10px;
+                                    padding-right: 3px;
+                                    ">/</span>
+                                </span> -->
+                                <span v-else :data-id="playingList[playingindex - 1]?.radio.id">{{ playingList[playingindex - 1]?.radio.name }}</span>
                             </span>
                         </div>
                     </div>
@@ -51,12 +67,19 @@
                     </div>
                     <div class="right" :class="{'right-contsee':Main.playing < 0}" >
                         <!-- :likeJust()?'icon-aixin_fill':'icon-aixin' -->
-                        <div class="todo"  @click="likeOrDislike" :class="{ noDrag: !Main.dragMouse }">
+                        <div v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'" class="todo"  @click="likeOrDislike" :class="{ noDrag: !Main.dragMouse }">
                             <i v-if="likeFlag" class="iconfont icon-aixin"></i>
                             <i v-else class="iconfont icon-aixin_fill"></i>
                         </div>
-                        <div class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
+                        <div v-else class="todo" @click="likeOrDislikeRadio()" :class="{ noDrag: !Main.dragMouse }">
+                            <i v-if="!DjLike" style="color: var(--fontColor);" class="iconfont icon-dianzan"  ></i>
+                            <i v-else style="color: var(--primaryColor);" class="iconfont icon-dianzan" ></i>
+                        </div>
+                        <div v-if="playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'" class="todo" v-for="({}, index) in 3" @click="todoHandle(index)" :class="{ noDrag: !Main.dragMouse }">
                             <i class="iconfont" :class="[leftIcon[index + 1]]"></i>
+                        </div>
+                        <div v-else class="todo" v-for="({}, index) in 2" @click="todoHandle(index);" :class="{ noDrag: !Main.dragMouse }">
+                            <i class="iconfont" :class="[leftIcon2[index + 1]]"></i>
                         </div>
                     </div>
                 </div>
@@ -74,7 +97,7 @@
 
                     <i class="iconfont" :class="[iconWay[wayIndex]]" :title="iconWayWrite[wayIndex]" @click="nextWay"
                         v-if="Main.songType !== 'FM'"></i>
-                    <i class="iconfont icon-lajixiang" v-else title="垃圾桶" @click="rubish"></i>
+                    <!-- <i class="iconfont icon-lajixiang" v-else title="垃圾桶" @click="rubish"></i> -->
                 </div>
                 <div class="before" @click="prevSongThor" :title="`上一首（${globalVar.setting.quick[1]}）`">
                     <i class="iconfont icon-shangyishou"></i>
@@ -112,7 +135,7 @@
                     :max-have="playingPrivileges[playingindex - 1].maxBrLevel"
                     :max-level="playingPrivileges[playingindex - 1].plLevel" :now-level="nowLevel" @show="changeSpanLevel"
                     @close="showLevelFlag = false"></SmallBlock>
-                <div class="bk" :class="{ 'bk-oneself': globalVar.oneself }">
+                <div class="bk" :class="{ 'bk-oneself': globalVar.oneself }" v-if="Main.songType != 'DJ'">
                     <span draggable="false">{{ levelName }}</span>
                 </div>
             </div>
@@ -186,12 +209,25 @@
         <template #midle>
             <div class="default">
                 <div class="writ">
-                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef"></WriteCommit>
+                    <WriteCommit @getText="getZhuanfaText" ref="WriteCommitRef">
+                        <template #share v-if="ifNM">
+                            <i @click.self="addShareImage" class="iconfont icon-icon-" :class="{noDrag:!Main.dragMouse}" ></i>
+                        </template>
+                    </WriteCommit>
                 </div>
                 <div class="show">
                     <div class="img" ref="imgRef" v-show="globalVar.share.imgUrl.length != 0"></div>
                     <div class="name" v-if="globalVar.share.type == 'comment'">{{ globalVar.share.name}}</div>
                     <div class="message">{{globalVar.share.message }}</div>
+                </div>
+                <div class="imgs" v-show="shareimages.length!= 0">
+                    <div class="ig" v-for="buffer,index in shareimages" draggable="false">
+                        <el-image draggable="false" :src="buffer"></el-image>
+                        <i class="icon-cuowu iconfont" @click="delimg(index)"></i>
+                    </div>
+                    <div class="ig addd" @click="addShareImage" v-show="shareimages.length != 9">
+                        <i class="iconfont icon-jiahao_o"></i>
+                    </div>
                 </div>
             </div>
         </template>
@@ -213,36 +249,42 @@ import {
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
 import { before, throttle } from 'lodash'
-import { useMain, useGlobalVar, useMainMenu ,useBasicApi} from '@renderer/store';
+import { useMain, useGlobalVar, useMainMenu ,useBasicApi,useNM} from '@renderer/store';
 import { rand } from '@renderer/utils/rand';
 import { useRouter,useRoute } from 'vue-router';
 import { useElectronToApp } from '@renderer/store/index'
 import PlayListPanel from './playListPanel/index.vue';
 import SongDetail from './songDetail/index.vue';
 import MyDialog from '../myVC/MyDialog.vue';
+import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
+
+let myWorker:null | Worker = null
+let myWorkerFull:null | Worker = null
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const globalVar = useGlobalVar();
 const BasicApi = useBasicApi()
 const ElectronToApp = useElectronToApp()
+const NM = useNM()
 const $router = useRouter();
 const $route = useRoute();
+const ifNM = ref(false)
+if(localStorage.getItem('NMcookie'))ifNM.value = true
 let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbofang', 'icon-shunxubofang'])
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
+const leftIcon2 = ['icon-dianzan', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
-let ciId
-let t2 = setInterval(() => {
-    ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
-    if (ciId) {
-        clearInterval(t2);
-    }
-}, 100)
-// let t = setInterval(() => {
-//     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'ciId');
-//     if (ciId) {
-//         clearInterval(t);
-//     }
-// }, 100)
+let ciId = toRef(Main, 'ciId');
+// await new Promise((reslove)=>{
+//     let t2 = setInterval(() => {
+//     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
+//         if (ciId) {
+//             reslove('ok')
+//             clearInterval(t2);
+//         }
+//     }, 5000)
+// })
+
 let animationId;
 
 let playingList = toRef(Main, 'playingList')
@@ -282,6 +324,7 @@ watch(likes, () => {
 },{deep:true})
 
 watch(playingId, () => {
+    if(playingId.value == -1)return
     if (likes.value.includes(playingId.value)) {
         likeFlag.value = false
     } else {
@@ -289,23 +332,41 @@ watch(playingId, () => {
     }
 })
 
-const likeOrDislike = () => {
+const likeOrDislike = async () => {
     if(Main.playing < 0) return
+    if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
+        globalVar.flagLogin = true
+        return
+    }
     let likeIndex = likes.value.indexOf(playingId.value)
     if (likeIndex != -1) {
         //取消喜欢
-        Main.reqLike(Number(playingId.value), false)
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(playingId.value), false)).data
+            let code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            Main.reqLike(Number(playingId.value), false)
+        }
         likes.value.splice(likeIndex, 1)
+        Main.playList[0].trackCount--
         globalVar.loadMessageDefault = '取消喜欢成功'
         globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},false`
     } else {
-        Main.reqLike(Number(playingId.value), true)
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(playingId.value), true)).data
+            let code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            Main.reqLike(Number(playingId.value), true)
+        }
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
         globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
         globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},true`
+        Main.playList[0].trackCount++
     }
 
 }
@@ -323,7 +384,12 @@ watch(playListId, async () => {
             originalPrivileges.value = playingPrivileges.value
             originalsongIndex.value = playingindex.value
         } else {
-            let result = (await Main.reqPlaylistTrackAll(playListId.value)).data;
+            let result 
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(playListId.value)).data;
+            }else{
+                result = (await Main.reqPlaylistTrackAll(playListId.value)).data;
+            }
             originalList.value = result.songs
             originalPrivileges.value = result.privileges
             originalsongIndex.value = playingindex.value
@@ -440,6 +506,7 @@ const loaclPlayWay = async()=>{
     ]);
         console.log(lyricData.data);
         lyric.value = lyricData.data;
+        sendLyric()
         simiSong.value = simiSongData.data.songs;
         simiPlaylist.value = simiPlaylistData.data.playlists;
     }
@@ -458,14 +525,7 @@ const loaclPlayWay = async()=>{
             nowLevel.value = 'local'
             levelName.value = '本地'
             playStatus.value = 'play'
-            let str = playingList.value[playingindex.value - 1].name + ' - ';
-            let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-            singerArr.forEach((element, index) => {
-                str += element.name
-                if (index != singerArr.length - 1) str += ' / '
-            })
-            window.electron.ipcRenderer.send('change-play-thum', str)
-            window.electron.ipcRenderer.send('render-play')
+
             // stopPlayAudip()
         })
     })
@@ -488,13 +548,11 @@ const loaclMusicCanSee = (base64)=>{
             analyser.connect(AC.destination);
             bufferSource.buffer = AudioBuffer;
             bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
             bufferSource.connect(gainNode)
             gainNode.connect(AC.destination);
             gainNode.gain.setValueAtTime(-1, AC.currentTime)
             // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
             // color.addColorStop(0, 'rgba(102, 204, 255,1)');
-            drawIndex.value++
             cancelAnimationFrame(animationId)
             draw()
             const t = setTimeout(() => {
@@ -509,32 +567,76 @@ const loaclMusicCanSee = (base64)=>{
 
 const normalPlayWay = async()=>{
     if (playingId.value != -1) {
+        // if(!await Main.reqCheckMusic(Main.playing,br(nowLevel.value))){
+        //     globalVar.loadMessageDefault = '对象不可用'
+        //     globalVar.loadMessageDefaultType = 'error'
+        //     globalVar.loadMessageDefaultFlag = true
+        //     Main.playingList.splice(Main.playingindex-1,1)
+        //     Main.playingPrivileges.splice(Main.playingindex-1,1)
+        //     nextSongThor()
+        //     return
+        // }
         audio = document.querySelector('audio') as HTMLAudioElement
         audio.currentTime = 0
         audio.pause()
-        let result: any = await Main.reqSongUrl(playingId.value)
-        lyric.value = (await Main.reqLyric(playingId.value)).data
-        await musicCanSee(result.data.data[0].url, 0, 0)
-        SongUrl.value = result.data.data[0].url
-        nextTick(() => {
-            stopOrPlayFlag.value = false
-            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
-            audio.play()
-        })
-        nowLevel.value = 'standard'
-        levelName.value = '标准'
-        //喜欢这首歌的人也听与包含这首歌的歌单
-        simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
-        simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
-        console.log(simiSong, simiPlaylist);
+        if(Main.songType != 'DJ'){
+            let result: any = await Main.reqSongUrl(playingId.value)
+            lyric.value = (await Main.reqLyric(playingId.value)).data
+            sendLyric()
+            // await musicCanSee(result.data.data[0].url, 0, 0)
+            musicCanSeeNew(result.data.data[0].url, 0, 0)
+            SongUrl.value = result.data.data[0].url
+            nextTick(() => {
+                stopOrPlayFlag.value = false
+                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
+                audio.play()
+            })
+            nowLevel.value = 'standard'
+            levelName.value = '标准'
+            //喜欢这首歌的人也听与包含这首歌的歌单
+            simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
+            simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
+        }else{
+            let result: any = await Main.reqSongUrl(playingId.value)
+            lyric.value = {lrc:{lyric:''}}
+            sendLyric()
+            // await musicCanSee(result.data.data[0].url, 0, 0)
+            musicCanSeeNew(result.data.data[0].url, 0, 0)
+            SongUrl.value = result.data.data[0].url
+            nextTick(() => {
+                stopOrPlayFlag.value = false
+                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
+                audio.play()
+            })
+            nowLevel.value = 'DJ'
+            levelName.value = '电台'
+        }
     }
 }
 //获取播放url
 
+const br = (str: string) => {
+    if (str == 'standard') return 128000
+    else if (str == 'higher') return 192000
+    else if (str == 'exhigh') return 320000
+    else return 999000
+}
 
-watch(playingId, async () => {
-    nextTick(()=>{
+watch(playingId, async ({},oldValue) => {
+    if(playingId.value == -1)return
+    nextTick(async ()=>{
+        console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
+        console.log(Main.beforePlayListId,Main.playing);
+        if(localStorage.getItem('NMcookie')){
+            let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
+            let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
+            console.log(NT,ET);
+            if(1-(ET-NT)/ET!=1) NM.reqScrobble(oldValue,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
+        }else{
+            Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
+        }
         const playList = document.querySelector("#play-list-Panel-bottom")!.children
         if(Main.playingList[Main.playingindex - 1].localPath){
             loaclPlayWay()
@@ -573,6 +675,15 @@ watch(playingId, async () => {
                 normalPlayWay()
             }
         }
+        let str = playingList.value[playingindex.value - 1].name + ' - ';
+        let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
+        singerArr.forEach((element, index) => {
+            str += element.name
+            if (index != singerArr.length - 1) str += ' / '
+        })
+        console.log('这个是主进程的名字',str);
+        window.electron.ipcRenderer.send('change-play-thum', str.replace(/<\/?[^>]+(>|$)/g, ''))
+        window.electron.ipcRenderer.send('render-play')
     })
 })
 function base64ToArrayBuffer(base64) {
@@ -584,23 +695,17 @@ function base64ToArrayBuffer(base64) {
     }
     return bytes.buffer;
 }
-// let t = setTimeout(async ()=>{
-//             const CiId = await electronIpc.ipcSendSync('getWindowId','Ci');
-//             clearTimeout(t);
-//             electronIpc.ipcSendTo(CiId, 'to-Ci', lyric);
-//         },1000)
-watch(lyric, async () => {
+
+const sendLyric = ()=>{
     let str = playingList.value[playingindex.value - 1].name + ' - ';
     let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-    singerArr.forEach((element, index) => {
+    singerArr?.forEach((element, index) => {
         str += element.name
         if (index != singerArr.length - 1) str += ' / '
     })
-    window.electron.ipcRenderer.sendTo(ciId, 'to-title', str);
-    window.electron.ipcRenderer.sendTo(ciId, 'to-Ci', lyric.value);
-    ElectronToApp.lrcArry = lyric.value
-
-})
+    window.electron.ipcRenderer.sendTo(ciId.value, 'to-title', str);
+    window.electron.ipcRenderer.sendTo(ciId.value, 'to-Ci', lyric.value);
+}
 
 
 //audio初始化
@@ -610,7 +715,7 @@ watch(currentTime, () => {
 })
 watch(playingId, () => {
     globalVar.lyricOffset = 0
-    window.electron.ipcRenderer.sendTo(ciId, 'lyric-offset-ci', 0)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', 0)
 })
 
 onMounted(async () => {
@@ -641,7 +746,6 @@ onMounted(async () => {
                     bufferSource.connect(gainNode)
                     gainNode.connect(AC.destination);
                     gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                    drawIndex.value++
                     cancelAnimationFrame(animationId)
                     draw()
                 }
@@ -674,7 +778,7 @@ onMounted(async () => {
     //播放进度
     audio.addEventListener('timeupdate', () => {
         if (!audioPlayFlag.value) {
-            window.electron.ipcRenderer.sendTo(ciId, 'to-currentTime', audio.currentTime);
+            window.electron.ipcRenderer.sendTo(ciId.value, 'to-currentTime', audio.currentTime);
             currentTime.value = audio.currentTime
             let bar = (audio.currentTime / audio.duration) * 100
             playLine.style.width = bar + '%'
@@ -686,6 +790,16 @@ onMounted(async () => {
     //播放完毕
     audio.addEventListener('ended', async () => {
         console.log('播放完毕');
+        console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
+        console.log(Main.beforePlayListId,Main.playing);
+        if(localStorage.getItem('NMcookie')){
+            let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
+            let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
+            console.log(NT,ET);
+            NM.reqScrobble(Main.playing,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
+        }else{
+            Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
+        }
         stopOrPlayFlag.value = true;
         if(bufferSource)bufferSource.stop()
         cancelAnimationFrame(animationId)
@@ -705,11 +819,9 @@ onMounted(async () => {
                 bufferSource.connect(analyser);
                 bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
                 bufferSource.start();
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
                 bufferSource.connect(gainNode)
                 gainNode.connect(AC.destination);
                 gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                drawIndex.value++
                 cancelAnimationFrame(animationId)
                 draw()
             }
@@ -799,11 +911,9 @@ const audioPlayEnd = () => {
         bufferSource.connect(analyser);
         bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
         bufferSource.start(0, Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01);
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
         bufferSource.connect(gainNode)
         gainNode.connect(AC.destination);
         gainNode.gain.setValueAtTime(-1, AC.currentTime)
-        drawIndex.value++
         cancelAnimationFrame(animationId)
         draw()
     }
@@ -841,7 +951,6 @@ const clickAudioPlay = (e: MouseEvent) => {
             suoFlag.value = true;
             audio.currentTime = wh / line.offsetWidth * audio.duration
             clickCanvas(wh)
-            // musicCanSee(SongUrl.value,currentTime,0)
         } else {
             suo.value = true;
         }
@@ -849,26 +958,90 @@ const clickAudioPlay = (e: MouseEvent) => {
 
 }
 
+let clickWillUseLen:number = 0
+let myWorkerFullFlag = false 
 const clickCanvas = (wh)=>{
     if(globalVar.setting.opencanvas){
         const currentTime = AC.currentTime;
-        AC = new AudioContext()
-        gainNode = AC.createGain()
-        analyser = AC.createAnalyser();
-        bufferSource.stop(currentTime);
-        bufferSource.disconnect()
-        bufferSource = AC.createBufferSource()
-        bufferSource.buffer = musicBuffer
-        bufferSource.connect(AC.destination)
-        bufferSource.connect(analyser);
-        bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-        bufferSource.start(0, wh / line.offsetWidth * audio.duration);
-        bufferSource.connect(gainNode)
-        gainNode.connect(AC.destination);
-        gainNode.gain.setValueAtTime(-1, AC.currentTime)
-        drawIndex.value++
-        cancelAnimationFrame(animationId)
-        draw()
+        if(myWorker && !myWorkerFullFlag){
+            if(!myWorkerFull){
+                myWorkerFull = new musicCanSeeWorker()
+                myWorkerFull.postMessage({ url:SongUrl.value})
+                myWorkerFull.addEventListener('message',(event)=>{
+                    const {musiceUintPiece,st} = event.data
+                    if(st === 'end'){
+                        AC.decodeAudioData(musiceUintPiece.buffer).then((AudioBuffer) => {
+                            myWorkerFullFlag = true
+                            musicBuffer = AudioBuffer
+                            myWorkerFull!.terminate()
+                            myWorkerFull = null
+                        })
+                    }
+                })
+            }
+            myWorker.terminate()
+            myWorker = new musicCanSeeWorker()
+            const range = wh / line.offsetWidth * clickWillUseLen
+            console.log(range);
+            myWorker.postMessage({ url:SongUrl.value,range:Math.floor(range),time:5000 })
+            let workerFirst = true
+            myWorker.addEventListener('message',(event)=>{
+                const {musiceUintPiece,st,len} = event.data
+                console.log(len,'*&^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
+                AC.decodeAudioData(musiceUintPiece.buffer).then((AudioBuffer) => {
+                    console.log('AudioBuffer解析完成');
+                    if (bufferSource) {
+                        bufferSource.stop();
+                    }
+                    // musicBuffer = AudioBuffer
+                    bufferSource = AC.createBufferSource();
+                    analyser.fftSize = 256;
+                    bufferSource.connect(analyser);
+                    analyser.connect(AC.destination);
+                    bufferSource.buffer = AudioBuffer;
+                    bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                    bufferSource.connect(gainNode)
+                    gainNode.connect(AC.destination);
+                    gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                    cancelAnimationFrame(animationId)
+                    draw()
+                    if(workerFirst){
+                        workerFirst = false
+                        console.log('bufferSource启动',currentTime);
+                        bufferSource.start(0)
+                    }else{
+                        console.log('bufferSource重新启动',AC.currentTime);
+                        bufferSource.start(0, AC.currentTime - currentTime)
+                        // musicBuffer = AudioBuffer
+                    }
+                    if(st === 'end'){
+                        console.log('bufferSource完成启动',AC.currentTime);
+                        bufferSource.start(0, AC.currentTime - currentTime)
+                        // musicBuffer = AudioBuffer
+                        myWorker!.terminate()
+                        myWorker = null
+                    }
+                })
+            })
+
+        }else{
+            AC = new AudioContext()
+            gainNode = AC.createGain()
+            analyser = AC.createAnalyser();
+            bufferSource.stop(currentTime);
+            bufferSource.disconnect()
+            bufferSource = AC.createBufferSource()
+            bufferSource.buffer = musicBuffer
+            bufferSource.connect(AC.destination)
+            bufferSource.connect(analyser);
+            bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            bufferSource.start(0, wh / line.offsetWidth * audio.duration);
+            bufferSource.connect(gainNode)
+            gainNode.connect(AC.destination);
+            gainNode.gain.setValueAtTime(-1, AC.currentTime)
+            cancelAnimationFrame(animationId)
+            draw()
+        }
     }
 }
 
@@ -948,7 +1121,7 @@ window.electron.ipcRenderer.on('to-close-ci', ({ }, flag:boolean ) => {
 //监视播放给另一个进程
 let playStatus = toRef(Main, 'playStatus')
 watch(playStatus, async () => {
-    window.electron.ipcRenderer.sendTo(ciId, 'play-status', playStatus.value)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'play-status', playStatus.value)
     stopOrPlay()
 })
 //另一进程play or stop
@@ -977,12 +1150,15 @@ const prevSong = () => {
             Main.FMindex--
         }
     } else {
+        if(Main.playingList.length == 0)return
         originalsongIndex.value++
         if (wayIndex.value == 2) {
             randIndex.value--;
             if (randIndex.value == -1) {
                 playingindex.value = rand(1, playingList.value.length, playingindex.value)
-                playingId.value = playingList.value[playingindex.value - 1].id
+                playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+                playingList.value[playingindex.value - 1].id:
+                playingList.value[playingindex.value - 1].mainSong.id
                 randQueue.unshift(playingindex.value)
                 randIndex.value++;
             }
@@ -993,16 +1169,13 @@ const prevSong = () => {
                 playingindex.value = playingList.value.length
             }
         }
-        playingId.value = playingList.value[playingindex.value - 1].id
+
+        playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+        playingList.value[playingindex.value - 1].id:
+        playingList.value[playingindex.value - 1].mainSong.id
+
         playStatus.value = 'play'
-        let str = playingList.value[playingindex.value - 1].name + ' - ';
-        let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
+
     }
 }
 //下一首
@@ -1010,13 +1183,18 @@ const nextSong = () => {
     if (Main.songType == 'FM') {
         Main.FMindex++
     } else {
+        if(Main.playingList.length == 0)return
         originalsongIndex.value++
         if (wayIndex.value == 2) {
             randIndex.value++;
             if (randIndex.value == randQueue.length) {
                 let randNum = rand(1, playingList.value.length, playingindex.value)
                 playingindex.value = randNum
-                playingId.value = playingList.value[playingindex.value - 1].id
+
+                playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+                playingList.value[playingindex.value - 1].id:
+                playingList.value[playingindex.value - 1].mainSong.id
+
                 randQueue.push(playingindex.value)
             }
             playingindex.value = randQueue[randIndex.value]
@@ -1026,16 +1204,12 @@ const nextSong = () => {
                 playingindex.value = 1
             }
         }
-        playingId.value = playingList.value[playingindex.value - 1].id
+
+        playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
+        playingList.value[playingindex.value - 1].id:
+        playingList.value[playingindex.value - 1].mainSong.id
+
         playStatus.value = 'play'
-        let str = playingList.value[playingindex.value - 1].name + ' - ';
-        let singerArr = playingList.value[playingindex.value - 1].ar as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
     }
 
 }
@@ -1299,22 +1473,31 @@ const changeSpanLevel = async (level: string, level2: string) => {
     levelName.value = level
     nowLevel.value = level2
     audio = document.querySelector('audio') as HTMLAudioElement
-    changPlayStatus();
     let t = audio.currentTime
     let result: any = await Main.reqSongUrl(playingId.value, nowLevel.value)
+    SongUrl.value = result.data.data[0].url
     nextTick(async () => {
-        await musicCanSee(result.data.data[0].url, t, 100)
-        SongUrl.value = result.data.data[0].url
+        // await musicCanSee(result.data.data[0].url, t, 100)
+        musicCanSeeNew(result.data.data[0].url, t, 100)
         audio = document.querySelector('audio') as HTMLAudioElement
-        console.log(Number(speedPower.value.substring(0, speedPower.value.length - 1)), 'DAJSIDHAYUCGAWJHUYADGA');
         bufferSource.playbackRate.value = audio.playbackRate
-        setTimeout(() => {
-            audio.currentTime = t
-            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            changPlayStatus();
-        }, 100)
+        audio.currentTime = t
+        audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+        Main.playStatus = 'play'
+        audio.play()
     })
 }
+
+// SongUrl.value = result.data.data[0].url
+//             nextTick(() => {
+//                 stopOrPlayFlag.value = false
+//                 audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+//                 if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
+//                 audio.play()
+//             })
+//             nowLevel.value = 'standard'
+//             levelName.value = '标准'
+
 
 //修改速度
 let showSpeedFlag = ref(false)
@@ -1401,7 +1584,8 @@ const keyDownWatch = (e: KeyboardEvent) => {
         //-10%
         reduce_10_volum()
     }else if(press == globalVar.setting.quick[5]){
-        likeOrDislike()
+        if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ')likeOrDislikeRadio()
+        else likeOrDislike()
     }else if(press == globalVar.setting.quick[6]){
         openCi()
     }
@@ -1431,20 +1615,20 @@ const reduce_10_volum = ()=>{
 
 //主进程播放
 onMounted(() => {
-    window.electron.ipcRenderer.on('main-prev', () => {
-        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+    window.electron.ipcRenderer.on('main-prev', ({},flag) => {
+        if (playingList.value.length != 0 && (globalVar.setting.closeGlWay || flag)) {
             console.log('上一首');
             prevSongThor();
         }
     })
-    window.electron.ipcRenderer.on('main-next', () => {
-        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+    window.electron.ipcRenderer.on('main-next', ({},flag) => {
+        if (playingList.value.length != 0 &&  (globalVar.setting.closeGlWay || flag)) {
             console.log('下一首');
             nextSongThor();
         }
     })
-    window.electron.ipcRenderer.on('main-play', () => {
-        if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
+    window.electron.ipcRenderer.on('main-play', ({},flag) => {
+        if (playingList.value.length != 0 &&  (globalVar.setting.closeGlWay || flag)) {
             console.log('播放');
             changPlayStatus();
         } else {
@@ -1463,7 +1647,8 @@ onMounted(() => {
     })
     window.electron.ipcRenderer.on('main-like',()=>{
         if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
-            likeOrDislike()
+            if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ')likeOrDislikeRadio()
+            else likeOrDislike()
         }
     })
     window.electron.ipcRenderer.on('main-open-ci',()=>{
@@ -1490,17 +1675,18 @@ onMounted(() => {
 })
 const MainMenu = useMainMenu()
 const Width = toRef(MainMenu, 'width')
+onMounted(()=>{
+    canvas.width = Width.value
+})
 watch(Width, () => {
-    nextTick(() => {
-        canvas.width = Width.value
-    })
-}, { immediate: true })
+    canvas.width = Width.value
+})
 let AC: AudioContext;
 let bufferSource: AudioBufferSourceNode;
 let gainNode: GainNode;
 let analyser: AnalyserNode;
 let musicBuffer: AudioBuffer
-let dataArray: Uint8Array
+let dataArray: Uint8Array = new Uint8Array()
 let loadingCanSeeUrl: boolean = false
 const musicCanSee = (url: string, offset: number, timer: number) => {
     if(globalVar.setting.opencanvas){
@@ -1526,13 +1712,11 @@ const musicCanSee = (url: string, offset: number, timer: number) => {
                     analyser.connect(AC.destination);
                     bufferSource.buffer = AudioBuffer;
                     bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                    dataArray = new Uint8Array(analyser.frequencyBinCount);
                     bufferSource.connect(gainNode)
                     gainNode.connect(AC.destination);
                     gainNode.gain.setValueAtTime(-1, AC.currentTime)
                     // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
                     // color.addColorStop(0, 'rgba(102, 204, 255,1)');
-                    drawIndex.value++
                     cancelAnimationFrame(animationId)
                     draw()
                     resolve('ok')
@@ -1547,23 +1731,90 @@ const musicCanSee = (url: string, offset: number, timer: number) => {
     }
     return
 }
-const drawIndex = ref(0)
+const musicCanSeeNew = (url: string, offset: number, timer: number) => {
+    if(globalVar.setting.opencanvas){
+        if (bufferSource) bufferSource.stop()
+        if(myWorker) myWorker.terminate()
+        if(myWorkerFull){
+            myWorkerFull.terminate()
+            myWorkerFull = null
+        }
+        myWorkerFullFlag = false
+        myWorker =  new musicCanSeeWorker()
+        let workerFirst = true
+        AC = new AudioContext()
+        gainNode = AC.createGain()
+        analyser = AC.createAnalyser();
+        loadingCanSeeUrl = true
+        // myWorker.postMessage({ url,range });
+        myWorker.postMessage({ url });
+        myWorker.addEventListener('message', workerMessageFn);
+        function workerMessageFn(event){
+            const {musiceUintPiece,st,len} = event.data
+            if(st === 'start'){
+                clickWillUseLen = len
+            }
+            AC.decodeAudioData(musiceUintPiece.buffer).then((AudioBuffer) => {
+                console.log('AudioBuffer解析完成');
+                if (bufferSource) {
+                    bufferSource.stop();
+                }
+                musicBuffer = AudioBuffer
+                bufferSource = AC.createBufferSource();
+                analyser.fftSize = 256;
+                bufferSource.connect(analyser);
+                analyser.connect(AC.destination);
+                bufferSource.buffer = AudioBuffer;
+                bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                bufferSource.connect(gainNode)
+                gainNode.connect(AC.destination);
+                gainNode.gain.setValueAtTime(-1, AC.currentTime)
+                cancelAnimationFrame(animationId)
+                draw()
+                if(workerFirst){
+                    workerFirst = false
+                    const t = setTimeout(() => {
+                        console.log('bufferSource启动',AC.currentTime);
+                        bufferSource.start(0, offset)
+                        loadingCanSeeUrl = false
+                        clearTimeout(t)
+                    }, timer)
+                }else{
+                    console.log('bufferSource重新启动',AC.currentTime);
+                    bufferSource.start(0, offset + AC.currentTime)
+                    musicBuffer = AudioBuffer
+                }
+                if(st === 'end'){
+                    console.log('bufferSource完成启动',AC.currentTime);
+                    myWorkerFullFlag = true
+                    bufferSource.start(0, offset + AC.currentTime)
+                    musicBuffer = AudioBuffer
+                    myWorker!.terminate()
+                    myWorker = null
+                }
+            }).catch(()=>{})
+        }
+    }
+    return
+}
+
+
+
 function draw() {
     if(!globalVar.setting.opencanvas){
         canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
         cancelAnimationFrame(animationId)
         return
     }
-    console.log(drawIndex.value);
     let oW = canvas.width;
     let oH = canvas.height;
     animationId = requestAnimationFrame(draw)
     canvasCTX.clearRect(0, 0, oW, oH);
     let barHeight;
-    canvasCTX.clearRect(0, 0, oW, oH);
-    for (let i = 0; i < dataArray.length; i++) {
+    dataArray = new Uint8Array(analyser.frequencyBinCount)
+    analyser?.getByteFrequencyData(dataArray)
+    for (let i = 0; i < dataArray?.length; i++) {
         barHeight = dataArray[i]
-        analyser.getByteFrequencyData(dataArray)
         // 绘制向上的线条
         if(globalVar.setting.canvasColor) canvasCTX.fillStyle = document.documentElement.style.getPropertyValue('--primaryColor')
         else canvasCTX.fillStyle = globalVar.setting.canvasColorRGB 
@@ -1571,12 +1822,11 @@ function draw() {
         canvasCTX.fillRect(oW / 2 - (i * 8), oH, 2, -barHeight / 4 + 30);
     }
 }
-watch(playStatus,(newValue,oldValue)=>{
-    console.log(newValue,oldValue);
+
+watch(playStatus,()=>{
     if(playStatus.value == 'stop'){
         cancelAnimationFrame(animationId)
     }else{
-        console.log(AC,gainNode,analyser);
         if(AC && gainNode && analyser)draw()
     }
 })
@@ -1596,15 +1846,28 @@ watch(SongUrl,()=>{
 })
 const goHandSong = (e:MouseEvent)=>{
     const dom = e.target as HTMLElement
+    console.log(playingList.value[Main.playingindex - 1]);
+    
     console.log(dom.getAttribute('data-id'));
     const id = dom.getAttribute('data-id')
     if(id){
-        $router.push({
-            name:'SongHand',
-            query:{
-                id
-            }
-        })
+        if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ'){
+            $router.push({
+                name:'SongHand',
+                query:{
+                    id
+                }
+            })
+        }else{
+            $router.push({
+                name:'djPlaylist',
+                query:{
+                    type:'播客',
+                    id,
+                    my:'false',
+                }
+            })
+        }
     }
 }
 
@@ -1612,19 +1875,36 @@ const goHandSong = (e:MouseEvent)=>{
 const startDialogFlag = ref(false)
 const imgRef = ref<InstanceType<typeof HTMLElement>>()
 const todoHandle = (index)=>{
-    if(index == 0){
-        startDialogFlag.value = true
-        willStartListId.value = [Main.playing]
-    }else if(index == 1){
-        download(Main.playing)
-    }else if(index == 2){
-        const ar = Main.playingList[Main.playingindex - 1].ar.map(it=>it.name).join('/')
-        globalVar.share.message = `单曲：${Main.playingList[Main.playingindex - 1].name}-${ar}`
-        globalVar.share.imgUrl = Main.playingList[Main.playingindex - 1].al.picUrl
-        globalVar.share.id = Main.playing
-        globalVar.share.type = 'song'
-        senddongtaiFlag.value = true
+    if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ'){
+        if(index == 0){
+            if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
+                globalVar.flagLogin = true
+                return
+            }
+            startDialogFlag.value = true
+            willStartListId.value = [Main.playing]
+        }else if(index == 1){
+            download(Main.playing)
+        }else if(index == 2){
+            const ar = Main.playingList[Main.playingindex - 1].ar.map(it=>it.name).join('/')
+            globalVar.share.message = `单曲：${Main.playingList[Main.playingindex - 1].name}-${ar}`
+            globalVar.share.imgUrl = Main.playingList[Main.playingindex - 1].al.picUrl
+            globalVar.share.id = Main.playing
+            globalVar.share.type = 'song'
+            senddongtaiFlag.value = true
+        }
+    }else{
+        if(index == 0){
+            download(Main.playing)
+        }else if(index == 1){
+            globalVar.share.message = `声音：${Main.playingList[Main.playingindex - 1].name}-${Main.playingList[Main.playingindex - 1].dj.nickname}`
+            globalVar.share.imgUrl = Main.playingList[Main.playingindex - 1].coverUrl
+            globalVar.share.id = Main.playingList[Main.playingindex - 1].id
+            globalVar.share.type = 'djprogram'
+            senddongtaiFlag.value = true
+        }
     }
+
 }
 
 watch(()=>globalVar.share.imgUrl,()=>{
@@ -1654,17 +1934,32 @@ const closeShareDialog = (done :()=>void)=>{
 
 const addIn = async(id,index)=>{
     if(index == 0 && willStartListId.value.length == 1){
-        Main.reqLike(Number(playingId.value), true)
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(playingId.value), true)).data
+            let code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            Main.reqLike(Number(playingId.value), true)
+        }
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
         globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
         globalVar.loadMessageDefaultFlag = true
         Main.likeChange = `${playingId.value},true`
+        Main.playList[0].trackCount++
     }else{
         globalVar.loadDefault = true
-        let result = (await Main.reqPlaylistTracks('add',id,willStartListId.value)).data
+        let result 
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqPlaylistTracks('add',id,willStartListId.value)).data
+        }else{
+            result = (await Main.reqPlaylistTracks('add',id,willStartListId.value)).data
+        }
+        if(result.url){
+            Main.playList[index].coverImgUrl = result.url
+        }
         globalVar.loadDefault = false
-        if (result.body.code == 200) {
+        if (result.body.code == 200 || (result.code == 200 && localStorage.getItem('NMcookie'))) {
             globalVar.loadMessageDefault = '已收藏到歌单'
             globalVar.loadMessageDefaultFlag = true 
             Main.playList[index].trackCount += willStartListId.value.length
@@ -1727,13 +2022,40 @@ watch(senddongtaiFlag,()=>{
         globalVar.flagLogin = true
         senddongtaiFlag.value = false
     }
-
 })
+
+function base64toFile(base64Data) {
+  const arr = base64Data.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const extension = mime.split('/')[1];
+  const timestamp = Date.now();
+  const fileName = `${timestamp}.${extension}`;
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], fileName, { type: mime });
+}
+
 const confirm = async()=>{
     try {
         senddongtaiFlag.value = false
         globalVar.loadDefault  = true
-        let result = await Main.reqShareResource(globalVar.share.type,globalVar.share.id,globalVar.share.txt)
+        let result
+        if(localStorage.getItem('NMcookie')){
+            const formData = new FormData()
+            shareimages.value.forEach((base64,index)=>{
+                formData.append('files',base64toFile(base64))
+            })
+            if(globalVar.share.type != 'noresource')formData.append('id', globalVar.share.id);
+            formData.append('type', globalVar.share.type);
+            formData.append('msg', globalVar.share.txt);
+            result = await NM.reqShareResource(formData)
+        }else{
+            result = await Main.reqShareResource(globalVar.share.type,globalVar.share.id,globalVar.share.txt)
+        }
         // let result = await Main.reqShareResource(globalVar.share.type,Main.playing,zhuanfaMessage.value)
         globalVar.loadDefault  = false
         if(result.code == 200){
@@ -1747,6 +2069,7 @@ const confirm = async()=>{
                 txt:'',
                 name:''
             }
+            BasicApi.profile!.eventCount++
         }else{
             globalVar.loadMessageDefaultType = 'error'
             globalVar.loadMessageDefault = '分享失败'
@@ -1754,6 +2077,7 @@ const confirm = async()=>{
         }
         globalVar.share.txt = ''
     } catch (error) {
+        console.log(error);
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefault = '分享失败'
         globalVar.loadMessageDefaultFlag = true
@@ -1804,13 +2128,24 @@ const confirmComment = async()=>{
             globalVar.loadMessageDefaultFlag = true;
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
         }else{
-            let result = (await Main.reqcomment({
-                t:2,
-                type:0,
-                id:Main.playing,
-                content:commitMessage.value,
-                commentId:replayId.value
-            })).data
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqcomment({
+                    t:2,
+                    type:0,
+                    id:Main.playing,
+                    content:commitMessage.value,
+                    commentId:replayId.value
+                })).data
+            }else{
+                result = (await Main.reqcomment({
+                    t:2,
+                    type:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?4:0,
+                    id:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?Main.playingList[Main.playingindex - 1].id:Main.playing,
+                    content:commitMessage.value,
+                    commentId:replayId.value
+                })).data
+            }
             if(result.code == 200){
                 globalVar.loadMessageDefaultFlag = true;
                 globalVar.loadMessageDefault = '回复成功！'
@@ -1840,12 +2175,22 @@ const confirmComment = async()=>{
             globalVar.loadMessageDefaultFlag = true;
             globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
         }else{
-            let result = (await Main.reqcomment({
-                t:1,
-                type:0,
-                id:Main.playing,
-                content:commitMessage.value,
-            })).data
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqcomment({
+                    t:1,
+                    type:0,
+                    id:Main.playing,
+                    content:commitMessage.value,
+                })).data
+            }else{
+                result = (await Main.reqcomment({
+                    t:1,
+                    type:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?4:0,
+                    id:Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'?Main.playingList[Main.playingindex - 1].id:Main.playing,
+                    content:commitMessage.value,
+                })).data
+            }
             if(result.code == 200){
                 globalVar.loadMessageDefaultFlag = true;
                 globalVar.loadMessageDefault = '评论成功！'
@@ -1898,7 +2243,8 @@ const getText = (message:string)=>{
 const willStartListId = ref()
 const startAll = ()=>{
     startDialogFlag.value = true
-    willStartListId.value = Main.playingList.map(it=>it.id)
+    console.log(Main.playingList.filter(it=>it.id > 0 && it.mainSong == undefined).map(it=>it.id));
+    willStartListId.value = Main.playingList.filter(it=>it.id > 0 && it.mainSong == undefined).map(it=>it.id)
 }
 
 watch(()=>globalVar.setting.opencanvas,()=>{
@@ -2026,6 +2372,62 @@ const getTime = (item:id3Message)=>{
         return item.time
     }else{
         return 0
+    }
+}
+
+const shareimages:Ref<ArrayBuffer[]> = ref([])
+const addShareImage = ()=>{
+    window.electron.ipcRenderer.invoke('add-share-image',shareimages.value.length).then(async(lius:PromiseSettledResult<any>[])=>{
+        let p = await Promise.allSettled(lius.map((item)=>{
+            return new Promise<any>((resolve, reject) => {
+                if(item.status == 'fulfilled'){
+                    const blob = new Blob([item.value], { type: 'image/png' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onload = function(event) {
+                        const base64Data:ArrayBuffer = event.target!.result as ArrayBuffer;
+                        console.log(base64Data);
+                        resolve(base64Data!)
+                    };
+                }else{
+                    resolve(new ArrayBuffer(1))
+                }
+            })
+        }))
+        p.forEach((item:any)=>{
+            shareimages.value.push(item.value)
+        })
+        console.log(shareimages.value);
+    })
+}
+const delimg = (index)=>{
+    shareimages.value.splice(index,1)
+}
+
+onMounted(()=>{
+    globalVar.radioReady = true
+})
+const DjLike = ref(false)
+watch(playingId,()=>{
+    if(playingId.value == -1)return
+    DjLike.value = playingList.value[playingindex.value - 1].liked 
+})
+const likeOrDislikeRadio = async()=>{
+    if(Main.playing < 0) return
+    if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
+        globalVar.flagLogin = true
+        return
+    }
+    let programId = Main.playingList[Main.playingindex - 1].id
+    if(!DjLike.value){
+        await Main.reqLikeResource(programId,4,1)
+        DjLike.value = true
+        //点赞
+        playingList.value[playingindex.value - 1].liked = true
+    }else{
+        await Main.reqLikeResource(programId,4,0)
+        DjLike.value = false
+        playingList.value[playingindex.value - 1].liked = false
     }
 }
 </script>
@@ -2718,21 +3120,25 @@ const getTime = (item:id3Message)=>{
 .default{
     margin-top: -20px;
     .writ{
-    border: 1px solid @small-font-color;
-    border-radius: .2em;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    box-sizing: border-box;
-    :deep(.writeCommit){
-        .input-bk{
-            margin-left: 0;
-            margin-right: 2px;
+        border: 1px solid @small-font-color;
+        border-radius: .2em;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        box-sizing: border-box;
+        :deep(.writeCommit){
+            .input-bk{
+                margin-left: 0;
+                margin-right: 2px;
+            }
         }
-    }
-    :deep(.option){
-        margin-left: 10px;
-        margin-top: 0px;
-    }
+        :deep(.option){
+            margin-left: 10px;
+            margin-top: 0px;
+        }
+        .icon-icon-{
+            font-size: 25px;
+            margin-left: 5px;
+        }
     }
     .show{
         height: 50px;
@@ -2782,6 +3188,62 @@ const getTime = (item:id3Message)=>{
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+    }
+    .imgs{
+        margin-top: 10px;
+        width: 100%;
+        // background-color: red;
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+        flex-wrap: wrap;
+        .ig{
+            user-select: none;
+            flex: 0 0 15%;
+            position: relative;
+            border-radius: .5em;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            .el-image{
+                width: 100%;
+                height: 100%;
+                :deep(img){
+                    width:100%;
+                    height: 65px;
+                    border-radius: .5em;
+                }
+            }
+            .icon-cuowu{
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                font-size: 20px;
+                background-color: white;
+                border-radius: 2em;
+                display: none;
+            }
+            &:hover i{
+                display: block;
+                cursor: pointer;
+            }
+        }
+        .addd{
+            height: 67px;
+            width: 65px;
+            border: 1px dashed  @small-font-color;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            i{
+                font-size: 40px;
+            }
+        }
+        :not(:nth-child(6n)) {
+            margin-right: 2%;
+        }
+
     }
 }
 

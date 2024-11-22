@@ -38,10 +38,19 @@ import {
     playlistPrivacy,
     playlistDelete,
     eventDel,
-    artistTopSong
+    artistTopSong,
+    Scrobble,
+    checkMusic,
+    djDetail,
+    djProgram,
+    djProgramDetail,
+    commentDj,
+    djSub,
+    djsuber
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
+import { NMCheckNickname, NMCommentFloor, NMEvent, NMEventComment, NMLikeResource, NMLoginStatus, NMPlayListCreate, NMPlaylistDetailDynamic, NMPlaylistSubscribe, NMScrobble, NMSearch, NMUploadAvatar, NMUserLike, NMUserPlaylist, NMUserRecord, NMUserSubcount, NMalbumSub, NMalbumSublist, NMartistSub, NMartistSublist, NMcomment, NMcommentLike, NMcommentMusic, NMcommentPlaylist, NMeventDel, NMeventForward, NMfollow, NMgetDetail, NMlikeQ, NMplaylistDelete, NMplaylistDetail, NMplaylistOrderUpdate, NMplaylistPrivacy, NMplaylistSubscribers, NMplaylistTrackAll, NMplaylistTracks, NMrecommendPlayList, NMshareResource, NMsongOrderUpdate, NMupdatePlayList, NMupdatePlayListTags, NMuploadPlaylistPic, NMuserEvents, NMuserFolloweds, NMuserFollows, NMuserUpdate } from '@renderer/api/niuma';
 
 interface E {
     ifToCloseWindow: boolean,
@@ -74,7 +83,8 @@ export const useMainMenu = defineStore("MainMenu", {
             model: false,
             colorBlock: '',
             iconSrc: '@/../icon.png',
-            primaryColor: ''
+            primaryColor: '',
+
         }
     },
     // getters{
@@ -234,7 +244,7 @@ export const useBasicApi = defineStore('BaseApi', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //我收藏的dj
@@ -246,7 +256,7 @@ export const useBasicApi = defineStore('BaseApi', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //歌曲的tags
@@ -349,6 +359,9 @@ interface T {
     // immheart:boolean
     searchHistory:string[]
     latelyPlay:any[]
+    ciId:number | undefined
+    mainId:number | undefined
+    dragMessageId:number | undefined
 }
 export const useMain = defineStore('Main', {
     state: (): T => {
@@ -425,7 +438,10 @@ export const useMain = defineStore('Main', {
             localListPathFlag:[],
             searchNumber:0,
             searchHistory:[],
-            latelyPlay:[]
+            latelyPlay:[],
+            ciId:undefined,
+            mainId:undefined,
+            dragMessageId:undefined,
         }
     },
     actions: {
@@ -500,7 +516,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error');
+                // alert('error');
             }
         },
         //调用后可获取歌单详情动态部分,如评论数,是否收藏,播放数
@@ -526,7 +542,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //获取歌词
@@ -537,7 +553,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //喜欢这首歌的人也听
@@ -548,7 +564,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         async reqSimiPlaylist(id: number): Promise<any> {
@@ -558,7 +574,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         ///song/detail获取一首歌的详情
@@ -569,7 +585,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -581,7 +597,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -593,7 +609,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -606,7 +622,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -618,7 +634,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //对歌单添加或删除歌曲
@@ -642,7 +658,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //调整歌单顺序
@@ -653,7 +669,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //心动模式
@@ -664,7 +680,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //喜欢歌曲
@@ -730,7 +746,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //垃圾桶
@@ -741,7 +757,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //下载url
@@ -752,7 +768,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
             }
         },
         //search
@@ -765,6 +781,8 @@ export const useMain = defineStore('Main', {
             if(type=='1000')this.searchNumber = result.data.result.playlistCount
             if(type=='1006')this.searchNumber = result.data.result.songCount
             if(type=='1002')this.searchNumber = result.data.result.userprofileCount
+            if(type=='1009')this.searchNumber = result.data.result.djRadiosCount
+            if(type=='2000')this.searchNumber = result.data.data.totalCount
             if(this.searchNumber != 0){
                 return new Promise<any>((resolve, reject) => {
                     if(type=='1')resolve(result.data.result.songs)
@@ -773,6 +791,8 @@ export const useMain = defineStore('Main', {
                     if(type=='1000')resolve(result.data.result.playlists)
                     if(type=='1006')resolve(result.data.result.songs)
                     if(type=='1002')resolve(result.data.result.userprofiles)
+                    if(type=='1009')resolve(result.data.result.djRadios)
+                    if(type=='2000')resolve(result.data.data.resources)
                 })
             }else{
                 return new Promise<any>((resolve, reject) => {
@@ -1004,7 +1024,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error');
+                // alert('error');
             }
         },
         //获取专辑评论
@@ -1015,7 +1035,7 @@ export const useMain = defineStore('Main', {
                     resolve(result)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1027,7 +1047,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1038,7 +1058,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1050,7 +1070,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1062,7 +1082,7 @@ export const useMain = defineStore('Main', {
                     resolve(result.data)
                 })
             } else {
-                alert('error')
+                // alert('error')
                 console.log(result);
             }
         },
@@ -1263,6 +1283,105 @@ export const useMain = defineStore('Main', {
             }
 
         },
+        //听歌打卡
+        async reqScrobble(id,sourceid,time){
+            let result = await Scrobble(id,sourceid,time)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqCheckMusic(id,br){
+            try {
+                let result = await checkMusic(id,br)
+                console.log(result,'我是result');
+                if(result.data == null){
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(true)
+                    })
+                }else{
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(result.data.success)
+                    })
+                }
+            } catch (error:any) {
+                if(error.message == 'Request failed with status code 404'){
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(true)
+                    })
+                }
+            }
+        },
+        //电台详情
+        async reqDjDetail(rid){
+            let result = await djDetail(rid)
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.data.data)
+            })
+        },
+        //电台列表
+        async reqdjProgram(rid,limit,offset){
+            let result = await djProgram(rid,limit,offset)
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.data.programs)
+            })
+        },
+        async djProgramDetail(id){
+            let result = await djProgramDetail(id)
+            return new Promise<any>((resolve, reject) => {
+                resolve(result.data.program)
+            })
+        },
+        //获取DJ评论
+        async reqCommentDj(id: number, limit?: number, offset?: number, before?: number): Promise<any> {
+            let result = await commentDj(id, limit, offset, before);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                // alert('error')
+                console.log(result);
+            }
+        },
+        //收藏dj
+        async reqdjSub(id,t){
+            let result = await djSub(id,t)
+            if (result.data.code == 200) {
+                return new Promise<boolean>((resolve) => {
+                    resolve(true)
+                })
+            } else {
+                return new Promise<boolean>((resolve) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqdjsuber(id,limit,time){
+            let result = await djsuber(id,limit,time)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve({
+                        more:result.data.hasMore,
+                        list:result.data.subscribers,
+                        time:result.data.time
+                    })
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve({
+                        more:result.data.hasMore,
+                        list:result.data.subscribers,
+                        time:result.data.time
+                    })
+                })
+            }
+        },
         init() {
             this.leftClickColor = '',
                 this.startDj = 0,
@@ -1378,6 +1497,9 @@ interface V {
         updataUrl:string
         newVersion:string
     }
+    clearList:boolean
+    radioReady:boolean
+    lrcFlag:boolean
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1432,7 +1554,7 @@ export const useGlobalVar = defineStore('globalVar', {
                 defaultMusic:false,
                 quitmodel:false,
                 playWay:false,
-                quick:['Ctrl + P','Ctrl + Left','Cti+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L','Ctrl + D'],
+                quick:['Ctrl + P','Ctrl + Left','Ctrl+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L','Ctrl + D'],
                 quickGlobal:['Ctrl + Alt + P','Ctrl + Alt + Left','Ctrl + Alt + Right','Ctrl + Alt + Up','Ctrl + Alt + Down','Ctrl + Alt + M','Ctrl + Alt + L','Ctrl + Alt + D'],
                 closeGlWay:false,
                 errGlobal:[],
@@ -1457,7 +1579,10 @@ export const useGlobalVar = defineStore('globalVar', {
                 version:'',
                 updataUrl:'',
                 newVersion:''
-            }
+            },
+            clearList:false,
+            radioReady:false,
+            lrcFlag:false
         }
     },
     actions:{
@@ -1465,7 +1590,665 @@ export const useGlobalVar = defineStore('globalVar', {
     },
     persist:{
         paths: ['setting'],
-    }
+    } 
 })
 
 
+export const useNM = defineStore('NM',{
+    state: ()=> {
+        return {
+        }
+    },
+    actions:{
+        async reqLogin() {
+            const BaseApi = useBasicApi()
+            return new Promise<any>(async(resolve, reject) => {
+                try {
+                    let res = await NMLoginStatus()
+                    if(res.data.code == 200){
+                        BaseApi.profile = res.data.profile
+                        resolve('ok')
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqUserPlaylist(uid) {
+            const BaseApi = useBasicApi()
+            const Main = useMain()
+            return new Promise<any>(async(resolve, reject) => {
+                try {
+                    let res = await NMUserPlaylist(uid)
+                    console.log( res.data,uid, BaseApi!.profile!.userId);
+                    
+                    if(res.data.code == 200 && uid == BaseApi!.profile!.userId){
+                        Main.playList = res.data.playlist.map((item,index)=>{
+                            item['index'] = index
+                            return item 
+                        })
+                        Main.playListId = []
+                        Main.playList.forEach((element) => {
+                            Main.playListId.push(element.id)
+                        })
+                    }
+                    console.log(Main.playList);
+                    resolve(res)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqUserLike(uid){
+            return new Promise<any>(async (resolve, reject) => {
+                try {
+                    let result = (await NMUserLike(uid)).data;
+                    useMain().likes = result.ids
+                    resolve(result)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqUserSubcount(){
+            return new Promise<any>(async(resolve, reject) => {
+                try {
+                    let result = await NMUserSubcount()
+                    const Main = useMain()
+                    if (result.data.code == 200) {
+                        Main.startDj = 0
+                        Main.createDj = 0
+                        Main.createPlay = result.data.createdPlaylistCount - 1
+                        Main.startPlay = result.data.subPlaylistCount
+                        resolve(result)
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqartistSublist(){
+            const BaseApi = useBasicApi()
+            try {
+                let result = await NMartistSublist()
+                BaseApi.startSongHand = []
+                BaseApi.startSongHand.unshift(...result.data.data ?? [])
+            } catch (error) {
+                BaseApi.startSongHand.unshift(...[])
+            }
+        },
+        async reqalbumSublist(limit?:number){
+            const BaseApi = useBasicApi()
+            try {
+                let result = await NMalbumSublist(limit)
+                if(result.data.code == 200){
+                    BaseApi.startalbum.unshift(...result.data.data ?? [])
+                }   
+            } catch (error) {
+                BaseApi.startalbum.unshift(...[])
+            }
+        },
+        async requserFollows(id,limit,offset){
+            return new Promise<any>(async (resolve, reject) => {
+                try {
+                    let result = await NMuserFollows(id,limit,offset)
+                    if (result.data.code == 200 && limit == 99999999) {
+                        useBasicApi().followsId = result.data.follow.map(item=>item.userId)
+                    }
+                    resolve(result.data)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        //对歌单添加或删除歌曲
+        async reqPlaylistTracks(op: 'add' | 'del', pid: number, tracks: number[]): Promise<any> {
+            let result = await NMplaylistTracks(op, pid, tracks);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            }
+        },
+        //歌单详情动态
+        async reqPlaylistDetailDynamic(id){
+            return new Promise<any>(async (resolve, reject) => {
+                try {
+                    let result = await NMPlaylistDetailDynamic(id)
+                    if (result.data.code == 200 ) {
+                        resolve(result.data)
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        },
+        async reqPlaylistDetail(id){
+            return new Promise<any>(async(resolve,reject) => {
+                try {
+                    let result = await NMplaylistDetail(id);
+                    if(result.data.code == 200){
+                        resolve(result)
+                    }else{
+                        resolve({})
+                    }
+                } catch (error) {
+                    reject(error)
+                }
+
+            })
+        },
+        async reqRecursion(id, limit, offset, res) {
+            let result = await NMplaylistTrackAll(id, limit, offset);
+            console.log(res, limit, offset);
+            if (result.data.code === 200) {
+              res.data.songs.push(...result.data.songs);
+              res.data.privileges.push(...result.data.privileges);
+              offset += limit;
+              if (result.data.songs.length != 0) {
+                return await this.reqRecursion(id, limit, offset, cloneDeep(res));
+              } else {
+                console.log(res);
+                return res;
+              }
+            } else {
+              console.log(res);
+              return res;
+            }
+        },
+        async reqPlaylistTrackAll(id,limit?,offset?){
+            console.log(id, limit, offset);
+            let result
+            if(limit == undefined && offset == undefined){
+                result = await this.reqRecursion(id, 1000, 0, {data:{songs:[],privileges:[],code:200}})
+                console.log(result);
+            }else{
+                result = await NMplaylistTrackAll(id, limit, offset);
+            }
+
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                // alert('error');
+            }
+        },
+        async reqPlayListCreate(name:string,privacy?:number){
+            let result = await NMPlayListCreate(name,privacy)
+            if(result.data.code == 200){
+                result = await this.reqPlaylistDetail(result.data.id)
+                if(result.data.code == 200){
+                    return new Promise<any>((resolve, reject) => {
+                        resolve(result.data.playlist)
+                    })
+                }else{
+                    return new Promise<any>((resolve, reject) => {
+                        resolve({})
+                    })
+                }
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        //修改歌单信息
+        async reqUpdatePlayList(index:string,id:number,name:string,desc:string,tags:string){
+            let result = await NMupdatePlayList(id,name,desc,tags)
+            if(result.data.code == 200){
+                let result2 = await this.reqPlaylistDetail(id)
+                console.log(result2.data.playlist);
+                const playinglist = result2.data.playlist
+                useMain().playList[index] = playinglist
+                new Promise<boolean>((resolve, reject) => {
+                    resolve(result2)
+                })
+            }else{
+                new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqUpdatePlayListTags(index:number,id:number,tags:string){
+            let result = await NMupdatePlayListTags(id,tags)
+            if(result.data.code == 200){
+                useMain().playList[index].tags = tags.split(';')
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    reject(false)
+                })
+            }
+        },
+        async reqUploadPlaylistPic(id:number,formData:FormData,imgSize:number,imgX:number,imgY:number){
+            let result = await NMuploadPlaylistPic(id,formData,imgSize,imgX,imgY)
+            console.log(result.data.data.url);
+            console.log(result.data.data);
+            console.log(result.data);
+            if(result.data.data.code == 200){
+                return new Promise<string>((resolve, reject) => {
+                    resolve(result.data.data.url)
+                })
+            }else{
+                return new Promise<string>((resolve, reject) => {
+                    resolve('')
+                })
+            }
+        },
+        async reqPlaylistOrderUpdate(ids: [number]): Promise<any> {
+            let result = await NMplaylistOrderUpdate(ids);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                // alert('error')
+            }
+        },
+        async reqUserUpdate(form:any){
+            let result = await NMuserUpdate(form)
+            if(result.data.code == 200){
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqUploadAvatar(formData:FormData,imgSize:number,imgX:number,imgY:number){
+            let result = await NMUploadAvatar(formData,imgSize,imgX,imgY)
+            console.log(result.data.data.url);
+            console.log(result.data.data);
+            console.log(result.data);
+            if(result.data.data.code == 200){
+                return new Promise<string>((resolve, reject) => {
+                    resolve(result.data.data.url)
+                })
+            }else{
+                return new Promise<string>((resolve, reject) => {
+                    resolve('')
+                })
+            }
+        },
+        //喜欢歌曲
+        async reqLike(id: number, like: boolean): Promise<any> {
+            try {
+                let result = await NMlikeQ(id, like);
+                if (result.data.code == 200) {
+                    return new Promise((resolve: any) => {
+                        resolve(result)
+                    })
+                }
+            } catch (error) {
+                return new Promise((resolve, reject) => {
+                    resolve({
+                        data: {
+                            code: '405'
+                        }
+                    })
+                })
+            }
+        },
+        async reqSongOrderUpdate(pid: number, ids: [number]): Promise<any> {
+            let result = await NMsongOrderUpdate(pid, ids);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                // alert('error')
+            }
+        },
+        //公开隐私歌单
+        async reqPlaylistPrivacy (id){
+            let result = await NMplaylistPrivacy(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //删除歌单
+        async reqPlaylistDelete(id){
+            let result = await NMplaylistDelete(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqSearch(key:string,type?:string,limit?:number,offset?:number){
+            const Main = useMain()
+            let result = await NMSearch(key,type,limit,offset)
+            console.log(result);
+            if(type=='1000')Main.searchNumber = result.data.result.playlistCount
+            if(type=='1002')Main.searchNumber = result.data.result.userprofileCount
+            if(Main.searchNumber != 0){
+                return new Promise<any>((resolve, reject) => {
+                    if(type=='1000')resolve(result.data.result.playlists)
+                    if(type=='1002')resolve(result.data.result.userprofiles)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve([])
+                })
+            }
+
+        },
+        async reqPlaylistSubscribe(t:1|2,id:number){
+            let result = await NMPlaylistSubscribe(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqDetail(id){
+            let result = await NMgetDetail(id);
+            return new Promise<AxiosResponse>((resolve) => {
+                resolve(result)
+            })
+        },
+        async reqPlaylistSubscribers(id,limit,offset){
+            let result = await NMplaylistSubscribers(id,limit,offset)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve({
+                        more:result.data.more,
+                        list:result.data.subscribers
+                    })
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({
+                        more:false,
+                        list:[]
+                    })
+                })
+            }
+        },
+        //每日推荐歌单
+        async reqRecommendPlayList() {
+            let result = await NMrecommendPlayList();
+            console.log(result.data);
+            if (result.data.code == 200) {
+                useBasicApi().everyDayPlayList = result.data.recommend
+                return new Promise((resolve) => {
+                    resolve(result.data.recommend)
+                })
+            }
+        },
+        async reqFollow(id,t){
+            let result = await NMfollow(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async requserFolloweds(id,limit,offser){
+            let result = await NMuserFolloweds(id,limit,offser)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve([])
+                })
+            }
+        },
+        async reqArtistSub(id,t){
+            let result = await NMartistSub(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //收藏专辑
+        async reqAlbumSub(t:1|2,id:number){
+            let result = await NMalbumSub(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //评论/删除
+        async reqcomment(obj: comment.delComment | comment.sendComment): Promise<any> {
+            try {
+                let result = await NMcomment(obj);
+                if (result.data.code == 200) {
+                    return new Promise((resolve: any) => {
+                        resolve(result)
+                    })
+                }
+            } catch (error) {
+                return new Promise((resolve, reject) => {
+                    resolve({
+                        data: {
+                            code: '300'
+                        }
+                    })
+                })
+            }
+        },
+        //获取歌单评论
+        async reqCommentPlaylist(id: number, limit?: number, offset?: number, before?: number): Promise<any> {
+            let result = await NMcommentPlaylist(id, limit, offset, before);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                // alert('error')
+                console.log(result);
+            }
+        },
+        //点赞
+        async reqcommentLike (cid:number,options: { id?: number; threadId?: string; },t:1 | 0,type:0|1|2|3|4|5|6|7){
+            let result = await NMcommentLike(cid,options,t,type)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(200)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve(400)
+                })
+            }
+        },
+        async reqCommentMusic(id: number, limit?: number, offset?: number, before?: number): Promise<any> {
+            let result = await NMcommentMusic(id, limit, offset, before);
+            if (result.data.code == 200) {
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } else {
+                // alert('error')
+                console.log(result);
+            }
+        },
+        //楼层评论
+        async reqCommentFloor(parentCommentId:number,id:number,type:number){
+            let result = await NMCommentFloor(parentCommentId,id,type)
+            if(result.data.code == 200){
+                return new Promise<{fa:any,time:number,ch:any[]}>((resolve, reject) => {
+                    resolve({
+                        fa:result.data.data.ownerComment,
+                        ch:[],
+                        time:0
+                    })
+                })
+            }else{
+                return new Promise<{fa:any,time:number,ch:any[]}>((resolve, reject) => {
+                    resolve({
+                        fa:{},
+                        ch:[],
+                        time:0
+                    })
+                })
+            }
+        },
+        async reqShareResource(formData:FormData){
+            let result = await NMshareResource(formData)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }
+        },
+        //关注动态
+        async reqMyEvent(lasttime = -1){
+            let result = await NMEvent(lasttime);
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        async requserEvents(id:number,lasttime?:number){
+            let result = await NMuserEvents(id,lasttime)
+            if (result.data.code == 200) {
+                return new Promise<any>((resolve) => {
+                    resolve(result.data)
+                })
+            } else {
+                return new Promise<any>((resolve) => {
+                    resolve([])
+                })
+            }
+        },
+        //删除动态
+        async reqEventDel(id){
+            let result = await NMeventDel(id)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //资源点赞
+        async reqLikeResource(id:string | number,t:1 | any){
+            let result = await NMLikeResource(id,t)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        //转发动态
+        async reqEventForward(uid:number,evid:number,forwards:string){
+            let result = await NMeventForward(uid, evid, forwards)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        //动态评论
+        async reqMyEventComment(threadId:string,limit?:number,offset?:number,before?:number){
+            let result = await NMEventComment(threadId,limit,offset,before)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(result.data)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve({})
+                })
+            }
+        },
+        //听歌打卡
+        async reqScrobble(id,sourceid,time){
+            let result = await NMScrobble(id,sourceid,time)
+            if(result.data.code == 200){
+                return new Promise<any>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<any>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        },
+        async reqUserRecord(uid:number,type:1 | 0){
+            let result = await NMUserRecord(uid,type)
+            if(result.data.code != 200){
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve([])
+                })
+            }else{
+                return new Promise<any[]>((resolve, reject) => {
+                    resolve(result.data.allData ?? result.data.weekData ?? [])
+                })
+            }
+        },
+        async reqCheckNickname(nickname:string){
+            let result = (await NMCheckNickname(nickname)).data
+            if(result.code == 200){
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(true)
+                })
+            }else{
+                return new Promise<boolean>((resolve, reject) => {
+                    resolve(false)
+                })
+            }
+        }
+    }
+})

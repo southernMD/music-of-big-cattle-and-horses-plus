@@ -173,7 +173,8 @@ export const songDetail = (ids:[number])=>{
         url:`/song/detail?ids=${ids.toString()}`,
         method:'POST',
         data:{
-            cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
+            cookie:"MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/openapi/clientlog; HTTPOnly;MUSIC_SNS=; Max-Age=0; Expires=Thu, 29 Jun 2023 01:29:13 GMT; Path=/;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/feedback; HTTPOnly;MUSIC_U=00D9C62B561A501C14826A66D1F17705A818D64E368011D29B264AD075563A3F233E8146E27162793ABCD2A86A96A354436B62B81CA0BF8150B55F6788B8D536EF3B0C00A1D334E3C413D8168651006F85698C99DF7C4C2FB95CE827E0FEF0D6999D976189D241452B86F9F5FF9C1FADE718A557B3DE30AE7A500CB698F7A2DD8C4E77C65BA6091366BF4055EBD735C3FCFB6DADC631777C8F351ADD41A61844A4DA68A407D5D0379736EE5509F183B68FFC42F2D80AC7AA8EF0069C69DA46FDBCC11F7C0D1719A72CE0279509096BF86764383CD1B6C5D04EFC4F7912ADB9FDC54F6DA524C1F0A0226F3E77A423A2FFE10A90648A99282620842D3AB383121C8E9D7D0A9CA816CAE6F332845EB345C89F9B0F4EF998D91D0A2690E156881BE344FDF0D32A9E8312B6615BD396002B301FE5F3DC11D2E8C6C9D10395F343F50111819D9E1FC16846F1E992F734ABE466C70BEBA2C3F211C54452385D37D2F7BF1746D65E47DBFF4BE50007ED46E9EF257E714E7F165B1E6E1CC57564842DE0507F; Max-Age=15552000; Expires=Tue, 26 Dec 2023 01:29:13 GMT; Path=/; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/clientlog; HTTPOnly;__csrf=e28a03793f2741053305e53e428145dd; Max-Age=1296010; Expires=Fri, 14 Jul 2023 01:29:23 GMT; Path=/;;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/clientlog; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/clientlog; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/feedback; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/feedback; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/openapi/clientlog; HTTPOnly"
+            // cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
         }
     })
 }
@@ -445,8 +446,11 @@ export const SongDlUrl = (id:number,br:number)=>{
 //搜索
 
 export const Search = (key:string,type?:string,limit?:number,offset?:number)=>{
+    let url
+    if(type != '2000')url = `/cloudsearch?keywords=${key}`
+    else url = `/search?keywords=${key}`
     return axios({
-        url:`/cloudsearch?keywords=${key}`,
+        url,
         method:'POST',
         params:{
             type,limit,offset,
@@ -643,7 +647,7 @@ export const AlbumDetailDynamic = (id:number)=>{
         url:url,
         method:'POST',
         data:{
-            cookie:localStorage.getItem('cookieUser')
+            cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
         }
     })
 }
@@ -685,7 +689,8 @@ export const artists = (id)=>{
         url:`/artists?id=${id}&t=${new Date().getTime()}`,
         method:'POST',
         data:{
-            cookie:localStorage.getItem('cookieUser')
+            // cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
+            cookie:'MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/openapi/clientlog; HTTPOnly;MUSIC_SNS=; Max-Age=0; Expires=Thu, 29 Jun 2023 01:29:13 GMT; Path=/;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/feedback; HTTPOnly;MUSIC_U=00D9C62B561A501C14826A66D1F17705A818D64E368011D29B264AD075563A3F233E8146E27162793ABCD2A86A96A354436B62B81CA0BF8150B55F6788B8D536EF3B0C00A1D334E3C413D8168651006F85698C99DF7C4C2FB95CE827E0FEF0D6999D976189D241452B86F9F5FF9C1FADE718A557B3DE30AE7A500CB698F7A2DD8C4E77C65BA6091366BF4055EBD735C3FCFB6DADC631777C8F351ADD41A61844A4DA68A407D5D0379736EE5509F183B68FFC42F2D80AC7AA8EF0069C69DA46FDBCC11F7C0D1719A72CE0279509096BF86764383CD1B6C5D04EFC4F7912ADB9FDC54F6DA524C1F0A0226F3E77A423A2FFE10A90648A99282620842D3AB383121C8E9D7D0A9CA816CAE6F332845EB345C89F9B0F4EF998D91D0A2690E156881BE344FDF0D32A9E8312B6615BD396002B301FE5F3DC11D2E8C6C9D10395F343F50111819D9E1FC16846F1E992F734ABE466C70BEBA2C3F211C54452385D37D2F7BF1746D65E47DBFF4BE50007ED46E9EF257E714E7F165B1E6E1CC57564842DE0507F; Max-Age=15552000; Expires=Tue, 26 Dec 2023 01:29:13 GMT; Path=/; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/clientlog; HTTPOnly;__csrf=e28a03793f2741053305e53e428145dd; Max-Age=1296010; Expires=Fri, 14 Jul 2023 01:29:23 GMT; Path=/;;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/clientlog; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/clientlog; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/weapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/feedback; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/feedback; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/eapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/neapi/feedback; HTTPOnly;MUSIC_A_T=1481945014720; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/api/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/wapi/clientlog; HTTPOnly;MUSIC_R_T=1481945063126; Max-Age=2147483647; Expires=Tue, 17 Jul 2091 04:43:20 GMT; Path=/openapi/clientlog; HTTPOnly'
         }
     })
 }
@@ -718,7 +723,7 @@ export const simiartist = (id:number)=>{
         url:`/simi/artist?id=${id}`,
         method:'POST',
         data:{
-            cookie:localStorage.getItem('cookieUser')
+            cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
         }
     })
 }
@@ -892,6 +897,24 @@ export const artistTopSong = (id)=>{
     })
 }
 
+//听歌打卡
+export const Scrobble = (id,sourceid,time = 0)=>{
+    return axios({
+        url:`/scrobble?id=${id}&sourceid=${sourceid}&time=$${time}&t=${new Date().getTime()}`,
+        method:'POST',
+    })
+}
+
+export const checkMusic = (id,br = 999000)=>{
+    return axios({
+        url:`/check/music?id=${id}&br=${br}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+
 //检测更新
 export const githubUpdate = ()=>{
     try {
@@ -900,4 +923,71 @@ export const githubUpdate = ()=>{
     } catch (error) {
         return null
     }
+}
+//电台详情
+export const djDetail = (rid)=>{
+    return axios({
+        url:`/dj/detail?rid=${rid}&time=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//电台列表
+export const djProgram = (rid,limit,offset)=>{
+    return axios({
+        url:`/dj/program?rid=${rid}&limit=${limit}&offset=${offset}&time=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//节目详情
+export const djProgramDetail = (id)=>{
+    return axios({
+        url:`/dj/program/detail?id=${id}&time=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//节目评论
+export const commentDj = (id:number,limit?:number,offset?:number,before?:number)=>{
+    let baseUrl = `/comment/dj?time=${new Date().getTime()}`
+    if(limit)baseUrl+=`&limit=${limit}`
+    if(offset)baseUrl+=`&offset=${offset}`
+    if(before)baseUrl+=`&before=${before}`
+    if(id)baseUrl+=`&id=${id}`
+    return axios({
+        url:baseUrl,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')|| sessionStorage.getItem('youkeCookie')
+        }
+    })
+}
+
+//收藏电台
+export const djSub = (id,t:0|1)=>{
+    return axios({
+        url:`/dj/sub?rid=${id}&t=${t}&time=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+}
+//电台订阅者
+export const djsuber = (id,limit,time)=>{
+    return axios({
+        url:`/dj/subscriber?id=${id}&time=${time}&limit=${limit}&t=${new Date().getTime()}`,
+        method:'POST',
+        data:{
+            cookie:localStorage.getItem('cookieUser')
+        }
+    })
+    
 }

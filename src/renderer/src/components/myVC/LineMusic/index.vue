@@ -7,16 +7,21 @@
     data-right="1" 
     :data-pic="zhuanji?.picUrl ?? bufferpic"
     :data-txt="`单曲:${title} - ${singer?.map(it=>it.name).join('/')}`"
-    :data-download="!(downloadId.includes(id)) && !(!ifDownload)"
+    :data-download="!(downloadId.includes(id)) && !(!ifDownload) || myPath != 'undefined'"
     :data-path="myPath"
+    :data-djName="djName"
+    :data-djId="djId"
+    :data-djprogramid="djprogramid"
+    :data-djprogramName="djprogramName"
+    :data-radioid="radioid"
     :class="{
         dragMouseStyleCan: Main.dragMouse && dragId != id && Main.dragType == 'songMy',
-        dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid == -1 && Main.dragMouse,
+        dragMouseStyleMyself: dragId == id && Main.dragMouse && Main.dragType == 'songMy' || playListid < 0 && Main.dragMouse || Main.dragType != 'songMy' && Main.dragMouse,
         topColor: topColorid == id && Main.dragType == 'songMy',
         bottomColor: Main.dragMouse && Main.dragType == 'songMy' && (length == index || length == indexSearch) && Main.mouseDragOnIndex == -1,
         'line-music-oneself': globalVar.oneself == 1 && oneselfColor != false
     }" @mousedown="pseudoDragBeginn" @click="changColor" ref="line-music" @mouseover="replaceLocation"
-        @mouseout="replaceLocationed" @dblclick="gotoPlay">
+        @mouseout="replaceLocationed" @dblclick="gotoPlay" @mouseenter="fnMouseEnter">
         <div class="line">
             <div class="small-jiantou">
                 <slot></slot>
@@ -33,10 +38,10 @@
                 <i class="iconfont icon-aixin_fill xin" :class="{ noDrag: !Main.dragMouse }" v-show="ifLike() && !lately"
                     @click="likeOrDislike"></i>
                 <i class="iconfont icon-xiazai1" :class="{ noDrag: !Main.dragMouse }" @click="download(id)"
-                    v-if="!ifDownload && !downloadId.includes(id) && !local && !lately"></i>
+                    v-if="(!ifDownload && !downloadId.includes(id)|| myPath == 'undefined' && !downloadId.includes(id)) && !local && !lately"></i>
                 <canvas id="loadingCanvas" width="25" height="25" ref="loadingCanvas"
-                    v-show="downloadId.includes(id) && !local  && !lately && loadingValue.get(id) && loadingValue.get(id)?.[0] > 0"></canvas>
-                <i class="iconfont icon-zhengque" v-if="!(downloadId.includes(id)) && !(!ifDownload) && !local  && !lately"
+                    v-show="downloadId.includes(id) && !local  && !lately && loadingValue.get(id) && loadingValue.get(id)?.[0]! > 0"></canvas>
+                <i class="iconfont icon-zhengque" v-if="(!(downloadId.includes(id)) && !(!ifDownload) || myPath != 'undefined') && !local  && !lately"
                     :class="{ noDrag: !Main.dragMouse }"></i>
                 <!-- <canvas id="loadingCanvas" width="18" height="18" ref="loadingCanvas"
                 v-show="true"></canvas> -->
@@ -45,14 +50,17 @@
                 <div class="limit" :class="{ 'limit-oneself': globalVar.oneself && oneselfColor != false }">
                     <span :class="{ red: Main.playing == id && (Main.beforePlayListId == playListid || type == 'radio') }"
                         v-html="title"></span>
-                    <span class="small" v-if="tns?.length" v-html="`&nbsp;(${tns[0]})`"></span>
-                    <span class="small" v-else-if="alia?.length" v-html="`&nbsp;(${alia[0]})`"></span>
+                    <span class="small" v-if="tns?.length" v-html="`&nbsp;(${tns?.[0]})`"></span>
+                    <span class="small" v-else-if="alia?.length" v-html="`&nbsp;(${alia?.[0]})`"></span>
                     <span class="tag" v-if="!(downloadId.includes(id)) && !(!ifDownload) && ( lately)">本地</span>
                 </div>
             </div>
             <div class="song-hand"  v-if="!record && !onlyTime" :class="{ 'song-hand-oneself': globalVar.oneself && oneselfColor }">
                 <div class="limit" :class="{ noDrag: !Main.dragMouse }">
-                    <span  v-if="singer![0]?.name"  class="span-singer" v-for="({}, index) in singer"
+                    <span v-if="djId" style="padding-left: 5px;">
+                        <Singer :id="radioid!"  :name="djprogramName" :index="0" :singerLen="0" type="DJ"></Singer>
+                    </span>
+                    <span  v-else-if="singer?.[0]?.name"  class="span-singer" v-for="({}, index) in singer"
                         :data-singerId="singer![index]?.id">
                         <Singer :id="singer![index]?.id"  :name="singer![index]?.name" :index="index" :singerLen="singer.length - 1"></Singer>
                     </span>
@@ -92,7 +100,7 @@
 import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect } from 'vue';
 import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
 import { useRouter,useRoute } from 'vue-router';
-import { useMain, useBasicApi, useGlobalVar } from '@renderer/store';
+import { useMain, useBasicApi, useGlobalVar,useNM } from '@renderer/store';
 import Singer from './Singer/index.vue'
 import ZhuanJi from './ZhuanJi/index.vue'
 // import {ElMessageBox} from 'element-plus'
@@ -102,6 +110,7 @@ const BasicApi = useBasicApi();
 const $router = useRouter();
 const $route = useRoute();
 const globalVar = useGlobalVar()
+const NM = useNM()
 const props = defineProps<{
     index?: number,
     title: string,
@@ -127,20 +136,27 @@ const props = defineProps<{
     onlyTime?:boolean//只要时间
     dataType?:string
     imageBuffer?:Uint8Array
+    djprogramid?:number
+    djId?:number
+    djName?:string
+    djprogramName?:string
+    radioid?:number
 }>()
 
 const bufferpic = ref('')
-const reader = new FileReader();
-reader.readAsDataURL(new Blob([props.imageBuffer!], { type: 'image/jpeg' }));
-new Promise<any>((resolve, reject) => {
-    reader.onloadend = () => {
-        const base64String = reader.result;
-        resolve(base64String);
-    };
-    reader.onerror = reject;
-}).then((base64:any)=>{
-    bufferpic.value = base64
-})
+if(props.imageBuffer){
+    const reader = new FileReader();
+    reader.readAsDataURL(new Blob([props.imageBuffer!], { type: 'image/jpeg' }));
+    new Promise<any>((resolve, reject) => {
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            resolve(base64String);
+        };
+        reader.onerror = reject;
+    }).then((base64:any)=>{
+        bufferpic.value = base64
+    })
+}
 
 
 //leftblock传过来的id，限自己的歌单的id
@@ -148,15 +164,16 @@ let playListid = inject<Ref<number>>('playListId') as Ref<number>
 let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 const ifDownload = ref(false)
 let name = ''
-
-props.singer.forEach((el, index) => {
-name += el.name
-    if (index != props.singer!.length - 1) name += ','
-})
+let cleanFileName = ''
+if(props.singer){
+    props.singer.forEach((el, index) => {
+        name += el.name
+        if (index != props.singer!.length - 1) name += ','
+    })
+}
 name = name + ' - ' + props.title
-
-
-const cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
+cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
+console.log(cleanFileName,downloadList.value,'&^%$%^&*()(*&^%^&&&&&&&&&&&&&&&&&&)');
 const myPath = ref('')
 watch(()=>props.path,()=>{
     myPath.value = props.path + ''
@@ -191,7 +208,14 @@ const likeOrDislike = async () => {
     let likeIndex = Main.likes.indexOf(props.id)
     if (likeIndex != -1) {
         //取消喜欢
-        let code = (await Main.reqLike(Number(props.id), false)).data.code
+        let code
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(props.id), false)).data
+            code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            code = (await Main.reqLike(Number(props.id), false)).data.code
+        }
         if (code == 405) {
             likeMessage.value = '操作繁忙，请稍后再试'
             globalVar.loadMessageDefault = likeMessage.value
@@ -202,10 +226,18 @@ const likeOrDislike = async () => {
             globalVar.loadMessageDefaultFlag = true
             Main.likes.splice(likeIndex, 1)
             Main.likeChange = `${props.id},false`
+            Main.playList[0].trackCount--
         }
 
     } else {
-        let code = (await Main.reqLike(Number(props.id), true)).data.code
+        let code
+        if(localStorage.getItem('NMcookie')){
+            const res = (await NM.reqLike(Number(props.id), true)).data
+            code = res.code
+            if(code == 200) Main.playList[0].coverImgUrl = res.url
+        }else{
+            code = (await Main.reqLike(Number(props.id), true)).data.code
+        }
         if (code == 405) {
             likeMessage.value = '操作繁忙，请稍后再试'
             globalVar.loadMessageDefault = likeMessage.value
@@ -216,6 +248,7 @@ const likeOrDislike = async () => {
             globalVar.loadMessageDefaultFlag = true
             Main.likes.unshift(props.id)
             Main.likeChange = `${props.id},true`
+            Main.playList[0].trackCount++
         }
 
     }
@@ -245,16 +278,24 @@ const replaceLocationed = () => {
 
 const $emit = defineEmits(['warpPlace', 'localPlay','recordPlay','shorPlayList'])
 const fnMouseDrag = async (e: any) => {
-    Main.dragMouse = false
+    clearTimeout(mousedownTimer)
+    console.log('取消mousedownTimer');
     window.removeEventListener('mouseup', fnMouseDrag)
-    window.removeEventListener('mousemove', fnMouseDragMoving)
+    // window.removeEventListener('mousemove', fnMouseDragMoving)
     for (let i = 0; i < e.path.length; i++) {
         if (e.path[i].classList != undefined && e.path[i].classList.contains('dragMouseStyleAdd')) {
             let dom = e.path[i] as HTMLElement
             if (String(playListid.value) != String(dom.getAttribute('data-id')) && Number(dom.getAttribute('data-index')) <= Main.createPlay) {
                 if(Number(dom.getAttribute('data-index')) == 0){
                     Main.dragMouse = false
-                    let code = (await Main.reqLike(Number(props.id), true)).data.code
+                    let code
+                    if(localStorage.getItem('NMcookie')){
+                        const res = (await NM.reqLike(Number(props.id), true)).data
+                        code = res.code
+                        if(code == 200) Main.playList[0].coverImgUrl = res.url
+                    }else{
+                        code = (await Main.reqLike(Number(props.id), true)).data.code
+                    }
                     if (code == 405) {
                         likeMessage.value = '操作繁忙，请稍后再试'
                         globalVar.loadMessageDefault = likeMessage.value
@@ -265,13 +306,22 @@ const fnMouseDrag = async (e: any) => {
                         globalVar.loadMessageDefaultFlag = true
                         Main.likes.unshift(props.id)
                         Main.likeChange = `${props.id},true`
+                        Main.playList[0].trackCount++
                     }
                 }else{
                     Main.dragMouse = false
                     globalVar.loadDefault = true
-                    let result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
+                    let result 
+                    if(localStorage.getItem('NMcookie')){
+                        result = (await NM.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
+                    }else{
+                        result = (await Main.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
+                    }
+                    if(result.url){
+                        Main.playList[Number(dom.getAttribute('data-index'))].coverImgUrl = result.url
+                    }
                     globalVar.loadDefault = false
-                    if (result.body.code == 200) {
+                    if (result.body.code == 200 || (result.data.code == 200 && localStorage.getItem('NMcookie'))) {
                         globalVar.loadMessageDefault = '已收藏到歌单'
                         globalVar.loadMessageDefaultFlag = true 
                         let index = Number(dom.getAttribute('data-index'))
@@ -284,30 +334,44 @@ const fnMouseDrag = async (e: any) => {
     }
     let domTop = document.querySelector('.topColor') as HTMLElement | null
     let domBottom = document.querySelector('.bottomColor') as HTMLElement | null
+    console.log(domTop,domBottom);
     if (domTop && playListid.value != -1) {
         let addIndex = Number(domTop.getAttribute('data-index'))
         console.log(Main.dragIndex - 1, addIndex - 1);
         if (Main.dragIndex - 1 > addIndex - 1) {      //上拖拽
             let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
             Main.openPlayListId.splice(addIndex - 1, 0, delId[0])
-            Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            if(localStorage.getItem('NMcookie')){
+                NM.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }else{
+                Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }
             $emit('warpPlace', { from: Main.dragIndex - 1, to: addIndex - 1 })
+            
         } else {
             let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
             Main.openPlayListId.splice(addIndex - 1 - 1, 0, delId[0])
-            Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            if(localStorage.getItem('NMcookie')){
+                NM.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }else{
+                Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+            }
             $emit('warpPlace', { from: Main.dragIndex - 1, to: addIndex - 1 - 1 })
         }
-
+        Main.dragMouse = false
     }
     if (domBottom) {
         let delId = Main.openPlayListId.splice(Main.dragIndex - 1, 1)
         Main.openPlayListId.push(delId[0] as never)
-        Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+        if(localStorage.getItem('NMcookie')){
+            NM.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+        }else{
+            Main.reqSongOrderUpdate(playListid.value, Main.openPlayListId as [number])
+        }
         $emit('warpPlace', { from: Main.dragIndex - 1, to: -1 })
-
+        Main.dragMouse = false
     }
-
+    Main.dragMouse = false
     topColorid.value = -1
     dragId.value = -1
 
@@ -321,19 +385,39 @@ const fnMouseDragMoving = (e: MouseEvent) => {
         Main.dragIndex = Number(props.index)
         Main.pageY = e.pageY
         Main.dragMessage = props.title as string
-        dragId.value = props.id as number
     } else if (Main.isMyCreate == false) {
         Main.dragMouse = true
         Main.dragMessage = props.title as string
         Main.dragType = 'song'
     }
 }
+
+const fnMouseEnter = (e:MouseEvent)=>{
+    if(Main.dragMouse == true){
+        if (Main.isMyCreate == true) {
+            Main.dragType = 'songMy'
+            Main.pageY = e.pageY
+        } else if (Main.isMyCreate == false) {
+            Main.dragType = 'song'
+        }
+    }
+}
+let mousedownTimer
 const pseudoDragBeginn = (event:MouseEvent) => {
     if(event.button !== 0)return
-    window.addEventListener('mousemove', fnMouseDragMoving)
-    window.addEventListener("mouseup", fnMouseDrag)
+    if(event.detail !== 1)return
+    console.log('pseudoDragBeginn函数调用',);
+    // window.addEventListener('mousemove', fnMouseDragMoving)
+    mousedownTimer = setTimeout(() => {
+        // 检查鼠标按下的时间是否超过 0.5 秒
+        window.addEventListener("mouseup", fnMouseDrag)
+        Main.dragMouse = true
+        Main.dragMessage = props.title
+        Main.dragIndex = Number(props.index)
+        dragId.value = props.id
+        console.log('拖动元素');
+    }, 500); // 设置计时器时间为 0.5 秒
 
-    console.log('拖动元素');
 }
 
 function searchFather(d: HTMLElement | undefined): HTMLElement | undefined{
@@ -352,6 +436,7 @@ onMounted(()=>{
     changColor()
 })
 const changColor = () => {
+    clearTimeout(mousedownTimer)
     let arr = document.querySelectorAll('.line-music') as unknown as Array<HTMLElement>
     for (let i = 0; i < arr.length; i++) {
         if ((i + 1) % 2 == 0) {
@@ -414,7 +499,10 @@ const heartJust = async () => {
 
 
 const gotoPlay = (e: MouseEvent) => {
+    console.log('不会触发了把');
     if(e.button !== 0)return 
+    clearTimeout(mousedownTimer)
+    if(!globalVar.radioReady)return
     if (!props.local) {
         let _this = $el.refs['line-music'] as HTMLElement
         if (!_this) return
@@ -434,35 +522,47 @@ const gotoPlay = (e: MouseEvent) => {
                         Main.songType = 'song'
                         heartJust()
                         return;
-                    }
-                    if(globalVar.setting.playWay){
-                        let result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
-                        Main.playingList = result.songs
-                        Main.playingPrivileges = result.privileges
-                        Main.playingindex = props.index as number
-                        Main.playing = props.id as number
-                        Main.beforePlayListId = playListid.value
-                        Main.playStatus = 'play'
-                        Main.songType = 'song'
                     }else{
-                        let result = (await Main.reqSongDetail([props.id])).data
-                        if(Main.playingindex == -1){
+                        if(globalVar.setting.playWay){
+                            let result
+                            if(localStorage.getItem('NMcookie')){
+                                result = (await NM.reqPlaylistTrackAll(playListid.value)).data;
+                            }else{
+                                result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                            }
                             Main.playingList = result.songs
                             Main.playingPrivileges = result.privileges
-                            Main.playingindex = 1
-                            Main.playing = props.id
+                            Main.playingindex = props.index as number
+                            Main.playing = props.id as number
+                            Main.beforePlayListId = playListid.value
                             Main.playStatus = 'play'
                             Main.songType = 'song'
                         }else{
-                            Main.playingList.splice(Main.playingindex,0,...result.songs)
-                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                            Main.playingindex++
-                            Main.playing = props.id
-                            Main.playStatus = 'play'
-                            Main.songType = 'song'
+                            let result = (await Main.reqSongDetail([props.id])).data
+                            if(Main.playingindex == -1){
+                                Main.playingList = result.songs
+                                Main.playingPrivileges = result.privileges
+                                Main.playingindex = 1
+                                Main.playing = props.id
+                                Main.playStatus = 'play'
+                                Main.songType = 'song'
+                            }else{
+                                const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                                if(ifId == -1){
+                                    Main.playingList.splice(Main.playingindex,0,...result.songs)
+                                    Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                                    Main.playingindex++
+                                    Main.playing = props.id
+                                }else{
+                                    Main.playing = props.id
+                                    Main.playingindex = ifId + 1
+                                }
+                                Main.playStatus = 'play'
+                                Main.songType = 'song'
+                            }
                         }
                     }
-                    console.log(Main.beforePlayListId, Main.playListId[0]);
+                    console.log(Main.beforePlayListId, Main.playListId);
                     heartJust()
                 }else if($route.query.type == '专辑'){
                     if(globalVar.setting.playWay){
@@ -484,10 +584,16 @@ const gotoPlay = (e: MouseEvent) => {
                             Main.playStatus = 'play'
                             Main.songType = 'song'
                         }else{
-                            Main.playingList.splice(Main.playingindex,0,...result.songs)
-                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                            Main.playingindex++
-                            Main.playing = props.id
+                            const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                            if(ifId == -1){
+                                Main.playingList.splice(Main.playingindex,0,...result.songs)
+                                Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                                Main.playingindex++
+                                Main.playing = props.id
+                            }else{
+                                Main.playing = props.id
+                                Main.playingindex = ifId + 1
+                            }
                             Main.playStatus = 'play'
                             Main.songType = 'song'
                         }
@@ -497,6 +603,11 @@ const gotoPlay = (e: MouseEvent) => {
                 Main.playing = props.id as number
                 Main.playingindex = props.index as number + 1
                 Main.playStatus = 'play'
+                if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
+                    Main.songType = 'DJ'
+                }else{
+                    Main.songType = 'song'
+                }
             } else if (father.getAttribute('id') === 'every-day') {
                 if(globalVar.setting.playWay){
                     Main.playingList = BasicApi.everyDaySong
@@ -519,10 +630,16 @@ const gotoPlay = (e: MouseEvent) => {
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }else{
-                        Main.playingList.splice(Main.playingindex,0,...result.songs)
-                        Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                        Main.playingindex++
-                        Main.playing = props.id
+                        const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                        if(ifId == -1){
+                            Main.playingList.splice(Main.playingindex,0,...result.songs)
+                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                            Main.playingindex++
+                            Main.playing = props.id
+                        }else{
+                            Main.playing = props.id
+                            Main.playingindex = ifId + 1
+                        }
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }
@@ -561,10 +678,16 @@ const gotoPlay = (e: MouseEvent) => {
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }else{
-                        Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(props.index!-1,props.index)) 
-                        Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege])
-                        Main.playingindex++
-                        Main.playing = props.id
+                        const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                        if(ifId == -1){
+                            Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(props.index!-1,props.index)) 
+                            Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege])
+                            Main.playingindex++
+                            Main.playing = props.id
+                        }else{
+                            Main.playing = props.id
+                            Main.playingindex = ifId + 1
+                        }
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }
@@ -577,14 +700,6 @@ const gotoPlay = (e: MouseEvent) => {
             //通知主进程修改播放图片以及文字
             // $el.props.title
         })
-        let str = props.title + ' - ';
-        let singerArr = props.singer as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        window.electron.ipcRenderer.send('change-play-thum', str)
-        window.electron.ipcRenderer.send('render-play')
         globalVar.closePointOutMessage = '已开始播放'
         globalVar.closePointOut = true
     } else {
@@ -632,6 +747,7 @@ const loadingValue = toRef(globalVar, 'loadingValue')
 onMounted(() => {
     nextTick(() => {
         const canvas = $el.refs.loadingCanvas as HTMLCanvasElement
+        if(!canvas)return
         const context = canvas.getContext('2d') as CanvasRenderingContext2D
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;

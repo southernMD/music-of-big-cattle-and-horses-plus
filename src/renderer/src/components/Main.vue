@@ -2,7 +2,7 @@
   <!-- <el-config-provider size="small" :z-index="3000" :locale="zhCn"> -->
   <!-- </el-config-provider> -->
   <div class="main" :class="{'main-oneself':globalVar.oneself == 1,'red-line':MainMenu.colorBlock == 'NMblack'}" >
-    <el-scrollbar ref="scrollbarRefLeft" @scroll="barLeft">
+    <el-scrollbar ref="scrollbarRefLeft" @scroll="barLeft" style="width: 200px;">
       <aside @mouseover="leftOver" :class="{'aside-right-color-oneself':globalVar.oneself == 1}">
         <div class="top">
           <LeftBlock message="发现音乐" :big="true" name="findMusic">
@@ -38,7 +38,7 @@
                 <i class="iconfont icon-yun_o"></i>
               </template>
             </LeftBlock>
-            <LeftBlock  v-if="false" message="我的播客" :big="false" name="mydj" >
+            <LeftBlock  v-if="!isNM" message="我的播客" :big="false" name="mydj" >
               <template #default>
                 <i class="iconfont icon-changpian"></i>
               </template>
@@ -66,7 +66,7 @@
               <LeftBlock data-right="1" data-type="playListLike" 
               :data-txt="`歌单：${Main.playList[0]?.name} by ${Main.playList[0]?.creator?.nickname}`" 
               :data-pic="Main.playList[0]?.coverImgUrl"
-              :big="false" :privacy="Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
+              :big="false" :privacy="+Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
                 :index="0">
                 <template #default>
                   <i class="iconfont icon-aixin"></i>
@@ -82,10 +82,10 @@
               <LeftBlock data-right="1" data-type="playListMy" 
                 :data-txt="`歌单：${Main.playList[valueIndex]?.name} by ${Main.playList[valueIndex]?.creator?.nickname}`" 
                 :data-pic="Main.playList[valueIndex]?.coverImgUrl"
-                v-for="(valueIndex, index) in Main.createPlay" :privacy="Main.playList[valueIndex]?.privacy"
+                v-for="(valueIndex, index) in Main.createPlay" :privacy="+Main.playList[valueIndex]?.privacy"
                 :message="Main.playList[valueIndex]?.name" :big="false" :id="Main.playList[valueIndex]?.id"
                 :index="valueIndex" :key="Main.playList[valueIndex]?.id">
-                <template #default v-if="Main.playList[valueIndex].privacy == 10">
+                <template #default v-if="+Main.playList[valueIndex]?.privacy == 10">
                   <i class="iconfont icon-suoding_o"></i>
                 </template>
                 <template #default v-else>
@@ -115,10 +115,10 @@
                 :data-pic="Main.playList[valueIndex + Main.createPlay]?.coverImgUrl"
                 v-for="(valueIndex, index) in Main.startPlay"
                 :message="Main.playList[valueIndex + Main.createPlay]?.name"
-                :privacy="Main.playList[valueIndex + Main.createPlay]?.privacy"
+                :privacy="+Main.playList[valueIndex + Main.createPlay]?.privacy"
                 :id="Main.playList[valueIndex + Main.createPlay]?.id" :index="valueIndex + Main.createPlay" :big="false"
                 :key="Main.playList[valueIndex + Main.createPlay]?.id">
-                <template #default v-if="Main.playList[valueIndex + Main.createPlay - 1]?.privacy == 10">
+                <template #default v-if="+Main.playList[valueIndex + Main.createPlay]?.privacy == 10">
                   <i class="iconfont icon-suoding_o"></i>
                 </template>
                 <template #default v-else>
@@ -142,7 +142,17 @@
         <!-- <router-view></router-view> -->
         <router-view v-slot="{ Component }">
           <keep-alive>
-              <component v-if="$route.meta.keepAlive" :is="Component" />
+              <component v-if="$route.meta.keepAlive && $route.name == 'PersonalCenter' " :is="Component" />
+          </keep-alive>
+        </router-view>
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+              <component v-if="$route.meta.keepAlive && $route.name == 'personalFM' " :is="Component" />
+          </keep-alive>
+        </router-view>
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+              <component v-if="$route.meta.keepAlive && $route.path.includes('myStart') " :is="Component" />
           </keep-alive>
         </router-view>
         <router-view v-if="!$route.meta.keepAlive" />
@@ -157,7 +167,7 @@
     </template>
     <template #midle>
       <div class="create">
-        <el-input v-model="playListName" placeholder="请输入新歌单标题"></el-input>
+        <el-input ref="inputAddPlayListRef" @focus="inputFn" @blur="inputRemove" v-model="playListName" placeholder="请输入新歌单标题"></el-input>
         <el-checkbox v-model="yinsi" size="large" label="设置为隐私歌单"></el-checkbox>
       </div>
     </template>
@@ -167,7 +177,7 @@
   import { ElScrollbar } from 'element-plus'
 //   import zhCn from 'element-plus/lib/locale/lang/zh-cn'
 import { toRef, ref, watch,nextTick, Ref, Suspense } from 'vue';
-import { useMainMenu, useMain,useGlobalVar,useBasicApi } from '../store'
+import { useMainMenu, useMain,useGlobalVar,useBasicApi,useNM } from '../store'
 import { useRoute, useRouter } from 'vue-router';
 
 import LeftBlock from './myVC/LeftBlock.vue';
@@ -179,7 +189,7 @@ const route = useRoute();
 const globalVar = useGlobalVar()
 const $router = useRouter();
 const BasicApi = useBasicApi();
-
+const NM = useNM()
 const messageList:Ref<any[]> = ref([])
 const routeName:Ref<any[]> = ref([])
 // const findMusic = ['个性推荐', 'q2', 'q3']
@@ -189,6 +199,9 @@ const findMusicRouteName = ['personalRecommend']
 const downloadMusic = ['下载管理', '本地音乐']
 const downloadMusicRouteName = ['downloaded', 'local']
 let clickFlag = ref([true, false, false])
+const isNM = ref(false)
+if(localStorage.getItem('NMcookie'))isNM.value = true
+else isNM.value = false
 watch(route,()=>{
   messageList.value.length = 0
   routeName.value.length = 0
@@ -214,11 +227,11 @@ const go = (index: number) => {
   })
 }
 
-watch(route,()=>{
+// watch(route,()=>{
   // if(routeName.value.includes(String(route.name)) && route.name!='downloading'){
   //   clickFlag.value = [false, false, false]
   // }
-})
+// })
 
 // let ifLogin = toRef(BasicApi, 'account')
 let playlistFlag = ref(true);
@@ -336,20 +349,44 @@ const createPlayList = async()=>{
   if(playListName.value.length == 0)return
   globalVar.loadDefault = true
   addPlayFlag.value = false
-  const result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  let result 
+  if(!localStorage.getItem('NMcookie')){
+    result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  }else{
+    result = await NM.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  }
   if(result.id){
     if(globalVar.addPlayId.length == 0){
       globalVar.loadDefault = false
       globalVar.loadMessageDefault = '创建歌单成功'
       globalVar.loadMessageDefaultFlag = true
+      if(route.name == 'songPlaylist'){
+        $router.replace({
+          name:'songPlaylist',
+          query:{
+            my:'true',
+            id:Main.playList[+route.query.index! + 1].id,
+            index:+route.query.index! + 1,
+            type:'歌单'
+          }
+        })
+      }
     }
     Main.playListId.splice(1,0,result.id)
     Main.playList.splice(1,0,result)
     Main.createPlay++
     if(globalVar.addPlayId.length != 0){
-        let result2 = (await Main.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
+      let result2
+      if(localStorage.getItem('NMcookie')){
+        result2 = (await NM.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
+      }else{
+        result2 = (await Main.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
+      }
+      if(result2.url){
+        Main.playList[1].coverImgUrl = result.url
+      }
         globalVar.loadDefault = false
-        if (result2.body.code == 200) {
+        if (result2.body.code == 200 || (result2.code == 200 && localStorage.getItem('NMcookie'))) {
           globalVar.loadMessageDefault = '已收藏到歌单'
           globalVar.loadMessageDefaultFlag = true 
           Main.playList[1].trackCount += globalVar.addPlayId.length
@@ -417,6 +454,20 @@ watch(()=>globalVar.changeMainScroll,()=>{
   }
 })
 
+import {modInput} from '../utils/modInput'
+const inputAddPlayListRef = ref()
+
+const onKeyDown = (event: KeyboardEvent) => {
+  playListName.value = modInput(event, inputAddPlayListRef.value.ref, playListName.value);
+}
+
+const inputFn = ()=>{
+  window.addEventListener('keydown',onKeyDown)
+}
+
+const inputRemove = ()=>{
+  window.removeEventListener('keydown',onKeyDown)
+}
 </script>
 
 <style lang="less" scoped>

@@ -20,10 +20,11 @@
   <script setup lang="ts">
   import messageCard from '@renderer/components/myVC/messageCard.vue';
   import {ref ,nextTick,onMounted} from 'vue'
-  import { useMain } from '@renderer/store';
+  import { useMain,useNM } from '@renderer/store';
   import { useRoute } from 'vue-router';
   const $route = useRoute()
   const Main = useMain();
+  const NM = useNM()
   let list = ref(new Array())
   let more = ref(true)
   const listRef = ref<(InstanceType<typeof HTMLElement>)>()
@@ -31,7 +32,13 @@
   const offset = ref(0)
   const load = async()=>{
     if(more.value){
-      let result = await Main.requserFolloweds(+$route.query.id!,limit.value,offset.value)
+      let result
+      if(localStorage.getItem('NMcookie')){
+        result = await NM.requserFolloweds(+$route.query.id!,limit.value,offset.value)
+      }else{
+        result = await Main.requserFolloweds(+$route.query.id!,limit.value,offset.value)
+      }
+      more.value = result.more
       offset.value+=limit.value
       let follows = result.followeds as Array<any>
       list.value.push(...follows)

@@ -15,11 +15,18 @@
                 </div>
             </div>
             <div class="bottom" id="play-list-Panel-bottom">
-                <LineMusic v-for="(value, index) in  list" :showIndex="false" :title="value.name" :singer="value.ar"
-                    :time="value.dt" :id="value.id" :index="index" :key="value.id" :tns="value?.tns"
-                    :alia="value?.alia" :oneselfColor="false" type="radio">
+                <LineMusic v-for="(value, index) in  list" :showIndex="false" :title="value.name" :singer="value.ar ?? value.mainSong.artists"
+                    :time="value.dt ?? value.mainSong.bMusic.playTime" :id="value.mainSong?value.mainSong.id:value.id" :index="index" :key="value.id" :tns="value?.tns"
+                    :alia="value?.alia" :oneselfColor="false" type="radio" :dataType="getDataType(value.id,value.localPath,(value.mainSong ?? value.programId)== undefined)"
+                    :path="value.localPath"
+                    :djName="value.mainSong?.artists?.[0]?.name"
+                    :djId="value.dj?.userId"
+                    :djprogramid="value.mainSong?value?.id:undefined"
+                    :radioid="value.mainSong?value?.radio.id:undefined"
+                    :djprogramName="value.mainSong?value?.dj.brand:undefined"
+                    >
                     <template #default>
-                        <i class="iconfont icon-youjiantou" v-if="Main.playing == value.id"></i>
+                        <i class="iconfont icon-youjiantou" v-if="Main.playing == value.id || Main.playing == value.mainSong?.id"></i>
                     </template>
                 </LineMusic>
             </div>
@@ -30,14 +37,14 @@
 
 <script lang="ts" setup>
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
-import { getCurrentInstance, ComponentInternalInstance, toRef } from 'vue';
-import { useMain } from '@renderer/store';
+import { getCurrentInstance, ComponentInternalInstance, toRef, watch } from 'vue';
+import { useMain,useGlobalVar } from '@renderer/store';
 const $el = getCurrentInstance() as ComponentInternalInstance
 const $emit = defineEmits(['close','stopPlay','startAll'])
 const Main = useMain();
-
+const globalVar = useGlobalVar()
 let list = toRef(Main, 'playingList')
-
+console.log(list);
 const clearList = ()=>{
     Main.playingList = []
     Main.playingPrivileges = []
@@ -57,6 +64,33 @@ useClickElsewhereToClose(deleteDilog, $emit, "playlistIcon")
 
 const startAll = ()=>{
     $emit('startAll')
+}
+
+watch(()=>globalVar.clearList,()=>{
+    if(globalVar.clearList == true){
+        clearList()
+        globalVar.clearList = false
+    }
+})
+
+const getDataType = (id,path,flag)=>{
+    if(flag){
+        if(id > 0){
+            if(path != undefined){
+                return 'songPanelLocal'
+            }else{
+                return 'songPanel'
+            }
+        }else{
+            return 'songPanelnor'
+        }
+    }else{
+        if(path != undefined){
+            return 'songPanelLocalDJ'
+        }else{
+            return 'songPanelDJ'
+        }
+    }
 }
 </script>
 

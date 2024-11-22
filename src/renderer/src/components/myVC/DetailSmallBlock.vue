@@ -61,15 +61,6 @@ const gotoDetail = async()=>{
         playingindex.value++;
         Main.beforePlayListId = -1
         Main.playStatus = 'play'
-        let str = result.songs[0].name +' - ';
-        let singerArr = result.songs[0].ar as unknown as Array<any>
-        singerArr.forEach((element,index)=>{
-            str+=element.name
-            if(index != singerArr.length - 1)str+=' / '
-        })
-        console.log(result);
-        window.electron.ipcRenderer.send('change-play-thum',str)
-        window.electron.ipcRenderer.send('render-play')
     }else if($el.props.type == 'playList' && flag.value){
         flag.value = false;
         let t = setTimeout(()=>{

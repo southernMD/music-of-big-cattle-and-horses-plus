@@ -25,7 +25,10 @@
 [v0.0.3-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.3-beta/bingNMmusic-0.0.3-beta-setup.exe)修复bug，更新打开方式限.mp3格式<br>
 [v0.0.4-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.4-beta/bingNMmusic-0.0.4-beta-setup.exe)修复bug，应用内更新<br>
 [v0.0.5-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.5-beta/bingNMmusic-0.0.5-beta-setup.exe)修复bug<br>
-[v0.0.6-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.6-beta/bingNMmusic-0.0.6-beta-setup.exe)无牛马api的最后一个版本，存在部分bug
+[v0.0.6-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.6-beta/bingNMmusic-0.0.6-beta-setup.exe)无牛马api的最后一个版本，存在部分bug<br>
+[v0.0.7-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.7-beta/bingNMmusic-0.0.7-beta-setup.exe)牛马api的第一个版本，修复部分bug<br>
+[v0.0.8-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.8-beta/bingNMmusic-0.0.8-beta-setup.exe)优化启动<br>
+[v0.0.9-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.9-beta/bingNMmusic-0.0.9-beta-setup.exe)支持播客<br>
 ## 克隆项目
 
 ```shell
@@ -49,7 +52,7 @@ yarn build:win
 
 ### 注意
 注意一下几点
-
+- 更换了音乐接口为vercel，必须使用魔法访问
 - 下载浏览器报毒属于正常现象，本应用保证未窃取个人信息
 - yarn dev启动可能会卡住，可以使用yarn start(失去热更新)
 - 设置内最好不要设置为开机自动启动。
@@ -57,6 +60,7 @@ yarn build:win
 - 如果使用自定义皮肤页面可能会很丑,建议使用黑色主题。
 - 运行不是很稳定所以默认会启动控制台，如果你不希望有控制台，注释src/main/windows.ts 内的win.webContents.toggleDevTools(),应用内可点击f12弹出开发者工具，可能弹不出来
 - 应该有很多bug，但是应该不影响使用
+- 本地播放可以播放已经下载的电台声音，但是本地资源无法被app解析成电台声音,只会解析成一般歌曲，也有可能回被跳过播放
 - 重启应用可以解决95%的问题
 - 仅供学习交流个人使用
 ### 浏览
@@ -65,7 +69,7 @@ yarn build:win
 ![Alt Text](https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305221538403.png)
 
 ### 功能
-基于NeteaseCloudMusicApi，支持听歌，创建歌单，下载，不支持vip，暂不支持播放声音，私信。
+基于NeteaseCloudMusicApi，支持听歌，创建歌单，下载，不支持vip，暂不支持私信。
 
 ### 自动更新
 

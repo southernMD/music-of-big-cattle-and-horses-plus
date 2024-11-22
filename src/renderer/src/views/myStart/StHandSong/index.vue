@@ -8,7 +8,7 @@
                 <i class="iconfont icon-guanbi_o" v-else @click="clearSearch" :class="{ noDrag: !Main.dragMouse }"></i>
             </div>
         </div>
-        <div class="list">
+        <div class="list" :class="{'list-oneself':globalVar.oneself}">
             <HBlock v-show="searchKey.length == 0" 
                 v-for="val in list" 
                 type="startSongHand"
@@ -38,13 +38,14 @@
 
 <script setup lang="ts">
 import { ref, watch, Ref ,toRef} from 'vue'
-import { useMain, useBasicApi } from '@renderer/store'
+import { useMain, useBasicApi,useGlobalVar } from '@renderer/store'
 import { useRouter } from 'vue-router'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
 import { throttle } from 'lodash'
 const Main = useMain()
 const $router = useRouter()
 const BasicApi = useBasicApi()
+const globalVar = useGlobalVar()
 const searchKey = ref('')
 const clearSearch = () => {
     searchKey.value = ''
@@ -165,5 +166,16 @@ const go = (id)=>{
             background-color: @line-color-even;
         }
     }
+    .list-oneself{
+    
+        >.Hblock:nth-child(odd) {
+            background-color: rgba(43,43,43,.6);
+        }
+
+        >.Hblock:nth-child(even) {
+            background-color: rgba(46,46,46,.4);
+        }
+    }
+
 }
 </style>

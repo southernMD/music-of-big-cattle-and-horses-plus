@@ -73,14 +73,14 @@ const Main = useMain();
 const $el = getCurrentInstance() as ComponentInternalInstance;
 
 
-let mainId = ref(0)
+let mainId = ref(undefined)
 let t =setInterval(()=>{
     mainId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Main')
     if(mainId.value != undefined){
         console.log('得到mainid');
         clearInterval(t)
     }
-},100)
+},5000)
 
 const fillHeight = computed(()=>{
     return !(yinOryi[1] && romalrcArr.value.length != 0) && !(yinOryi[0] && tlyricArr.value.length != 0)
@@ -92,16 +92,7 @@ let t2 = setInterval(()=>{
     if(ok) clearInterval(t2)
     window.electron.ipcRenderer.sendTo(mainId.value,'lrc-ready')
 },2000)
-// const geMainid = async()=>{
-//     let id =  electronIpc.ipcSendSync('getWindowId', 'Main')
-//     console.log(id,'递归');
-//     if(id != undefined){
-//         console.log(id);
-//         return id
-//     }else{
-//         return  electronIpc.ipcSendSync('getWindowId', 'Main')
-//     }
-// }
+
 const yinOryi = ref([false,false])
 window.electron.ipcRenderer.on('yin-or-yi',({},arg:boolean[])=>{
     yinOryi.value = arg

@@ -54,7 +54,7 @@
             </div>
             <div class="st-bt">
                 <el-checkbox v-model="globalVar.setting.opencanvas" label="开启音频可视化" size="large" />
-                <span>（关闭后可以加快加载速度）</span>
+                <span>（切换音质后会丢失几秒）</span>
             </div>
             <div class="el">
                 <el-radio-group  v-model="globalVar.setting.canvasColor" class="ml-4">
@@ -203,8 +203,9 @@
 <script setup lang="ts">
 import {onMounted, toRef,ref, watch, watchEffect,toRaw} from 'vue'
 import {githubUpdate} from '@renderer/api/index'
-import {useGlobalVar} from '@renderer/store'
+import {useGlobalVar, useMain} from '@renderer/store'
 import dropDown from '@renderer/components/myVC/dropDown.vue'
+const Main = useMain()
 const globalVar = useGlobalVar()
 const fontList = toRef(globalVar,'fontList')
 
@@ -432,13 +433,15 @@ const isClick = (index:number) => {
     }
     flagsuo = true
 }
-let ciId = ref(0)
-let t =setInterval(()=>{
-    ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
-    if(ciId.value != undefined){
-        clearInterval(t)
-    }
-},100)
+let ciId = toRef(Main,"ciId")
+
+// let t = 1
+// let t =setInterval(()=>{
+//     ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(ciId.value != undefined){
+//         clearInterval(t)
+//     }
+// },5000)
 
 const lrcPositionHandle = ()=>{
     window.electron.ipcRenderer.send('change-lrc-position',lrcPosition.value)
@@ -453,6 +456,7 @@ const changeLrcFamily = (ms)=>{
 
 const changeLrcSize = (ms)=>{
     globalVar.setting.lrcSize = +ms.name
+    globalVar.lrcFlag = true
     window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',+ms.name)
     txtRef.value.style.setProperty('--fontSizeLrc',  ms.name + 'px');
 }
@@ -569,8 +573,10 @@ const searchUpdate = async()=>{
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefaultFlag = true
     }else{
+        const v = res.data.name.split('v')[1]
+        console.log(v,globalVar.setting.version);
         // if(res.data.name.endsWith(version.value)){
-        if(res.data.name.endsWith == version.value){
+        if(v <= globalVar.setting.version){
             globalVar.loadMessageDefault = '当前版本已是最新'
             globalVar.loadMessageDefaultFlag = true
         }else{
@@ -582,6 +588,8 @@ const searchUpdate = async()=>{
         }
     }
 }
+
+
 
 </script>
 
@@ -881,7 +889,7 @@ const searchUpdate = async()=>{
 }
 :deep(.el-checkbox){
     --el-checkbox-input-border:var(--smallFontColor) 1px solid;
-    --el-checkbox-checked-text-color:@font-color;
+    --el-checkbox-checked-text-color:@font-color-oneself;
     --el-checkbox-bg-color:@commit-block-color;
     --el-checkbox-checked-input-border-color:@primary-color;
     --el-checkbox-checked-bg-color:@primary-color;
@@ -890,7 +898,7 @@ const searchUpdate = async()=>{
     --el-text-color-disabled:: @small-font-color !important;
     --el-disabled-border-color: @quick-bk-stop;
     height: auto;
-    color: @font-color;
+    color: @font-color-oneself;
     .el-checkbox__label{
         font-size: 12px;
     }
@@ -905,7 +913,7 @@ const searchUpdate = async()=>{
         height: 25px;
         .el-radio__label {
             font-size: 13px;
-            color: @font-color;
+            color: @font-color-oneself;
         }
 
     }

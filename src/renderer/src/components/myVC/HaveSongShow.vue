@@ -55,10 +55,11 @@
 import {Ref,onMounted,ref, watch,computed } from 'vue'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue';
 import { dayjsStamp } from '@renderer/utils/dayjs';
-import { useMain,useBasicApi ,useGlobalVar} from '@renderer/store';
+import { useMain,useBasicApi ,useGlobalVar,useNM} from '@renderer/store';
 import { useRoute } from 'vue-router';
 const globalVar = useGlobalVar()
 const $route = useRoute()
+const NM = useNM()
 const Main = useMain()
 const BasicApi = useBasicApi()
 const size = ref(0)
@@ -68,7 +69,12 @@ const change = async()=>{
     if(props.id == -5){
         try {
             Recorderror.value = false
-            const result = await Main.reqUserRecord(props.uid,1);
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(props.uid,1)
+            }else{
+                result = await Main.reqUserRecord(props.uid,1)
+            }
             list.value = result.map(item=>item.song).splice(0,10)
             listCount.value = result.map(item=>item.playCount).splice(0,10)
         } catch (error) {
@@ -81,7 +87,11 @@ const change = async()=>{
     }else {
         let result
         if(props.type == 'playList'){
-            result = (await Main.reqPlaylistTrackAll(props.id,10)).data
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqPlaylistTrackAll(props.id,10)).data
+            }else{
+                result = (await Main.reqPlaylistTrackAll(props.id,10)).data
+            }
             list.value = result.songs
         }
         else if(props.type == 'songHand'){
@@ -144,10 +154,15 @@ watch(()=>props.list_6!,()=>{
 })
 const Recorderror = ref(false)
 watch(()=>props.uid,async()=>{
-    if(props.id == -5){
+    if(props.id == -5 && !isNaN(props.uid)){
         try {
             Recorderror.value = false
-            const result = await Main.reqUserRecord(props.uid,1);
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = await NM.reqUserRecord(props.uid,1)
+            }else{
+                result = await Main.reqUserRecord(props.uid,1)
+            }
             list.value = result.map(item=>item.song).splice(0,10)
             listCount.value = result.map(item=>item.playCount).splice(0,10)
         } catch (error) {
@@ -174,12 +189,13 @@ const shorPlayList = async({index,id})=>{
             Main.beforePlayListId = props.id
         }else{
             if(Main.playingindex == -1){
+                console.log(props.list_6,index);
                 Main.playingList = props.list_6!.slice(index!-1,index)
-                Main.playingPrivileges = [props.list_6!.slice(props.index!-1,props.index)[0].privilege]
+                Main.playingPrivileges = [props.list_6!.slice(index!-1,index)[0].privilege]
                 Main.playingindex = 1
             }else{
-                Main.playingList.splice(Main.playingindex,0,...props.list_6!.slice(props.index!-1,props.index)) 
-                Main.playingPrivileges.splice(Main.playingindex,0,...[props.list_6!.slice(props.index!-1,props.index)[0].privilege])
+                Main.playingList.splice(Main.playingindex,0,...props.list_6!.slice(index!-1,index!)) 
+                Main.playingPrivileges.splice(Main.playingindex,0,...[props.list_6!.slice(index!-1,index)[0].privilege])
                 Main.playingindex++
             }
         }
@@ -187,7 +203,11 @@ const shorPlayList = async({index,id})=>{
         if(globalVar.setting.playWay){
             let result
             if(props.type == 'playList'){
-                result = (await Main.reqPlaylistTrackAll(props.id)).data
+                if(localStorage.getItem('NMcookie')){
+                    result = (await NM.reqPlaylistTrackAll(props.id)).data
+                }else{
+                    result = (await Main.reqPlaylistTrackAll(props.id)).data
+                }
                 Main.playingPrivileges = result.privileges
             }else if(props.type == 'songHand'){
                 result = (await Main.reqAlbumTrackAll(props.id)).data
@@ -197,7 +217,7 @@ const shorPlayList = async({index,id})=>{
             Main.playingList = result.songs
             Main.beforePlayListId = props.id
         }else{
-            let result = (await Main.reqSongDetail([props.id])).data
+            let result = (await Main.reqSongDetail([id])).data
             if(Main.playingindex == -1){
                 Main.playingList = result.songs
                 Main.playingPrivileges = result.privileges

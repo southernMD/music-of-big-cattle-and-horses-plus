@@ -7,7 +7,7 @@
         <slot name="midle"></slot>
         <template #footer v-if="button">
             <el-button @click="confirm" class="go">{{ confirmName }}</el-button>
-            <el-button type="primary" @click="cancel" class="fa">{{ cancelName }}</el-button>
+            <el-button type="primary" @click="cancel" class="fa" style="color: var(--fontColor);">{{ cancelName }}</el-button>
         </template>
     </el-dialog>
 </template>

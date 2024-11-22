@@ -1,6 +1,6 @@
 <template>
     <div class="AppSmall">
-        <img src="" alt="" id="mainBackground">
+        <img src="" id="mainBackground" style="display: none;">
         <video src="" id="mainBackgroundVideo" :muted="true" loop type="video/mp4"></video>
         <MyMainMenu></MyMainMenu>
         <!-- <LoadingBig></LoadingBig> -->
@@ -33,7 +33,15 @@
             :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag"
             @close="globalVar.loadMessageDefaultFlag = false"></Loading>
         <Teleport to="body">
-            <rightBlock :index="index" :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" :type="type" :rightFlag="rightFlag"></rightBlock>
+            <rightBlock :index="index" :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" 
+            :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" 
+            :type="type" :rightFlag="rightFlag"
+            :djName="djName"
+            :djId="djId"
+            :djprogramid="djprogramid"
+            :djprogramName="djprogramName"
+            :radioid="radioid"
+            ></rightBlock>
         </Teleport>
         <MyDialog :flag="updateFlag" @closeDialog="closeUpdate" @confirm="confirmUpdate" @cancel="cancleUpdate" confirmName="现在更新">
             <template #header>
@@ -47,16 +55,33 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject } from 'vue'
-import { useMainMenu, useGlobalVar, useBasicApi, useMain } from '@renderer/store'
-import MusicRadio from '@renderer/components/MusicRadio/index.vue'
-import useColor from '@renderer/hooks/useColor';
+import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect } from 'vue'
+import { useMainMenu, useGlobalVar, useBasicApi, useMain,useNM } from '@renderer/store'
+// const MusicRadio = shallowRef()
+// const MyMainMenu = shallowRef()
+// const Main = shallowRef()
+// onMounted(()=>{
+//     MusicRadio.value = defineAsyncComponent(() =>
+//     import('@renderer/components/MusicRadio/index.vue'))
+//     MyMainMenu.value = defineAsyncComponent(() =>
+//     import('@renderer/components/MyMainMenu/index.vue'))
+//     Main.value = defineAsyncComponent(() =>
+//     import('@renderer/components/Main.vue'))
+// })
+const MusicRadio = defineAsyncComponent(() =>
+    import('@renderer/components/MusicRadio/index.vue'))
+const MyMainMenu = defineAsyncComponent(() =>
+    import('@renderer/components/MyMainMenu/index.vue'))
+const Main = defineAsyncComponent(() =>
+    import('@renderer/components/Main.vue'))
+
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
+const NM = useNM();
 const MainPinia = useMain();
 const flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 const loadDefault: Ref<boolean> = toRef(globalVar, 'loadDefault')
@@ -65,7 +90,6 @@ const downloadQueue = shallowRef(new PromiseQueue({ concurrency: 3 }))
 globalVar.setting.version = window.electron.ipcRenderer.sendSync('app-version')
 
 provide('downloadQueue', downloadQueue)
-useColor()
 onMounted(() => {
     globalVar.oneself = Number(localStorage.getItem('oneself')) as 0 | 1
 })
@@ -87,21 +111,24 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
                 if (h) {
                     BKbase64.value = newUrl as string
                     h.src = newUrl
+                    h.style.display = 'block'
                     clearInterval(t)
                 }
             }, 500)
         };
     }
-    document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
     MainMenu.colorBlock = extname
-    localStorage.setItem('colorBlock', extname);
-    localStorage.setItem('oneself', '1')
     globalVar.oneself = 1
+    nextTick(()=>{
+        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
+        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
+        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+        localStorage.setItem('MainTitle', `255, 255, 255`)
+        localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+        localStorage.setItem('MainMenuHover', `255, 255, 255`)
+        localStorage.setItem('colorBlock', extname);
+        localStorage.setItem('oneself', '1')
+    })
 })
 // window.electron.ipcRenderer.on('ffmpeg-path',({},data)=>{
 //     console.log(data);
@@ -111,36 +138,43 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
 onMounted(()=>{
     window.electron.ipcRenderer.sendSync('renderer-ready')
 })
-window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag }) => {
+window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
     if (!flag) globalVar.loadingMp4Bk = true
     const port = window.electron.ipcRenderer.sendSync('vedio-server-port');
     nextTick(()=>{
         const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-        v.src = `http://127.0.0.1:${port}/video`
+        v.src = `http://127.0.0.1:${port}/video?path=${filePath}`
         v.play()
         const h = document.getElementById('mainBackground') as HTMLImageElement
+        h.style.display = 'none'
         h.src = ''
     })
-    // fetch(`http://127.0.0.1:2233/video`).then((response) => {
-    //     return response.arrayBuffer()
-    // }).then((buffer) => {
-    //     console.log(buffer);
-    //     const url = URL.createObjectURL(new Blob([buffer], {
-    //         type: "video/m3u8"
-    //     }))
-    //     const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-    //     v.src = url
-    //     v.play()
-    //     const h = document.getElementById('mainBackground') as HTMLImageElement
-    //     h.src = ''
-        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-        localStorage.setItem('MainTitle', `255, 255, 255`)
-        localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-        localStorage.setItem('MainMenuHover', `255, 255, 255`)
-        localStorage.setItem('oneself', '1')
-        globalVar.oneself = 1
+    fetch(`http://127.0.0.1:${port}/video?path=${filePath}`).then((response) => {
+        return response.arrayBuffer()
+    }).then((buffer) => {
+        console.log(buffer);
+        const url = URL.createObjectURL(new Blob([buffer], {
+            type: "video/m3u8"
+        }))
+        const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
+        v.src = url
+        v.play()
+        const h = document.getElementById('mainBackground') as HTMLImageElement
+        h.style.display = 'none'
+        h.src = ''
+    })
+
+        MainMenu.colorBlock = '.mp4'
+        nextTick(()=>{
+            document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
+            document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
+            document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+            localStorage.setItem('MainTitle', `255, 255, 255`)
+            localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+            localStorage.setItem('MainMenuHover', `255, 255, 255`)
+            localStorage.setItem('oneself', '1')
+            globalVar.oneself = 1
+        })
     // })
 })
 
@@ -155,24 +189,28 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
         const newUrl = this.result;
         const h: any = document.getElementById('mainBackground') as HTMLImageElement
         h.src = newUrl
+        h.style.display = 'block'
         const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
         v.pause();
         v.src = ''
     };
     // const h = document.querySelector('#header') as HTMLElement
     // h.style.backgroundImage =   "data:image/png;base64," + base64
-    localStorage.setItem('broundColor', '33,33,36,.8')
-    document.documentElement.style.setProperty(`--broundColor`, `rgba(33,33,36,.8)`)
-    document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
-    MainMenu.colorBlock = extname
-    localStorage.setItem('colorBlock', extname);
-    localStorage.setItem('oneself', '1')
     globalVar.oneself = 1
+    MainMenu.colorBlock = extname
+    nextTick(()=>{
+        localStorage.setItem('broundColor', '33,33,36,.8')
+        document.documentElement.style.setProperty(`--broundColor`, `rgba(33,33,36,.8)`)
+        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
+        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
+        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+        localStorage.setItem('MainTitle', `255, 255, 255`)
+        localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+        localStorage.setItem('MainMenuHover', `255, 255, 255`)
+        localStorage.setItem('colorBlock', extname);
+        localStorage.setItem('oneself', '1')
+    })
+  
 })
 
 if (!sessionStorage.getItem('youkeCookie')) {
@@ -182,31 +220,60 @@ if (!sessionStorage.getItem('youkeCookie')) {
     }
 }
 let cookie = localStorage.getItem('cookieUser')
-if (sessionStorage.getItem('NMcookie')) {
-
-}
-else if (!(cookie == '' || cookie == null || cookie == undefined)) {
-    BasicApi.reqLogin(cookie as string).then(() => {
-        MainPinia.reqUserPlaylist(BasicApi.account?.id)
-        MainPinia.reqUserLike(BasicApi.account?.id)
-        BasicApi.reqStartDj()
-        BasicApi.reqCreateDj(BasicApi.account?.id)
-        MainPinia.reqUserSubcount()
-    })
-}
+// if (localStorage.getItem('NMcookie')) {
+//     NM.reqLogin().then(()=>{
+//         NM.reqUserPlaylist(BasicApi.profile?.userId)
+//         NM.reqUserLike(BasicApi.profile?.userId)
+//         NM.reqUserSubcount()
+//         NM.reqartistSublist()
+//         NM.reqalbumSublist()
+//         NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+//     })
+// }
+// else if (!(cookie == '' || cookie == null || cookie == undefined)) {
+//     BasicApi.reqLogin(cookie as string).then(() => {
+//         MainPinia.reqUserPlaylist(BasicApi.account?.id)
+//         MainPinia.reqUserLike(BasicApi.account?.id)
+//         BasicApi.reqStartDj()
+//         BasicApi.reqCreateDj(BasicApi.account?.id)
+//         MainPinia.reqUserSubcount()
+//         BasicApi.reqartistSublist()
+//         BasicApi.reqalbumSublist()
+//         BasicApi.requserFollows(BasicApi.account!.id)
+//     })
+// }
+const p0 = localStorage.getItem('NMcookie')? NM.reqLogin():BasicApi.reqLogin(cookie as string)
 const p1 = BasicApi.reqRecommendSongs()
-const p2 = BasicApi.reqRecommendPlayList()
-const p3 = BasicApi.reqDjProgramToplist(10)
-const p4 = BasicApi.reqPlayListTags()
-await Promise.allSettled([p1, p2, p3, p4])
-MainPinia.reqPersonal_fm()
-BasicApi.reqartistSublist()
-try {
-    BasicApi.reqalbumSublist()
-    BasicApi.requserFollows(BasicApi.account!.id)
-} catch (error) {
-    
+let p2
+if(localStorage.getItem('NMcookie')){
+    p2 = NM.reqRecommendPlayList()
+}else{
+    p2 = BasicApi.reqRecommendPlayList()
 }
+// const p3 = BasicApi.reqDjProgramToplist(10)
+const p4 = BasicApi.reqPlayListTags()
+await Promise.allSettled([p0,p1, p2, p4])
+
+onMounted(async()=>{
+    if(localStorage.getItem('NMcookie')){
+        Promise.allSettled([
+            NM.reqUserPlaylist(BasicApi.profile?.userId),
+            NM.reqUserLike(BasicApi.profile?.userId),
+            NM.reqUserSubcount(),
+            NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+        ])
+    }else if(!(cookie == '' || cookie == null || cookie == undefined)){
+        Promise.allSettled([
+            MainPinia.reqUserPlaylist(BasicApi.account?.id),
+            MainPinia.reqUserLike(BasicApi.account?.id),
+            MainPinia.reqUserSubcount(),
+            BasicApi.requserFollows(BasicApi.account!.id)
+        ])
+        
+    }
+})
+
+
 
 const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
 globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
@@ -370,6 +437,7 @@ const getUrl = async (controller: AbortController) => {
 const downloadList = ref([])
 window.electron.ipcRenderer.send('get-download-list')
 window.electron.ipcRenderer.on('look-download-list', ({ }, args: any[]) => {
+    console.log('这里是下载的列表',args);
     //@ts-ignore
     downloadList.value = args.map((it: string) => it.split('.mp3')[0])
 })
@@ -379,32 +447,33 @@ provide('downloadList', downloadList)
 
 let draggable = toRef(MainPinia, 'dragMouse')
 //拖动监视
-let dragMessageId: number | null = null;
-let t = setInterval(() => {
-    dragMessageId = window.electron.ipcRenderer.sendSync('getWindowId', 'drageMessage');
-    if (dragMessageId) {
-        clearInterval(t);
-    }
-}, 100)
+let dragMessageId = toRef(MainPinia,"dragMessageId") 
+// let t = 1
+// let t = setInterval(() => {
+//     dragMessageId = window.electron.ipcRenderer.sendSync('getWindowId', 'drageMessage');
+//     if (dragMessageId) {
+//         clearInterval(t);
+//     }
+// }, 5000)
 watch(draggable, (newValue, oldValue) => {
     console.log(newValue, oldValue);
     if (newValue == true) {
         console.log('拖动开始');
         window.electron.ipcRenderer.send('begin-drag')
-        window.electron.ipcRenderer.sendTo(dragMessageId as number, 'send-to-drag-Message', { message: MainPinia.dragMessage })
+        window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-Message', { message: MainPinia.dragMessage })
     }
     if (newValue == false) {
         console.log('拖动结束');
         window.electron.ipcRenderer.send('end-drag')
-        window.electron.ipcRenderer.sendTo(dragMessageId as number, 'send-to-drag-end')
+        window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-end')
 
     }
 })
 watch(() => MainMenu.colorBlock, (newValue) => {
     if (newValue === 'NMblack' || globalVar.oneself) {
         let t = setInterval(() => {
-            if (dragMessageId) {
-                window.electron.ipcRenderer.sendTo(dragMessageId, 'send-to-drag-bkColor',
+            if (dragMessageId.value) {
+                window.electron.ipcRenderer.sendTo(dragMessageId.value, 'send-to-drag-bkColor',
                     {
                         backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
                         fontColor: document.documentElement.style.getPropertyValue('--fontColor')
@@ -414,8 +483,8 @@ watch(() => MainMenu.colorBlock, (newValue) => {
         }, 100)
     } else {
         let t = setInterval(() => {
-            if (dragMessageId) {
-                window.electron.ipcRenderer.sendTo(dragMessageId as number, 'send-to-drag-bkColor',
+            if (dragMessageId.value) {
+                window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-bkColor',
                     {
                         backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
                         fontColor: document.documentElement.style.getPropertyValue('--fontColor')
@@ -438,6 +507,12 @@ const download = ref('')
 const path = ref('')
 const commentType = ref('')
 const index = ref('')
+const djName = ref('')
+const djId = ref('')
+const djprogramid = ref('')
+const djprogramName = ref('')
+const radioid = ref('')
+
 window.addEventListener('contextmenu', (event) => {
   rightFlag.value = false 
   event.preventDefault(); // 阻止默认的右键菜单弹出
@@ -455,11 +530,18 @@ window.addEventListener('contextmenu', (event) => {
         commentType.value =  doms[i].getAttribute('data-commentType')! ?? ''
         evid.value =  doms[i].getAttribute('data-evid')! ?? ''
         index.value =  doms[i].getAttribute('data-index')! ?? ''
+        djName.value =  doms[i].getAttribute('data-djName')! ?? ''
+        djId.value =  doms[i].getAttribute('data-djId')! ?? ''
+        djprogramid.value =  doms[i].getAttribute('data-djprogramid')! ?? ''
+        djprogramName.value =  doms[i].getAttribute('data-djprogramname')! ?? ''
+        radioid.value =  doms[i].getAttribute('data-radioid')! ?? ''
+        
         const x = event.clientX; // 鼠标点击位置相对于浏览器窗口左上角的横坐标
         const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
         eventBlockLeft.value = x
         eventBlockTop.value = y
-        rightFlag.value = true 
+        if(type.value.length!=0)rightFlag.value = true 
+        console.log(id.value,evid.value);
         break
     }
   }
@@ -477,22 +559,21 @@ const quick = toRef(globalVar.setting,'quick')
 if(quick.value.length == 0)quick.value = ['Ctrl + P','Ctrl + Left','Ctrl+ Right','Ctrl + Up','Ctrl + Down','Ctrl + M','Ctrl + L']
 if(quickGlobal.value.length == 0)quickGlobal.value = ['Ctrl + Alt + P','Ctrl + Alt + Left','Ctrl + Alt + Right','Ctrl + Alt + Up','Ctrl + Alt + Down','Ctrl + Alt + M','Ctrl + Alt + L']
 if(errGlobal.value.length == 0)errGlobal.value = [false,false,false,false,false,false,false]
-let timeoutId:any  = null 
 watch(quickGlobal,()=>{
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-        window.electron.ipcRenderer.invoke('set-global-op',toRaw(quickGlobal.value)).then((ress)=>{
-            console.log(ress);
-            ress.forEach((val,index)=>{
-                if(!val)errGlobal.value[index] = true
-                else errGlobal.value[index] = false
-            })
+    setQuickButton()
+},{deep:true})
+onMounted(()=>{
+    setQuickButton()
+})
+const setQuickButton = ()=>{
+    window.electron.ipcRenderer.invoke('set-global-op',toRaw(quickGlobal.value)).then((ress)=>{
+        console.log(ress);
+        ress.forEach((val,index)=>{
+            if(!val)errGlobal.value[index] = true
+            else errGlobal.value[index] = false
         })
-      timeoutId = null;
-    }, 1000);
-},{deep:true,immediate:true})
+    })
+}
 
 if(globalVar.setting.downloadPath == ''){
     window.electron.ipcRenderer.invoke('get-download-path').then((data) => {
@@ -500,34 +581,36 @@ if(globalVar.setting.downloadPath == ''){
     })
 }
 
-watch(()=>globalVar.setting.downloadPath,()=>{
+watch(()=>globalVar.setting.downloadPath,async()=>{
     if(globalVar.setting.downloadPath != ''){
-        window.electron.ipcRenderer.send('change-download-path',globalVar.setting.downloadPath)
+        await window.electron.ipcRenderer.invoke('change-download-path',globalVar.setting.downloadPath)
+        window.electron.ipcRenderer.send('get-download-list')
     }
 },{immediate:true})
 
-let ciId = ref(0)
-let t3 =setInterval(()=>{
-    ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
-    if(ciId.value != undefined){
-        clearInterval(t3)
-    }
-},100)
+let ciId = toRef(MainPinia,"ciId")
+// let t3 = 1
+// let t3 =setInterval(()=>{
+//     ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(ciId.value != undefined){
+//         clearInterval(t3)
+//     }
+// },5000)
 
 window.electron.ipcRenderer.on('lrc-ready',()=>{
     console.log('lrc准备完毕');
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',globalVar.setting.lrcSize )
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontWeight',globalVar.setting.lrcWeigth)
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-LrcBorder',globalVar.setting.lrcBorder)
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontSize',globalVar.setting.lrcSize )
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontWeight',globalVar.setting.lrcWeigth)
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-LrcBorder',globalVar.setting.lrcBorder)
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
     if(globalVar.setting.lrcColor == '默认'){
-        window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',{
+        window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
             top:'rgb(255,255,0)',
             bottom:'rgb(255,0,0)'
         })
     }else{
-        window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',{
+        window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
             top:toRaw(globalVar.setting.topColor),
             bottom:toRaw(globalVar.setting.bottomColor)
         })
@@ -543,12 +626,14 @@ const newVersion = toRef(globalVar.setting,'newVersion')
 const url = toRef(globalVar.setting,'updataUrl')
 const updateFlag = toRef(globalVar.setting,'updateFlag')
 const searchUpdate = async()=>{
-    globalVar.loadDefault = true
+    // globalVar.loadDefault = true
     let res =  await githubUpdate()
-    globalVar.loadDefault = false
+    // globalVar.loadDefault = false
     if(res == null){
     }else{
-        if(res.data.name.endsWith(globalVar.setting.version)){
+        const v = res.data.name.split('v')[1]
+        console.log(v,globalVar.setting.version);
+        if(v <= globalVar.setting.version){
         }else{
             newVersion.value = res.data.name
             updateFlag.value = true
@@ -577,6 +662,10 @@ const cancleUpdate = ()=>{
     updateFlag.value = false
 }
 
+watch(()=>globalVar.downloadId,()=>{
+    console.log(globalVar.downloadId,'下载id列表变化');
+    
+})
 </script>
 
 <style scoped lang="less">
@@ -604,5 +693,6 @@ video {
     text-align: center;
     color: @font-color;
 }
+
 
 </style>

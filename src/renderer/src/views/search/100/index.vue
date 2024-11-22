@@ -1,6 +1,6 @@
 <template>
   <!-- <div class="">10{{ $route.query.key }}</div> -->
-  <div class="list">
+  <div class="list" :class="{'list-oneself':globalVar.oneself}">
     <HBlock :dataType="BasicApi.startSongHand.every(item=>item.id != val.id)?'songHand':'songHandHad' " @click="goSongHand(val.id)" type="singer" :id="val.id" :Name="HName(val.name,val.alias)" :url="val.picUrl" v-for="val in list.get(nowPage)"></HBlock>
   </div>
   <div class="pagination">
@@ -67,6 +67,18 @@ const goSongHand = (id)=>{
         background-color: @line-color-even;
     }
 }
+.list-oneself{
+    
+    >.Hblock:nth-child(odd) {
+        background-color: rgba(43,43,43,.6);
+    }
+
+    >.Hblock:nth-child(even) {
+        background-color: rgba(46,46,46,.4);
+    }
+}
+
+
 
 .pagination {
     display: flex;

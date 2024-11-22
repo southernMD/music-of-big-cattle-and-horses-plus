@@ -18,7 +18,7 @@
               playingList[playingindex - 1]?.name
             }}</span>
           </span>
-          <div class="subtitle">
+          <div class="subtitle" v-if="Main.playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'">
             <div v-if="
               Boolean(
                 playingList[playingindex - 1]?.tns?.length ||
@@ -29,15 +29,15 @@
                 playingList[playingindex - 1]?.tns?.length !== 0 &&
                 playingList[playingindex - 1]?.tns?.length !== undefined
               ">
-                {{ playingList[playingindex - 1].tns[0] }}</span>
+                {{ playingList[playingindex - 1].tns?.[0] }}</span>
               <span @dragstart="prevenDrag" v-if="
                 playingList[playingindex - 1]?.alia?.length !== 0 &&
                 playingList[playingindex - 1]?.alia?.length != undefined
               ">
-                &nbsp;{{ playingList[playingindex - 1].alia[0] }}</span>
+                &nbsp;{{ playingList[playingindex - 1].alia?.[0] }}</span>
             </div>
             <div>
-              <span @dragstart="prevenDrag" v-if="playingList[playingindex - 1]?.ar[0]?.name" class="span-singer"
+              <span @dragstart="prevenDrag" v-if="playingList[playingindex - 1]?.ar?.[0]?.name" class="span-singer"
                 v-for="(value, index) in playingList[playingindex - 1]?.ar"
                 :data-singerId="playingList[playingindex - 1]?.ar[index]?.id">
                 <Singer :id="playingList[playingindex - 1]?.ar[index]?.id" :name="playingList[playingindex - 1]?.ar[index]?.name" :index="index"
@@ -56,8 +56,23 @@
               <span v-else style="padding-left: 5px">未知专辑</span>
             </div>
           </div>
+          <div v-else class="subtitle">
+            <div class="master">
+              <span>
+                <span>主播：</span><span class="url" @click.self="go(Main.playingList[playingindex - 1].dj.userId)" >南山有壶酒</span>
+              </span>
+              <span>
+                <i class="iconfont icon-shizhong"></i>
+                <span>{{dayjsStamp(Main.playingList[playingindex - 1].createTime!)}}</span>
+              </span>
+              <span>
+                <i class="iconfont icon-gf-play"></i>
+                <span>{{numberSimp(Main.playingList[playingindex - 1].listenerCount!)}}次</span>
+              </span>
+            </div>
+          </div>
         </div>
-        <div class="music">
+        <div class="music" v-show="Main.playingPrivileges[playingindex - 1]?.maxBrLevel != 'DJ'">
           <div class="left" ref="left">
             <div class="bk">
               <div class="ba ba-play" ref="ba"></div>
@@ -73,7 +88,7 @@
           <div class="right" v-show="ifShowRight">
             <el-scrollbar height="40%">
               <div class="main">
-                <div class="haveSong" v-show="simiPlaylist?.length !== 0">
+                <div class="haveSong" v-show="simiPlaylist?.length !== 0 && NMcookie">
                   <div class="title">
                     <span>包含这首歌的歌单</span>
                     <div class="block">
@@ -100,8 +115,33 @@
             <i v-if="!ifShowRight" class="iconfont icon-zuoxiangshuangjiantou"></i>
           </div>
         </div>
+        <div class="music music-DJ" v-if="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'">
+          <div class="left-DJ">
+            <el-image :src="playingList[playingindex - 1]?.coverUrl" style="width: 270px; height: 270px;">
+              <template #placeholder>
+                <el-image src="/src/assets/image/cloudmusic_5e9Ef54bbN.png" style="width: 270px; height: 270px;"></el-image>
+              </template>
+              <template #error>
+                <el-image src="/src/assets/image/cloudmusic_5e9Ef54bbN.png" style="width: 270px; height: 270px;"></el-image>
+              </template>
+            </el-image>
+          </div>
+          <div class="right-DJ">
+            <div class="contain">
+              <div class="DJname">{{ playingList[playingindex - 1]?.dj.brand }}</div>
+              <div class="startNumber">{{ playingList[playingindex - 1]?.radio.subCount }}人收藏</div>
+              <el-scrollbar style="width: 100%;">
+                <div class="desc" v-html="playingList[playingindex - 1]?.description.replace(/\n/g, '<br>')">
+                </div>
+              </el-scrollbar>
+            </div>
+          </div>
+        </div>
         <CommentList :commentFlag="commentFlag" :nowPage="nowPage" :hotComments="hotComments" :moreHot="moreHot"
-          :total="total" :comments="comments" :totalPage="totalPage" :id="playingId" :type="0"></CommentList>
+          :total="total" :comments="comments" :totalPage="totalPage" :id="playingId" 
+          :type="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'?4:0"
+          :djprogramid="Main.playingPrivileges[playingindex - 1]?.maxBrLevel == 'DJ'?Main.playingList[playingindex - 1].id:undefined"
+          ></CommentList>
         <transition-group name="showWrite">
           <FloatTag @click="openCommentDialog" :key="1" v-show="showSroll" :align="'center'" :bottom="'80px'" :size="'12px'" :width="'150px'"
             :height="'30px'" :option="'write'" @write="write">
@@ -134,7 +174,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useMain, useMainMenu, useElectronToApp, useGlobalVar } from "@renderer/store";
+
+import { useMain, useMainMenu, useElectronToApp, useGlobalVar, useNM } from "@renderer/store";
 import {
   toRef,
   watch,
@@ -150,10 +191,13 @@ import {
 import Vibrant from 'node-vibrant';
 import { ElScrollbar } from "element-plus";
 import { useRouter } from 'vue-router'
+import {dayjsStamp} from '@renderer/utils/dayjs'
+import { numberSimp } from "@renderer/utils/numberSimp";
 import MyMainMenu from '@renderer/components/MyMainMenu/index.vue'
 import ZhuanJi from '@renderer/components/myVC/LineMusic/ZhuanJi/index.vue'
 import Singer from '@renderer/components/myVC/LineMusic/Singer/index.vue'
 const Main = useMain();
+const NM = useNM()
 const MainMenu = useMainMenu();
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const $router = useRouter()
@@ -163,6 +207,10 @@ let playingindex = toRef(Main, "playingindex");
 let playingList = toRef(Main, "playingList");
 let detailStatus = toRef(Main, "detailStatus");
 let playingId = toRef(Main, "playing");
+const NMcookie = ref(true)
+watch(detailStatus,()=>{
+  if(localStorage.getItem('NMcookie'))NMcookie.value = false
+})
 
 defineProps<{
   currentTime: number;
@@ -221,7 +269,16 @@ let nowPage = ref(1);
 let moreHot = ref(false)
 watch(playingId, async () => {
   if (playingId.value > 0) {
-    let result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+    let result
+    if(Main.playingPrivileges[Main.playingindex - 1]?.maxBrLevel != 'DJ'){
+      if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqCommentMusic(playingId.value, 20, 0)).data
+      }else{
+        result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+      }
+    }else{
+      result = (await Main.reqCommentDj(Main.playingList[Main.playingindex - 1].id, 20, 0)).data
+    }
     hotComments.value = result.hotComments;
     comments.value = result.comments;
     total.value = result.total
@@ -461,6 +518,16 @@ const openCommentDialog = ()=>{
   $emit('openCommentDialog')
 }
 
+const go = (id)=>{
+    Main.detailStatus = 'close'
+    $router.push({
+        name:'PersonalCenter',
+        query:{
+            id
+        }
+    })
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -610,7 +677,26 @@ const openCommentDialog = ()=>{
           }
         }
       }
-
+      .master{
+        user-select: none;
+        &>span{
+          margin:0 5px;
+          display: inline-block;
+        }
+        .url{
+          color: @url-color;
+          cursor: pointer;
+          user-select: none;
+        }
+        i{
+          font-size: 12px;
+          margin-right: 2px;
+        }
+      }
+    }
+    .subtitleDj{
+      display: flex;
+      flex-direction: row;
     }
   }
 
@@ -772,8 +858,59 @@ const openCommentDialog = ()=>{
         color: @small-font-color;
       }
     }
-  }
 
+    .left-DJ{
+      height: 80%;
+      width: 350px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      >.el-image{
+        border-radius: .5em;
+      }
+    }
+    .right-DJ{
+      height: 80%;
+      width: 40%;
+      min-width:300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      .contain{
+        height: 270px;
+        min-width:300px;
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        align-items: self-start;
+        .DJname{
+          font-size: 20px;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          width: 100%;
+          color: @font-color;
+          height: 30px;
+        }
+        .startNumber{
+          font-size: 13px;
+          color: @font-color;
+          margin-bottom: 20px;
+        }
+        .desc{
+          height: calc(100% - 30px);
+          color: @small-font-color;
+          font-size: 14px;
+          line-height: 20PX;
+        }
+      }
+    }
+  }
+  .music-DJ{
+    margin-top: 50px;
+    height: 50vh;
+    justify-content: center;
+  }
 
 
   .showWrite-enter-from,

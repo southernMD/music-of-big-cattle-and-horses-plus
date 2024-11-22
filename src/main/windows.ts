@@ -20,20 +20,58 @@ import { exec, spawn } from 'child_process'
 import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
 import log from 'electron-log'
-export const createWindow = (path?:string):BrowserWindow=>{
-    let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
-    let X: number, Y: number; //鼠标基于显示器的坐标
+export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
+    // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
+    // let X: number, Y: number; //鼠标基于显示器的坐标
     let screenMove: any = null;  //鼠标移动监听
-    const primaryDisplay = screen.getPrimaryDisplay()
-    const { width, height } = primaryDisplay.workAreaSize
-    // Create the browser window.
+    // const primaryDisplay = screen.getPrimaryDisplay()
+    // const { width, height } = primaryDisplay.workAreaSize
+    let basePath = ''
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      basePath = '../../resources'
+    } else {
+      basePath = '../../../app.asar.unpacked/resources'
+    }
+    let fontColor
+    let downloadPath
+    const background = await new Promise<string>((res, reject) => {
+      fs.readFile(join(__dirname,basePath,'color.json'), 'utf8', (err, jsonString) => {
+        if (err) {
+          // 文件不存在，创建文件并写入内容
+          fs.writeFileSync(join(__dirname,basePath,'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
+          fontColor = "rgba(0,0,0,.7)"
+          downloadPath = resolve('download')
+          res("rgb(255,255,255)")
+        } else {
+          // 文件存在，输出文件内容
+          fontColor = JSON.parse(jsonString).color
+          downloadPath = JSON.parse(jsonString).dowloadPath
+          res(JSON.parse(jsonString).background)
+        }
+      });
+    })
+    downloadPath = await new Promise<string>((res, reject) => {
+      fs.readFile(join(__dirname,basePath,'dowloadPath.json'), 'utf8', (err, jsonString) => {
+        if (err) {
+          // 文件不存在，创建文件并写入内容
+          fs.writeFileSync(join(__dirname,basePath,'dowloadPath.json'), `{"dowloadPath":"${resolve("download").replaceAll("\\","\\\\")}"}`, 'utf8');
+          res(resolve('download'))
+        } else {
+          res(JSON.parse(jsonString).dowloadPath.replaceAll('\\\\','\\'))
+        }
+      })
+    })
+    console.log('下载目录是',downloadPath);
+    console.log('主题颜色是',background);
     const mainWindow = new BrowserWindow({
       width: 1020,
       height: 670,
-      // backgroundColor: '#00000000',
+      backgroundColor: background,
       frame: false, //隐藏默认控件
-      resizable: false,
-      maxHeight: 670,
+      // resizable: false,
+      // maxHeight: 670,
+      minHeight:670,
+      minWidth:1020,
       title: '大牛马音乐',
       // autoHideMenuBar: true,
       icon:iconW,
@@ -198,7 +236,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 tooltip: '上一首',
                 icon: nativeImage.createFromPath(prevIcon),
                 click() {
-                    mainWindow.webContents.send('main-prev')
+                    mainWindow.webContents.send('main-prev',true)
                 }
             },
             {
@@ -206,14 +244,14 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 icon: nativeImage.createFromPath(stopIcon),
                 click() {
                     stop()
-                    mainWindow.webContents.send('main-play')
+                    mainWindow.webContents.send('main-play',true)
                 }
             },
             {
                 tooltip: '下一首',
                 icon: nativeImage.createFromPath(nextIcon),
                 click() {
-                    mainWindow.webContents.send('main-next')
+                    mainWindow.webContents.send('main-next',true)
                 }
             }
         ])
@@ -225,7 +263,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 tooltip: '上一首',
                 icon: nativeImage.createFromPath(prevIcon),
                 click() {
-                    mainWindow.webContents.send('main-prev')
+                    mainWindow.webContents.send('main-prev',true)
                 }
             },
             {
@@ -233,14 +271,14 @@ export const createWindow = (path?:string):BrowserWindow=>{
                 icon: nativeImage.createFromPath(playIcon),
                 click() {
                     play();
-                    mainWindow.webContents.send('main-play')
+                    mainWindow.webContents.send('main-play',true)
                 }
             },
             {
                 tooltip: '下一首',
                 icon: nativeImage.createFromPath(nextIcon),
                 click() {
-                    mainWindow.webContents.send('main-next')
+                    mainWindow.webContents.send('main-next',true)
 
                 }
             }
@@ -304,37 +342,40 @@ export const createWindow = (path?:string):BrowserWindow=>{
       mainWindow.minimize();
     })
     ipcMain.on('to-middle', (e) => {
-        mainWindow.setContentBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
-        mainWindow.setBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
-        mainWindow.webContents.send('to-changeFished-finshed')
+      // console.log("??????");
+      // mainWindow.setContentBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
+      // mainWindow.setBounds({ x: windowX, y: windowY, width: 1020, height: 670 })
+      mainWindow.restore()
+      mainWindow.webContents.send('to-changeFished-finshed')
     })
     ipcMain.on('to-big', () => {
-        windowX = mainWindow.getBounds().x
-        windowY = mainWindow.getBounds().y
-        mainWindow.setContentBounds({ x: 0, y: 0, width, height })
-        mainWindow.setBounds({ x: 0, y: 0, width, height })
+        // windowX = mainWindow.getBounds().x
+        // windowY = mainWindow.getBounds().y
+        // mainWindow.setContentBounds({ x: 0, y: 0, width, height })
+        // mainWindow.setBounds({ x: 0, y: 0, width, height })
+        mainWindow.maximize()
         mainWindow.webContents.send('to-changeFished-finshed')
     })
-    ipcMain.on('move-screen', (e, obj) => {
-      let { mouseX, mouseY } = obj //鼠标按下时的坐标
-      let { x, y } = mainWindow.getBounds();  //左上点坐标
-      console.log('按下时',screenMove);
-      if(!screenMove){
-          console.log('beginmoving');
-          screenMove = setInterval(() => {
-              X = screen.getCursorScreenPoint().x
-              Y = screen.getCursorScreenPoint().y
-              let nW = mainWindow.getContentBounds().width
-              let nH = mainWindow.getContentBounds().height
-              mainWindow.setContentBounds({width:nW,height:nH,x:x + (X - (mouseX + x)),y:y + (Y - (mouseY + y))})
-          }, 10)
-      }
-    })
-    ipcMain.on('cancel-screen', () => {
-      console.log('endmoving');
-      clearInterval(screenMove)
-      screenMove = null;
-    })
+    // ipcMain.on('move-screen', (e, obj) => {
+    //   let { mouseX, mouseY } = obj //鼠标按下时的坐标
+    //   let { x, y } = mainWindow.getBounds();  //左上点坐标
+    //   console.log('按下时',screenMove);
+    //   if(!screenMove){
+    //       console.log('beginmoving');
+    //       screenMove = setInterval(() => {
+    //           X = screen.getCursorScreenPoint().x
+    //           Y = screen.getCursorScreenPoint().y
+    //           let nW = mainWindow.getContentBounds().width
+    //           let nH = mainWindow.getContentBounds().height
+    //           mainWindow.setContentBounds({width:nW,height:nH,x:x + (X - (mouseX + x)),y:y + (Y - (mouseY + y))})
+    //       }, 10)
+    //   }
+    // })
+    // ipcMain.on('cancel-screen', () => {
+    //   console.log('endmoving');
+    //   clearInterval(screenMove)
+    //   screenMove = null;
+    // })
     //获取当前窗口的宽高
     ipcMain.on('get-screen-X-Y', (e) => {
       e.reply('there-X-Y', { width: mainWindow.getBounds().width, height: mainWindow.getBounds().height })
@@ -348,20 +389,25 @@ export const createWindow = (path?:string):BrowserWindow=>{
           {name:'视频资源',extensions:['mp4']}
         ],
         properties:['openFile','promptToCreate']
-      }).then((obj)=>{
+      }).then(async(obj)=>{
         const {canceled,filePaths} = obj
         if(!canceled){
           const filePath = filePaths[0]
-          fs.readFile(filePath,(err,data)=>{
-            if(!err){
-              if(!extname(filePath).endsWith('mp4'))event.reply('file-ready', {liu:data,extname:extname(filePath)})
-              else {
-                event.reply('mp4-ready',{flag:false})
+          await new Promise<any>((resolve, reject) => {
+            fs.readFile(filePath,(err,data)=>{
+              if(!err){
+                if(!extname(filePath).endsWith('mp4'))event.reply('file-ready', {liu:data,extname:extname(filePath)})
+                else {
+                  event.reply('mp4-ready',{flag:false,filePath})
+                }
+                resolve('ok')
+              }else{
+                console.log(err);
+                reject(err)
               }
-            }else{
-              console.log(err);
-            }
+            })
           })
+
           //打包环境与开发环境
           let basePath = ''
           if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -420,7 +466,6 @@ export const createWindow = (path?:string):BrowserWindow=>{
         // 三、销毁窗口 id
         removeWindowId('Main');
     })
-    let downloadPath = resolve('download')
     ipcMain.on('save-music',(e,{arrayBuffer,name,id3})=>{
       const buffer = Buffer.from(arrayBuffer);
       const imageUrl = id3.image
@@ -460,6 +505,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
 
     })
     ipcMain.on('get-download-list',(e)=>{
+      console.log(downloadPath,'空的你在搞笑么');
       if (fs.existsSync(downloadPath)) {
         const Files = fs.readdirSync(downloadPath)
         e.reply('look-download-list',Files)
@@ -469,6 +515,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
     })
     ipcMain.on('get-download-list-detail',(e)=>{
       if (fs.existsSync(downloadPath)) {
+        console.log(downloadPath);
         const Files = fs.readdirSync(downloadPath)
         const detail:any[] = []
         Files.forEach((item)=>{
@@ -516,10 +563,10 @@ export const createWindow = (path?:string):BrowserWindow=>{
     
     //获取默认下载目录路径
     ipcMain.handle('get-download-path',()=>{
-      return resolve('download')
+      return downloadPath ?? resolve('download')
     })
 
-    ipcMain.on('change-download-path',({},path)=>{
+    ipcMain.handle('change-download-path',({},path)=>{
       watcher.off('unlink', delMusic);
       watcher.off('add', addMuisc);
       watcher.off('unlinkDir', delDir);
@@ -532,6 +579,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
           watcher.on('unlink', delMusic);
           watcher.on('add', addMuisc);
           watcher.on('unlinkDir', delDir);
+          return 'ok'
         })
       }
     })
@@ -557,6 +605,7 @@ export const createWindow = (path?:string):BrowserWindow=>{
       if(paths == undefined){
         return {canceled:true,path:[]}
       }else{
+        fs.writeFileSync(join(__dirname,basePath,'dowloadPath.json'), `{"dowloadPath":"${paths[0].replaceAll("\\","\\\\")}"}`, 'utf8');
         return { canceled: false, path: paths };
       }
     })
@@ -885,7 +934,47 @@ export const createWindow = (path?:string):BrowserWindow=>{
         }
       })
     })
-    
+    //分享图片
+    ipcMain.handle('add-share-image',({},length)=>{
+      return new Promise<any>((resolve, reject) => {
+        dialog.showOpenDialog(mainWindow,{
+          title:'选择图片',
+          filters:[
+            {name:'图片资源',extensions:['jpg','png','jpeg']},
+          ],
+          properties:['openFile','multiSelections']
+        }).then(async({canceled,filePaths })=>{
+          if(!canceled){
+            //file-re
+            filePaths = filePaths.slice(0,9 - length)
+            const lius = await Promise.allSettled(filePaths.map((path)=>{
+              return new Promise<any>((resolve, reject) => {
+                fs.readFile(path,(err,data)=>{
+                  if(err)reject(err)
+                  else resolve(data)
+                })
+              })
+            }))
+            resolve(lius)
+          }
+        })
+      })
+
+    })
+    //记忆启动色
+    ipcMain.on('set-background-color',({},arr)=>{
+      console.log(arr[0],arr[1]);
+      let basePath
+      if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+        basePath = '../../resources'
+      } else {
+        basePath = '../../../app.asar.unpacked/resources'
+      }
+      fs.writeFileSync(join(__dirname,basePath,'color.json'),`{"background":"${arr[0]}","color":"${arr[1]}"}`)
+    })
+    ipcMain.on('get-background-color',(event)=>{
+      event.returnValue = {background,fontColor}
+    })
     return mainWindow
 }
 
@@ -895,7 +984,14 @@ const pares163Key = (comment:string)=>{
   //@ts-ignore
   const aesd = aes128ecbDecipher.update(key, 'base64') + aes128ecbDecipher.final(); // Base64 解码，AES 解密
   if(aesd.startsWith('dj')){
-    return JSON.parse(aesd.substring(aesd.indexOf(':')+1)).mainMusic // 移除 music: 并解析 JSON
+    const djMessage = JSON.parse(aesd.substring(aesd.indexOf(':')+1))
+    return Object.assign(djMessage.mainMusic,{
+      programId:djMessage.programId,
+      djId: djMessage.djId,
+      djName: djMessage.djName,
+      programName: djMessage.programName,
+      brand: djMessage.brand,
+    }) // 移除 music: 并解析 JSON
   }else if(aesd.startsWith('music')){
     return JSON.parse(aesd.substring(aesd.indexOf(':')+1)) // 移除 music: 并解析 JSON
   }else{
@@ -925,7 +1021,7 @@ export const lrcwindow = (): any => {
         preload: join(__dirname, "../preload/index.js"),
       },
   })
-  child.webContents.toggleDevTools()
+  // child.webContents.toggleDevTools()
   //注册名称
   child.webContents.on('did-finish-load', () => {
       // 二、注册窗口id

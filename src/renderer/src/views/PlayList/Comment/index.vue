@@ -12,6 +12,7 @@
         :hotComments="hotComments" :moreHot="moreHot" :total="total"
         :comments="comments" :totalPage="totalPage" :id="Number(routeId)"
         :type="CPtype"
+        :oneself="1"
         ></CommentList>
         <Teleport to="body" v-if="errorFlag">
             <Loading :type="typeError" :message="errorMassage" :width="loadingWidth"
@@ -26,9 +27,10 @@
 <script setup lang="ts">
 import {ref,toRef,watch,Ref,onMounted,getCurrentInstance,ComponentInternalInstance, computed, provide} from 'vue'
 import {useRoute} from 'vue-router'
-import {useMain} from '@renderer/store'
+import {useMain,useNM} from '@renderer/store'
 // import {regEmoji} from '@/utils/regEmoji'
 const Main = useMain()
+const NM = useNM()
 const $route = useRoute()
 const $el = getCurrentInstance() as ComponentInternalInstance 
 console.log($el);
@@ -58,7 +60,12 @@ const subCommit = async()=>{
                 commentId:replayId.value
             }
             console.log(obj);
-            let result = (await Main.reqcomment(obj)).data;
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqcomment(obj)).data;
+            }else{
+                result = (await Main.reqcomment(obj)).data;
+            }
             console.log(result);
             if(result.code == 200){
                 typeError.value = ''
@@ -99,7 +106,12 @@ const subCommit = async()=>{
                 id:Number(routeId.value),
                 content:commitMessage.value
             }
-            let result = (await Main.reqcomment(obj)).data;
+            let result
+            if(localStorage.getItem('NMcookie')){
+                result = (await NM.reqcomment(obj)).data;
+            }else{
+                result = (await Main.reqcomment(obj)).data;
+            }
             if(result.code == 200){
                 typeError.value = ''
                 errorFlag.value = true;
@@ -139,9 +151,23 @@ let moreHot = ref(false)
 const loadComment = async()=>{
     commentFlag.value = false
     let result
-    if($route.query.type == '歌单') result = (await Main.reqCommentPlaylist(Number(routeId.value),20,0)).data
+    if($route.query.type == '歌单') {
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqCommentPlaylist(Number(routeId.value),20,0)).data
+        }else{
+            result = (await Main.reqCommentPlaylist(Number(routeId.value),20,0)).data
+        }
+    }
     else if($route.query.type == '专辑') result = (await Main.reqCommentAlbum(Number(routeId.value),20,0)).data
-    else if($route.query.type == '歌曲') result = (await Main.reqCommentMusic(Number(routeId.value),20,0)).data
+    else if($route.query.type == '歌曲'){
+        if(localStorage.getItem('NMcookie')){
+            result = (await NM.reqCommentMusic(Number(routeId.value),20,0)).data
+        }else{
+            result = (await Main.reqCommentMusic(Number(routeId.value),20,0)).data
+        }
+    }else if($route.query.type == '声音'){
+        result = (await Main.reqCommentDj(Number(routeId.value),20,0)).data
+    }
     hotComments.value = result.hotComments;
     comments.value = result.comments;
     total.value = result.total
@@ -170,6 +196,7 @@ watch(Rn,async()=>{
 const CPtype = computed(()=>{
     if($route.query.type == '歌单') return 2
     else if($route.query.type == '专辑') return 3
+    else if($route.query.type == '声音') return 4
     else return 0
 })
 
@@ -182,6 +209,7 @@ provide('replayFlag',replayFlag)
 provide('replayId',replayId)
 provide('replayName',replayName)
 provide('replayContent',replayContent)
+provide('fenxiang',($route.name!='SongComments'?true:false))
 const WriteCommitRef = ref()
 watch(replayFlag,()=>{
     if(replayFlag.value == true){

@@ -62,6 +62,7 @@ const Main = useMain()
 const globalVar = useGlobalVar()
 const searchKey = ref('')
 window.electron.ipcRenderer.invoke('get-download-path').then((data:string) => {
+  console.log('get-download-path',data);
   if(!Main.localListPath.includes(data)){
     Main.localListPath.push(data)
     Main.localListPathFlag.push(true)

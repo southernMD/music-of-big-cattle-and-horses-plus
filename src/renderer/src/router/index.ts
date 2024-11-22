@@ -52,6 +52,11 @@ const routes: Array<RouteRecordRaw> = [
                         component:()=>import('@renderer/views/PlayList/Song/index.vue'),
                     },
                     {
+                        path:'dj',
+                        name:'djPlaylist',
+                        component:()=>import('@renderer/views/PlayList/Dj/index.vue'),
+                    },
+                    {
                         path:'comment',
                         name:'commentPlaylist',
                         component:()=>import('@renderer/views/PlayList/Comment/index.vue'),
@@ -109,7 +114,10 @@ const routes: Array<RouteRecordRaw> = [
                 children: [
                     { path: 'startAl', name: 'startAl', component: () => import('@renderer/views/myStart/StZhuanJi/index.vue') },
                     { path: 'startHS', name: 'startHS', component: () => import('@renderer/views/myStart/StHandSong/index.vue') }
-                ]
+                ],
+                meta:{
+                    keepAlive:true
+                }
             },
             {
                 path:`search`,
@@ -149,6 +157,16 @@ const routes: Array<RouteRecordRaw> = [
                         name:'1006',
                         component:()=>import('@renderer/views/search/1006/index.vue'),
                     },
+                    {
+                        path:'1009',
+                        name:'1009',
+                        component:()=>import('@renderer/views/search/1009/index.vue'),
+                    },
+                    {
+                        path:'2000',
+                        name:'2000',
+                        component:()=>import('@renderer/views/search/2000/index.vue'),
+                    },
                 ]
             },
             {
@@ -174,7 +192,10 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path:'PersonalCenter',
                 name:'PersonalCenter',
-                component:()=>import('@renderer/views/PersonalCenter/index.vue')
+                component:()=>import('@renderer/views/PersonalCenter/index.vue'),
+                meta:{
+                    keepAlive:true
+                }
             },
             {
                 path:'PersonalRecord',
@@ -232,9 +253,18 @@ const routes: Array<RouteRecordRaw> = [
         name:'dragMessage',
         component:()=>import('@renderer/views/dragMessage.vue')
     },
+    // {
+    //     path:'/test',
+    //     name:'test',
+    //     component:()=>import('@renderer/views/test.vue')
+    // },
     {
         path:'/',
         redirect:`/app/findMusic/find1`
+    },
+    {
+        path:'/',
+        redirect:`/test`
     }
 ]
  

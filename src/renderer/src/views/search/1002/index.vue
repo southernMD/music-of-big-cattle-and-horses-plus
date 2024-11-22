@@ -1,7 +1,9 @@
 <template>
   <!-- <div class="">1000{{ $route.query.key }}</div> -->
-  <HBlock  dataType="user" type="searchUser" :id="val.userId" :Name="val.nickname" 
-  :url="val.avatarUrl" :signature="val.signature" v-for="val in list.get(nowPage)" @click="goDetail(val.userId)"></HBlock>
+  <div class="list" :class="{'list-oneself':globalVar.oneself}">
+    <HBlock  dataType="user" type="searchUser" :id="val.userId" :Name="val.nickname" 
+    :url="val.avatarUrl" :signature="val.signature" v-for="val in list.get(nowPage)" @click="goDetail(val.userId)"></HBlock>
+  </div>
   <div class="pagination">
       <el-pagination :pager-count="9" :hide-on-single-page="true" small background layout="prev, pager, next"
           :total="total" :page-count="totalPage" v-model:currentPage="nowPage"></el-pagination>
@@ -11,19 +13,28 @@
 <script setup lang="ts">
 import {ref,Ref,watch,toRef} from 'vue'
 import { useRoute,useRouter } from 'vue-router';
-import { useGlobalVar, useMain } from '@renderer/store'
+import { useGlobalVar, useMain, useNM } from '@renderer/store'
 import HBlock from '@renderer/components/myVC/HBlock.vue'
 const list: Ref<Map<number,any[]>> = ref(new Map())
 const $route = useRoute()
 const $router = useRouter()
 const Main = useMain()
 const globalVar = useGlobalVar()
-list.value.set(1,await Main.reqSearch($route.query.key as string, '1002', 20, 0))
+const NM = useNM()
+if(localStorage.getItem('NMcookie')){
+    list.value.set(1,await NM.reqSearch($route.query.key as string, '1002', 20, 0))
+}else{
+    list.value.set(1,await Main.reqSearch($route.query.key as string, '1002', 20, 0))
+}
 console.log(list.value.get(1));
 watch(() => $route.query.key, async () => {
     if ($route.name === '1002') {
       list.value.clear()
-      list.value.set(1,await Main.reqSearch($route.query.key as string, '1002', 20, 0))
+      if(localStorage.getItem('NMcookie')){
+        list.value.set(1,await NM.reqSearch($route.query.key as string, '1002', 20, 0))
+      }else{
+        list.value.set(1,await Main.reqSearch($route.query.key as string, '1002', 20, 0))
+      }
       nowPage.value = 1
     }
 })
@@ -35,7 +46,11 @@ watch(total,()=>{
 })
 watch(nowPage,async()=>{
     if(!list.value.has(nowPage.value)){
-        list.value.set(nowPage.value,await Main.reqSearch($route.query.key as string, '1002', 20, (nowPage.value - 1)*20)) 
+        if(localStorage.getItem('NMcookie')){
+            list.value.set(nowPage.value,await NM.reqSearch($route.query.key as string, '1002', 20, (nowPage.value - 1)*20)) 
+        }else{
+            list.value.set(nowPage.value,await Main.reqSearch($route.query.key as string, '1002', 20, (nowPage.value - 1)*20)) 
+        }
     }else{
         globalVar.scrollToTop = true
     }
@@ -53,6 +68,28 @@ const goDetail = (id)=>{
 </script>
 
 <style scoped lang="less">
+.list{
+    
+    >.Hblock:nth-child(odd) {
+        background-color: @line-color-odd;
+    }
+
+    >.Hblock:nth-child(even) {
+        background-color: @line-color-even;
+    }
+}
+.list-oneself{
+    
+    >.Hblock:nth-child(odd) {
+        background-color: rgba(43,43,43,.6);
+    }
+
+    >.Hblock:nth-child(even) {
+        background-color: rgba(46,46,46,.4);
+    }
+}
+
+
 
 .pagination {
     display: flex;

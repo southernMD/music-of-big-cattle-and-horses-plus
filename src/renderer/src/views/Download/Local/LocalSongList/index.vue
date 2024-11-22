@@ -43,6 +43,7 @@ const props = defineProps<{
     list:id3Message[]
     searchKey:string
 }>()
+console.log(props.list);
 // watch(()=>props.list,async()=>{
 //     console.log(props.list);
 // },{immediate:true})
@@ -62,6 +63,7 @@ const getZhuanji = (index:number,name: string ,detail: {description: string;valu
     }
 }
 const getSongid = (index:number,detail: {description: string;value: string;} | undefined,_163key:string | undefined)=>{
+    console.log(props.list[index],index);
     if(detail && detail.description == 'song id'){
         return +detail.value
     }
@@ -79,7 +81,7 @@ const getSinger = (index:number,names: string | string[], detail: {description: 
         let namesList = names as string[]
         if(typeof(names)=='string') namesList = names.split('/')
         const idsList = detail?.value.split(',')
-        namesList.forEach(({ }, index) => {
+        namesList?.forEach(({ }, index) => {
             arr.push({ id: +idsList[index], name: namesList[index] })
         })
         return arr
@@ -114,38 +116,65 @@ const getTime = (item:id3Message)=>{
 }
 const Main = useMain()
 
-const pushPlayList = async(flag:1 | undefined,list = Array.from(props.list))=>{
+const pushPlayList = async(flag:number | undefined,list = Array.from(props.list))=>{
     const playingList:any[] = []
     const playingPrivileges:any[] = []
     console.log(list);
-    const promises = list.map(async(item,index)=>{
-        const song = {
-            name:item.title,
-            id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
-            ar:getSinger(index,item.artist, item?.userDefinedText?.[2],item?.comment?.text),
-            al:getZhuanji(index,item.album, item?.userDefinedText?.[1],item?.comment?.text),
-            localPath:item.path,
-            dt:getTime(item)
-        }
-        console.log(item);
-        playingList.push(song)
-        playingList[playingList.length - 1].al['picUrl'] = await bufferToBase64(item.image?.imageBuffer)
-        const privilege = {
-            id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
-            maxBrLevel: "local",
-            playMaxBrLevel: "local",
-            downloadMaxBrLevel: "local",
-            plLevel: "local",
-            dlLevel: "local",
-            flLevel: "local",
-        }
-        playingPrivileges.push(privilege)
-    })
+    let promises 
+    if(flag){
+        promises = list.map(async(item,index)=>{
+            const song = {
+                name:item.title,
+                id:getSongid(flag,item?.userDefinedText?.[0],item?.comment?.text),
+                ar:getSinger(flag,item.artist, item?.userDefinedText?.[2],item?.comment?.text),
+                al:getZhuanji(flag,item.album, item?.userDefinedText?.[1],item?.comment?.text),
+                localPath:item.path,
+                dt:getTime(item)
+            }
+            console.log(item);
+            playingList.push(song)
+            playingList[playingList.length - 1].al['picUrl'] = await bufferToBase64(item.image?.imageBuffer)
+            const privilege = {
+                id:getSongid(flag,item?.userDefinedText?.[0],item?.comment?.text),
+                maxBrLevel: "local",
+                playMaxBrLevel: "local",
+                downloadMaxBrLevel: "local",
+                plLevel: "local",
+                dlLevel: "local",
+                flLevel: "local",
+            }
+            playingPrivileges.push(privilege)
+        })
+    }else{
+        promises = list.map(async(item,index)=>{
+            const song = {
+                name:item.title,
+                id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
+                ar:getSinger(index,item.artist, item?.userDefinedText?.[2],item?.comment?.text),
+                al:getZhuanji(index,item.album, item?.userDefinedText?.[1],item?.comment?.text),
+                localPath:item.path,
+                dt:getTime(item)
+            }
+            console.log(item);
+            playingList.push(song)
+            playingList[playingList.length - 1].al['picUrl'] = await bufferToBase64(item.image?.imageBuffer)
+            const privilege = {
+                id:getSongid(index,item?.userDefinedText?.[0],item?.comment?.text),
+                maxBrLevel: "local",
+                playMaxBrLevel: "local",
+                downloadMaxBrLevel: "local",
+                plLevel: "local",
+                dlLevel: "local",
+                flLevel: "local",
+            }
+            playingPrivileges.push(privilege)
+        })
+    }
     return Promise.all(promises).then(()=>{
         if(Main.playingindex == -1 || flag == undefined){
             Main.playingList = playingList
             Main.playingPrivileges = playingPrivileges
-        }else if(flag == 1){
+        }else if(flag!=undefined){
             Main.playingList.splice(Main.playingindex,0,...playingList)
             Main.playingPrivileges.splice(Main.playingindex,0,...playingPrivileges)
         }
@@ -153,11 +182,14 @@ const pushPlayList = async(flag:1 | undefined,list = Array.from(props.list))=>{
 }
 
 const localPlay = async({index,id})=>{
-    Main.playingList = []
-    Main.playingPrivileges = []
-    if(globalVar.setting.playWay)await pushPlayList(undefined)  //替换
-    else await pushPlayList(1,[props.list[index - 1]])
-    Main.playingindex = index
+    if(globalVar.setting.playWay){//替换
+        await pushPlayList(undefined)
+        Main.playingindex = index
+    }  
+    else {
+        await pushPlayList(index - 1,[props.list[index - 1]])
+        Main.playingindex = Main.playingindex == -1?1:Main.playingindex+1
+    }
     Main.playStatus = 'play'
     Main.songType = 'song'
     if(globalVar.setting.playWay)Main.beforePlayListId = -2

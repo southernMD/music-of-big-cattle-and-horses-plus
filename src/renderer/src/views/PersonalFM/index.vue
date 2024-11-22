@@ -19,9 +19,9 @@
                         <div title="喜欢">
                             <i class="iconfont icon-aixin"></i>
                         </div>
-                        <div title="垃圾箱" @click="rubbish">
+                        <!-- <div title="垃圾箱" @click="rubbish">
                             <i class="iconfont icon-lajixiang"></i>
-                        </div>
+                        </div> -->
                         <div @click="throPrev" title="上一首">
                             <i class="iconfont icon-shangyishoushangyige"></i>
                         </div>
@@ -96,13 +96,14 @@
 
 <script lang='ts' setup>
 import { onActivated, ref, Ref, getCurrentInstance, ComponentInternalInstance, nextTick, watch, toRef } from 'vue'
-import { useMain, useGlobalVar } from '@renderer/store'
+import { useMain, useGlobalVar,useNM } from '@renderer/store'
 import { throttle } from 'lodash'
 import { useRouter } from 'vue-router'
 const Main = useMain()
 const $router = useRouter()
 const globalVar = useGlobalVar()
 const $el = getCurrentInstance() as ComponentInternalInstance
+const NM = useNM()
 let FMplayFlag = ref(false)
 let currentTime = toRef(globalVar, 'currentTime')
 let lyricOffset = toRef(globalVar, 'lyricOffset')
@@ -111,7 +112,7 @@ let playingId = toRef(Main, 'playing')
 let FMindex = toRef(Main, 'FMindex')
 let playingPrivileges = toRef(Main, 'playingPrivileges')
 let playStatus = toRef(Main, 'playStatus')
-
+await Main.reqPersonal_fm()
 watch(playStatus, () => {
     if (playStatus.value == 'play' && Main.songType == 'FM') {
         FMplayFlag.value = true
@@ -138,14 +139,6 @@ const changePlaying = () => {
     playingId.value = Main.FMList[FMindex.value]?.id as number
     Main.beforePlayListId = 4
     Main.playStatus = 'play'
-    let str = playingList.value[Main.playingindex - 1]?.name + ' - ';
-    let singerArr = playingList.value[Main.playingindex - 1]?.ar as unknown as Array<any>
-    singerArr?.forEach((element, index) => {
-        str += element.name
-        if (index != singerArr.length - 1) str += ' / '
-    })
-    window.electron.ipcRenderer.send('change-play-thum', str)
-    window.electron.ipcRenderer.send('render-play')
 }
 
 const addPlay = () => {
@@ -273,12 +266,22 @@ let errorMassage = ref('')
 let typeError = ref('')
 let loadingWidth = ref('')
 const subCommit = async () => {
-    let result = (await Main.reqcomment({
-        t: 1,
-        type: 0,
-        id: playingId.value,
-        content: subCommitStr.value
-    })).data
+    let result 
+    if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqcomment({
+            t: 1,
+            type: 0,
+            id: playingId.value,
+            content: subCommitStr.value
+        })).data
+    }else{
+        result = (await Main.reqcomment({
+            t: 1,
+            type: 0,
+            id: playingId.value,
+            content: subCommitStr.value
+        })).data
+    }
     console.log(result);
     if (result.code == 200) {
         typeError.value = ''
@@ -310,7 +313,12 @@ let moreHot = ref(false)
 watch(playingId, async () => {
     if(playingId.value == -1)return 
     commentFlag.value = false
-    let result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+    let result
+    if(localStorage.getItem('NMcookie')){
+        result = (await NM.reqCommentMusic(playingId.value, 20, 0)).data
+    }else[
+        result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+    ]
     console.log(result, '******&&&&&&&&');
     hotComments.value = result.hotComments;
     comments.value = result.comments;
