@@ -5,6 +5,6 @@ out
 .vscode
 download
 download2
-resources\background.*
+resources
 *.nmd2
 yarn.lock

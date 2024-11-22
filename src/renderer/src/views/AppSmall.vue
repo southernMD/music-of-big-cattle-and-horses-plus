@@ -106,15 +106,14 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
         reader.readAsDataURL(file);
         reader.onload = function () {
             const newUrl = this.result;
-            const t = setInterval(() => {
+            nextTick(()=>{
                 const h: any = document.getElementById('mainBackground') as HTMLImageElement
                 if (h) {
                     BKbase64.value = newUrl as string
                     h.src = newUrl
                     h.style.display = 'block'
-                    clearInterval(t)
                 }
-            }, 500)
+            })
         };
     }
     MainMenu.colorBlock = extname
