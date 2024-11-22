@@ -203,8 +203,9 @@
 <script setup lang="ts">
 import {onMounted, toRef,ref, watch, watchEffect,toRaw} from 'vue'
 import {githubUpdate} from '@renderer/api/index'
-import {useGlobalVar} from '@renderer/store'
+import {useGlobalVar, useMain} from '@renderer/store'
 import dropDown from '@renderer/components/myVC/dropDown.vue'
+const Main = useMain()
 const globalVar = useGlobalVar()
 const fontList = toRef(globalVar,'fontList')
 
@@ -432,13 +433,15 @@ const isClick = (index:number) => {
     }
     flagsuo = true
 }
-let ciId = ref(0)
-let t =setInterval(()=>{
-    ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
-    if(ciId.value != undefined){
-        clearInterval(t)
-    }
-},100)
+let ciId = toRef(Main,"ciId")
+
+// let t = 1
+// let t =setInterval(()=>{
+//     ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(ciId.value != undefined){
+//         clearInterval(t)
+//     }
+// },5000)
 
 const lrcPositionHandle = ()=>{
     window.electron.ipcRenderer.send('change-lrc-position',lrcPosition.value)

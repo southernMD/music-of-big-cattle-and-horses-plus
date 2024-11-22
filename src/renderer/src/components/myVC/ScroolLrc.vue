@@ -63,9 +63,23 @@ import { dayjsMMSS } from '@renderer/utils/dayjs'
 import { ElScrollbar } from "element-plus";
 import { useRoute } from 'vue-router';
 const $route = useRoute()
-const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
-const mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Main');
 const Main = useMain();
+let ciId = toRef(Main,'ciId') as Ref<number>;
+let mainId = toRef(Main,'mainId') as Ref<number>;
+// let t3 =setInterval(()=>{
+//     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(ciId != undefined){
+//         clearInterval(t3)
+//     }
+// },5000)
+// let t2 =setInterval(()=>{
+//   mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(mainId != undefined){
+//         clearInterval(t2)
+//     }
+// },5000)
+// const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
+// const mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Main');
 const MainMenu = useMainMenu()
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>();
@@ -304,22 +318,22 @@ const isClick = (index:number) => {
 //加0.5
 const jia = () => {
     eqi.value += 0.5
-    window.electron.ipcRenderer.sendTo(ciId, 'lyric-offset-ci', eqi.value)
-    window.electron.ipcRenderer.sendTo(mainId, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
+    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
 }
 
 //减0.5
 const jian = () => {
     eqi.value -= 0.5
-    window.electron.ipcRenderer.sendTo(ciId, 'lyric-offset-ci', eqi.value)
-    window.electron.ipcRenderer.sendTo(mainId, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
+    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
 }
 
 //歌词状态
 // ciId
 watch(yinOryi,()=>{
   console.log(toRaw(yinOryi.value));
-  window.electron.ipcRenderer.sendTo(ciId,'yin-or-yi',toRaw(yinOryi.value))
+  window.electron.ipcRenderer.sendTo(ciId.value,'yin-or-yi',toRaw(yinOryi.value))
 },{immediate:true,deep:true})
 
 //隐藏时切换模式

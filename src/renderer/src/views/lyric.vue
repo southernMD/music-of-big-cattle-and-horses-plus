@@ -73,7 +73,7 @@ const Main = useMain();
 const $el = getCurrentInstance() as ComponentInternalInstance;
 
 
-let mainId = ref(0)
+let mainId = ref(undefined)
 let t =setInterval(()=>{
     mainId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Main')
     if(mainId.value != undefined){

@@ -253,17 +253,23 @@ if(localStorage.getItem('NMcookie')){
 // const p3 = BasicApi.reqDjProgramToplist(10)
 const p4 = BasicApi.reqPlayListTags()
 await Promise.allSettled([p0,p1, p2, p4])
+
 onMounted(async()=>{
     if(localStorage.getItem('NMcookie')){
-        NM.reqUserPlaylist(BasicApi.profile?.userId)
-        NM.reqUserLike(BasicApi.profile?.userId)
-        NM.reqUserSubcount()
-        NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+        Promise.allSettled([
+            NM.reqUserPlaylist(BasicApi.profile?.userId),
+            NM.reqUserLike(BasicApi.profile?.userId),
+            NM.reqUserSubcount(),
+            NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+        ])
     }else if(!(cookie == '' || cookie == null || cookie == undefined)){
-        MainPinia.reqUserPlaylist(BasicApi.account?.id)
-        MainPinia.reqUserLike(BasicApi.account?.id)
-        MainPinia.reqUserSubcount()
-        BasicApi.requserFollows(BasicApi.account!.id)
+        Promise.allSettled([
+            MainPinia.reqUserPlaylist(BasicApi.account?.id),
+            MainPinia.reqUserLike(BasicApi.account?.id),
+            MainPinia.reqUserSubcount(),
+            BasicApi.requserFollows(BasicApi.account!.id)
+        ])
+        
     }
 })
 
@@ -441,32 +447,33 @@ provide('downloadList', downloadList)
 
 let draggable = toRef(MainPinia, 'dragMouse')
 //拖动监视
-let dragMessageId: number | null = null;
-let t = setInterval(() => {
-    dragMessageId = window.electron.ipcRenderer.sendSync('getWindowId', 'drageMessage');
-    if (dragMessageId) {
-        clearInterval(t);
-    }
-}, 5000)
+let dragMessageId = toRef(MainPinia,"dragMessageId") 
+// let t = 1
+// let t = setInterval(() => {
+//     dragMessageId = window.electron.ipcRenderer.sendSync('getWindowId', 'drageMessage');
+//     if (dragMessageId) {
+//         clearInterval(t);
+//     }
+// }, 5000)
 watch(draggable, (newValue, oldValue) => {
     console.log(newValue, oldValue);
     if (newValue == true) {
         console.log('拖动开始');
         window.electron.ipcRenderer.send('begin-drag')
-        window.electron.ipcRenderer.sendTo(dragMessageId as number, 'send-to-drag-Message', { message: MainPinia.dragMessage })
+        window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-Message', { message: MainPinia.dragMessage })
     }
     if (newValue == false) {
         console.log('拖动结束');
         window.electron.ipcRenderer.send('end-drag')
-        window.electron.ipcRenderer.sendTo(dragMessageId as number, 'send-to-drag-end')
+        window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-end')
 
     }
 })
 watch(() => MainMenu.colorBlock, (newValue) => {
     if (newValue === 'NMblack' || globalVar.oneself) {
         let t = setInterval(() => {
-            if (dragMessageId) {
-                window.electron.ipcRenderer.sendTo(dragMessageId, 'send-to-drag-bkColor',
+            if (dragMessageId.value) {
+                window.electron.ipcRenderer.sendTo(dragMessageId.value, 'send-to-drag-bkColor',
                     {
                         backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
                         fontColor: document.documentElement.style.getPropertyValue('--fontColor')
@@ -476,8 +483,8 @@ watch(() => MainMenu.colorBlock, (newValue) => {
         }, 100)
     } else {
         let t = setInterval(() => {
-            if (dragMessageId) {
-                window.electron.ipcRenderer.sendTo(dragMessageId as number, 'send-to-drag-bkColor',
+            if (dragMessageId.value) {
+                window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-bkColor',
                     {
                         backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
                         fontColor: document.documentElement.style.getPropertyValue('--fontColor')
@@ -581,28 +588,29 @@ watch(()=>globalVar.setting.downloadPath,async()=>{
     }
 },{immediate:true})
 
-let ciId = ref(0)
-let t3 =setInterval(()=>{
-    ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
-    if(ciId.value != undefined){
-        clearInterval(t3)
-    }
-},5000)
+let ciId = toRef(MainPinia,"ciId")
+// let t3 = 1
+// let t3 =setInterval(()=>{
+//     ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
+//     if(ciId.value != undefined){
+//         clearInterval(t3)
+//     }
+// },5000)
 
 window.electron.ipcRenderer.on('lrc-ready',()=>{
     console.log('lrc准备完毕');
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',globalVar.setting.lrcSize )
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontWeight',globalVar.setting.lrcWeigth)
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-LrcBorder',globalVar.setting.lrcBorder)
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontSize',globalVar.setting.lrcSize )
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontWeight',globalVar.setting.lrcWeigth)
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-LrcBorder',globalVar.setting.lrcBorder)
+    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
     if(globalVar.setting.lrcColor == '默认'){
-        window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',{
+        window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
             top:'rgb(255,255,0)',
             bottom:'rgb(255,0,0)'
         })
     }else{
-        window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',{
+        window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
             top:toRaw(globalVar.setting.topColor),
             bottom:toRaw(globalVar.setting.bottomColor)
         })
@@ -658,7 +666,6 @@ watch(()=>globalVar.downloadId,()=>{
     console.log(globalVar.downloadId,'下载id列表变化');
     
 })
-
 </script>
 
 <style scoped lang="less">

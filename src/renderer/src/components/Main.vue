@@ -227,11 +227,11 @@ const go = (index: number) => {
   })
 }
 
-watch(route,()=>{
+// watch(route,()=>{
   // if(routeName.value.includes(String(route.name)) && route.name!='downloading'){
   //   clickFlag.value = [false, false, false]
   // }
-})
+// })
 
 // let ifLogin = toRef(BasicApi, 'account')
 let playlistFlag = ref(true);

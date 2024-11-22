@@ -21,11 +21,11 @@ import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
 import log from 'electron-log'
 export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
-    let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
+    // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
     // let X: number, Y: number; //鼠标基于显示器的坐标
     let screenMove: any = null;  //鼠标移动监听
-    const primaryDisplay = screen.getPrimaryDisplay()
-    const { width, height } = primaryDisplay.workAreaSize
+    // const primaryDisplay = screen.getPrimaryDisplay()
+    // const { width, height } = primaryDisplay.workAreaSize
     let basePath = ''
     if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
       basePath = '../../resources'
@@ -371,11 +371,11 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
     //       }, 10)
     //   }
     // })
-    ipcMain.on('cancel-screen', () => {
-      console.log('endmoving');
-      clearInterval(screenMove)
-      screenMove = null;
-    })
+    // ipcMain.on('cancel-screen', () => {
+    //   console.log('endmoving');
+    //   clearInterval(screenMove)
+    //   screenMove = null;
+    // })
     //获取当前窗口的宽高
     ipcMain.on('get-screen-X-Y', (e) => {
       e.reply('there-X-Y', { width: mainWindow.getBounds().width, height: mainWindow.getBounds().height })

@@ -274,16 +274,16 @@ let iconWay = ref(['icon-caozuo-xunhuan1', 'icon-danquxunhuan', 'icon-xunhuanbof
 const leftIcon = ['icon-aixin', 'icon-wodeshoucang', 'icon-xiazai1', 'icon-fenxiang']
 const leftIcon2 = ['icon-dianzan', 'icon-xiazai1', 'icon-fenxiang']
 let iconWayWrite = ref(['列表循环', '单曲循环', '随机播放', '顺序播放'])
-let ciId
-await new Promise((reslove)=>{
-    let t2 = setInterval(() => {
-    ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
-        if (ciId) {
-            reslove('ok')
-            clearInterval(t2);
-        }
-    }, 5000)
-})
+let ciId = toRef(Main, 'ciId');
+// await new Promise((reslove)=>{
+//     let t2 = setInterval(() => {
+//     ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
+//         if (ciId) {
+//             reslove('ok')
+//             clearInterval(t2);
+//         }
+//     }, 5000)
+// })
 
 let animationId;
 
@@ -703,8 +703,8 @@ const sendLyric = ()=>{
         str += element.name
         if (index != singerArr.length - 1) str += ' / '
     })
-    window.electron.ipcRenderer.sendTo(ciId, 'to-title', str);
-    window.electron.ipcRenderer.sendTo(ciId, 'to-Ci', lyric.value);
+    window.electron.ipcRenderer.sendTo(ciId.value, 'to-title', str);
+    window.electron.ipcRenderer.sendTo(ciId.value, 'to-Ci', lyric.value);
 }
 
 
@@ -715,7 +715,7 @@ watch(currentTime, () => {
 })
 watch(playingId, () => {
     globalVar.lyricOffset = 0
-    window.electron.ipcRenderer.sendTo(ciId, 'lyric-offset-ci', 0)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', 0)
 })
 
 onMounted(async () => {
@@ -778,7 +778,7 @@ onMounted(async () => {
     //播放进度
     audio.addEventListener('timeupdate', () => {
         if (!audioPlayFlag.value) {
-            window.electron.ipcRenderer.sendTo(ciId, 'to-currentTime', audio.currentTime);
+            window.electron.ipcRenderer.sendTo(ciId.value, 'to-currentTime', audio.currentTime);
             currentTime.value = audio.currentTime
             let bar = (audio.currentTime / audio.duration) * 100
             playLine.style.width = bar + '%'
@@ -1121,7 +1121,7 @@ window.electron.ipcRenderer.on('to-close-ci', ({ }, flag:boolean ) => {
 //监视播放给另一个进程
 let playStatus = toRef(Main, 'playStatus')
 watch(playStatus, async () => {
-    window.electron.ipcRenderer.sendTo(ciId, 'play-status', playStatus.value)
+    window.electron.ipcRenderer.sendTo(ciId.value, 'play-status', playStatus.value)
     stopOrPlay()
 })
 //另一进程play or stop

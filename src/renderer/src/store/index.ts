@@ -83,7 +83,8 @@ export const useMainMenu = defineStore("MainMenu", {
             model: false,
             colorBlock: '',
             iconSrc: '@/../icon.png',
-            primaryColor: ''
+            primaryColor: '',
+
         }
     },
     // getters{
@@ -358,6 +359,9 @@ interface T {
     // immheart:boolean
     searchHistory:string[]
     latelyPlay:any[]
+    ciId:number | undefined
+    mainId:number | undefined
+    dragMessageId:number | undefined
 }
 export const useMain = defineStore('Main', {
     state: (): T => {
@@ -434,7 +438,10 @@ export const useMain = defineStore('Main', {
             localListPathFlag:[],
             searchNumber:0,
             searchHistory:[],
-            latelyPlay:[]
+            latelyPlay:[],
+            ciId:undefined,
+            mainId:undefined,
+            dragMessageId:undefined,
         }
     },
     actions: {
