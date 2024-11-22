@@ -14,7 +14,7 @@
                 <span>启动：</span>
             </div>
             <div class="st-bt">
-                <el-checkbox @change="autoPlay" v-model="globalVar.setting.autoOpen" label="开机自动运行" size="large" />
+                <el-checkbox  class="checkbox-oneself" @change="autoPlay" v-model="globalVar.setting.autoOpen" label="开机自动运行" size="large" />
             </div>
         </div>
         <div class="link">
@@ -903,6 +903,8 @@ const searchUpdate = async()=>{
         font-size: 12px;
     }
 }
+
+
 :deep(.el-radio-group){
     label {
         --el-radio-input-border:var(--smallFontColor) 1px solid;

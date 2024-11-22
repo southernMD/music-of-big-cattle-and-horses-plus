@@ -106,15 +106,14 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
         reader.readAsDataURL(file);
         reader.onload = function () {
             const newUrl = this.result;
-            const t = setInterval(() => {
+            nextTick(()=>{
                 const h: any = document.getElementById('mainBackground') as HTMLImageElement
                 if (h) {
                     BKbase64.value = newUrl as string
                     h.src = newUrl
                     h.style.display = 'block'
-                    clearInterval(t)
                 }
-            }, 500)
+            })
         };
     }
     MainMenu.colorBlock = extname
@@ -682,7 +681,7 @@ video {
     position: fixed;
     left: 0;
     top: 0;
-    z-index: -1000;
+    z-index: -999;
     height: 100%;
     width: 100%;
     object-fit: fill;

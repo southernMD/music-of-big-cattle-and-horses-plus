@@ -13,13 +13,13 @@
 <script setup lang="ts">
 import { onMounted, ref,watch } from 'vue'
 import { useGlobalVar } from '@renderer/store'
-const globalVar = useGlobalVar()
 const props = defineProps<{
     message?: string
     list: any[]
     width?:number
 }>()
 const showMessage = ref('')
+const globalVar = useGlobalVar()
 const dropdownRef = ref()
 const listRef = ref()
 const rand = ref(Math.random())
