@@ -8,3 +8,4 @@ download2
 resources
 *.nmd2
 yarn.lock
+electron.vite.config.*.mjs

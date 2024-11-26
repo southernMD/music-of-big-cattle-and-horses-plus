@@ -77,6 +77,7 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
       icon:iconW,
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
+        webgl:true,
         sandbox: false
       }
     })
@@ -214,6 +215,8 @@ export const createWindow = async(path?:string):Promise<BrowserWindow>=>{
                 }else{
                   mainWindow.webContents.send('mp4-ready',{flag:true})
                 }
+              }else{
+                console.log(err);
               }
             })
           }
