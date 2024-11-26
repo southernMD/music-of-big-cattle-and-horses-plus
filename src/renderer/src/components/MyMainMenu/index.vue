@@ -25,7 +25,6 @@
                 <div :key="2" class="search" v-show="scrollY == undefined || scrollY < 300">
                     <i class="iconfont icon-search"></i>
                     <input ref="searchInputRef" class="search-input" 
-                    @input="searchSuggestThrottle" 
                     v-model="searchKey" 
                     @focus="inputFn();flagSearch=true" 
                     @blur="inputRemove" 
@@ -469,10 +468,13 @@ const close = (done: () => void)=>{
     flag.value = false
 }
 const listTop = ref({allMatch:[]})
+watch(()=>searchKey.value,async()=>{
+    searchSuggestThrottle()
+})
 const searchSuggest = async()=>{
     listTop.value = (await Main.reqSearchSuggest(searchKey.value.trim(),'mobile')).allMatch
 }
-const searchSuggestThrottle = throttle(searchSuggest,500)
+const searchSuggestThrottle = throttle(searchSuggest,2000)
 const setting = ()=>{
     Main.detailStatus = 'close'
     $router.push({

@@ -51,7 +51,7 @@ const changeFlag = ()=>{
 const getKey = (key:string)=>{
     console.log(globalVar.searchKey.trim(),key);
     const reg = new RegExp(globalVar.searchKey.trim(),'gi')
-    return key.replace(reg, `<span style="color:var(--urlColor)" >${globalVar.searchKey.trim()}</span>`)
+    return key?.replace(reg, `<span style="color:var(--urlColor)" >${globalVar.searchKey.trim()}</span>`)
 }
 const fasterSearch = (key:string,type:number)=>{
     $router.push({
