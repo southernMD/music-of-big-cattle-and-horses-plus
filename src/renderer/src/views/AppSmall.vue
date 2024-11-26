@@ -79,6 +79,7 @@ import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
+
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
 const NM = useNM();
@@ -133,9 +134,8 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
 //     console.log(data);
 // })
 
-
 onMounted(()=>{
-    window.electron.ipcRenderer.sendSync('renderer-ready')
+    window.electron.ipcRenderer.send('renderer-ready')
 })
 window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
     if (!flag) globalVar.loadingMp4Bk = true
@@ -178,6 +178,7 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
 })
 
 //换被景图
+//与下面代码无关
 
 window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
     console.log(liu, extname);
@@ -219,28 +220,28 @@ if (!sessionStorage.getItem('youkeCookie')) {
     }
 }
 let cookie = localStorage.getItem('cookieUser')
-// if (localStorage.getItem('NMcookie')) {
-//     NM.reqLogin().then(()=>{
-//         NM.reqUserPlaylist(BasicApi.profile?.userId)
-//         NM.reqUserLike(BasicApi.profile?.userId)
-//         NM.reqUserSubcount()
-//         NM.reqartistSublist()
-//         NM.reqalbumSublist()
-//         NM.requserFollows(BasicApi.profile?.userId,99999999,0)
-//     })
-// }
-// else if (!(cookie == '' || cookie == null || cookie == undefined)) {
-//     BasicApi.reqLogin(cookie as string).then(() => {
-//         MainPinia.reqUserPlaylist(BasicApi.account?.id)
-//         MainPinia.reqUserLike(BasicApi.account?.id)
-//         BasicApi.reqStartDj()
-//         BasicApi.reqCreateDj(BasicApi.account?.id)
-//         MainPinia.reqUserSubcount()
-//         BasicApi.reqartistSublist()
-//         BasicApi.reqalbumSublist()
-//         BasicApi.requserFollows(BasicApi.account!.id)
-//     })
-// }
+if (localStorage.getItem('NMcookie')) {
+    NM.reqLogin().then(()=>{
+        NM.reqUserPlaylist(BasicApi.profile?.userId)
+        NM.reqUserLike(BasicApi.profile?.userId)
+        NM.reqUserSubcount()
+        NM.reqartistSublist()
+        NM.reqalbumSublist()
+        NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+    })
+}
+else if (!(cookie == '' || cookie == null || cookie == undefined)) {
+    BasicApi.reqLogin(cookie as string).then(() => {
+        MainPinia.reqUserPlaylist(BasicApi.account?.id)
+        MainPinia.reqUserLike(BasicApi.account?.id)
+        BasicApi.reqStartDj()
+        BasicApi.reqCreateDj(BasicApi.account?.id)
+        MainPinia.reqUserSubcount()
+        BasicApi.reqartistSublist()
+        BasicApi.reqalbumSublist()
+        BasicApi.requserFollows(BasicApi.account!.id)
+    })
+}
 const p0 = localStorage.getItem('NMcookie')? NM.reqLogin():BasicApi.reqLogin(cookie as string)
 const p1 = BasicApi.reqRecommendSongs()
 let p2
@@ -271,8 +272,6 @@ onMounted(async()=>{
         
     }
 })
-
-
 
 const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
 globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
@@ -588,13 +587,6 @@ watch(()=>globalVar.setting.downloadPath,async()=>{
 },{immediate:true})
 
 let ciId = toRef(MainPinia,"ciId")
-// let t3 = 1
-// let t3 =setInterval(()=>{
-//     ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
-//     if(ciId.value != undefined){
-//         clearInterval(t3)
-//     }
-// },5000)
 
 window.electron.ipcRenderer.on('lrc-ready',()=>{
     console.log('lrc准备完毕');

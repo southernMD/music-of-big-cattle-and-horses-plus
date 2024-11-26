@@ -333,7 +333,7 @@ const jian = () => {
 // ciId
 watch(yinOryi,()=>{
   console.log(toRaw(yinOryi.value));
-  window.electron.ipcRenderer.sendTo(ciId.value,'yin-or-yi',toRaw(yinOryi.value))
+  if(ciId.value)window.electron.ipcRenderer.sendTo(ciId.value,'yin-or-yi',toRaw(yinOryi.value))
 },{immediate:true,deep:true})
 
 //隐藏时切换模式

@@ -1,49 +1,67 @@
 <script setup lang="ts">
-import {ref,toRef} from 'vue'
-import { useGlobalVar,useMain } from './store';
+import { onErrorCaptured, onMounted, ref, toRef } from 'vue'
+import { useGlobalVar, useMain } from './store';
 import useColor from '@renderer/hooks/useColor';
-const {background,fontColor} = window.electron.ipcRenderer.sendSync('get-background-color')
-console.log(background,fontColor);
+import { RouterView } from 'vue-router';
+import getWindowsWorker from '@renderer/workers/getWindowsWorker?worker'
+const { background, fontColor } = window.electron.ipcRenderer.sendSync('get-background-color')
+console.log(background, fontColor);
 const globalVar = useGlobalVar()
 useColor()
 const Main = useMain()
-let ciId = toRef(Main,'ciId') 
-let mainId = toRef(Main,'mainId')
-let dragMessageId = toRef(Main,'dragMessageId')
-let t1 =setInterval(()=>{
-    dragMessageId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'drageMessage')
-    if(dragMessageId.value != undefined){
-        clearInterval(t1)
-    }
-},5000)
-let t3 =setInterval(()=>{
-    ciId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci')
-    if(ciId.value != undefined){
-        clearInterval(t3)
-    }
-},5000)
-let t2 =setInterval(()=>{
-  mainId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Main')
-    if(mainId.value != undefined){
-        clearInterval(t2)
-    }
-},5000)
-window.addEventListener('keydown',(e)=>{
+let ciId = toRef(Main, 'ciId')
+let mainId = toRef(Main, 'mainId')
+let dragMessageId = toRef(Main, 'dragMessageId')
+onMounted(() => {
+    const windowsWorker = new getWindowsWorker()
+    // 监听 Worker 的消息
+    windowsWorker.addEventListener('message', (e) => {
+        console.log(e.data);
+        const { windowName, id } = e.data;
+        if (id !== undefined) {
+            // 将结果发送回主进程
+            const idRes = window.electron.ipcRenderer.sendSync('getWindowId', windowName);
+            console.log("主进程获得", windowName, "的id", idRes);
+            if (idRes !== undefined) {
+                windowsWorker.postMessage({ type: 'finished', windowName, id });
+                switch (windowName) {
+                    case 'drageMessage':
+                        dragMessageId.value = idRes
+                        break;
+                    case 'Ci':
+                        ciId.value = idRes
+                        break;
+                    case 'Main':
+                        mainId.value = idRes
+                        break;
+                }
+            }
+        }
+    });
+
+    // 请求窗口 ID
+    console.log("请求窗口 ID");
+    windowsWorker.postMessage({ type: 'requestId', windowName: 'drageMessage' });
+    windowsWorker.postMessage({ type: 'requestId', windowName: 'Ci' });
+    windowsWorker.postMessage({ type: 'requestId', windowName: 'Main' });
+
+})
+window.addEventListener('keydown', (e) => {
     e.preventDefault()
 })
 </script>
 
 <template>
-<div class="contain" v-if="!globalVar.radioReady && $route.path.includes('/app') && !globalVar.lrcFlag">大牛马音乐</div>
-<Suspense>
-    <template #default>
-        <RouterView></RouterView>
-    </template>
-</Suspense>
+    <div class="contain" v-if="!globalVar.radioReady && $route.path.includes('/app') && !globalVar.lrcFlag">大牛马音乐</div>
+    <Suspense>
+        <template #default>
+            <RouterView></RouterView>
+        </template>
+    </Suspense>
 </template>
 
 <style lang="less" scoped>
-.contain{
+.contain {
     width: 100vw;
     height: 100vh;
     background-color: v-bind('background');
@@ -56,6 +74,6 @@ window.addEventListener('keydown',(e)=>{
     color: v-bind('fontColor');
     font-family: '方正准圆简体';
     user-select: none;
-    letter-spacing:10px
+    letter-spacing: 10px
 }
 </style>
