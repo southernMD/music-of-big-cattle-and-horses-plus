@@ -457,8 +457,8 @@ watch(()=>globalVar.changeMainScroll,()=>{
 import {modInput} from '../utils/modInput'
 const inputAddPlayListRef = ref()
 
-const onKeyDown = (event: KeyboardEvent) => {
-  playListName.value = modInput(event, inputAddPlayListRef.value.ref, playListName.value);
+const onKeyDown = async(event: KeyboardEvent) => {
+  playListName.value = await modInput(event, inputAddPlayListRef.value.ref, playListName.value);
 }
 
 const inputFn = ()=>{

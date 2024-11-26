@@ -24,7 +24,15 @@
                 </div>
                 <div :key="2" class="search" v-show="scrollY == undefined || scrollY < 300">
                     <i class="iconfont icon-search"></i>
-                    <input ref="searchInputRef" class="search-input" @input="searchSuggestThrottle" v-model="searchKey" @focus="inputFn();flagSearch=true" @blur="inputRemove" @click="flagSearch=true" @keydown="goSearch" type="text" :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
+                    <input ref="searchInputRef" class="search-input" 
+                    @input="searchSuggestThrottle" 
+                    v-model="searchKey" 
+                    @focus="inputFn();flagSearch=true" 
+                    @blur="inputRemove" 
+                    @click="flagSearch=true" 
+                    @keydown="goSearch" 
+                    type="text" 
+                    :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
                     <Teleport to="#header" v-if="flagSearch">
                         <SearchTip @close="flagSearch = false" @changeFlag="flag = true" :listTop="listTop" ></SearchTip>
                     </Teleport>
@@ -478,8 +486,8 @@ const goHome = ()=>{
     })
 }
 
-const onKeyDown = (event: KeyboardEvent) => {
-    searchKey.value = modInput(event, searchInputRef.value, searchKey.value);
+const onKeyDown = async(event: KeyboardEvent) => {
+    searchKey.value = await modInput(event, searchInputRef.value, searchKey.value);
 }
 
 const inputFn = ()=>{

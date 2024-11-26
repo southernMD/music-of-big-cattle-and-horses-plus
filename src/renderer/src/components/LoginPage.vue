@@ -426,16 +426,16 @@ const clearValid = (str:string)=>{
     ruleFormRef.value?.clearValidate(str)
 }
 
-const onKeyDown = (event: KeyboardEvent) => {
-    formLabelAlign.name = modInput(event, inputRef1.value.ref, formLabelAlign.name);
+const onKeyDown = async (event: KeyboardEvent) => {
+    formLabelAlign.name = await modInput(event, inputRef1.value.ref, formLabelAlign.name);
 }
 
-const onKeyDown2 = (event: KeyboardEvent) => {
-    formLabelAlign.password = modInput(event, inputRef2.value.ref, formLabelAlign.password);
+const onKeyDown2 = async(event: KeyboardEvent) => {
+    formLabelAlign.password = await modInput(event, inputRef2.value.ref, formLabelAlign.password);
 }
 
-const onKeyDown3 = (event: KeyboardEvent) => {
-    formLabelAlign.code = modInput(event, inputRef3.value.ref, formLabelAlign.code);
+const onKeyDown3 = async(event: KeyboardEvent) => {
+    formLabelAlign.code = await modInput(event, inputRef3.value.ref, formLabelAlign.code);
 }
 
 const inputFn = (p:number)=>{
