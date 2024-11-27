@@ -18,16 +18,16 @@ const globalVar = useGlobalVar()
 const $el = getCurrentInstance() as ComponentInternalInstance 
 const loadingMp4Bk = toRef(globalVar, 'loadingMp4Bk')
 const number = ref(0)
-window.electron.ipcRenderer.on('loading-mp4',({},{p})=>{
-  if(loadingMp4Bk.value == false) number.value = 0
-  number.value = +p
-  const line = $el.refs.line as HTMLElement
-  line.style.width = p + '%'
-  if(+p === 100){
-    loadingMp4Bk.value = false
-    number.value = 0
-  }
-})
+// window.electron.ipcRenderer.on('loading-mp4',({},{p})=>{
+//   if(loadingMp4Bk.value == false) number.value = 0
+//   number.value = +p
+//   const line = $el.refs.line as HTMLElement
+//   line.style.width = p + '%'
+//   if(+p === 100){
+//     loadingMp4Bk.value = false
+//     number.value = 0
+//   }
+// })
 const stopLoading = ()=>{
   loadingMp4Bk.value = false
   number.value = 0
