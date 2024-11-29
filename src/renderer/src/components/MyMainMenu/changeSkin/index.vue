@@ -147,7 +147,7 @@ const recover = ()=>{
 .bk {
     width: 320px;
     height: 270px;
-    background-color: @mianban-bk-color;
+    background-color: @mainban-bk-color;
     position: absolute;
     top: 60px;
     right: 0;

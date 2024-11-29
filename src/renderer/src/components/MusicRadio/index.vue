@@ -1,5 +1,5 @@
 <template>
-    <div class="MusicRadio" :class="{ 'MusicRadio-oneself': globalVar.oneself == 1 }">
+    <div class="MusicRadio" :class="{ 'MusicRadio-oneself': globalVar.oneself == 1 }" v-show="$route.name != 'video_detail'">
         <div class="left" v-show="playingList.length">
             <transition name="imgpng">
                 <div v-show="Main.detailStatus == 'close'">

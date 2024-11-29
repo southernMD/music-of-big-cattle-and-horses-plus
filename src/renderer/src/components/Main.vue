@@ -1,9 +1,14 @@
 <template>
   <!-- <el-config-provider size="small" :z-index="3000" :locale="zhCn"> -->
   <!-- </el-config-provider> -->
-  <div class="main" :class="{'main-oneself':globalVar.oneself == 1,'red-line':MainMenu.colorBlock == 'NMblack'}" >
-    <el-scrollbar ref="scrollbarRefLeft" @scroll="barLeft" style="width: 200px;">
-      <aside @mouseover="leftOver" :class="{'aside-right-color-oneself':globalVar.oneself == 1}">
+  <div class="main" :class="{ 
+    'main-oneself': globalVar.oneself == 1,
+    'red-line': MainMenu.colorBlock == 'NMblack',
+    'main-video-detail': $route.name == 'video_detail'
+   }">
+    <el-scrollbar v-show="$route.name != 'video_detail'" ref="scrollbarRefLeft" @scroll="barLeft" style="width: 200px;">
+      <aside @mouseover="leftOver"
+        :class="{ 'aside-right-color-oneself': globalVar.oneself == 1 }">
         <div class="top">
           <LeftBlock message="发现音乐" :big="true" name="findMusic">
           </LeftBlock>
@@ -13,9 +18,11 @@
           </LeftBlock>
           <LeftBlock message="私人FM" :big="true" name="personalFM">
           </LeftBlock>
+          <LeftBlock message="视频" :big="true" name="video">
+          </LeftBlock>
         </div>
         <div class="middle">
-          <div class="title" :class="{'oneself-title':globalVar.oneself == 1}">
+          <div class="title" :class="{ 'oneself-title': globalVar.oneself == 1 }">
             <span>我的音乐</span>
           </div>
           <div class="list-my-music">
@@ -24,9 +31,9 @@
                 <i class="iconfont icon-xiazai"></i>
               </template>
               <template #jump v-if="Main.beforePlayListId == 0 || Main.beforePlayListId == -2">
-                  <i v-if="Main.playStatus == 'play'" class="iconfont icon-shengyin_shiti songStatus"></i>
-                  <i v-else-if="Main.playStatus == 'stop'" class="iconfont icon-shengyin03-mianxing songStatus"></i>
-                </template>
+                <i v-if="Main.playStatus == 'play'" class="iconfont icon-shengyin_shiti songStatus"></i>
+                <i v-else-if="Main.playStatus == 'stop'" class="iconfont icon-shengyin03-mianxing songStatus"></i>
+              </template>
             </LeftBlock>
             <LeftBlock message="最近播放" :big="false" name="Latelyplay">
               <template #default>
@@ -38,7 +45,7 @@
                 <i class="iconfont icon-yun_o"></i>
               </template>
             </LeftBlock>
-            <LeftBlock  v-if="!isNM" message="我的播客" :big="false" name="mydj" >
+            <LeftBlock v-if="!isNM" message="我的播客" :big="false" name="mydj">
               <template #default>
                 <i class="iconfont icon-changpian"></i>
               </template>
@@ -51,11 +58,11 @@
           </div>
         </div>
         <div class="play-list">
-          <div class="title" >
-            <div class="option" @click="showPlay" :class="{noDrag:!Main.dragMouse}">
-              <span :class="{'onself':globalVar.oneself == 1}">创建的歌单</span>
-              <i class="iconfont icon-xiajiantou" :class="{'onself':globalVar.oneself == 1}" v-if="playlistFlag"></i>
-              <i class="iconfont icon-youjiantou" :class="{'onself':globalVar.oneself == 1}" v-else></i>
+          <div class="title">
+            <div class="option" @click="showPlay" :class="{ noDrag: !Main.dragMouse }">
+              <span :class="{ 'onself': globalVar.oneself == 1 }">创建的歌单</span>
+              <i class="iconfont icon-xiajiantou" :class="{ 'onself': globalVar.oneself == 1 }" v-if="playlistFlag"></i>
+              <i class="iconfont icon-youjiantou" :class="{ 'onself': globalVar.oneself == 1 }" v-else></i>
             </div>
             <div class="more" @click="addPlay">
               <i class="iconfont icon-jiahao_o"></i>
@@ -63,28 +70,27 @@
           </div>
           <div class="play-main-list" v-show="playlistFlag">
             <div class="Ilike">
-              <LeftBlock data-right="1" data-type="playListLike" 
-              :data-txt="`歌单：${Main.playList[0]?.name} by ${Main.playList[0]?.creator?.nickname}`" 
-              :data-pic="Main.playList[0]?.coverImgUrl"
-              :big="false" :privacy="+Main.playList[0]?.privacy" message="我喜欢的音乐" :id="Main.playList[0]?.id"
-                :index="0">
+              <LeftBlock data-right="1" data-type="playListLike"
+                :data-txt="`歌单：${Main.playList[0]?.name} by ${Main.playList[0]?.creator?.nickname}`"
+                :data-pic="Main.playList[0]?.coverImgUrl" :big="false" :privacy="+Main.playList[0]?.privacy"
+                message="我喜欢的音乐" :id="Main.playList[0]?.id" :index="0">
                 <template #default>
                   <i class="iconfont icon-aixin"></i>
                 </template>
                 <template #jump>
-                  <div class="bk" v-show="false" :class="{'bk-oneself':globalVar.oneself == 1}" @click.stop="heartJump" title="开启鸡动模式">
+                  <div class="bk" v-show="false" :class="{ 'bk-oneself': globalVar.oneself == 1 }" @click.stop="heartJump"
+                    title="开启鸡动模式">
                     <i class="iconfont icon-xindong"></i>
                   </div>
                 </template>
               </LeftBlock>
             </div>
             <div class="other">
-              <LeftBlock data-right="1" data-type="playListMy" 
-                :data-txt="`歌单：${Main.playList[valueIndex]?.name} by ${Main.playList[valueIndex]?.creator?.nickname}`" 
-                :data-pic="Main.playList[valueIndex]?.coverImgUrl"
-                v-for="(valueIndex, index) in Main.createPlay" :privacy="+Main.playList[valueIndex]?.privacy"
-                :message="Main.playList[valueIndex]?.name" :big="false" :id="Main.playList[valueIndex]?.id"
-                :index="valueIndex" :key="Main.playList[valueIndex]?.id">
+              <LeftBlock data-right="1" data-type="playListMy"
+                :data-txt="`歌单：${Main.playList[valueIndex]?.name} by ${Main.playList[valueIndex]?.creator?.nickname}`"
+                :data-pic="Main.playList[valueIndex]?.coverImgUrl" v-for="(valueIndex, index) in Main.createPlay"
+                :privacy="+Main.playList[valueIndex]?.privacy" :message="Main.playList[valueIndex]?.name" :big="false"
+                :id="Main.playList[valueIndex]?.id" :index="valueIndex" :key="Main.playList[valueIndex]?.id">
                 <template #default v-if="+Main.playList[valueIndex]?.privacy == 10">
                   <i class="iconfont icon-suoding_o"></i>
                 </template>
@@ -102,16 +108,16 @@
         </div>
         <div class="start-list" v-if="Main.startPlay">
           <div class="title">
-            <div class="option" @click="showStart" :class="{noDrag:!Main.dragMouse}">
-              <span :class="{'onself':globalVar.oneself == 1}">收藏的歌单</span>
-              <i :class="{'onself':globalVar.oneself == 1}" class="iconfont icon-xiajiantou" v-if="startlistFlag"></i>
-              <i :class="{'onself':globalVar.oneself == 1}" class="iconfont icon-youjiantou" v-else></i>
+            <div class="option" @click="showStart" :class="{ noDrag: !Main.dragMouse }">
+              <span :class="{ 'onself': globalVar.oneself == 1 }">收藏的歌单</span>
+              <i :class="{ 'onself': globalVar.oneself == 1 }" class="iconfont icon-xiajiantou" v-if="startlistFlag"></i>
+              <i :class="{ 'onself': globalVar.oneself == 1 }" class="iconfont icon-youjiantou" v-else></i>
             </div>
           </div>
           <div class="start-main-list" v-show="startlistFlag">
             <div class="other">
-              <LeftBlock data-right="1" data-type="playListStart" 
-                :data-txt="`歌单：${Main.playList[valueIndex + Main.createPlay]?.name} by ${Main.playList[valueIndex + Main.createPlay]?.creator?.nickname}`" 
+              <LeftBlock data-right="1" data-type="playListStart"
+                :data-txt="`歌单：${Main.playList[valueIndex + Main.createPlay]?.name} by ${Main.playList[valueIndex + Main.createPlay]?.creator?.nickname}`"
                 :data-pic="Main.playList[valueIndex + Main.createPlay]?.coverImgUrl"
                 v-for="(valueIndex, index) in Main.startPlay"
                 :message="Main.playList[valueIndex + Main.createPlay]?.name"
@@ -130,29 +136,30 @@
         </div>
       </aside>
     </el-scrollbar>
-    <main @mouseover="rightOver" id="mainWindow">
-      <div class="stopS" v-if="route.path.includes('setting') || route.path.includes('findMusic') || route.path.includes('download')">
+    <main @mouseover="rightOver" id="mainWindow" :class="{ 'main-video-detail': ($route.name =='video_detail' )}">
+      <div class="stopS"
+        v-if="route.path.includes('setting') || route.path.includes('findMusic') || route.path.includes('download')">
         <header>
-          <Tag :class="{'tag-oneself':globalVar.oneself == 1}" v-for="(value,index) in messageList" :message="value" :big="true" :size="16" :ifClick="clickFlag[index]" :name="routeName[index]"
-            @click="go(index)"></Tag>
-            <div class="setting" v-if="route.path.includes('setting')">设置</div>
+          <Tag :class="{ 'tag-oneself': globalVar.oneself == 1 }" v-for="(value, index) in messageList" :message="value"
+            :big="true" :size="16" :ifClick="clickFlag[index]" :name="routeName[index]" @click="go(index)"></Tag>
+          <div class="setting" v-if="route.path.includes('setting')">设置</div>
         </header>
       </div>
       <el-scrollbar ref="scrollbarRef" @scroll="barRight">
         <!-- <router-view></router-view> -->
         <router-view v-slot="{ Component }">
           <keep-alive>
-              <component v-if="$route.meta.keepAlive && $route.name == 'PersonalCenter' " :is="Component" />
+            <component v-if="$route.meta.keepAlive && $route.name == 'PersonalCenter'" :is="Component" />
           </keep-alive>
         </router-view>
         <router-view v-slot="{ Component }">
           <keep-alive>
-              <component v-if="$route.meta.keepAlive && $route.name == 'personalFM' " :is="Component" />
+            <component v-if="$route.meta.keepAlive && $route.name == 'personalFM'" :is="Component" />
           </keep-alive>
         </router-view>
         <router-view v-slot="{ Component }">
           <keep-alive>
-              <component v-if="$route.meta.keepAlive && $route.path.includes('myStart') " :is="Component" />
+            <component v-if="$route.meta.keepAlive && $route.path.includes('myStart')" :is="Component" />
           </keep-alive>
         </router-view>
         <router-view v-if="!$route.meta.keepAlive" />
@@ -161,23 +168,25 @@
       </LocationSong>
     </main>
   </div>
-  <MyDialog :flag="addPlayFlag" @confirm="createPlayList" @cancel="addPlayFlag = false " @closeDialog="addPlayFlag = false">
+  <MyDialog :flag="addPlayFlag" @confirm="createPlayList" @cancel="addPlayFlag = false"
+    @closeDialog="addPlayFlag = false">
     <template #header>
       <span class="title1">新建歌单</span>
     </template>
     <template #midle>
       <div class="create">
-        <el-input ref="inputAddPlayListRef" @focus="inputFn" @blur="inputRemove" v-model="playListName" placeholder="请输入新歌单标题"></el-input>
+        <el-input ref="inputAddPlayListRef" @focus="inputFn" @blur="inputRemove" v-model="playListName"
+          placeholder="请输入新歌单标题"></el-input>
         <el-checkbox v-model="yinsi" size="large" label="设置为隐私歌单"></el-checkbox>
       </div>
     </template>
   </MyDialog>
 </template>
 <script setup lang="ts">
-  import { ElScrollbar } from 'element-plus'
+import { ElScrollbar } from 'element-plus'
 //   import zhCn from 'element-plus/lib/locale/lang/zh-cn'
-import { toRef, ref, watch,nextTick, Ref, Suspense } from 'vue';
-import { useMainMenu, useMain,useGlobalVar,useBasicApi,useNM } from '../store'
+import { toRef, ref, watch, nextTick, Ref, Suspense } from 'vue';
+import { useMainMenu, useMain, useGlobalVar, useBasicApi, useNM } from '../store'
 import { useRoute, useRouter } from 'vue-router';
 
 import LeftBlock from './myVC/LeftBlock.vue';
@@ -190,8 +199,8 @@ const globalVar = useGlobalVar()
 const $router = useRouter();
 const BasicApi = useBasicApi();
 const NM = useNM()
-const messageList:Ref<any[]> = ref([])
-const routeName:Ref<any[]> = ref([])
+const messageList: Ref<any[]> = ref([])
+const routeName: Ref<any[]> = ref([])
 // const findMusic = ['个性推荐', 'q2', 'q3']
 const findMusic = ['个性推荐']
 // const findMusicRouteName = ['personalRecommend', 'q1', 'q2']
@@ -200,22 +209,22 @@ const downloadMusic = ['下载管理', '本地音乐']
 const downloadMusicRouteName = ['downloaded', 'local']
 let clickFlag = ref([true, false, false])
 const isNM = ref(false)
-if(localStorage.getItem('NMcookie'))isNM.value = true
+if (localStorage.getItem('NMcookie')) isNM.value = true
 else isNM.value = false
-watch(route,()=>{
+watch(route, () => {
   messageList.value.length = 0
   routeName.value.length = 0
-  if(route.path.includes('findMusic')){
+  if (route.path.includes('findMusic')) {
     messageList.value.push(...findMusic)
     routeName.value.push(...findMusicRouteName)
-    clickFlag.value .fill(false)
-  }else if(route.path.includes('download')){
+    clickFlag.value.fill(false)
+  } else if (route.path.includes('download')) {
     messageList.value.push(...downloadMusic)
     routeName.value.push(...downloadMusicRouteName)
-    clickFlag.value .fill(false)
-    if(route.path.includes('manage'))clickFlag.value[0] = true
+    clickFlag.value.fill(false)
+    if (route.path.includes('manage')) clickFlag.value[0] = true
   }
-},{immediate:true})
+}, { immediate: true })
 
 const go = (index: number) => {
   clickFlag.value.forEach((element, i) => {
@@ -223,14 +232,14 @@ const go = (index: number) => {
   })
   clickFlag.value[index] = true
   $router.push({
-    name:routeName.value[index] ,
+    name: routeName.value[index],
   })
 }
 
 // watch(route,()=>{
-  // if(routeName.value.includes(String(route.name)) && route.name!='downloading'){
-  //   clickFlag.value = [false, false, false]
-  // }
+// if(routeName.value.includes(String(route.name)) && route.name!='downloading'){
+//   clickFlag.value = [false, false, false]
+// }
 // })
 
 // let ifLogin = toRef(BasicApi, 'account')
@@ -254,10 +263,10 @@ watch(route, () => {
   scrollbarRef.value!.setScrollTop(0)
 })
 
-let scrollToTop = toRef(globalVar,'scrollToTop')
-watch(scrollToTop,()=>{
-  if(scrollToTop.value == true){
-    nextTick(()=>{
+let scrollToTop = toRef(globalVar, 'scrollToTop')
+watch(scrollToTop, () => {
+  if (scrollToTop.value == true) {
+    nextTick(() => {
       scrollbarRef.value!.setScrollTop(0)
       scrollToTop.value = false
     })
@@ -277,7 +286,7 @@ watch(pageY, () => {
   if (Main.dragMouse) {
     if (document.documentElement.clientHeight - pageY.value < 80) {
       if (whereMouse.value == 'right') {
-        
+
         scrollbarRef.value!.scrollTo({
           top: rightScroll.value + 40,
         })
@@ -332,9 +341,9 @@ const showPlay = () => {
   playlistFlag.value = !playlistFlag.value
 }
 
-const addPlayFlag = toRef(globalVar,'addPlayFlag')
-watch(addPlayFlag,()=>{
-  if(addPlayFlag.value == true && BasicApi.profile == null){
+const addPlayFlag = toRef(globalVar, 'addPlayFlag')
+watch(addPlayFlag, () => {
+  if (addPlayFlag.value == true && BasicApi.profile == null) {
     globalVar.flagLogin = true
     addPlayFlag.value = false
   }
@@ -345,55 +354,55 @@ const addPlay = () => {
   addPlayFlag.value = true
   console.log('增加歌单');
 }
-const createPlayList = async()=>{
-  if(playListName.value.length == 0)return
+const createPlayList = async () => {
+  if (playListName.value.length == 0) return
   globalVar.loadDefault = true
   addPlayFlag.value = false
-  let result 
-  if(!localStorage.getItem('NMcookie')){
-    result = await Main.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
-  }else{
-    result = await NM.reqPlayListCreate(playListName.value,yinsi.value?10:undefined)
+  let result
+  if (!localStorage.getItem('NMcookie')) {
+    result = await Main.reqPlayListCreate(playListName.value, yinsi.value ? 10 : undefined)
+  } else {
+    result = await NM.reqPlayListCreate(playListName.value, yinsi.value ? 10 : undefined)
   }
-  if(result.id){
-    if(globalVar.addPlayId.length == 0){
+  if (result.id) {
+    if (globalVar.addPlayId.length == 0) {
       globalVar.loadDefault = false
       globalVar.loadMessageDefault = '创建歌单成功'
       globalVar.loadMessageDefaultFlag = true
-      if(route.name == 'songPlaylist'){
+      if (route.name == 'songPlaylist') {
         $router.replace({
-          name:'songPlaylist',
-          query:{
-            my:'true',
-            id:Main.playList[+route.query.index! + 1].id,
-            index:+route.query.index! + 1,
-            type:'歌单'
+          name: 'songPlaylist',
+          query: {
+            my: 'true',
+            id: Main.playList[+route.query.index! + 1].id,
+            index: +route.query.index! + 1,
+            type: '歌单'
           }
         })
       }
     }
-    Main.playListId.splice(1,0,result.id)
-    Main.playList.splice(1,0,result)
+    Main.playListId.splice(1, 0, result.id)
+    Main.playList.splice(1, 0, result)
     Main.createPlay++
-    if(globalVar.addPlayId.length != 0){
+    if (globalVar.addPlayId.length != 0) {
       let result2
-      if(localStorage.getItem('NMcookie')){
-        result2 = (await NM.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
-      }else{
-        result2 = (await Main.reqPlaylistTracks('add',result.id,globalVar.addPlayId)).data
+      if (localStorage.getItem('NMcookie')) {
+        result2 = (await NM.reqPlaylistTracks('add', result.id, globalVar.addPlayId)).data
+      } else {
+        result2 = (await Main.reqPlaylistTracks('add', result.id, globalVar.addPlayId)).data
       }
-      if(result2.url){
+      if (result2.url) {
         Main.playList[1].coverImgUrl = result.url
       }
-        globalVar.loadDefault = false
-        if (result2.body.code == 200 || (result2.code == 200 && localStorage.getItem('NMcookie'))) {
-          globalVar.loadMessageDefault = '已收藏到歌单'
-          globalVar.loadMessageDefaultFlag = true 
-          Main.playList[1].trackCount += globalVar.addPlayId.length
-        }
+      globalVar.loadDefault = false
+      if (result2.body.code == 200 || (result2.code == 200 && localStorage.getItem('NMcookie'))) {
+        globalVar.loadMessageDefault = '已收藏到歌单'
+        globalVar.loadMessageDefaultFlag = true
+        Main.playList[1].trackCount += globalVar.addPlayId.length
+      }
       globalVar.addPlayId = []
     }
-  }else{
+  } else {
     globalVar.loadDefault = false
     globalVar.loadMessageDefaultFlag = true
   }
@@ -447,37 +456,39 @@ const showStart = () => {
 //   }
 // })
 
-watch(()=>globalVar.changeMainScroll,()=>{
-  if(globalVar.changeMainScroll!=0){
+watch(() => globalVar.changeMainScroll, () => {
+  if (globalVar.changeMainScroll != 0) {
     scrollbarRef.value!.setScrollTop(rightScroll.value + globalVar.changeMainScroll)
     globalVar.changeMainScroll = 0;
   }
 })
 
-import {modInput} from '../utils/modInput'
+import { modInput } from '../utils/modInput'
 const inputAddPlayListRef = ref()
 
-const onKeyDown = async(event: KeyboardEvent) => {
+const onKeyDown = async (event: KeyboardEvent) => {
   playListName.value = await modInput(event, inputAddPlayListRef.value.ref, playListName.value);
 }
 
-const inputFn = ()=>{
-  window.addEventListener('keydown',onKeyDown)
+const inputFn = () => {
+  window.addEventListener('keydown', onKeyDown)
 }
 
-const inputRemove = ()=>{
-  window.removeEventListener('keydown',onKeyDown)
+const inputRemove = () => {
+  window.removeEventListener('keydown', onKeyDown)
 }
 </script>
 
 <style lang="less" scoped>
-.red-line{
+.red-line {
   border-top: 2px solid #b72525 !important;
 }
+
 .noDrag {
   cursor: pointer;
 }
-.onself{
+
+.onself {
   color: @oneselfFontColor !important;
 }
 
@@ -491,6 +502,7 @@ const inputRemove = ()=>{
   display: flex;
   color: @font-color;
   border-top: 2px solid transparent;
+
   aside {
     width: 200px;
     min-height: calc(100vh - 60px - 70px);
@@ -514,13 +526,15 @@ const inputRemove = ()=>{
         user-select: none;
         padding-left: 5px;
         margin: 0 auto;
+
         &>span {
           padding-left: 5px;
           padding-top: 2px;
           font-size: 14px;
         }
       }
-      .oneself-title{
+
+      .oneself-title {
         color: @oneselfFontColor;
       }
 
@@ -534,9 +548,10 @@ const inputRemove = ()=>{
           font-size: 15px !important;
           font-weight: normal !important;
         }
+
         .songStatus {
-            color: @small-font-red !important;
-          }
+          color: @small-font-red !important;
+        }
       }
     }
 
@@ -552,7 +567,8 @@ const inputRemove = ()=>{
         align-items: center;
 
         .option {
-            color: @small-font-color;
+          color: @small-font-color;
+
           span {
             padding-left: 5px;
             padding-top: 2px;
@@ -566,8 +582,11 @@ const inputRemove = ()=>{
             transform: translate(4px, -2px);
           }
         }
-        .option-onself{
-          span,i{
+
+        .option-onself {
+
+          span,
+          i {
             color: @oneselfFontColor !important;
           }
         }
@@ -608,10 +627,12 @@ const inputRemove = ()=>{
               padding: 0 0;
             }
           }
-          .bk-oneself{
-            background-color: rgb(43,43,43);
-            border-color: rgb(61,61,64);
-            &:hover{
+
+          .bk-oneself {
+            background-color: rgb(43, 43, 43);
+            border-color: rgb(61, 61, 64);
+
+            &:hover {
               background-color: rgb(65, 65, 65);
             }
           }
@@ -679,8 +700,9 @@ const inputRemove = ()=>{
       }
     }
   }
-  .aside-right-color-oneself{
-    border-right-color:@oneselfsplitLineColor;
+
+  .aside-right-color-oneself {
+    border-right-color: @oneselfsplitLineColor;
   }
 
   main {
@@ -689,6 +711,7 @@ const inputRemove = ()=>{
 
     .stopS {
       margin-top: -10px;
+
       header {
         width: 100%;
         height: 40px;
@@ -700,14 +723,17 @@ const inputRemove = ()=>{
         :deep(.tag) {
           margin: 0 5px;
         }
-        .tag-oneself{
+
+        .tag-oneself {
           color: @oneselfFontColor ;
         }
-        .follow{
+
+        .follow {
           font-size: 20px;
           font-weight: bolder;
         }
-        .setting{
+
+        .setting {
           user-select: none;
           font-weight: bolder;
           font-size: 20px;
@@ -715,57 +741,72 @@ const inputRemove = ()=>{
       }
     }
   }
-
+  .main-video-detail{
+    width: 100vw;
+    min-height: calc(100vh - 60px);
+  }
 
 }
-.main-oneself{
+
+.main-oneself {
   background-color: @onselfColor;
-  color:@oneselfFontColor;
+  color: @oneselfFontColor;
+}
+
+.main-video-detail{
+  height: calc(100vh - 60px);
 }
 
 .title1 {
-    color: @font-color;
-    font-weight: bolder;
+  color: @font-color;
+  font-weight: bolder;
 }
 
-.create{
+.create {
   display: flex;
   flex-direction: column;
-  :deep(label){
+
+  :deep(label) {
     height: 25px;
 
     .el-checkbox__label {
       font-size: 13px;
       color: @font-color;
     }
+
     --el-checkbox-bg-color:@other-bk-color;
     --el-checkbox-input-border-color-hover:@primary-color;
     --el-checkbox-input-border:1px solid @border-color;
   }
+
   :deep(.is-checked) {
     :deep(.el-el-checkbox__input) {
       border-color: @primary-color;
       background-color: @primary-color;
     }
+
     --el-checkbox-checked-bg-color:@primary-color;
     --el-checkbox-checked-input-border-color:@primary-color;
+
     .el-checkbox__label {
-        color: @primary-color;
+      color: @primary-color;
     }
   }
-  :deep(.el-input){
+
+  :deep(.el-input) {
     margin-bottom: 10px;
-    --el-input-focus-border-color:@border-color;
+    --el-input-focus-border-color: @border-color;
     --el-input-bg-color: @left-click-color;
-    --el-input-border-color:@border-color;
-    --el-input-hover-border-color:@border-color;
-    input{
+    --el-input-border-color: @border-color;
+    --el-input-hover-border-color: @border-color;
+
+    input {
       color: @font-color !important;
     }
-    input::placeholder{
+
+    input::placeholder {
       color: @small-font-color !important;
     }
   }
 }
-
 </style>

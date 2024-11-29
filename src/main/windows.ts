@@ -397,7 +397,9 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         await new Promise<any>((resolve, reject) => {
           fs.readFile(filePath, (err, data) => {
             if (!err) {
-              if (['jpg', 'png', 'jpeg', 'webp'].includes(extname(filePath))) {
+              console.log(filePath,extname(filePath));
+              
+              if (['.jpg', '.png', '.jpeg', '.webp'].includes(extname(filePath))) {
                 event.reply('file-ready', { liu: data, extname: extname(filePath) })
               } else {
                 //如果视频大小不为MP4或者大小超过50m

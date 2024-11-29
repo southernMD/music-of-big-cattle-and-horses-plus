@@ -1,7 +1,8 @@
 <template>
     <div class="AppSmall">
         <img src="" id="mainBackground" style="display: none;">
-        <video src="" id="mainBackgroundVideo" :muted="true" loop type="video/mp4"></video>
+        <video hidden src="" ref="video" id="mainBackgroundVideo" :muted="true" loop type="video/mp4"></video>
+        <canvas ref="videoCanvas"></canvas>
         <MyMainMenu></MyMainMenu>
         <!-- <LoadingBig></LoadingBig> -->
         <Main></Main>
@@ -137,13 +138,31 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
 onMounted(()=>{
     window.electron.ipcRenderer.send('renderer-ready')
 })
+const videoCanvas = ref()
+const video = ref()
+let context
 window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
     if (!flag) globalVar.loadingMp4Bk = true
     const port = window.electron.ipcRenderer.sendSync('vedio-server-port');
     nextTick(()=>{
-        const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-        v.src = `http://127.0.0.1:${port}/video?path=${filePath}`
-        v.play()
+        video.value.src = `http://127.0.0.1:${port}/video?path=${filePath}`
+        video.value.play()
+        context = videoCanvas.value.getContext('2d')
+
+        video.value.addEventListener('loadedmetadata',()=>{
+            videoCanvas.value.width = video.value.videoWidth;
+            videoCanvas.value.height = video.value.videoHeight;
+            context.imageSmoothingEnabled = false;
+        })
+        video.value.addEventListener("play", function () {
+            const drawFrame = () => {
+                if (context && !video.value.paused && !video.value.ended) {
+                    context.drawImage(video.value, 0, 0, videoCanvas.value.width, videoCanvas.value.height);
+                    requestAnimationFrame(drawFrame);
+                }
+            };
+            drawFrame();
+        })
         const h = document.getElementById('mainBackground') as HTMLImageElement
         h.style.display = 'none'
         h.src = ''
@@ -676,6 +695,15 @@ img {
 }
 
 video {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: -999;
+    height: 100%;
+    width: 100%;
+    object-fit: fill;
+}
+canvas{
     position: fixed;
     left: 0;
     top: 0;

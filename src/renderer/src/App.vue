@@ -46,8 +46,11 @@ onMounted(() => {
     windowsWorker.postMessage({ type: 'requestId', windowName: 'Main' });
 
 })
-window.addEventListener('keydown', (e) => {
-    e.preventDefault()
+window.addEventListener('keydown', (e) => {    
+    //ctrl没有按下
+    if(!e.ctrlKey){
+        e.preventDefault()
+    }
 })
 </script>
 

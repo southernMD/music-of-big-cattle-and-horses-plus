@@ -18,7 +18,7 @@ export default function (): any {
             document.documentElement.style.setProperty('--radioBkColor', `rgb(34,34,37)`);
             document.documentElement.style.setProperty('--otherBkColor', `rgb(43,43,43)`);
             document.documentElement.style.setProperty('--otherBkColorOp', `rgb(43,43,43,.7)`);
-            document.documentElement.style.setProperty('--mianbanBkColor', `rgb(54,54,54)`);
+            document.documentElement.style.setProperty('--mainbanBkColor', `rgb(54,54,54)`);
             document.documentElement.style.setProperty('--fontColor', `rgba(255,255,255,.7)`);
             document.documentElement.style.setProperty('--fontColorHover', `rgb(255,255,255)`);
             document.documentElement.style.setProperty('--primaryColor', `rgb(236,65,65)`);
@@ -101,7 +101,7 @@ export default function (): any {
             document.documentElement.style.setProperty('--radioBkColor', `rgb(255,255,255)`);
             document.documentElement.style.setProperty('--otherBkColor', `rgb(255,255,255)`);
             document.documentElement.style.setProperty('--otherBkColorOp', `rgb(255,255,255,.7)`);
-            document.documentElement.style.setProperty('--mianbanBkColor', `rgb(255,255,255)`);
+            document.documentElement.style.setProperty('--mainbanBkColor', `rgb(255,255,255)`);
             document.documentElement.style.setProperty('--fontColor', `rgba(0,0,0,.7)`);
             document.documentElement.style.setProperty('--fontColorHover', `rgb(0,0,0)`);
             document.documentElement.style.setProperty('--redLine', `rgba(0,0,0,0)`);

@@ -120,7 +120,7 @@ if ($el.props.ifLevel) {
     min-height: 40px;
     height: auto;
     border-radius: 0.5em;
-    background-color: @mianban-bk-color;
+    background-color: @mainban-bk-color;
     box-shadow: @shadow;
     position: absolute;
     top: 0px;
@@ -205,7 +205,7 @@ if ($el.props.ifLevel) {
 
     .snajiao {
         border-right: 7px solid rgba(0, 0, 0, 0);
-        border-top: 7px solid @mianban-bk-color;
+        border-top: 7px solid @mainban-bk-color;
         border-bottom: 7px solid rgba(0, 0, 0, 0);
         border-left: 7px solid rgba(0, 0, 0, 0);
         width: 0px;

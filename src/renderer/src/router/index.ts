@@ -72,6 +72,16 @@ const routes: Array<RouteRecordRaw> = [
                 }
             },
             {
+                path:'video',
+                name:'video',
+                component:()=>import('@renderer/views/video/index.vue'),
+            },
+            {
+                path:'video_detail',
+                name:'video_detail',
+                component:()=>import('@renderer/views/video_detail/index.vue'),
+            },
+            {
                 path:'download',
                 name:'download',
                 component:()=>import('@renderer/views/Download/index.vue'),

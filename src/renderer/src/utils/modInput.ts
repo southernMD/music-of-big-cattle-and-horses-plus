@@ -5,8 +5,6 @@ export const modInput = async (e: KeyboardEvent, inputRef: HTMLInputElement, key
   let st = inputRef.selectionStart || 0;
   let end = inputRef.selectionEnd || 0;
   // 撤销功能
-
-    console.log(undoStack,currentKey);
   const handleUndo = (): string => {
     if (undoStack.length >= 1) {
       const previousKey = undoStack[undoStack.length - 1];
@@ -117,6 +115,9 @@ export const modInput = async (e: KeyboardEvent, inputRef: HTMLInputElement, key
   if (currentKey !== key) {
     undoStack.push(currentKey);
     currentKey = key;
+    if(undoStack.length > 20){
+      undoStack.shift();
+    }
   }
   return key;
 };

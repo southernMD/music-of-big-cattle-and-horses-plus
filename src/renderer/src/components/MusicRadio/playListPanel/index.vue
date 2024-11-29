@@ -102,7 +102,7 @@ const getDataType = (id,path,flag)=>{
     right: 0px;
     width: 420px;
     height: calc(100% - 60px - 70px);
-    background-color: @mianban-bk-color;
+    background-color: @mainban-bk-color;
     box-shadow: @shadow;
     z-index: 5;
     overflow: hidden;

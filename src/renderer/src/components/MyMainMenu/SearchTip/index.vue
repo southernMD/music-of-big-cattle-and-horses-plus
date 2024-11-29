@@ -81,7 +81,7 @@ const goSearch = (key:string)=>{
     top: 70px;
     left: 300px;
     height: 300px;
-    background-color: @mianban-bk-color;
+    background-color: @mainban-bk-color;
     box-shadow: @shadow;
     width: 400px;
     transform: translate(-40px, 2px);

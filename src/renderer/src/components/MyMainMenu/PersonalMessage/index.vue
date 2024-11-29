@@ -191,7 +191,7 @@ const goFans = ()=>{
     top: 60px;
     right: 0;
     height: 200px;
-    background-color: @mianban-bk-color;
+    background-color: @mainban-bk-color;
     box-shadow: @shadow;
     width: 280px;
     transform: translate(-40px, 2px);
