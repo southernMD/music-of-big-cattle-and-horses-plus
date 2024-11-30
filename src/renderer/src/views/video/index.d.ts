@@ -20,3 +20,12 @@ export interface VideoInfo{
     otherName: string[];
     time:string;
 }
+
+export interface AddVideoInfo{
+    folderId: number | undefined,
+    title: string,
+    type: VideoType,
+    videoPath: string,
+    coverPath: string,
+    otherName: string[],
+}

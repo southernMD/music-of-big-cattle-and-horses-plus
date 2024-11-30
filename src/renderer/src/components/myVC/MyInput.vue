@@ -1,11 +1,17 @@
 <template>
     <el-input @keydown.enter="goSearch" 
-     @focus="inputFn"
-     @blur="inputRemove" 
+     @focus="inputFn();focus($event)"
+     @blur="inputRemove();blur($event)" 
      @input="clearValid"
+     :size="props.size"
      v-model="searchInputC" 
      ref="searchInputRef" 
-     :placeholder="placeholder">
+     :placeholder="placeholder"
+     :style="{width:width}"
+     >
+     <template #suffix>
+        <slot name="suffix"></slot>
+     </template>
     </el-input>
 </template>
 
@@ -21,6 +27,14 @@ const props = defineProps({
     modelValue: {
         type: String,
         default: ''
+    },
+    size:{
+        type: String,
+        default: 'medium'
+    },
+    width:{
+        type: String,
+        default: '100%'
     }
 })
 
@@ -39,14 +53,23 @@ const inputFn = () => {
 }
 
 const inputRemove = () => {
+    console.log('remove');
     window.removeEventListener('keydown', onKeyDown)
 }
-const $emit = defineEmits(['search','update:modelValue'])
+const $emit = defineEmits(['search','update:modelValue','blur','focus'])
 const goSearch = () => {
     $emit('search', searchInputC.value)
 }
 const clearValid = ()=>{
     $emit('update:modelValue', searchInputC.value);
+}
+
+const blur = ($event)=>{
+    $emit('blur', $event);
+}
+
+const focus = ($event)=>{
+    $emit('focus', $event);
 }
 </script>
 

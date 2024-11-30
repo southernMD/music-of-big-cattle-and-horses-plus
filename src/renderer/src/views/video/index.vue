@@ -1,11 +1,7 @@
 <template>
     <div class="video">
         <div class="search-group">
-            <MyInput 
-            v-model="searchInput"
-            @search="searchInputFn" 
-            :placeholder="searchType" 
-            ></MyInput>
+            <MyInput v-model="searchInput" @search="searchInputFn" :placeholder="searchType"></MyInput>
             <div class="options">
                 <el-radio-group v-model="searchTypeid" class="ml-4">
                     <el-radio label="folder" size="large">文件夹</el-radio>
@@ -61,6 +57,9 @@
         <template #midle>
             <div class="add-playlist">
                 <el-form :model="form" label-width="auto" style="max-width: 600px">
+                    <el-form-item label="文件夹">
+                        <MyInputSelect :key="5" v-model="form.folderId" :options="options"></MyInputSelect>
+                    </el-form-item>
                     <el-form-item label="视频类型">
                         <el-radio-group v-model="form.type">
                             <el-radio :label="VideoType.local">本地视频</el-radio>
@@ -69,24 +68,25 @@
                         </el-radio-group>
                     </el-form-item>
                     <el-form-item label="视频标题">
-                        <MyInput 
-                            v-model="form.title"
-                            :placeholder="`请输入标题`" 
-                            ></MyInput>
+                        <MyInput :key="1" v-model="form.title" :placeholder="`请输入标题`"></MyInput>
                     </el-form-item>
                     <el-form-item label="视频地址">
-                        <MyInput 
-                            v-model="form.videoPath"
-                            @search="searchInputFn2" 
-                            :placeholder="`请输入视频地址`" 
-                            ></MyInput>
+                        <MyInput :key="2" v-model="form.videoPath" @search="searchInputFn2" :placeholder="`请输入视频地址`"></MyInput>
                     </el-form-item>
                     <el-form-item label="封面地址">
-                        <MyInput 
-                            v-model="form.coverPath"
-                            @search="searchInputFn2" 
-                            :placeholder="`请输入图片地址或者base64图片`" 
-                        ></MyInput>
+                        <MyInput :key="3"  v-model="form.coverPath" @search="searchInputFn2" :placeholder="`请输入图片地址或者base64图片`">
+                        </MyInput>
+                    </el-form-item>
+                    <el-form-item label="别名" class="height-fix">
+                        <el-tag v-for="tag in form.otherName" :key="tag" closable :disable-transitions="false"
+                            @close="handleClose(tag)">
+                            {{ tag }}
+                        </el-tag>
+                        <MyInput :key="4" ref="InputRef" v-if="inputVisible"  :size="`small`" v-model="inputValue" @blur="handleInputConfirm" @search="handleInputConfirm" :placeholder="` `" width="79px">
+                        </MyInput>
+                        <button v-else class="button-new-tag" size="small" @click="showInput">
+                            添加别名
+                        </button>
                     </el-form-item>
                 </el-form>
             </div>
@@ -96,10 +96,11 @@
 
 <script setup lang="ts">
 import { useGlobalVar } from '@renderer/store';
-import { reactive, Ref, ref, toRaw, watch } from 'vue'
-import { VideoListInfo, VideoType, VideoInfo } from './index.d';
+import { nextTick, reactive, Ref, ref, toRaw, watch } from 'vue'
+import { VideoListInfo, VideoType, VideoInfo, AddVideoInfo } from './index.d';
 import { useRouter } from 'vue-router';
 import MyInput from '@renderer/components/myVC/MyInput.vue';
+import MyInputSelect from '@renderer/components/myVC/MyInputSelect.vue';
 const $router = useRouter()
 const searchInput = ref('')
 const searchType = ref("查询视频标题")
@@ -208,6 +209,17 @@ const videoList: Ref<VideoListInfo[]> = ref([
         ]
     }
 ])
+
+const options: any[] = [
+    {
+        value: 1,
+        label: '日高大地',
+    },
+    {
+        value: 2,
+        label: 'SHIDO',
+    },
+];
 const activeNames = ref(toRaw(videoList.value.map(item => item.id)))
 console.log(activeNames);
 
@@ -247,8 +259,8 @@ const confirmDialog = () => {
     addVideoFlag.value = false
 }
 
-const form = ref({
-    folderId: 0,
+const form:Ref<AddVideoInfo> = ref({
+    folderId: undefined,
     title: '',
     type: VideoType.local,
     videoPath: '',
@@ -258,10 +270,33 @@ const form = ref({
 const searchInputFn2 = (e: KeyboardEvent) => {
     console.log(form.value);
 }
+
+
+const inputValue = ref('')
+const inputVisible = ref(false)
+const InputRef = ref()
+
+const handleClose = (tag: string) => {
+  form.value.otherName.splice(form.value.otherName.indexOf(tag), 1)
+}
+
+const showInput = () => {
+  inputVisible.value = true
+  nextTick(() => {
+    InputRef.value.$refs.searchInputRef!.input!.focus()
+  })
+}
+
+const handleInputConfirm = () => {
+  if (inputValue.value) {
+    form.value.otherName.push(inputValue.value)
+  }
+  inputVisible.value = false
+  inputValue.value = ''
+}
 </script>
 
 <style scoped lang="less">
-
 .video {
     margin: 1em;
 
@@ -452,5 +487,17 @@ const searchInputFn2 = (e: KeyboardEvent) => {
 
     }
 
+}
+.height-fix{
+    :deep(.el-form-item__content){
+        height: 32px;
+        .el-tag{
+            margin-right: 5px;
+            --el-tag-bg-color:none;
+            --el-tag-text-color:@primary-color;
+            --el-tag-hover-color:@primary-color;
+            border-color:@font-color;
+        }
+    }
 }
 </style>
