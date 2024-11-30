@@ -120,3 +120,6 @@ interface id3Message {
     text:any
   }
 }
+declare module '@renderer/src/indexDB/db' {
+  export const db: any; // 根据实际情况调整类型
+}

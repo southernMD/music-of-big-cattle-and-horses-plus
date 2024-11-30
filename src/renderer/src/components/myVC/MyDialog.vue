@@ -1,6 +1,6 @@
 <template>
     <el-dialog v-model="flagC" align-center draggable class="downloadDialog" :close-on-click-modal="false"
-        :before-close="closeDialog" :destroy-on-close="destroy">
+        :before-close="closeDialog" :destroy-on-close="destroy" z-index="99">
         <template #header>
             <slot name="header"></slot>
         </template>

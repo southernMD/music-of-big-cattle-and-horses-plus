@@ -15,6 +15,7 @@
     </div>
 </template>
 <script setup lang="ts">
+import { videoFolder } from '@renderer/views/video';
 import { nextTick, ref, watch } from 'vue'
 const props = defineProps({
     modelValue: {
@@ -34,8 +35,12 @@ const props = defineProps({
         default: "100px"
     },
     options: {
-        type: Array<{ label: string, value: string }>,
+        type: Array<videoFolder>,
         default: () => []
+    },
+    updateOptions:{
+        type:Function,
+        default:async()=>{}
     }
 })
 
@@ -77,7 +82,7 @@ watch(()=>searchInputC.value,()=>{
     // $emit('update:modelValue',undefined );
 })
 const $emit = defineEmits(['update:modelValue'])
-const choiceItem = (val: { label: string, value: string }) => {
+const choiceItem = (val: videoFolder) => {
     event?.stopPropagation() 
     searchInputC.value = val.label;
     $emit('update:modelValue', val.value);
@@ -87,9 +92,10 @@ const choiceItem = (val: { label: string, value: string }) => {
 
 const myInputRef = ref()
 
-const addOption = ()=>{
+const addOption = async()=>{
     if(searchInputC.value && searchInputC.value?.length != 0 && optionsC.value.length == 0){
-        const num = Math.floor(Math.random() * 1000).toString()
+        const num = await props.updateOptions(searchInputC.value!)
+        // const num = Math.floor(Math.random() * 1000).toString()
         props.options.push({value:num,label:searchInputC.value!})
         optionsC.value.push({value:num,label:searchInputC.value!})
         //让input失去焦点

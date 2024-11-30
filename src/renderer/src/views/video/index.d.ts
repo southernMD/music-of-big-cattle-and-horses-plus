@@ -5,9 +5,10 @@ export enum VideoType {
     bilibili = 3,
 }
 
-export interface VideoListInfo {
+export interface videoFolderList {
     id: number;
     folderName: string;
+    updateTime:string;
     list:VideoInfo[]
 }
 
@@ -17,8 +18,10 @@ export interface VideoInfo{
     type: VideoType;
     videoPath:string;
     coverPath:string;
-    otherName: string[];
+    otherName: string;
     time:string;
+    description:string;
+    updateTime:string;
 }
 
 export interface AddVideoInfo{
@@ -28,4 +31,16 @@ export interface AddVideoInfo{
     videoPath: string,
     coverPath: string,
     otherName: string[],
+    description:string,
+    save:boolean
+}
+
+export interface VideoDataInfo{
+    id: number;
+    data: ArrayBuffer;
+}
+
+export interface videoFolder{
+    label: string;
+    value: number;
 }

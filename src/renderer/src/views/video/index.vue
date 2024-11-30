@@ -38,7 +38,7 @@
                         <div class="msg">
                             <div class="txt" @click="goVideo(video_val)">{{ video_val.title }}</div>
                             <div class="othername-and-time">
-                                <span class="oN">{{ video_val.otherName.join(" ") }}</span>
+                                <span class="oN">{{ video_val.otherName }}</span>
                                 <span class="t">{{ video_val.time }}</span>
                             </div>
                         </div>
@@ -58,7 +58,8 @@
             <div class="add-playlist">
                 <el-form :model="form" label-width="auto" style="max-width: 600px" :rules="rules" ref=formRef>
                     <el-form-item label="文件夹" prop="folderId">
-                        <MyInputSelect :key="5" v-model="form.folderId" :options="options"></MyInputSelect>
+                        <MyInputSelect :updateOptions="updateOptions" :key="5" v-model="form.folderId"
+                            :options="options"></MyInputSelect>
                     </el-form-item>
                     <el-form-item label="视频类型" prop="type">
                         <el-radio-group v-model="form.type">
@@ -90,6 +91,15 @@
                             添加别名
                         </button>
                     </el-form-item>
+                    <el-form-item label="是否缓存">
+                        <el-checkbox v-model="form.save" size="large"></el-checkbox>
+                    </el-form-item>
+                    <el-form-item label="描述信息">
+                        <div class="input-bk">
+                            <el-input v-model="form.description" :rows="2" type="textarea" resize="none" ref="text"
+                                @keydown.stop />
+                        </div>
+                    </el-form-item>
                 </el-form>
             </div>
         </template>
@@ -98,132 +108,194 @@
 
 <script setup lang="ts">
 import { useGlobalVar } from '@renderer/store';
-import { nextTick, reactive, Ref, ref, toRaw, watch } from 'vue'
-import { VideoListInfo, VideoType, VideoInfo, AddVideoInfo } from './index.d';
+import { inject, nextTick, onUnmounted, reactive, Ref, ref, toRaw, watch } from 'vue'
+import { videoFolderList, VideoType, VideoInfo, AddVideoInfo, videoFolder } from './index.d';
 import { useRouter } from 'vue-router';
 import MyInput from '@renderer/components/myVC/MyInput.vue';
 import MyInputSelect from '@renderer/components/myVC/MyInputSelect.vue';
+import type { AppDatabase } from '@renderer/indexDB/db'
+
+import saveVideoWorker from '@renderer/workers/saveVideoWorker?worker'
+import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64';
+import { videos_folders_table } from '@renderer/indexDB/dbType';
+
 const $router = useRouter()
 const searchInput = ref('')
 const searchType = ref("查询视频标题")
 const searchTypeid = ref("folder")
-const videoList: Ref<VideoListInfo[]> = ref([
-    {
-        id: 1,
-        folderName: "日高大地",
-        list: [
-            {
-                id: 1,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 2,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 3,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 4,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 5,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 6,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 7,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-        ]
-    },
-    {
-        id: 2,
-        folderName: "日高大地",
-        list: [
-            {
-                id: 1,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 2,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-            {
-                id: 3,
-                title: "独学画伯",
-                type: VideoType.local,
-                videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
-                coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
-                otherName: ['学'],
-                time: "2004-01-02"
-            },
-        ]
+watch(() => searchTypeid.value, (newVal) => {
+    switch (newVal) {
+        case "folder":
+            searchType.value = "查询文件夹"
+            break;
+        case "title":
+            searchType.value = "查询视频地址"
+            break;
+        case "otherName":
+            searchType.value = "查询别名"
+            break;
     }
-])
+})
+const db = inject('db') as AppDatabase
 
-const options: any[] = [
-    {
-        value: 1,
-        label: '日高大地',
-    },
-    {
-        value: 2,
-        label: 'SHIDO',
-    },
-];
-const activeNames = ref(toRaw(videoList.value.map(item => item.id)))
-console.log(activeNames);
+const videoList: Ref<videoFolderList[] | undefined> = ref()
+//  = ref([
+//     {
+//         id: 1,
+//         folderName: "日高大地",
+//         list: [
+//             {
+//                 id: 1,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 2,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 3,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 4,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 5,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 6,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 7,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//         ]
+//     },
+//     {
+//         id: 2,
+//         folderName: "日高大地",
+//         list: [
+//             {
+//                 id: 1,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 2,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//             {
+//                 id: 3,
+//                 title: "独学画伯",
+//                 type: VideoType.local,
+//                 videoPath: "C:\\Users\\southernMD\\Desktop\\娱乐杂项\\righthere.mp4",
+//                 coverPath: "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg",
+//                 otherName: ['学'],
+//                 time: "2004-01-02"
+//             },
+//         ]
+//     }
+// ])
+const options: Ref<videoFolder[] | undefined> = ref()
+const activeNames = ref()
+
+const initFolder = async () => {
+    const video_folders = (await db.videos_folders.toArray())
+    options.value = video_folders.map(item => {
+        return {
+            label: item.folderName,
+            value: item.id!
+        }
+    })
+    const videoTableList = (await db.videos.toArray()).sort((a, b) => {
+        return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+    })
+    console.log(videoTableList);
+    
+    const arr: videos_folders_table[] = video_folders.sort((a, b) => {
+        return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+    })
+    const newArr = arr.map(videos_folder => {
+        return {...videos_folder, list: videoTableList.filter(video => video.folderId === videos_folder.id)};
+    });
+    console.log(newArr);
+    //@ts-ignore
+    videoList.value = newArr
+    activeNames.value = toRaw(videoList.value?.map(item => item.id) ?? [])
+};
+try {
+    initFolder()
+} catch (error) {
+    options.value = []
+    videoList.value = []
+}
+
+
+
+const updateOptions = async (folderName: string) => {
+    //videos_folders插入一条数据
+    const id = await db.videos_folders.add({
+        folderName: folderName,
+        updateTime: new Date().toLocaleString()
+    })
+    videoList.value?.unshift({
+        id: id,
+        folderName: folderName,
+        list: [],
+        updateTime: new Date().toLocaleString()
+    })
+    activeNames.value.unshift(id)
+    return id
+
+}
+
 
 const globalVar = useGlobalVar();
 
@@ -257,17 +329,87 @@ const cancelDialog = () => {
 }
 
 const formRef = ref()
+const saveVideo = new saveVideoWorker()
 const confirmDialog = () => {
-    console.log(form.value);
     formRef.value.validate(async (valid: boolean) => {
         if (valid) {
-            // console.log(form.value);
-            // const res = await addVideo(form.value)
-            // console.log(res);
+            const nowTime = new Date().toLocaleString()
+            const id = await db.videos.add({
+                title: form.value.title,
+                type: form.value.type,
+                videoPath: form.value.videoPath,
+                coverPath: form.value.coverPath,
+                otherName: form.value.otherName.join(" "),
+                description: form.value.description,
+                folderId: form.value.folderId!,
+                time: nowTime,
+                updateTime: nowTime
+            })
+            await db.videos_folders.where('id').equals(form.value.folderId!).modify({
+                updateTime:nowTime
+            })
+            //查找id与form.value.folderId相同的项
+            const index = videoList.value?.findIndex(item => item.id === form.value.folderId)!;
+            videoList.value![index].updateTime = nowTime
+            videoList.value?.sort((a, b) => {
+                return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+            })
+            //把form.value.folderId对应的放到videoList.value 的第一个
+            videoList.value?.unshift(videoList.value?.find(item => item.id === form.value.folderId)!)
+            videoList.value?.splice(videoList.value?.findIndex(item => item.id === form.value.folderId)!, 1)
+            videoList.value?.[0].list.unshift({
+                id,
+                title: form.value.title,
+                type: form.value.type,
+                videoPath: form.value.videoPath,
+                coverPath: form.value.coverPath,
+                otherName: form.value.otherName.join(" "),
+                description: form.value.description,
+                time: nowTime,
+                updateTime: nowTime
+            })
+            if (form.value.save) {
+                
+                saveVideo.postMessage({
+                    coverPath: form.value.coverPath,
+                    videoPath: form.value.videoPath,
+                    type: form.value.type,
+                })
+                saveVideo.addEventListener('message', (event) => {
+                    const { type, value } = event.data
+                    if (type === "ffmpeg") {
+                        const { videoPath, coverPath } = value
+                        window.electron.ipcRenderer.send('saveVideo', { videoPath, coverPath })
+                        window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer,coverArrayBuffer }) => {
+                            console.log("save-video-finish");
+                            //创建链接
+                            db.videos_data.add({
+                                id,
+                                data: arrayBuffer
+                            })
+                            if(form.value.coverPath.length == 0){
+                                //coverArrayBuffer转base64
+                                const imageBase64 =  await bufferToBase64(coverArrayBuffer)
+                                db.videos.update(id, {
+                                    coverPath: `${imageBase64}`
+                                })
+                                videoList.value![0].list[0].coverPath = `${imageBase64}`
+                            }
+                        })
+                    }
+                })
+            }
             addVideoFlag.value = false
+        } else {
+            console.log(form.value);
+
         }
     })
 }
+onUnmounted(() => {
+    saveVideo.terminate()
+})
+
 
 const form: Ref<AddVideoInfo> = ref({
     folderId: undefined,
@@ -276,6 +418,8 @@ const form: Ref<AddVideoInfo> = ref({
     videoPath: '',
     coverPath: '',
     otherName: [],
+    description: '',
+    save: false
 })
 const searchInputFn2 = (e: KeyboardEvent) => {
     console.log(form.value);
@@ -299,7 +443,7 @@ const showInput = () => {
 
 const handleInputConfirm = () => {
     if (inputValue.value) {
-        if(!form.value.otherName.includes(inputValue.value)){
+        if (!form.value.otherName.includes(inputValue.value)) {
             form.value.otherName.push(inputValue.value)
         }
     }
@@ -343,7 +487,7 @@ const rules = reactive<any>({
                     callback();
                 } else if (form.value.type === VideoType.web && linkRegex.test(value)) {
                     callback();
-                } else if (form.value.type ===  VideoType.local && localFileRegex.test(value)) {
+                } else if (form.value.type === VideoType.local && localFileRegex.test(value)) {
                     callback();
                 } else {
                     callback(new Error(`请输入有效的${form.value.type === VideoType.web ? '链接' : '本地文件路径'}`));
@@ -353,8 +497,8 @@ const rules = reactive<any>({
         }
     ],
     coverPath: [
-        { 
-            validator: (rule: any, value: any, callback: any)=>{
+        {
+            validator: (rule: any, value: any, callback: any) => {
                 if (value) {
                     const isUrl = /^(http|https):\/\/.+/.test(value);
                     const isBase64 = /^data:image\/\w+;base64,.+$/.test(value);
@@ -366,19 +510,23 @@ const rules = reactive<any>({
                         callback();
                     }
                 } else {
-                    callback();
+                    if (!form.value.save) {
+                        callback(new Error('如果你不想填写图片地址，那么必须选择缓存'))
+                    } else {
+                        callback();
+                    }
                 }
-            }, 
-            trigger: 'blur' 
+            },
+            trigger: 'blur'
         }
     ]
 });
-watch(()=>form.value.videoPath,()=>{
-    const linkRegex =  /^http/;
+watch(() => form.value.videoPath, () => {
+    const linkRegex = /^http/;
     console.log(linkRegex.test(form.value.videoPath));
-    if(linkRegex.test(form.value.videoPath)){
+    if (linkRegex.test(form.value.videoPath)) {
         form.value.type = VideoType.web
-    }else{
+    } else {
         form.value.type = VideoType.local
     }
     console.log(form.value)
@@ -481,7 +629,7 @@ watch(()=>form.value.videoPath,()=>{
                 // display: flex;
                 // flex-wrap: wrap;
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(100px, 200px));
                 gap: 30px;
             }
 
@@ -567,6 +715,8 @@ watch(()=>form.value.videoPath,()=>{
                         }
                     }
                 }
+
+
             }
 
             :deep(.el-collapse-item__header) {
@@ -589,6 +739,90 @@ watch(()=>form.value.videoPath,()=>{
             --el-tag-hover-color: @primary-color;
             border-color: @font-color;
         }
+    }
+}
+
+.input-bk {
+    position: relative;
+    width: 100%;
+
+    :deep(.el-textarea) {
+        --el-input-hover-border-color: none;
+        --el-input-focus-border-color: none;
+        width: 100%;
+        font-size: 14px;
+        border: 1px solid @commit-block-border-color;
+        border-radius: 0.2em;
+        background-color: @commit-block-color;
+        padding-bottom: 5px;
+        padding-top: 5px;
+
+        .el-textarea__inner {
+            background-color: @commit-block-color;
+            box-shadow: none;
+            color: @font-color;
+            padding-bottom: 5px;
+            padding-top: 5px;
+            padding-right: 15px;
+
+            &::-webkit-scrollbar {
+                height: 80%;
+            }
+
+            &::-webkit-scrollbar-button {
+                display: none;
+            }
+
+            &::-webkit-scrollbar {
+                width: 7px;
+                height: 90%;
+                background-color: @commit-block-scroll-line;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                border-radius: 0.4em;
+                background: @commit-block-scroll-button;
+            }
+        }
+    }
+
+    .number {
+        position: absolute;
+        bottom: 7px;
+        right: 6px;
+        font-size: 12px;
+        color: @font-color;
+    }
+}
+
+.el-checkbox.el-checkbox--large {
+    height: auto;
+}
+
+:deep(label) {
+    height: 25px;
+
+    .el-checkbox__label {
+        font-size: 13px;
+        color: @font-color;
+    }
+
+    --el-checkbox-bg-color:@other-bk-color;
+    --el-checkbox-input-border-color-hover:@primary-color;
+    --el-checkbox-input-border:1px solid @border-color;
+}
+
+:deep(.is-checked) {
+    :deep(.el-el-checkbox__input) {
+        border-color: @primary-color;
+        background-color: @primary-color;
+    }
+
+    --el-checkbox-checked-bg-color:@primary-color;
+    --el-checkbox-checked-input-border-color:@primary-color;
+
+    .el-checkbox__label {
+        color: @primary-color;
     }
 }
 </style>

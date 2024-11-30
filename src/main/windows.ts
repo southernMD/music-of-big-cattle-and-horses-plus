@@ -23,6 +23,7 @@ import log from 'electron-log'
 
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
+import { Writable } from 'stream'
 export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
   // let X: number, Y: number; //鼠标基于显示器的坐标
@@ -397,8 +398,8 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         await new Promise<any>((resolve, reject) => {
           fs.readFile(filePath, (err, data) => {
             if (!err) {
-              console.log(filePath,extname(filePath));
-              
+              console.log(filePath, extname(filePath));
+
               if (['.jpg', '.png', '.jpeg', '.webp'].includes(extname(filePath))) {
                 event.reply('file-ready', { liu: data, extname: extname(filePath) })
               } else {
@@ -437,7 +438,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
             readStream.pipe(writeStream)
           })
         } else {
-          event.reply('mp4-msg', {msg:"目标格式需要进行转码请稍后" })
+          event.reply('mp4-msg', { msg: "目标格式需要进行转码请稍后" })
           console.log("开始进行视频转码");
           if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
             ffmpeg.setFfmpegPath(ffmpegPath.path);
@@ -461,7 +462,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
             .on('error', function (err) {
               console.log('An error occurred: ' + err.message);
               if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
-                event.reply("mp4-error",{msg:"视频上传发生错误，请检查上传文件"})
+                event.reply("mp4-error", { msg: "视频上传发生错误，请检查上传文件" })
                 exfs.removeSync(join(__dirname, basePath, `background_temporarily.mp4`))
                 ffmpegCommand.kill('SIGTERM')
                 console.log('An error occurred: ' + err.message);
@@ -485,13 +486,13 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       }
     })
   })
-  const pickTime = (time:string)=>{
+  const pickTime = (time: string) => {
     let hao = +time.split('.')[1]
     let shi = +time.split(':')[0]
     let feng = +time.split(':')[1]
     let miao = +time.split(':')[2].split('.')[0]
-    
-    return +(shi * 60 * 60 * 100+ feng * 60 * 100 + miao * 100 + hao).toFixed(2)
+
+    return +(shi * 60 * 60 * 100 + feng * 60 * 100 + miao * 100 + hao).toFixed(2)
   }
   ipcMain.on('recove-background', () => {
     new Promise((resolve, reject) => {
@@ -1018,6 +1019,75 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   })
   ipcMain.on('get-background-color', (event) => {
     event.returnValue = { background, fontColor }
+  })
+  //下载视频
+  ipcMain.on('saveVideo', (event, { videoPath, coverPath }) => {
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      ffmpeg.setFfmpegPath(ffmpegPath.path);
+    } else {
+      ffmpeg.setFfmpegPath(join(__dirname, '../../../app.asar.unpacked/node_modules/@ffmpeg-installer/win32-x64/ffmpeg.exe'));
+    }
+    let total = '0'
+    const ffmpegCommand = ffmpeg(videoPath)
+      .nativeFramerate()
+      .videoCodec('libx264')
+      .format('mp4')
+      .noAudio()
+      .outputOptions(
+        '-movflags', 'frag_keyframe+empty_moov+faststart',
+        '-preset', 'faster', //以损失画质换取流畅度
+        '-threads', 'auto',
+        "-crf","20"
+      )
+      .on('progress', function ({ timemark }) {
+        console.log(Math.ceil(pickTime(timemark) / pickTime(total) * 100));
+      })
+      .on('error', function (err) {
+        if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
+          event.reply("save-video-error", { msg: "视频上传发生错误，请检查上传文件" })
+          ffmpegCommand.kill('SIGTERM')
+          console.log('An error occurred: ' + err.message);
+        }
+      })
+      .on('end', function () {
+        ffmpegCommand.kill('SIGTERM')
+      }).on('codecData', ({ duration }) => {
+        total = duration
+      })
+    const chunks: Uint8Array[] = [];
+    const writableStream = new Writable({
+      write(chunk, encoding, callback) {
+        chunks.push(chunk);
+        callback();
+      }
+    });
+    const fileName = new Date().getTime() + '.jpg'
+    ffmpegCommand.output(writableStream).screenshots({
+      timestamps: ['1'], // 获取视频的第一帧截图
+      filename:  fileName, // 保存为临时文件
+      folder: join(__dirname, basePath) , // 临时文件夹
+    });
+    ffmpegCommand.run();
+    writableStream.on('finish', () => {
+      const buffer = Buffer.concat(chunks);
+      fs.readFile(join(__dirname, basePath,fileName), (err, data) => {
+        if (err) {
+          event.reply('save-video-erro', { err });
+          console.error('Error reading image file:', err);
+          return;
+        }
+        event.reply('save-video-finish', { arrayBuffer:buffer.buffer,coverArrayBuffer:data.buffer });
+        //删除图片
+        // fs.unlink(join(__dirname, basePath,fileName), (err) => {
+        //   if (err) {
+        //     event.reply('save-video-erro', { err });
+        //   }
+        // });
+      });
+    });
+    writableStream.on("error",(err)=>{
+      writableStream.destroy();
+    })
   })
   return mainWindow
 }
