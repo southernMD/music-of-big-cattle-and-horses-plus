@@ -48,6 +48,8 @@ let timer:NodeJS.Timeout | undefined
 const blur = () => {
     iconStatus.value = false;
     timer = setTimeout(() => {
+        const val = props.options.find(item=>item.label == searchInputC.value)?.value
+        $emit('update:modelValue',val );
         listFlag.value = false
         clearTimeout(timer)
     }, 100);
@@ -56,6 +58,7 @@ const blur = () => {
 const focus = () => {
     iconStatus.value = true;
     listFlag.value = true
+    
 }
 const searchInputC = ref(props.options.find(item=>item.value ==  props.modelValue)?.label)
 watch(() => props.modelValue, () => {
@@ -66,8 +69,12 @@ watch(() => props.options, () => {
 },{deep:true})
 
 watch(()=>searchInputC.value,()=>{
-    //从options中查找给optionsC
-    optionsC.value = props.options.filter(item=>item.label.includes(searchInputC.value!))
+    if(searchInputC.value?.trim().length == 0 || searchInputC.value == undefined){
+        optionsC.value = props.options
+    }else{
+        optionsC.value = props.options.filter(item=>item.label.includes(searchInputC.value!))
+    }
+    // $emit('update:modelValue',undefined );
 })
 const $emit = defineEmits(['update:modelValue'])
 const choiceItem = (val: { label: string, value: string }) => {

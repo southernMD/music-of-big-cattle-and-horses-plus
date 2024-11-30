@@ -56,33 +56,35 @@
         </template>
         <template #midle>
             <div class="add-playlist">
-                <el-form :model="form" label-width="auto" style="max-width: 600px">
-                    <el-form-item label="文件夹">
+                <el-form :model="form" label-width="auto" style="max-width: 600px" :rules="rules" ref=formRef>
+                    <el-form-item label="文件夹" prop="folderId">
                         <MyInputSelect :key="5" v-model="form.folderId" :options="options"></MyInputSelect>
                     </el-form-item>
-                    <el-form-item label="视频类型">
+                    <el-form-item label="视频类型" prop="type">
                         <el-radio-group v-model="form.type">
                             <el-radio :label="VideoType.local">本地视频</el-radio>
                             <el-radio :label="VideoType.web">网络视频</el-radio>
-                            <el-radio :label="VideoType.bilibili">b站视频</el-radio>
+                            <el-radio disabled :label="VideoType.bilibili">b站视频</el-radio>
                         </el-radio-group>
                     </el-form-item>
-                    <el-form-item label="视频标题">
+                    <el-form-item label="视频标题" prop="title">
                         <MyInput :key="1" v-model="form.title" :placeholder="`请输入标题`"></MyInput>
                     </el-form-item>
-                    <el-form-item label="视频地址">
-                        <MyInput :key="2" v-model="form.videoPath" @search="searchInputFn2" :placeholder="`请输入视频地址`"></MyInput>
+                    <el-form-item label="视频地址" prop="videoPath">
+                        <MyInput :key="2" v-model="form.videoPath" :placeholder="`请输入视频地址`"></MyInput>
                     </el-form-item>
-                    <el-form-item label="封面地址">
-                        <MyInput :key="3"  v-model="form.coverPath" @search="searchInputFn2" :placeholder="`请输入图片地址或者base64图片`">
+                    <el-form-item label="封面地址" prop="coverPath">
+                        <MyInput @search="searchInputFn2" :key="3" v-model="form.coverPath"
+                            :placeholder="`请输入图片地址或者base64图片`">
                         </MyInput>
                     </el-form-item>
-                    <el-form-item label="别名" class="height-fix">
+                    <el-form-item label="别名" class="height-fix" prop="otherName">
                         <el-tag v-for="tag in form.otherName" :key="tag" closable :disable-transitions="false"
                             @close="handleClose(tag)">
                             {{ tag }}
                         </el-tag>
-                        <MyInput :key="4" ref="InputRef" v-if="inputVisible"  :size="`small`" v-model="inputValue" @blur="handleInputConfirm" @search="handleInputConfirm" :placeholder="` `" width="79px">
+                        <MyInput :key="4" ref="InputRef" v-if="inputVisible" :size="`small`" v-model="inputValue"
+                            @blur="handleInputConfirm" @search="handleInputConfirm" :placeholder="` `" width="79px">
                         </MyInput>
                         <button v-else class="button-new-tag" size="small" @click="showInput">
                             添加别名
@@ -254,12 +256,20 @@ const cancelDialog = () => {
     addVideoFlag.value = false
 }
 
+const formRef = ref()
 const confirmDialog = () => {
     console.log(form.value);
-    addVideoFlag.value = false
+    formRef.value.validate(async (valid: boolean) => {
+        if (valid) {
+            // console.log(form.value);
+            // const res = await addVideo(form.value)
+            // console.log(res);
+            addVideoFlag.value = false
+        }
+    })
 }
 
-const form:Ref<AddVideoInfo> = ref({
+const form: Ref<AddVideoInfo> = ref({
     folderId: undefined,
     title: '',
     type: VideoType.local,
@@ -277,23 +287,102 @@ const inputVisible = ref(false)
 const InputRef = ref()
 
 const handleClose = (tag: string) => {
-  form.value.otherName.splice(form.value.otherName.indexOf(tag), 1)
+    form.value.otherName.splice(form.value.otherName.indexOf(tag), 1)
 }
 
 const showInput = () => {
-  inputVisible.value = true
-  nextTick(() => {
-    InputRef.value.$refs.searchInputRef!.input!.focus()
-  })
+    inputVisible.value = true
+    nextTick(() => {
+        InputRef.value.$refs.searchInputRef!.input!.focus()
+    })
 }
 
 const handleInputConfirm = () => {
-  if (inputValue.value) {
-    form.value.otherName.push(inputValue.value)
-  }
-  inputVisible.value = false
-  inputValue.value = ''
+    if (inputValue.value) {
+        if(!form.value.otherName.includes(inputValue.value)){
+            form.value.otherName.push(inputValue.value)
+        }
+    }
+    inputVisible.value = false
+    inputValue.value = ''
 }
+
+
+const rules = reactive<any>({
+    folderId: [
+        {
+            validator: (rule: any, value: any, callback: any) => {
+                let t = setTimeout(() => {
+                    console.log(form.value.folderId);
+                    clearTimeout(t);
+                    if (form.value.folderId === undefined) {
+                        callback(new Error('请选择加入的文件夹'))
+                    } else {
+                        callback()
+                    }
+                }, 300)
+
+            }, trigger: 'blur', required: true
+        }
+    ],
+    title: [
+        { required: true, message: '请输入视频标题', trigger: 'blur' }
+    ],
+    videoPath: [
+        {
+            required: true,
+            message: '请输入视频地址',
+            trigger: 'blur'
+        },
+        {
+            validator: (rule: any, value: any, callback: any) => {
+                const linkRegex = /^(http|https):\/\/[^ "]+$/;
+                const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/;
+
+                if (!value) {
+                    callback();
+                } else if (form.value.type === VideoType.web && linkRegex.test(value)) {
+                    callback();
+                } else if (form.value.type ===  VideoType.local && localFileRegex.test(value)) {
+                    callback();
+                } else {
+                    callback(new Error(`请输入有效的${form.value.type === VideoType.web ? '链接' : '本地文件路径'}`));
+                }
+            },
+            trigger: 'blur'
+        }
+    ],
+    coverPath: [
+        { 
+            validator: (rule: any, value: any, callback: any)=>{
+                if (value) {
+                    const isUrl = /^(http|https):\/\/.+/.test(value);
+                    const isBase64 = /^data:image\/\w+;base64,.+$/.test(value);
+                    const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/.test(value);
+
+                    if (!isUrl && !isBase64 && !localFileRegex) {
+                        callback(new Error('请输入有效的图片地址或 base64 图片'));
+                    } else {
+                        callback();
+                    }
+                } else {
+                    callback();
+                }
+            }, 
+            trigger: 'blur' 
+        }
+    ]
+});
+watch(()=>form.value.videoPath,()=>{
+    const linkRegex =  /^http/;
+    console.log(linkRegex.test(form.value.videoPath));
+    if(linkRegex.test(form.value.videoPath)){
+        form.value.type = VideoType.web
+    }else{
+        form.value.type = VideoType.local
+    }
+    console.log(form.value)
+})
 </script>
 
 <style scoped lang="less">
@@ -488,15 +577,17 @@ const handleInputConfirm = () => {
     }
 
 }
-.height-fix{
-    :deep(.el-form-item__content){
+
+.height-fix {
+    :deep(.el-form-item__content) {
         height: 32px;
-        .el-tag{
+
+        .el-tag {
             margin-right: 5px;
-            --el-tag-bg-color:none;
-            --el-tag-text-color:@primary-color;
-            --el-tag-hover-color:@primary-color;
-            border-color:@font-color;
+            --el-tag-bg-color: none;
+            --el-tag-text-color: @primary-color;
+            --el-tag-hover-color: @primary-color;
+            border-color: @font-color;
         }
     }
 }
