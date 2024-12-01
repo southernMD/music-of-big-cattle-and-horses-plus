@@ -198,11 +198,9 @@ watch(() => globalVar.delVideo, async () => {
     if (globalVar.delVideo.flag) {
         await db.videos.delete(globalVar.delVideo.videoId)
         await db.videos_data.delete(globalVar.delVideo.videoId)
-        //从videoList中过滤掉删除的
         updateAideoListAfterDelete()
         globalVar.delVideo.flag = false
     }
-
 }, { deep: true })
 
 //editForm
@@ -292,7 +290,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag,base_video }: { id: number, f
     videoList.value![0].list[0].otherName = form.otherName.join(" ");
     videoList.value![0].list[0].type = form.type
     videoList.value![0].list[0].videoPath = form.videoPath;
-    if (form.save && reloadFlag) {
+    if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
         if (form.type === 1 || form.type === 2) {
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
             window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
@@ -319,6 +317,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag,base_video }: { id: number, f
                     })
                     videoList.value![0].list[0].coverPath = `${imageBase64}`
                 }
+                EddVideoFormRef.value.updateBaseVideo(id)
             })
             window.electron.ipcRenderer.once('save-video-error',(_,{error})=>{
                 //@ts-ignore id only undefined in table create
@@ -330,6 +329,9 @@ const editVideo = ({ id, form, nowTime, reloadFlag,base_video }: { id: number, f
         }
     } else if (!form.save) {
         db.videos_data.delete(id)
+        EddVideoFormRef.value.updateBaseVideo(id)
+    }else{
+        EddVideoFormRef.value.updateBaseVideo(id)
     }
 }
 

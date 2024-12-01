@@ -2,7 +2,7 @@
   <div class="video_detail">
     <main>
       <div class="left">
-        <video ref="video" :src="vide_url" controls loop ></video>
+        <video ref="video" :src="vide_url" controls loop></video>
         <div class="title">
           <h1>
             {{ activeVideo.title }}
@@ -25,7 +25,7 @@
         <div class="folderName">{{ folderName }}</div>
         <el-scrollbar>
           <ul id="vedio_list">
-            <li v-for="val in video_detail_view" @click="goVideo(val)">
+            <li v-for="val,index in video_detail_view" @click="goVideo(val,index)">
               <div class="playing" :class="{ active: val.id === activeVideo.id }">
                 <i class="icon-youjiantou iconfont"></i>
               </div>
@@ -37,30 +37,38 @@
                 <div class="ar">{{ val.otherName }}</div>
                 <div class="play_msg">{{ val.updateTime }}</div>
               </div>
-              <div class="more" @mousedown="onMouseDown" @mouseup="onMouseUp" @click.stop>
+              <div class="more" @mousedown="onMouseDown" @mouseup="onMouseUp" @click.stop="rightClick" :data-id="val.id"
+                :data-video-folderId="val.folderId" data-right="true" data-type="video_detail">
                 <i class="iconfont icon-gengduo"></i>
               </div>
+              <canvas :ref="el => getCanvaasRef(el, index)" width="0" height="0"></canvas>
             </li>
           </ul>
         </el-scrollbar>
       </div>
     </main>
   </div>
+  <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
+    @editVideo="editVideo" :id="globalVar.editVideo.videoId" :folderFormFlag="false"></EddVideoForm>
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { Ref, ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { db } from '@renderer/indexDB/db'
 import { videos_table } from '@renderer/indexDB/dbType'
+import { useGlobalVar } from "@renderer/store/index"
+import { EditVideoInfo, videoFolder } from '../video/indexType'
+import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64'
 const des_txt = ref()
 const open = ref(false)
 const video = ref() as Ref<HTMLVideoElement>
 const $route = useRoute()
+const $router = useRouter()
 const id = ref(+($route.query.id ?? 0)) as unknown as Ref<number>
 const floderId = ref(+($route.query.floderId ?? 0)) as unknown as Ref<number>
 const folderName = ref(($route.query.floderName ?? " "))
-
+const globalVar = useGlobalVar()
 const activeVideo: Ref<video_detail_view> = ref({
   id: 0,
   src: "",
@@ -128,7 +136,10 @@ const onMouseUp = (event: MouseEvent) => {
   target.classList.remove('pressed')
 }
 
-const goVideo = (videMsg: videos_table) => {
+const goVideo = (videMsg: videos_table,index:number) => {
+    if(getCanvaasList.value[index].width !== 0){
+        return
+    }
   try {
     init(videMsg.id!, videMsg.folderId)
   } catch (error) {
@@ -143,6 +154,158 @@ const goVideo = (videMsg: videos_table) => {
     }
   }
 }
+
+const rightClick = (event: MouseEvent) => {
+  event.preventDefault()
+  event.target?.dispatchEvent(new MouseEvent('contextmenu', {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+    clientX: event.clientX,
+    clientY: event.clientY,
+  }))
+}
+const updateAideoListAfterDelete = async (id) => {
+  video_detail_view.value = video_detail_view.value.filter(val => val.id != id)
+}
+
+watch(() => globalVar.delVideo, async () => {
+  console.log(globalVar.delVideo);
+  if (globalVar.delVideo.flag) {
+    await db.videos.delete(globalVar.delVideo.videoId)
+    await db.videos_data.delete(globalVar.delVideo.videoId)
+    if (globalVar.delVideo.videoId == activeVideo.value.id) {
+      $router.push({ name: 'video' })
+    } else {
+      updateAideoListAfterDelete(globalVar.delVideo.videoId)
+    }
+    globalVar.delVideo.flag = false
+  }
+}, { deep: true })
+
+const options: Ref<videoFolder[] | undefined> = ref()
+try {
+  const video_folders = (await db.videos_folders.toArray())
+  options.value = video_folders.map(item => {
+    return {
+      label: item.folderName,
+      value: item.id!
+    }
+  })
+} catch (error) {
+  options.value = []
+}
+const editVideoFlag = ref(false)
+watch(() => globalVar.editVideo.flag, () => {
+  editVideoFlag.value = globalVar.editVideo.flag
+}, { deep: true })
+
+const EddVideoFormRef = ref()
+const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table }) => {
+  const index = video_detail_view.value?.findIndex(item => item.id === form.id)!;
+  video_detail_view.value![index].updateTime = nowTime
+  video_detail_view.value?.sort((a, b) => {
+    return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+  })
+  video_detail_view.value![0].coverPath = form.coverPath;
+  video_detail_view.value![0].title = form.title;
+  video_detail_view.value![0].description = form.description;
+  video_detail_view.value![0].updateTime = nowTime;
+  video_detail_view.value![0].folderId = form.folderId
+  video_detail_view.value![0].otherName = form.otherName.join(" ");
+  video_detail_view.value![0].type = form.type
+  video_detail_view.value![0].videoPath = form.videoPath;
+  let arrayBufferBlob: null | Blob = null
+  if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
+    if (form.type === 1 || form.type === 2) {
+      window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
+      window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
+        console.log("save-video-finish");
+        //创建链接
+        //arrayBuffer转blob
+        arrayBufferBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
+        let t = await db.videos_data.get(id)
+        if (t) {
+          db.videos_data.update(id, {
+            data: arrayBufferBlob
+          })
+        } else {
+          db.videos_data.add({
+            id,
+            data: arrayBufferBlob
+          })
+        }
+        if (activeVideo.value.id == id) {
+          activeVideo.value.src = arrayBufferBlob
+        }
+        if (form.updatePic) {
+          //coverArrayBuffer转base64
+          const imageBase64 = await bufferToBase64(coverArrayBuffer)
+          db.videos.update(id, {
+            coverPath: `${imageBase64}`
+          })
+          video_detail_view.value![0].coverPath = `${imageBase64}`
+        }
+        console.log("updateBaseVideo");
+        EddVideoFormRef.value.updateBaseVideo(id)
+      })
+      window.electron.ipcRenderer.once('save-video-error', (_, { error }) => {
+        // @ts-ignore id only undefined in table create
+        video_detail_view.value![0] = base_video
+        db.videos.update(id, base_video)
+        EddVideoFormRef.value.rollBackForm()
+        alert("\n视频缓存修改失败，已自动回滚")
+      })
+    }
+  } else if (!form.save) {
+    db.videos_data.delete(id)
+    console.log("updateBaseVideo");
+    EddVideoFormRef.value.updateBaseVideo(id)
+  }else{
+    console.log("updateBaseVideo");
+    EddVideoFormRef.value.updateBaseVideo(id)
+  }
+  if (activeVideo.value.id == id) {
+    activeVideo.value = {
+      id: form!.id!,
+      src: activeVideo.value.src,
+      title: form.title,
+      otherName: form.otherName.join(" "),
+      time: activeVideo.value.time,
+      updateTime: form.updateTime,
+      description: form.description,
+    }
+  }
+}
+const getCanvaasList = ref<HTMLCanvasElement[]>([]);
+const getCanvaasRef = (el, index) => {
+    if (el) {
+        getCanvaasList.value[index]= el;
+    }
+};
+window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
+    const canvas:HTMLCanvasElement =  getCanvaasList.value[0] as HTMLCanvasElement
+    //画进度条具体实现,线形的
+    canvas.width = canvas.clientWidth
+    canvas.height = canvas.clientHeight
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 设置背景条样式
+    ctx.fillStyle = '#e0e0e0'; // 背景条颜色
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // 绘制背景条
+
+    // 计算进度条宽度
+    const progressWidth = (progress / 100) * canvas.width;
+
+    // 设置进度条样式
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primaryColor'); // 进度条颜色
+    ctx.fillRect(0, 0, progressWidth, canvas.height);
+    if(progress == 100){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = 0
+        canvas.height = 0
+    }
+})
 </script>
 
 <style scoped lang="less">
@@ -267,6 +430,7 @@ main {
         margin-bottom: 20px;
         display: flex;
         align-items: center;
+        position: relative;
 
         .playing {
           color: @primary-color;
@@ -278,6 +442,7 @@ main {
           opacity: 1;
         }
 
+        
         img {
           height: 80%;
           aspect-ratio: 3 / 2;
@@ -328,6 +493,16 @@ main {
           margin-right: 2%;
           padding: .5em;
           box-sizing: border-box;
+        }
+        canvas{
+          width: 90%;
+          height: 5px;
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          border-radius: 2em;
+          margin: 0 auto;
         }
 
         .pressed {

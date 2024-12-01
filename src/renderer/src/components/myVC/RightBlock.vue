@@ -381,11 +381,20 @@ const buildList = ()=>{
             eventsHandle.value.push(download)
         }
     }else if(props.type.startsWith('video')){
-        messageList.value.push(...['查看','编辑','删除'])
-        ifBorderBottom.value.push(...[false,false,false])
-        iconList.value.push(...['icon-chakan','icon-bianji1','icon-lajixiang'])
-        params.value.push({id:props.id,videoFolder:props.videoFolder,videoFolderId:Number(props.videoFolderId)},props.id,props.id)
-        eventsHandle.value.push(...[lookVideo,editVideo,delVideo])
+        if(props.type.endsWith('_detail')){
+            messageList.value.push(...['编辑','删除'])
+            ifBorderBottom.value.push(...[false,false])
+            iconList.value.push(...['icon-bianji1','icon-lajixiang'])
+            params.value.push(props.id,props.id)
+            eventsHandle.value.push(...[editVideo,delVideo])
+        }else{
+            messageList.value.push(...['查看','编辑','删除'])
+            ifBorderBottom.value.push(...[false,false,false])
+            iconList.value.push(...['icon-chakan','icon-bianji1','icon-lajixiang'])
+            params.value.push({id:props.id,videoFolder:props.videoFolder,videoFolderId:Number(props.videoFolderId)},props.id,props.id)
+            eventsHandle.value.push(...[lookVideo,editVideo,delVideo])
+        }
+
     }
     eventLength.value = messageList.value.length
 }

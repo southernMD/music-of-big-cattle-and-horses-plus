@@ -7,7 +7,7 @@
             <template #midle>
                 <div class="add-playlist">
                     <el-form :model="form" label-width="auto" style="max-width: 600px" :rules="rules" ref="addFormRef">
-                        <el-form-item label="文件夹" prop="folderId">
+                        <el-form-item label="文件夹" prop="folderId" v-if="folderFormFlag">
                             <MyInputSelect :updateOptions="updateOptions" :key="5" v-model="form.folderId"
                                 :options="optionsC"></MyInputSelect>
                         </el-form-item>
@@ -79,6 +79,10 @@ const props = defineProps({
     id: {
         type: Number,
         default: 0
+    },
+    folderFormFlag:{
+        type: Boolean,
+        default: true
     }
 })
 
@@ -193,7 +197,6 @@ const confirmAddDialog = () => {
             } else{
                 $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:false,base_video })
             }
-
             $emit('update:editVideoFlag', false)
         } else {
             console.log(form.value);
@@ -227,7 +230,12 @@ const rollBackForm = () => {
     }
 }
 
-defineExpose({rollBackForm})
+const updateBaseVideo = async (id: number) => {
+    console.log("updateBaseVideo");
+    base_video = (await db.videos.get(id))!
+}
+
+defineExpose({rollBackForm,updateBaseVideo})
 const cancelAddDialog = () => {
     $emit('update:editVideoFlag', false)
 }
