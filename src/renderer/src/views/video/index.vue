@@ -57,67 +57,13 @@
     </div>
     <AddVideoForm key="AddVideoForm" v-model:addVideoFlag="addVideoFlag" v-model:options="options"
         @updateFolder="updateFolder" @addVideo="addVideo"></AddVideoForm>
-    <EddVideoForm key="EddVideoForm" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
-        @updateFolder="updateFolder" @editVideo="editVideo" :id="globalVar.editVideo.videoId"></EddVideoForm>
-    <!-- <Teleport to="body">
-        <MyDialog @confirm="confirmEditDialog" @cancel="cancelEditDialog" :flag="editVideoFlag" @closeDialog="cancelEditDialog">
-            <template #header>
-                <span class="title">编辑视频</span>
-            </template>
-<template #midle>
-                <el-form :model="formEdit" label-width="auto" style="max-width: 600px" :rules="rules" ref=addFormRef>
-                        <el-form-item label="文件夹" prop="folderId">
-                            <MyInputSelect :updateOptions="updateOptions" :key="5" v-model="formEdit.folderId"
-                                :options="options"></MyInputSelect>
-                        </el-form-item>
-                        <el-form-item label="视频类型" prop="type">
-                            <el-radio-group v-model="formEdit.type">
-                                <el-radio :label="VideoType.local">本地视频</el-radio>
-                                <el-radio :label="VideoType.web">网络视频</el-radio>
-                                <el-radio disabled :label="VideoType.bilibili">b站视频</el-radio>
-                            </el-radio-group>
-                        </el-form-item>
-                        <el-form-item label="视频标题" prop="title">
-                            <MyInput :key="1" v-model="formEdit.title" :placeholder="`请输入标题`"></MyInput>
-                        </el-form-item>
-                        <el-form-item label="视频地址" prop="videoPath">
-                            <MyInput :key="2" v-model="formEdit.videoPath" :placeholder="`请输入视频地址`"></MyInput>
-                        </el-form-item>
-                        <el-form-item label="封面地址" prop="coverPath">
-                            <MyInput :key="3" v-model="formEdit.coverPath"
-                                :placeholder="`请输入图片地址或者base64图片`">
-                            </MyInput>
-                        </el-form-item>
-                        <el-form-item label="别名" class="height-fix" prop="otherName">
-                            <el-tag v-for="tag in formEdit.otherName" :key="tag" closable :disable-transitions="false"
-                                @close="handleCloseEdit(tag)">
-                                {{ tag }}
-                            </el-tag>
-                            <MyInput :key="4" ref="InputRefEdit" v-if="inputVisibleEdit" :size="`small`" v-model="inputValueEdit"
-                                @blur="handleInputConfirmEdit" @search="handleInputConfirmEdit" :placeholder="` `" width="79px">
-                            </MyInput>
-                            <button v-else class="button-new-tag" size="small" @click="showInputEdit">
-                                添加别名
-                            </button>
-                        </el-form-item>
-                        <el-form-item label="是否缓存">
-                            <el-checkbox v-model="formEdit.save" size="large"></el-checkbox>
-                        </el-form-item>
-                        <el-form-item label="描述信息">
-                            <div class="input-bk">
-                                <el-input v-model="formEdit.description" :rows="2" type="textarea" resize="none" ref="text"
-                                    @keydown.stop />
-                            </div>
-                        </el-form-item>
-                    </el-form>
-            </template>
-</MyDialog>
-</Teleport> -->
+    <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
+        @updateFolder="updateFolder" @editVideo="editVideo" :id="globalVar.editVideo.videoId" ></EddVideoForm>
 </template>
 
 <script setup lang="ts">
 import { useGlobalVar } from '@renderer/store';
-import { Ref, ref, toRaw, watch } from 'vue'
+import { onMounted, Ref, ref, toRaw, watch } from 'vue'
 import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo } from './indexType.d.ts';
 import { useRouter } from 'vue-router';
 import MyInput from '@renderer/components/myVC/MyInput.vue';
@@ -126,7 +72,7 @@ import AddVideoForm from '@renderer/components/video/AddVideoForm.vue'
 import { db } from '@renderer/indexDB/db'
 // import saveVideoWorker from '@renderer/workers/saveVideoWorker?worker'
 import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64';
-import { videos_folders_table } from '@renderer/indexDB/dbType';
+import { videos_folders_table, videos_table } from '@renderer/indexDB/dbType';
 
 const getCanvaasList = ref<HTMLCanvasElement[][]>([]);
 const getCanvaasRef = (el, folder_index, video_index) => {
@@ -317,11 +263,20 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                     videoList.value![0].list[0].coverPath = `${imageBase64}`
                 }
             })
+            window.electron.ipcRenderer.once('save-video-error',async(error)=>{
+                videoList.value?.[0].list.shift()
+                await db.videos.delete(id)
+                alert(error)
+            })
         }
     }
 }
 
-const editVideo = ({ id, form, nowTime, reloadFlag }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean }) => {
+const EddVideoFormRef = ref()
+onMounted(() => {
+    console.log(EddVideoFormRef.value);
+})
+const editVideo = ({ id, form, nowTime, reloadFlag,base_video }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean,base_video:videos_table }) => {
     const index = videoList.value?.findIndex(item => item.id === form.folderId)!;
     videoList.value![index].updateTime = nowTime
     videoList.value?.sort((a, b) => {
@@ -329,11 +284,14 @@ const editVideo = ({ id, form, nowTime, reloadFlag }: { id: number, form: EditVi
     })
     videoList.value?.[0].list.unshift(videoList.value?.[0].list.find(item => item.id === id)!)
     videoList.value?.[0].list.splice(videoList.value?.[0].list.findLastIndex(item => item.id === id)!, 1)
-    console.log(videoList.value![0].list[0], form);
     videoList.value![0].list[0].coverPath = form.coverPath;
     videoList.value![0].list[0].title = form.title;
     videoList.value![0].list[0].description = form.description;
     videoList.value![0].list[0].updateTime = nowTime;
+    videoList.value![0].list[0].folderId = form.folderId
+    videoList.value![0].list[0].otherName = form.otherName.join(" ");
+    videoList.value![0].list[0].type = form.type
+    videoList.value![0].list[0].videoPath = form.videoPath;
     if (form.save && reloadFlag) {
         if (form.type === 1 || form.type === 2) {
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
@@ -362,11 +320,19 @@ const editVideo = ({ id, form, nowTime, reloadFlag }: { id: number, form: EditVi
                     videoList.value![0].list[0].coverPath = `${imageBase64}`
                 }
             })
+            window.electron.ipcRenderer.once('save-video-error',(_,{error})=>{
+                //@ts-ignore id only undefined in table create
+                videoList.value![0].list[0] = base_video
+                db.videos.update(id, base_video)
+                EddVideoFormRef.value.rollBackForm()
+                alert("\n视频缓存修改失败，已自动回滚")
+            })
         }
     } else if (!form.save) {
         db.videos_data.delete(id)
     }
 }
+
 
 window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
     const canvas:HTMLCanvasElement =  getCanvaasList.value[0][0] as HTMLCanvasElement
@@ -383,7 +349,7 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
     const progressWidth = (progress / 100) * canvas.width;
 
     // 设置进度条样式
-    ctx.fillStyle = '#76c7c0'; // 进度条颜色
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primaryColor'); // 进度条颜色
     ctx.fillRect(0, 0, progressWidth, canvas.height);
     if(progress == 100){
         ctx.clearRect(0, 0, canvas.width, canvas.height);

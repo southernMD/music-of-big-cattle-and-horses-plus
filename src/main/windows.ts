@@ -1041,6 +1041,12 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       .on('progress', function ({ timemark }) {
         event.reply("save-video-progress", { progress: Math.ceil(pickTime(timemark) / pickTime(total) * 100) })
         console.log(Math.ceil(pickTime(timemark) / pickTime(total) * 100));
+      }).on('error', function (err) {
+        if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
+          event.reply("save-video-error", {err})
+          ffmpegCommand.kill('SIGTERM')
+          console.log('An error occurred: ' + err.message);
+        }
       })
     const chunks: Uint8Array[] = [];
     const writableStream = new Writable({
@@ -1056,7 +1062,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       folder: join(__dirname, basePath) , // 临时文件夹
     }).on('error', function (err) {
       if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
-        event.reply("save-video-error", { msg: "视频上传发生错误，请检查上传文件" })
+        event.reply("save-video-error",{err})
         ffmpegCommand.kill('SIGTERM')
         console.log('An error occurred: ' + err.message);
       }
@@ -1068,7 +1074,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       event.reply("save-video-progress", { progress: 100 })
       fs.readFile(join(__dirname, basePath,fileName), (err, data) => {
         if (err) {
-          event.reply('save-video-erro', { err });
+          event.reply("save-video-error", {err})
           console.error('Error reading image file:', err);
           return;
         }
@@ -1076,7 +1082,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         // 删除图片
         fs.unlink(join(__dirname, basePath,fileName), (err) => {
           if (err) {
-            event.reply('save-video-erro', { err });
+            event.reply('save-video-error',  {err});
           }
         });
       });

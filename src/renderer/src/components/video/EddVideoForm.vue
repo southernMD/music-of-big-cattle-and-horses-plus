@@ -189,9 +189,9 @@ const confirmAddDialog = () => {
                 updateTime: nowTime
             })
             if(base_video.videoPath!=form.value.videoPath && form.value.save){
-                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:true })
+                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:true,base_video })
             } else{
-                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:false })
+                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:false,base_video })
             }
 
             $emit('update:editVideoFlag', false)
@@ -210,6 +210,24 @@ watch(() => form.value.videoPath, () => {
     console.log(form.value)
 })
 
+const rollBackForm = () => {
+    form.value =
+    {
+        id: base_video?.id!,
+        folderId: base_video?.folderId!,
+        title: base_video?.title,
+        type: base_video?.type,
+        videoPath: base_video?.videoPath,
+        coverPath: base_video?.coverPath,
+        otherName:base_video?.otherName.length!=0 ? base_video?.otherName.split(" "):[],
+        description: base_video?.description,
+        updateTime: base_video?.updateTime,
+        save: save_flag,
+        updatePic:false
+    }
+}
+
+defineExpose({rollBackForm})
 const cancelAddDialog = () => {
     $emit('update:editVideoFlag', false)
 }
