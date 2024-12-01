@@ -1032,7 +1032,6 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       .nativeFramerate()
       .videoCodec('libx264')
       .format('mp4')
-      .noAudio()
       .outputOptions(
         '-movflags', 'frag_keyframe+empty_moov+faststart',
         '-preset', 'faster', //以损失画质换取流畅度
@@ -1067,7 +1066,6 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       filename:  fileName, // 保存为临时文件
       folder: join(__dirname, basePath) , // 临时文件夹
     });
-    ffmpegCommand.run();
     writableStream.on('finish', () => {
       const buffer = Buffer.concat(chunks);
       fs.readFile(join(__dirname, basePath,fileName), (err, data) => {
@@ -1077,12 +1075,12 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
           return;
         }
         event.reply('save-video-finish', { arrayBuffer:buffer.buffer,coverArrayBuffer:data.buffer });
-        //删除图片
-        // fs.unlink(join(__dirname, basePath,fileName), (err) => {
-        //   if (err) {
-        //     event.reply('save-video-erro', { err });
-        //   }
-        // });
+        // 删除图片
+        fs.unlink(join(__dirname, basePath,fileName), (err) => {
+          if (err) {
+            event.reply('save-video-erro', { err });
+          }
+        });
       });
     });
     writableStream.on("error",(err)=>{

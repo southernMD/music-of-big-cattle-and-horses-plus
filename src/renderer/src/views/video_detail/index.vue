@@ -2,45 +2,17 @@
   <div class="video_detail">
     <main>
       <div class="left">
-        <video ref="video" src="https://mc.kurogames.com/static4.0/assets/end-zh-e987f9e8.mp4" controls loop></video>
+        <video ref="video" :src="vide_url" controls loop ></video>
         <div class="title">
           <h1>
-            庆祝中华人民共和国成立75周年 天安门广场举行国庆升国旗仪式 | CCTV
+            {{ activeVideo.title }}
           </h1>
         </div>
         <div class="describe">
-          <span class="txt" ref="des_txt" :style="{ '-webkit-line-clamp':( open ? 'inherit' : '4') }">
-            <span class="title_txt">19万次观看 1个月前 #CCTV #国庆节<br></span>
+          <span class="txt" ref="des_txt" :style="{ '-webkit-line-clamp': (open ? 'inherit' : '4') }">
+            <span class="title_txt">创建时间：{{ activeVideo.time }}<br>更新时间：{{ activeVideo.updateTime }}</span>
             <pre class="main_txt">
-【欢迎订阅CCTV中国中央电视台频道】：https://bit.ly/3tjXkBJ
-
-#CCTV #国庆节
-
-■□其他CCTV精彩内容■□
-《焦点访谈》播放列表：https://bit.ly/3EXVQBF
-《面对面》播放列表：https://bit.ly/3kzg2S6
-《等着我》播放列表：https://bit.ly/2We5Epy
-《山水间的家》播放列表：https://bit.ly/3AOJZWl
-《正大综艺》播放列表：https://bit.ly/398xHg1
-《典籍里的中国》播放列表：https://bit.ly/3kEYHHv
-《经典咏流传》播放列表：https://bit.ly/3kIXCOZ
-《国家宝藏 第四季》官方高清播放列表：https://t.ly/IrhUA
-《诗画中国 江河万古流》播放列表：https://bit.ly/3TSRXaX
-
-■□更多精彩视频，请关注我们■□
-CCTV中文： / @cctvch
-CCTV春晚：https://bit.ly/CCTVGala
-CCTV科教：https://bit.ly/CCTVScienceAndEducation
-CCTV百家讲坛官方频道：https://bit.ly/Chinahistorytalks
-CCTV电视剧：https://bit.ly/CCTVDRAMA
-CCTV热播剧场：https://bit.ly/CCTVHitdrama
-CCTV今日说法官方频道：https://bit.ly/CCTVLegalreport
-
-■□关注CCTV系列帐号 Like us on Facebook■□
-Facebook（中文）: / cctv.ch
-Facebook（英文）: / cctvcom
-
-■□更多精彩内容欢迎关注CCTV Global：https://global.cctv.com/
+{{ activeVideo.description }}
 </pre>
           </span>
           <div class="open-jiantou">
@@ -50,50 +22,128 @@ Facebook（英文）: / cctvcom
 
       </div>
       <div class="right">
-        <ul id="vedio_list">
-          <li>
-            <div class="playing">
-              <i class="icon-youjiantou iconfont"></i>
-            </div>
-            <img src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg" alt="" />
-            <div class="msg">
-              <div class="title">
-                独学画伯独学画伯独学画伯独学画伯独学画伯独学画伯独学画伯独学画伯
+        <div class="folderName">{{ folderName }}</div>
+        <el-scrollbar>
+          <ul id="vedio_list">
+            <li v-for="val in video_detail_view" @click="goVideo(val)">
+              <div class="playing" :class="{ active: val.id === activeVideo.id }">
+                <i class="icon-youjiantou iconfont"></i>
               </div>
-              <div class="ar">独学画伯独学画伯独学画伯独学画伯独学画伯独学画伯独学画伯独学画伯</div>
-              <div class="play_msg">1141-14-21</div>
-            </div>
-            <div class="more">
-              <i class="iconfont icon-gengduo"></i>
-            </div>
-          </li>
-          <li>
-            <div class="playing">
-              <i class="icon-youjiantou iconfont"></i>
-            </div>
-            <img src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg" alt="" />
-            <div class="msg">
-              <div class="title">
-                独学画伯
+              <img :src="val.coverPath" alt="" />
+              <div class="msg">
+                <div class="title">
+                  {{ val.title }}
+                </div>
+                <div class="ar">{{ val.otherName }}</div>
+                <div class="play_msg">{{ val.updateTime }}</div>
               </div>
-              <div class="ar">123</div>
-              <div class="play_msg">321</div>
-            </div>
-            <div class="more" @mousedown.stop="onMouseDown($event)" @mouseup.stop="onMouseUp($event)">
-              <i class="iconfont icon-gengduo"></i>
-            </div>
-          </li>
-        </ul>
+              <div class="more" @mousedown="onMouseDown" @mouseup="onMouseUp" @click.stop>
+                <i class="iconfont icon-gengduo"></i>
+              </div>
+            </li>
+            <li v-for="val in video_detail_view" @click="goVideo(val)">
+              <div class="playing" :class="{ active: val.id === activeVideo.id }">
+                <i class="icon-youjiantou iconfont"></i>
+              </div>
+              <img :src="val.coverPath" alt="" />
+              <div class="msg">
+                <div class="title">
+                  {{ val.title }}
+                </div>
+                <div class="ar">{{ val.otherName }}</div>
+                <div class="play_msg">{{ val.updateTime }}</div>
+              </div>
+              <div class="more" @mousedown="onMouseDown" @mouseup="onMouseUp" @click.stop>
+                <i class="iconfont icon-gengduo"></i>
+              </div>
+            </li>
+            <li v-for="val in video_detail_view" @click="goVideo(val)">
+              <div class="playing" :class="{ active: val.id === activeVideo.id }">
+                <i class="icon-youjiantou iconfont"></i>
+              </div>
+              <img :src="val.coverPath" alt="" />
+              <div class="msg">
+                <div class="title">
+                  {{ val.title }}
+                </div>
+                <div class="ar">{{ val.otherName }}</div>
+                <div class="play_msg">{{ val.updateTime }}</div>
+              </div>
+              <div class="more" @mousedown="onMouseDown" @mouseup="onMouseUp" @click.stop>
+                <i class="iconfont icon-gengduo"></i>
+              </div>
+            </li>
+          </ul>
+        </el-scrollbar>
       </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue'
+import { Ref, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { db } from '@renderer/indexDB/db'
+import { videos_table } from '@renderer/indexDB/dbType'
 const des_txt = ref()
 const open = ref(false)
 const video = ref() as Ref<HTMLVideoElement>
+const $route = useRoute()
+const id = ref(+($route.query.id ?? 0)) as unknown as Ref<number>
+const floderId = ref(+($route.query.floderId ?? 0)) as unknown as Ref<number>
+const folderName = ref(($route.query.floderName ?? " "))
+
+const activeVideo: Ref<video_detail_view> = ref({
+  id: 0,
+  src: "",
+  title: "发生错误",
+  otherName: "",
+  time: "0000-00-00 00:00:00",
+  updateTime: "0000-00-00 00:00:00",
+  description: "发生错误"
+})
+const video_detail_view: Ref<videos_table[]> = ref([])
+const init = async (id: number, floderId: number) => {
+  const video_table_msg = await db.videos.where('id').equals(id).first()
+  const video_list_table_msg = await db.videos.where('folderId').equals(floderId).toArray()
+  video_list_table_msg.sort((a, b) => {
+    return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+  })
+  video_detail_view.value = video_list_table_msg
+
+  const video_blob = await db.videos_data.where('id').equals(id).first()
+  activeVideo.value = {
+    id: video_table_msg!.id!,
+    src: video_blob ? video_blob.data : video_table_msg!.videoPath,
+    title: video_table_msg!.title,
+    otherName: video_table_msg!.otherName,
+    time: video_table_msg!.time,
+    updateTime: video_table_msg!.updateTime,
+    description: video_table_msg!.description,
+  }
+}
+try {
+  await init(id.value, floderId.value)
+} catch (error) {
+  activeVideo.value = {
+    id: 0,
+    src: "",
+    title: "发生错误",
+    otherName: "",
+    time: "0000-00-00 00:00:00",
+    updateTime: "0000-00-00 00:00:00",
+    description: "发生错误"
+  }
+}
+
+//computed
+const vide_url = computed(() => {
+  if (activeVideo.value.src instanceof Blob) {
+    return URL.createObjectURL(activeVideo.value.src)
+  } else {
+    return activeVideo.value.src
+  }
+})
 
 const changeDescribe = () => {
   open.value = !open.value
@@ -109,14 +159,30 @@ const onMouseUp = (event: MouseEvent) => {
   const target = event.currentTarget as HTMLElement
   target.classList.remove('pressed')
 }
+
+const goVideo = (videMsg: videos_table) => {
+  try {
+    init(videMsg.id!, videMsg.folderId)
+  } catch (error) {
+    activeVideo.value = {
+      id: 0,
+      src: "",
+      title: "发生错误",
+      otherName: "",
+      time: "0000-00-00 00:00:00",
+      updateTime: "0000-00-00 00:00:00",
+      description: "发生错误"
+    }
+  }
+}
 </script>
 
 <style scoped lang="less">
 main {
   width: 90vw;
-  margin: 0 auto;
+  margin: 10px auto;
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 
   .left {
     width: 78vw;
@@ -217,9 +283,15 @@ main {
   .right {
     width: calc(27vw - 20px);
     min-width: 300px;
-    min-height: 1000px;
+
+    .folderName {
+      font-size: 25px;
+      margin-bottom: .5em;
+    }
 
     ul {
+      max-height: calc(100vh - 60px - 50px - 280px);
+
       li {
         cursor: pointer;
         height: 90px;
@@ -230,6 +302,12 @@ main {
 
         .playing {
           color: @primary-color;
+          margin-right: 5px;
+          opacity: 0;
+        }
+
+        .active {
+          opacity: 1;
         }
 
         img {
@@ -301,7 +379,7 @@ main {
       }
 
       li:hover {
-        background-color:@left-click-color;
+        background-color: @left-click-color;
       }
 
       .active {

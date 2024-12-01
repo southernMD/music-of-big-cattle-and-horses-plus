@@ -2442,7 +2442,7 @@ const likeOrDislikeRadio = async()=>{
     width: 100vw;
     height: 70px;
     box-sizing: border-box;
-    border-top: 1px solid;
+    border-top: 3px solid;
     border-top-color: @split-line-color;
     background-color: @radio-bk-color;
     position: fixed;

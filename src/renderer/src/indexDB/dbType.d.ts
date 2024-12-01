@@ -19,7 +19,7 @@ export interface videos_folders_table{
 }
 export interface video_data_table{
     id:number;
-    data:ArrayBuffer;
+    data:Blob;
 }
 export enum VideoType {
     local = 1,

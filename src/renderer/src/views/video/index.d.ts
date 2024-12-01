@@ -22,6 +22,7 @@ export interface VideoInfo{
     time:string;
     description:string;
     updateTime:string;
+    folderId:number
 }
 
 export interface AddVideoInfo{
