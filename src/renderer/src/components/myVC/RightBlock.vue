@@ -70,6 +70,9 @@ const props = defineProps<{
     djprogramid:string | null | undefined
     djprogramName:string | null | undefined
     radioid:string | null | undefined
+    videoFolderId:string | null | undefined
+    videoFolder:string | null | undefined
+    
 }>()
 
 const flag = ref(false)
@@ -377,6 +380,12 @@ const buildList = ()=>{
             params.value.push(props.id)
             eventsHandle.value.push(download)
         }
+    }else if(props.type.startsWith('video')){
+        messageList.value.push(...['查看','编辑','删除'])
+        ifBorderBottom.value.push(...[false,false,false])
+        iconList.value.push(...['icon-chakan','icon-bianji1','icon-lajixiang'])
+        params.value.push({id:props.id,videoFolder:props.videoFolder,videoFolderId:Number(props.videoFolderId)},props.id,props.id)
+        eventsHandle.value.push(...[lookVideo,editVideo,delVideo])
     }
     eventLength.value = messageList.value.length
 }
@@ -1417,6 +1426,34 @@ const DJprogrampage = (id)=>{
     })
 }
 
+// eventsHandle.value.push(...[look,editVideo,delVideo])
+
+const lookVideo = (obj)=>{
+    const {id,videoFolder,videoFolderId} = obj;
+    $router.push({
+        name: 'video_detail',
+        query: {
+            id: id,
+            floderId:videoFolderId,
+            floderName:videoFolder
+        }
+    })
+}
+
+const editVideo = (id) =>{
+    console.log(id);
+    globalVar.editVideo = {
+        videoId:+id,
+        flag:true
+    }
+}
+
+const delVideo = (id)=>{
+    globalVar.delVideo = {
+        videoId:+id,
+        flag:true
+    }
+}
 
 </script>
 

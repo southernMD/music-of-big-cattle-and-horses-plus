@@ -11,6 +11,7 @@ declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     404: typeof import('./src/components/myVC/404.vue')['default']
     AddTipDialog: typeof import('./src/components/myVC/AddTipDialog.vue')['default']
+    AddVideoForm: typeof import('./src/components/video/AddVideoForm.vue')['default']
     ChangeSkin: typeof import('./src/components/MyMainMenu/changeSkin/index.vue')['default']
     ColorBlock: typeof import('./src/components/myVC/ColorBlock.vue')['default']
     ColorPick: typeof import('./src/components/ColorPick.vue')['default']
@@ -18,6 +19,7 @@ declare module '@vue/runtime-core' {
     CommentList: typeof import('./src/components/myVC/CommentList.vue')['default']
     DetailSmallBlock: typeof import('./src/components/myVC/DetailSmallBlock.vue')['default']
     DropDown: typeof import('./src/components/myVC/dropDown.vue')['default']
+    EddVideoForm: typeof import('./src/components/video/EddVideoForm.vue')['default']
     EditorPage: typeof import('./src/components/myVC/editorPage.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
@@ -71,6 +73,7 @@ declare module '@vue/runtime-core' {
     SmallTips: typeof import('./src/components/myVC/smallTips.vue')['default']
     SongDetail: typeof import('./src/components/MusicRadio/songDetail/index.vue')['default']
     Tag: typeof import('./src/components/myVC/Tag.vue')['default']
+    VideoUpdateForm: typeof import('./src/components/video/videoUpdateForm.vue')['default']
     WriteCommit: typeof import('./src/components/myVC/WriteCommit/index.vue')['default']
     ZhuanJi: typeof import('./src/components/myVC/LineMusic/ZhuanJi/index.vue')['default']
   }

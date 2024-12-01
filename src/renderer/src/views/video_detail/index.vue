@@ -41,38 +41,6 @@
                 <i class="iconfont icon-gengduo"></i>
               </div>
             </li>
-            <li v-for="val in video_detail_view" @click="goVideo(val)">
-              <div class="playing" :class="{ active: val.id === activeVideo.id }">
-                <i class="icon-youjiantou iconfont"></i>
-              </div>
-              <img :src="val.coverPath" alt="" />
-              <div class="msg">
-                <div class="title">
-                  {{ val.title }}
-                </div>
-                <div class="ar">{{ val.otherName }}</div>
-                <div class="play_msg">{{ val.updateTime }}</div>
-              </div>
-              <div class="more" @mousedown="onMouseDown" @mouseup="onMouseUp" @click.stop>
-                <i class="iconfont icon-gengduo"></i>
-              </div>
-            </li>
-            <li v-for="val in video_detail_view" @click="goVideo(val)">
-              <div class="playing" :class="{ active: val.id === activeVideo.id }">
-                <i class="icon-youjiantou iconfont"></i>
-              </div>
-              <img :src="val.coverPath" alt="" />
-              <div class="msg">
-                <div class="title">
-                  {{ val.title }}
-                </div>
-                <div class="ar">{{ val.otherName }}</div>
-                <div class="play_msg">{{ val.updateTime }}</div>
-              </div>
-              <div class="more" @mousedown="onMouseDown" @mouseup="onMouseUp" @click.stop>
-                <i class="iconfont icon-gengduo"></i>
-              </div>
-            </li>
           </ul>
         </el-scrollbar>
       </div>

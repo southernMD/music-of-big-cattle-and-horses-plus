@@ -42,6 +42,8 @@
             :djprogramid="djprogramid"
             :djprogramName="djprogramName"
             :radioid="radioid"
+            :videoFolderId="videoFolderId"
+            :videoFolder="videoFolder"
             ></rightBlock>
         </Teleport>
         <MyDialog :flag="updateFlag" @closeDialog="closeUpdate" @confirm="confirmUpdate" @cancel="cancleUpdate" confirmName="现在更新">
@@ -535,6 +537,8 @@ const djId = ref('')
 const djprogramid = ref('')
 const djprogramName = ref('')
 const radioid = ref('')
+const videoFolderId = ref('')
+const videoFolder = ref('')
 
 window.addEventListener('contextmenu', (event) => {
   rightFlag.value = false 
@@ -558,6 +562,9 @@ window.addEventListener('contextmenu', (event) => {
         djprogramid.value =  doms[i].getAttribute('data-djprogramid')! ?? ''
         djprogramName.value =  doms[i].getAttribute('data-djprogramname')! ?? ''
         radioid.value =  doms[i].getAttribute('data-radioid')! ?? ''
+
+        videoFolderId.value =  doms[i].getAttribute('data-video-folderId')! ?? ''
+        videoFolder.value =  doms[i].getAttribute('data-video-folder')! ?? ''
         
         const x = event.clientX; // 鼠标点击位置相对于浏览器窗口左上角的横坐标
         const y = event.clientY; // 鼠标点击位置相对于浏览器窗口左上角的纵坐标
@@ -573,7 +580,11 @@ window.addEventListener('contextmenu', (event) => {
 // leftValue.value = left
 });
 window.addEventListener('click',(event)=>{
-    rightFlag.value = false 
+    if(globalVar.rightClick){
+        globalVar.rightClick =false
+    }else{
+        rightFlag.value = false 
+    }
 })
 
 const quickGlobal = toRef(globalVar.setting,'quickGlobal')

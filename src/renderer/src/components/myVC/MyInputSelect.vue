@@ -15,7 +15,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { videoFolder } from '@renderer/views/video';
+import { videoFolder } from '@renderer/views/video/indexType';
 import { nextTick, ref, watch } from 'vue'
 const props = defineProps({
     modelValue: {

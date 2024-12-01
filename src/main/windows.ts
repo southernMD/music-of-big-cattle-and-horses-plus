@@ -1039,19 +1039,8 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         "-crf","20"
       )
       .on('progress', function ({ timemark }) {
+        event.reply("save-video-progress", { progress: Math.ceil(pickTime(timemark) / pickTime(total) * 100) })
         console.log(Math.ceil(pickTime(timemark) / pickTime(total) * 100));
-      })
-      .on('error', function (err) {
-        if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
-          event.reply("save-video-error", { msg: "视频上传发生错误，请检查上传文件" })
-          ffmpegCommand.kill('SIGTERM')
-          console.log('An error occurred: ' + err.message);
-        }
-      })
-      .on('end', function () {
-        ffmpegCommand.kill('SIGTERM')
-      }).on('codecData', ({ duration }) => {
-        total = duration
       })
     const chunks: Uint8Array[] = [];
     const writableStream = new Writable({
@@ -1065,9 +1054,18 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       timestamps: ['1'], // 获取视频的第一帧截图
       filename:  fileName, // 保存为临时文件
       folder: join(__dirname, basePath) , // 临时文件夹
-    });
-    writableStream.on('finish', () => {
+    }).on('error', function (err) {
+      if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
+        event.reply("save-video-error", { msg: "视频上传发生错误，请检查上传文件" })
+        ffmpegCommand.kill('SIGTERM')
+        console.log('An error occurred: ' + err.message);
+      }
+    })
+    .on('end', function () {
+      ffmpegCommand.kill('SIGTERM')
+      writableStream.destroy();
       const buffer = Buffer.concat(chunks);
+      event.reply("save-video-progress", { progress: 100 })
       fs.readFile(join(__dirname, basePath,fileName), (err, data) => {
         if (err) {
           event.reply('save-video-erro', { err });
@@ -1082,7 +1080,9 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
           }
         });
       });
-    });
+    }).on('codecData', ({ duration }) => {
+      total = duration
+    })
     writableStream.on("error",(err)=>{
       writableStream.destroy();
     })

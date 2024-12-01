@@ -1500,6 +1500,15 @@ interface V {
     clearList:boolean
     radioReady:boolean
     lrcFlag:boolean
+    rightClick:boolean //取消左键点击的右键
+    delVideo:{
+        flag:boolean
+        videoId:number
+    } //删除视频
+    editVideo:{
+        flag:boolean
+        videoId:number
+    }//编辑视频
 }
 //已开始播放
 export const useGlobalVar = defineStore('globalVar', {
@@ -1582,7 +1591,16 @@ export const useGlobalVar = defineStore('globalVar', {
             },
             clearList:false,
             radioReady:false,
-            lrcFlag:false
+            lrcFlag:false,
+            rightClick:false,
+            delVideo:{
+                flag:false,
+                videoId:0
+            },
+            editVideo:{
+                flag:false,
+                videoId:0
+            },
         }
     },
     actions:{

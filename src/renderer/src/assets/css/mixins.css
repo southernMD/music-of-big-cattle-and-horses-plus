@@ -1,4 +1,5 @@
 :deep(.el-overlay) {
+  -webkit-app-region: no-drag;
   background-color: rgba(0, 0, 0, 0);
 }
 :deep(.el-dialog) {

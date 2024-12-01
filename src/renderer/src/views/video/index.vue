@@ -31,18 +31,23 @@
         <div class="video-group">
             <el-collapse v-model="activeNames">
                 <el-collapse-item :title="folder_val.folderName" :name="folder_val.id"
-                    v-for="folder_val, index in videoList">
-                    <div class="folder-video-item" v-for="video_val, index in folder_val.list">
-                        <div class="view" @click="goVideo(video_val,folder_val.folderName)"
-                            :style="{ 'background-image': `url(${video_val.coverPath})` }"></div>
+                    v-for="folder_val, folder_index in videoList">
+                    <div class="folder-video-item" v-for="video_val, video_index in folder_val.list">
+                        <div class="view" @click="goVideo(video_val, folder_val.folderName,folder_index, video_index)"
+                            :style="{ 'background-image': `url(${video_val.coverPath})` }">
+                            <canvas :ref="el => getCanvaasRef(el, folder_index, video_index)" width="0" height="0"></canvas>
+                        </div>
                         <div class="msg">
-                            <div class="txt" @click="goVideo(video_val,folder_val.folderName)">{{ video_val.title }}</div>
+                            <div class="txt" @click="goVideo(video_val, folder_val.folderName,folder_index, video_index)">{{ video_val.title }}
+                            </div>
                             <div class="othername-and-time">
                                 <span class="oN">{{ video_val.otherName }}</span>
                                 <span class="t">{{ video_val.time }}</span>
                             </div>
                         </div>
-                        <div class="op" @mousedown.stop="onMouseDown($event)" @mouseup.stop="onMouseUp($event)">
+                        <div class="op" data-right="true" data-type="video" :data-id="video_val.id"
+                            :data-video-folderId="folder_val.id" :data-video-folder="folder_val.folderName"
+                            @mousedown.stop="onMouseDown($event)" @mouseup.stop="onMouseUp($event)" @click="rightClick">
                             <i class="iconfont icon-gengduo"></i>
                         </div>
                     </div>
@@ -50,73 +55,89 @@
             </el-collapse>
         </div>
     </div>
-    <MyDialog @confirm="confirmDialog" @cancel="cancelDialog" :flag="addVideoFlag" @closeDialog="cancelDialog">
-        <template #header>
-            <span class="title">上传视频</span>
-        </template>
-        <template #midle>
-            <div class="add-playlist">
-                <el-form :model="form" label-width="auto" style="max-width: 600px" :rules="rules" ref=formRef>
-                    <el-form-item label="文件夹" prop="folderId">
-                        <MyInputSelect :updateOptions="updateOptions" :key="5" v-model="form.folderId"
-                            :options="options"></MyInputSelect>
-                    </el-form-item>
-                    <el-form-item label="视频类型" prop="type">
-                        <el-radio-group v-model="form.type">
-                            <el-radio :label="VideoType.local">本地视频</el-radio>
-                            <el-radio :label="VideoType.web">网络视频</el-radio>
-                            <el-radio disabled :label="VideoType.bilibili">b站视频</el-radio>
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="视频标题" prop="title">
-                        <MyInput :key="1" v-model="form.title" :placeholder="`请输入标题`"></MyInput>
-                    </el-form-item>
-                    <el-form-item label="视频地址" prop="videoPath">
-                        <MyInput :key="2" v-model="form.videoPath" :placeholder="`请输入视频地址`"></MyInput>
-                    </el-form-item>
-                    <el-form-item label="封面地址" prop="coverPath">
-                        <MyInput @search="searchInputFn2" :key="3" v-model="form.coverPath"
-                            :placeholder="`请输入图片地址或者base64图片`">
-                        </MyInput>
-                    </el-form-item>
-                    <el-form-item label="别名" class="height-fix" prop="otherName">
-                        <el-tag v-for="tag in form.otherName" :key="tag" closable :disable-transitions="false"
-                            @close="handleClose(tag)">
-                            {{ tag }}
-                        </el-tag>
-                        <MyInput :key="4" ref="InputRef" v-if="inputVisible" :size="`small`" v-model="inputValue"
-                            @blur="handleInputConfirm" @search="handleInputConfirm" :placeholder="` `" width="79px">
-                        </MyInput>
-                        <button v-else class="button-new-tag" size="small" @click="showInput">
-                            添加别名
-                        </button>
-                    </el-form-item>
-                    <el-form-item label="是否缓存">
-                        <el-checkbox v-model="form.save" size="large"></el-checkbox>
-                    </el-form-item>
-                    <el-form-item label="描述信息">
-                        <div class="input-bk">
-                            <el-input v-model="form.description" :rows="2" type="textarea" resize="none" ref="text"
-                                @keydown.stop />
-                        </div>
-                    </el-form-item>
-                </el-form>
-            </div>
-        </template>
-    </MyDialog>
+    <AddVideoForm key="AddVideoForm" v-model:addVideoFlag="addVideoFlag" v-model:options="options"
+        @updateFolder="updateFolder" @addVideo="addVideo"></AddVideoForm>
+    <EddVideoForm key="EddVideoForm" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
+        @updateFolder="updateFolder" @editVideo="editVideo" :id="globalVar.editVideo.videoId"></EddVideoForm>
+    <!-- <Teleport to="body">
+        <MyDialog @confirm="confirmEditDialog" @cancel="cancelEditDialog" :flag="editVideoFlag" @closeDialog="cancelEditDialog">
+            <template #header>
+                <span class="title">编辑视频</span>
+            </template>
+<template #midle>
+                <el-form :model="formEdit" label-width="auto" style="max-width: 600px" :rules="rules" ref=addFormRef>
+                        <el-form-item label="文件夹" prop="folderId">
+                            <MyInputSelect :updateOptions="updateOptions" :key="5" v-model="formEdit.folderId"
+                                :options="options"></MyInputSelect>
+                        </el-form-item>
+                        <el-form-item label="视频类型" prop="type">
+                            <el-radio-group v-model="formEdit.type">
+                                <el-radio :label="VideoType.local">本地视频</el-radio>
+                                <el-radio :label="VideoType.web">网络视频</el-radio>
+                                <el-radio disabled :label="VideoType.bilibili">b站视频</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="视频标题" prop="title">
+                            <MyInput :key="1" v-model="formEdit.title" :placeholder="`请输入标题`"></MyInput>
+                        </el-form-item>
+                        <el-form-item label="视频地址" prop="videoPath">
+                            <MyInput :key="2" v-model="formEdit.videoPath" :placeholder="`请输入视频地址`"></MyInput>
+                        </el-form-item>
+                        <el-form-item label="封面地址" prop="coverPath">
+                            <MyInput :key="3" v-model="formEdit.coverPath"
+                                :placeholder="`请输入图片地址或者base64图片`">
+                            </MyInput>
+                        </el-form-item>
+                        <el-form-item label="别名" class="height-fix" prop="otherName">
+                            <el-tag v-for="tag in formEdit.otherName" :key="tag" closable :disable-transitions="false"
+                                @close="handleCloseEdit(tag)">
+                                {{ tag }}
+                            </el-tag>
+                            <MyInput :key="4" ref="InputRefEdit" v-if="inputVisibleEdit" :size="`small`" v-model="inputValueEdit"
+                                @blur="handleInputConfirmEdit" @search="handleInputConfirmEdit" :placeholder="` `" width="79px">
+                            </MyInput>
+                            <button v-else class="button-new-tag" size="small" @click="showInputEdit">
+                                添加别名
+                            </button>
+                        </el-form-item>
+                        <el-form-item label="是否缓存">
+                            <el-checkbox v-model="formEdit.save" size="large"></el-checkbox>
+                        </el-form-item>
+                        <el-form-item label="描述信息">
+                            <div class="input-bk">
+                                <el-input v-model="formEdit.description" :rows="2" type="textarea" resize="none" ref="text"
+                                    @keydown.stop />
+                            </div>
+                        </el-form-item>
+                    </el-form>
+            </template>
+</MyDialog>
+</Teleport> -->
 </template>
 
 <script setup lang="ts">
 import { useGlobalVar } from '@renderer/store';
-import { inject, nextTick, onUnmounted, reactive, Ref, ref, toRaw, watch } from 'vue'
-import { videoFolderList, VideoType, VideoInfo, AddVideoInfo, videoFolder } from './index.d';
+import { Ref, ref, toRaw, watch } from 'vue'
+import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo } from './indexType.d.ts';
 import { useRouter } from 'vue-router';
 import MyInput from '@renderer/components/myVC/MyInput.vue';
-import MyInputSelect from '@renderer/components/myVC/MyInputSelect.vue';
-import {db} from '@renderer/indexDB/db'
+// import MyInputSelect from '@renderer/components/myVC/MyInputSelect.vue';
+import AddVideoForm from '@renderer/components/video/AddVideoForm.vue'
+import { db } from '@renderer/indexDB/db'
 // import saveVideoWorker from '@renderer/workers/saveVideoWorker?worker'
 import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64';
 import { videos_folders_table } from '@renderer/indexDB/dbType';
+
+const getCanvaasList = ref<HTMLCanvasElement[][]>([]);
+const getCanvaasRef = (el, folder_index, video_index) => {
+    if (el) {
+        if (!getCanvaasList.value[folder_index]) {
+            getCanvaasList.value[folder_index] = [];
+        }
+        getCanvaasList.value[folder_index][video_index] = el;
+    }
+};
+console.log(getCanvaasList.value);
 
 const $router = useRouter()
 const searchInput = ref('')
@@ -152,12 +173,12 @@ const initFolder = async () => {
         return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
     })
     console.log(videoTableList);
-    
+
     const arr: videos_folders_table[] = video_folders.sort((a, b) => {
         return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
     })
     const newArr = arr.map(videos_folder => {
-        return {...videos_folder, list: videoTableList.filter(video => video.folderId === videos_folder.id)};
+        return { ...videos_folder, list: videoTableList.filter(video => video.folderId === videos_folder.id) };
     });
     console.log(newArr);
     //@ts-ignore
@@ -171,39 +192,22 @@ try {
     videoList.value = []
 }
 
-
-
-const updateOptions = async (folderName: string) => {
-    //videos_folders插入一条数据
-    const id = await db.videos_folders.add({
-        folderName: folderName,
-        updateTime: new Date().toLocaleString()
-    })
-    videoList.value?.unshift({
-        id: id,
-        folderName: folderName,
-        list: [],
-        updateTime: new Date().toLocaleString()
-    })
-    activeNames.value.unshift(id)
-    return id
-
-}
-
-
 const globalVar = useGlobalVar();
-
 
 const searchInputFn = () => {
     console.log(searchInput.value);
 }
-const goVideo = (videMsg: VideoInfo,folderName:string) => {
+const goVideo = (videMsg: VideoInfo, folderName: string,folder_index:number, video_index:number) => {
+    console.log(getCanvaasList.value[folder_index][video_index].width);
+    if(getCanvaasList.value[folder_index][video_index].width !== 0){
+        return
+    }
     $router.push({
         name: 'video_detail',
         query: {
             id: videMsg.id,
-            floderId:videMsg.folderId,
-            floderName:folderName
+            floderId: videMsg.folderId,
+            floderName: folderName
         }
     })
 }
@@ -218,204 +222,174 @@ const onMouseUp = (event: MouseEvent) => {
     target.classList.remove('pressed')
 }
 
+const rightClick = (event: MouseEvent) => {
+    globalVar.rightClick = true
+    event.preventDefault()
+    event.target?.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: event.clientX,
+        clientY: event.clientY,
+    }))
+}
+
 const addVideoFlag = ref(false)
 
-const cancelDialog = () => {
-    addVideoFlag.value = false
+const updateAideoListAfterDelete = () => {
+    for (let i = 0; i < videoList.value!.length; i++) {
+        for (let j = 0; j < videoList.value![i].list.length; j++) {
+            if (videoList.value![i].list[j].id == globalVar.delVideo.videoId) {
+                videoList.value![i].list.splice(j, 1)
+                return
+            }
+        }
+    }
 }
 
-const formRef = ref()
-// const saveVideo = new saveVideoWorker()
-const confirmDialog = () => {
-    formRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-            const nowTime = new Date().toLocaleString()
-            const id = await db.videos.add({
-                title: form.value.title,
-                type: form.value.type,
-                videoPath: form.value.videoPath,
-                coverPath: form.value.coverPath,
-                otherName: form.value.otherName.join(" "),
-                description: form.value.description,
-                folderId: form.value.folderId!,
-                time: nowTime,
-                updateTime: nowTime
+watch(() => globalVar.delVideo, async () => {
+    console.log(globalVar.delVideo);
+    if (globalVar.delVideo.flag) {
+        await db.videos.delete(globalVar.delVideo.videoId)
+        await db.videos_data.delete(globalVar.delVideo.videoId)
+        //从videoList中过滤掉删除的
+        updateAideoListAfterDelete()
+        globalVar.delVideo.flag = false
+    }
+
+}, { deep: true })
+
+//editForm
+const editVideoFlag = ref(false)
+watch(() => globalVar.editVideo.flag, () => {
+    editVideoFlag.value = globalVar.editVideo.flag
+}, { deep: true })
+const updateFolder = ({ id, folderName }) => {
+    videoList.value?.unshift({
+        id: id,
+        folderName: folderName,
+        list: [],
+        updateTime: new Date().toLocaleString()
+    })
+    activeNames.value.unshift(id)
+}
+
+const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTime: string }) => {
+    // 查找id与form.value.folderId相同的项
+    const index = videoList.value?.findIndex(item => item.id === form.folderId)!;
+    videoList.value![index].updateTime = nowTime
+    videoList.value?.sort((a, b) => {
+        return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+    })
+    //把form.value.folderId对应的放到videoList.value 的第一个
+    videoList.value?.unshift(videoList.value?.find(item => item.id === form.folderId)!)
+    videoList.value?.splice(videoList.value?.findIndex(item => item.id === form.folderId)!, 1)
+    videoList.value?.[0].list.unshift({
+        id,
+        title: form.title,
+        type: form.type,
+        videoPath: form.videoPath,
+        coverPath: form.coverPath,
+        otherName: form.otherName.join(" "),
+        description: form.description,
+        time: nowTime,
+        updateTime: nowTime,
+        folderId: videoList.value?.[0].id
+    })
+    if (form.save) {
+        if (form.type === 1 || form.type === 2) {
+            window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
+            window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
+                console.log("save-video-finish");
+                //创建链接
+                //arrayBuffer转blob
+                const arrayBufferBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
+                db.videos_data.add({
+                    id,
+                    data: arrayBufferBlob
+                })
+                if (form.coverPath.length == 0) {
+                    //coverArrayBuffer转base64
+                    const imageBase64 = await bufferToBase64(coverArrayBuffer)
+                    db.videos.update(id, {
+                        coverPath: `${imageBase64}`
+                    })
+                    videoList.value![0].list[0].coverPath = `${imageBase64}`
+                }
             })
-            await db.videos_folders.where('id').equals(form.value.folderId!).modify({
-                updateTime:nowTime
-            })
-            //查找id与form.value.folderId相同的项
-            const index = videoList.value?.findIndex(item => item.id === form.value.folderId)!;
-            videoList.value![index].updateTime = nowTime
-            videoList.value?.sort((a, b) => {
-                return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
-            })
-            //把form.value.folderId对应的放到videoList.value 的第一个
-            videoList.value?.unshift(videoList.value?.find(item => item.id === form.value.folderId)!)
-            videoList.value?.splice(videoList.value?.findIndex(item => item.id === form.value.folderId)!, 1)
-            videoList.value?.[0].list.unshift({
-                id,
-                title: form.value.title,
-                type: form.value.type,
-                videoPath: form.value.videoPath,
-                coverPath: form.value.coverPath,
-                otherName: form.value.otherName.join(" "),
-                description: form.value.description,
-                time: nowTime,
-                updateTime: nowTime,
-                folderId:videoList.value?.[0].id
-            })
-            if (form.value.save) {
-                if(form.value.type === 1 || form.value.type === 2){
-                    window.electron.ipcRenderer.send('saveVideo', { videoPath:form.value.videoPath, coverPath: form.value.coverPath })
-                    window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer,coverArrayBuffer }) => {
-                        console.log("save-video-finish");
-                        //创建链接
-                        //arrayBuffer转blob
-                        const arrayBufferBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
-                        db.videos_data.add({
-                            id,
-                            data: arrayBufferBlob
-                        })
-                        if(form.value.coverPath.length == 0){
-                            //coverArrayBuffer转base64
-                            const imageBase64 =  await bufferToBase64(coverArrayBuffer)
-                            db.videos.update(id, {
-                                coverPath: `${imageBase64}`
-                            })
-                            videoList.value![0].list[0].coverPath = `${imageBase64}`
-                        }
+        }
+    }
+}
+
+const editVideo = ({ id, form, nowTime, reloadFlag }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean }) => {
+    const index = videoList.value?.findIndex(item => item.id === form.folderId)!;
+    videoList.value![index].updateTime = nowTime
+    videoList.value?.sort((a, b) => {
+        return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+    })
+    videoList.value?.[0].list.unshift(videoList.value?.[0].list.find(item => item.id === id)!)
+    videoList.value?.[0].list.splice(videoList.value?.[0].list.findLastIndex(item => item.id === id)!, 1)
+    console.log(videoList.value![0].list[0], form);
+    videoList.value![0].list[0].coverPath = form.coverPath;
+    videoList.value![0].list[0].title = form.title;
+    videoList.value![0].list[0].description = form.description;
+    videoList.value![0].list[0].updateTime = nowTime;
+    if (form.save && reloadFlag) {
+        if (form.type === 1 || form.type === 2) {
+            window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
+            window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
+                console.log("save-video-finish");
+                //创建链接
+                //arrayBuffer转blob
+                const arrayBufferBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
+                let t = await db.videos_data.get(id)
+                if (t) {
+                    db.videos_data.update(id, {
+                        data: arrayBufferBlob
+                    })
+                } else {
+                    db.videos_data.add({
+                        id,
+                        data: arrayBufferBlob
                     })
                 }
-            }
-            addVideoFlag.value = false
-        } else {
-            console.log(form.value);
-
-        }
-    })
-}
-
-
-const form: Ref<AddVideoInfo> = ref({
-    folderId: undefined,
-    title: '',
-    type: VideoType.local,
-    videoPath: '',
-    coverPath: '',
-    otherName: [],
-    description: '',
-    save: false
-})
-const searchInputFn2 = (e: KeyboardEvent) => {
-    console.log(form.value);
-}
-
-
-const inputValue = ref('')
-const inputVisible = ref(false)
-const InputRef = ref()
-
-const handleClose = (tag: string) => {
-    form.value.otherName.splice(form.value.otherName.indexOf(tag), 1)
-}
-
-const showInput = () => {
-    inputVisible.value = true
-    nextTick(() => {
-        InputRef.value.$refs.searchInputRef!.input!.focus()
-    })
-}
-
-const handleInputConfirm = () => {
-    if (inputValue.value) {
-        if (!form.value.otherName.includes(inputValue.value)) {
-            form.value.otherName.push(inputValue.value)
-        }
-    }
-    inputVisible.value = false
-    inputValue.value = ''
-}
-
-
-const rules = reactive<any>({
-    folderId: [
-        {
-            validator: (rule: any, value: any, callback: any) => {
-                let t = setTimeout(() => {
-                    console.log(form.value.folderId);
-                    clearTimeout(t);
-                    if (form.value.folderId === undefined) {
-                        callback(new Error('请选择加入的文件夹'))
-                    } else {
-                        callback()
-                    }
-                }, 300)
-
-            }, trigger: 'blur', required: true
-        }
-    ],
-    title: [
-        { required: true, message: '请输入视频标题', trigger: 'blur' }
-    ],
-    videoPath: [
-        {
-            required: true,
-            message: '请输入视频地址',
-            trigger: 'blur'
-        },
-        {
-            validator: (rule: any, value: any, callback: any) => {
-                const linkRegex = /^(http|https):\/\/[^ "]+$/;
-                const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/;
-
-                if (!value) {
-                    callback();
-                } else if (form.value.type === VideoType.web && linkRegex.test(value)) {
-                    callback();
-                } else if (form.value.type === VideoType.local && localFileRegex.test(value)) {
-                    callback();
-                } else {
-                    callback(new Error(`请输入有效的${form.value.type === VideoType.web ? '链接' : '本地文件路径'}`));
+                if (form.updatePic) {
+                    //coverArrayBuffer转base64
+                    const imageBase64 = await bufferToBase64(coverArrayBuffer)
+                    db.videos.update(id, {
+                        coverPath: `${imageBase64}`
+                    })
+                    videoList.value![0].list[0].coverPath = `${imageBase64}`
                 }
-            },
-            trigger: 'blur'
+            })
         }
-    ],
-    coverPath: [
-        {
-            validator: (rule: any, value: any, callback: any) => {
-                if (value) {
-                    const isUrl = /^(http|https):\/\/.+/.test(value);
-                    const isBase64 = /^data:image\/\w+;base64,.+$/.test(value);
-                    const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/.test(value);
-
-                    if (!isUrl && !isBase64 && !localFileRegex) {
-                        callback(new Error('请输入有效的图片地址或 base64 图片'));
-                    } else {
-                        callback();
-                    }
-                } else {
-                    if (!form.value.save) {
-                        callback(new Error('如果你不想填写图片地址，那么必须选择缓存'))
-                    } else {
-                        callback();
-                    }
-                }
-            },
-            trigger: 'blur'
-        }
-    ]
-});
-watch(() => form.value.videoPath, () => {
-    const linkRegex = /^http/;
-    console.log(linkRegex.test(form.value.videoPath));
-    if (linkRegex.test(form.value.videoPath)) {
-        form.value.type = VideoType.web
-    } else {
-        form.value.type = VideoType.local
+    } else if (!form.save) {
+        db.videos_data.delete(id)
     }
-    console.log(form.value)
+}
+
+window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
+    const canvas:HTMLCanvasElement =  getCanvaasList.value[0][0] as HTMLCanvasElement
+    //画进度条具体实现,线形的
+    canvas.width = canvas.clientWidth
+    canvas.height = canvas.clientHeight
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 设置背景条样式
+    ctx.fillStyle = '#e0e0e0'; // 背景条颜色
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // 绘制背景条
+
+    // 计算进度条宽度
+    const progressWidth = (progress / 100) * canvas.width;
+
+    // 设置进度条样式
+    ctx.fillStyle = '#76c7c0'; // 进度条颜色
+    ctx.fillRect(0, 0, progressWidth, canvas.height);
+    if(progress == 100){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = 0
+        canvas.height = 0
+    }
 })
 </script>
 
@@ -533,12 +507,23 @@ watch(() => form.value.videoPath, () => {
                         padding-top: 70%;
                         background-size: cover;
                         background-repeat: no-repeat;
-                        border-radius: 2em;
+                        border-radius: .5em;
                         cursor: pointer;
                         transition: transform .2s ease;
 
                         &:hover {
                             transform: scale(1.03);
+                        }
+                        position: relative;
+                        canvas{
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            height: 5px;
+                            width: calc(100% - .2em);
+                            margin: 0 auto;
+                            border-radius: 2em;
                         }
                     }
 
@@ -612,103 +597,5 @@ watch(() => form.value.videoPath, () => {
 
     }
 
-}
-
-.height-fix {
-    :deep(.el-form-item__content) {
-        height: 32px;
-
-        .el-tag {
-            margin-right: 5px;
-            --el-tag-bg-color: none;
-            --el-tag-text-color: @primary-color;
-            --el-tag-hover-color: @primary-color;
-            border-color: @font-color;
-        }
-    }
-}
-
-.input-bk {
-    position: relative;
-    width: 100%;
-
-    :deep(.el-textarea) {
-        --el-input-hover-border-color: none;
-        --el-input-focus-border-color: none;
-        width: 100%;
-        font-size: 14px;
-        border: 1px solid @commit-block-border-color;
-        border-radius: 0.2em;
-        background-color: @commit-block-color;
-        padding-bottom: 5px;
-        padding-top: 5px;
-
-        .el-textarea__inner {
-            background-color: @commit-block-color;
-            box-shadow: none;
-            color: @font-color;
-            padding-bottom: 5px;
-            padding-top: 5px;
-            padding-right: 15px;
-
-            &::-webkit-scrollbar {
-                height: 80%;
-            }
-
-            &::-webkit-scrollbar-button {
-                display: none;
-            }
-
-            &::-webkit-scrollbar {
-                width: 7px;
-                height: 90%;
-                background-color: @commit-block-scroll-line;
-            }
-
-            &::-webkit-scrollbar-thumb {
-                border-radius: 0.4em;
-                background: @commit-block-scroll-button;
-            }
-        }
-    }
-
-    .number {
-        position: absolute;
-        bottom: 7px;
-        right: 6px;
-        font-size: 12px;
-        color: @font-color;
-    }
-}
-
-.el-checkbox.el-checkbox--large {
-    height: auto;
-}
-
-:deep(label) {
-    height: 25px;
-
-    .el-checkbox__label {
-        font-size: 13px;
-        color: @font-color;
-    }
-
-    --el-checkbox-bg-color:@other-bk-color;
-    --el-checkbox-input-border-color-hover:@primary-color;
-    --el-checkbox-input-border:1px solid @border-color;
-}
-
-:deep(.is-checked) {
-    :deep(.el-el-checkbox__input) {
-        border-color: @primary-color;
-        background-color: @primary-color;
-    }
-
-    --el-checkbox-checked-bg-color:@primary-color;
-    --el-checkbox-checked-input-border-color:@primary-color;
-
-    .el-checkbox__label {
-        color: @primary-color;
-    }
 }
 </style>

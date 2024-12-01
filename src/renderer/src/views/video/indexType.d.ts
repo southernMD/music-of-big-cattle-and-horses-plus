@@ -1,9 +1,3 @@
-//1本地 2网络 3b站
-export enum VideoType {
-    local = 1,
-    web = 2,
-    bilibili = 3,
-}
 
 export interface videoFolderList {
     id: number;
@@ -34,6 +28,20 @@ export interface AddVideoInfo{
     otherName: string[],
     description:string,
     save:boolean
+}
+
+export interface EditVideoInfo{
+    id: number;
+    title: string;
+    type: VideoType;
+    videoPath:string;
+    coverPath:string;
+    otherName: string[];
+    updateTime:string;
+    description:string;
+    folderId:number
+    save:boolean;
+    updatePic:boolean;
 }
 
 export interface VideoDataInfo{
