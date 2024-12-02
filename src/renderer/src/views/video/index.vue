@@ -10,7 +10,7 @@
                 </el-radio-group>
                 <div class="btns">
                     <div class="btn btn1" :class="{ 'btn-oneself': globalVar.oneself == 1 }"
-                        @click="addVideoFlag = true">
+                        @click="loadingVideoId === 0?addVideoFlag = true: addVideoFlag = false">
                         <i class="iconfont icon-xiazai1"></i>
                         <div class="txt">
                             <span>上传</span>
@@ -90,8 +90,8 @@
 </template>
 
 <script setup lang="ts">
-import { useGlobalVar } from '@renderer/store';
-import { onMounted, Ref, ref, toRaw, watch } from 'vue'
+import { useGlobalVar, useVideo } from '@renderer/store';
+import { nextTick, onMounted, Ref, ref, toRaw, toRef, watch } from 'vue'
 import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo, videoSearchInfo } from './indexType.d.ts';
 
 import pinyin from "pinyin";
@@ -116,9 +116,11 @@ const getCanvaasRef = (el: HTMLCanvasElement, folder_index: string | number, vid
         getCanvaasList.value[folder_index][video_index] = el;
     }
 };
-watch(() => getCanvaasList.value, (newVal) => {
-    console.log(newVal, "(*&^%$^#%$^&*()(*&^%$%^&*()())))))))))))))))))))))))))))))))");
-}, { deep: true })
+
+const videoPinia = useVideo()
+
+const loadingVideoId = toRef(videoPinia,'loadingVideoId')
+const loadingVideoFolderId = toRef(videoPinia,'loadingVideoFolderId')
 
 const $router = useRouter()
 const searchInput = ref('')
@@ -297,6 +299,9 @@ const updateAideoListAfterDelete = () => {
         for (let j = 0; j < videoList.value![i].list.length; j++) {
             if (videoList.value![i].list[j].id == globalVar.delVideo.videoId) {
                 videoList.value![i].list.splice(j, 1)
+                nextTick(() => {
+                    searchInputFn()
+                })
                 return
             }
         }
@@ -316,7 +321,13 @@ watch(() => globalVar.delVideo, async () => {
 //editForm
 const editVideoFlag = ref(false)
 watch(() => globalVar.editVideo.flag, () => {
+    if(loadingVideoId.value !==0){
+        editVideoFlag.value = false
+        globalVar.editVideo.flag = false
+        return
+    }
     editVideoFlag.value = globalVar.editVideo.flag
+    
 }, { deep: true })
 const updateFolder = ({ id, folderName }) => {
     videoList.value?.unshift({
@@ -350,14 +361,19 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
         updateTime: nowTime,
         folderId: videoList.value?.[0].id
     })
-    searchInput.value = ""
-    if(searchTypeid.value === "folder"){
-        searchInputFn()
-    }else{
-        searchTypeid.value = "folder"
-    }
+    nextTick(() => {
+        searchInput.value = ""
+        if(searchTypeid.value === "folder"){
+            searchInputFn()
+        }else{
+            searchTypeid.value = "folder"
+        }
+    })
+
     if (form.save) {
         if (form.type === 1 || form.type === 2) {
+            loadingVideoId.value = id
+            loadingVideoFolderId.value = videoList.value?.[0].id!
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
             window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
                 console.log("save-video-finish");
@@ -375,9 +391,16 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                         coverPath: `${imageBase64}`
                     })
                     videoList.value![0].list[0].coverPath = `${imageBase64}`
+                    nextTick(() => {
+                        searchInputFn()
+                    })
                 }
+                loadingVideoId.value = 0
+                loadingVideoFolderId.value = 0
             })
             window.electron.ipcRenderer.once('save-video-error', async (error) => {
+                loadingVideoId.value = 0
+                loadingVideoFolderId.value = 0
                 videoList.value?.[0].list.shift()
                 await db.videos.delete(id)
                 alert(error)
@@ -390,8 +413,8 @@ const EddVideoFormRef = ref()
 onMounted(() => {
     console.log(EddVideoFormRef.value);
 })
-const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table, originalFolderId: number }) => {
-    if (!ifSearch || searchTypeid.value === 'folder') {
+const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table, originalFolderId: number }) => {    
+    if (!ifSearch.value || searchTypeid.value === 'folder') {
         const index = viewVidoListWithPinyin.value?.findIndex(item => item.id === form.folderId)!;
         viewVidoListWithPinyin.value![index].updateTime = nowTime
         viewVidoListWithPinyin.value?.sort((a, b) => {
@@ -447,6 +470,8 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
     origin.list.splice(originIndex + 1,1)
     if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
         if (form.type === 1 || form.type === 2) {
+            loadingVideoId.value = id
+            loadingVideoFolderId.value = form.folderId
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
             window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
                 console.log("save-video-finish");
@@ -471,12 +496,16 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                         coverPath: `${imageBase64}`
                     })
                     updateOriginObj.coverPath =  `${imageBase64}`
-                    if(!ifSearch || searchTypeid.value === 'folder')viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
+                    if(!ifSearch.value || searchTypeid.value === 'folder')viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
                     else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
                 }
+                loadingVideoId.value = 0
+                loadingVideoFolderId.value = 0
                 EddVideoFormRef.value.updateBaseVideo(id)
             })
             window.electron.ipcRenderer.once('save-video-error', (_, { error }) => {
+                loadingVideoId.value = 0
+                loadingVideoFolderId.value = 0
                 //@ts-ignore id only undefined in table create
                 viewVidoListWithPinyin.value![0].list[0] = base_video
                 db.videos.update(id, base_video)
@@ -493,14 +522,48 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
 
 }
 
+let lastIndex1 = 0;
+let lastIndex2 = 0;
 
 window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
-    const canvas: HTMLCanvasElement = getCanvaasList.value[0][0] as HTMLCanvasElement
+    let index1 = 0,index2 = 0
+    if(!ifSearch.value || searchTypeid.value === 'folder'){
+        index1 = viewVidoListWithPinyin.value.findIndex(item => item.id === loadingVideoFolderId.value)
+        index2 = index1 >= 0 ? viewVidoListWithPinyin.value[index1].list.findIndex(item => item.id === loadingVideoId.value):-1
+    }else{
+        index1 = 0,
+        index2 = viewVidoListWithPinyinOther.value.findIndex(item => item.id === loadingVideoId.value)
+    }
+    console.log(index1,index2,"正在绘制的cnavasindex为");
+    console.log(lastIndex1,lastIndex2,"上一次的cnavasindex为");
+    
+    if(index1 < 0 || index2 < 0){
+        if(lastIndex1 >=0 && lastIndex2 >= 0){
+            const canvas = getCanvaasList.value[lastIndex1][lastIndex2]
+            canvas.width = canvas.clientWidth
+            canvas.height = canvas.clientHeight
+            const ctx = canvas.getContext('2d')!;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        lastIndex1 = index1
+        lastIndex2 = index2
+        return
+    }
+    const canvas: HTMLCanvasElement = getCanvaasList.value[index1][index2] as HTMLCanvasElement
     //画进度条具体实现,线形的
     canvas.width = canvas.clientWidth
     canvas.height = canvas.clientHeight
     const ctx = canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if(lastIndex1 >=0 && lastIndex2 >= 0){
+        const canvasLast = getCanvaasList.value[lastIndex1][lastIndex2]
+        canvasLast.width = canvas.clientWidth
+        canvasLast.height = canvas.clientHeight
+        const ctxLast = canvas.getContext('2d')!;
+        ctxLast.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
     // 设置背景条样式
     ctx.fillStyle = '#e0e0e0'; // 背景条颜色
     ctx.fillRect(0, 0, canvas.width, canvas.height); // 绘制背景条
@@ -516,6 +579,8 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
         canvas.width = 0
         canvas.height = 0
     }
+    lastIndex1 = index1
+    lastIndex2 = index2
 })
 </script>
 
@@ -830,3 +895,6 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
 
 }
 </style>
+
+// canvas的位置不正确
+//删除正在上传的video时，需要取消请求

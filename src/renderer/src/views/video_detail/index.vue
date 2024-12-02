@@ -25,7 +25,7 @@
         <div class="folderName">{{ folderName }}</div>
         <el-scrollbar>
           <ul id="vedio_list">
-            <li v-for="val,index in video_detail_view" @click="goVideo(val,index)">
+            <li v-for="val, index in video_detail_view" @click="goVideo(val, index)">
               <div class="playing" :class="{ active: val.id === activeVideo.id }">
                 <i class="icon-youjiantou iconfont"></i>
               </div>
@@ -53,11 +53,11 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, computed, watch } from 'vue'
+import { Ref, ref, computed, watch, toRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@renderer/indexDB/db'
 import { videos_table } from '@renderer/indexDB/dbType'
-import { useGlobalVar } from "@renderer/store/index"
+import { useGlobalVar, useVideo } from "@renderer/store/index"
 import { EditVideoInfo, videoFolder } from '../video/indexType'
 import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64'
 const des_txt = ref()
@@ -69,6 +69,12 @@ const id = ref(+($route.query.id ?? 0)) as unknown as Ref<number>
 const floderId = ref(+($route.query.floderId ?? 0)) as unknown as Ref<number>
 const folderName = ref(($route.query.floderName ?? " "))
 const globalVar = useGlobalVar()
+
+const videoPinia = useVideo()
+const loadingVideoId = toRef(videoPinia, 'loadingVideoId')
+const loadingVideoFolderId = toRef(videoPinia, 'loadingVideoFolderId')
+
+
 const activeVideo: Ref<video_detail_view> = ref({
   id: 0,
   src: "",
@@ -136,10 +142,10 @@ const onMouseUp = (event: MouseEvent) => {
   target.classList.remove('pressed')
 }
 
-const goVideo = (videMsg: videos_table,index:number) => {
-    if(getCanvaasList.value[index].width !== 0){
-        return
-    }
+const goVideo = (videMsg: videos_table, index: number) => {
+  if (getCanvaasList.value[index].width !== 0) {
+    return
+  }
   try {
     init(videMsg.id!, videMsg.folderId)
   } catch (error) {
@@ -197,6 +203,11 @@ try {
 }
 const editVideoFlag = ref(false)
 watch(() => globalVar.editVideo.flag, () => {
+  if(loadingVideoId.value !==0){
+    editVideoFlag.value = false
+    globalVar.editVideo.flag = false
+    return
+  }
   editVideoFlag.value = globalVar.editVideo.flag
 }, { deep: true })
 
@@ -218,6 +229,8 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
   let arrayBufferBlob: null | Blob = null
   if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
     if (form.type === 1 || form.type === 2) {
+      loadingVideoId.value = id
+      loadingVideoFolderId.value = video_detail_view.value?.[0].id!
       window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
       window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
         console.log("save-video-finish");
@@ -246,6 +259,8 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
           })
           video_detail_view.value![0].coverPath = `${imageBase64}`
         }
+        loadingVideoId.value = 0
+        loadingVideoFolderId.value = 0
         console.log("updateBaseVideo");
         EddVideoFormRef.value.updateBaseVideo(id)
       })
@@ -261,7 +276,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
     db.videos_data.delete(id)
     console.log("updateBaseVideo");
     EddVideoFormRef.value.updateBaseVideo(id)
-  }else{
+  } else {
     console.log("updateBaseVideo");
     EddVideoFormRef.value.updateBaseVideo(id)
   }
@@ -279,32 +294,58 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
 }
 const getCanvaasList = ref<HTMLCanvasElement[]>([]);
 const getCanvaasRef = (el, index) => {
-    if (el) {
-        getCanvaasList.value[index]= el;
-    }
+  if (el) {
+    getCanvaasList.value[index] = el;
+  }
 };
-window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
-    const canvas:HTMLCanvasElement =  getCanvaasList.value[0] as HTMLCanvasElement
-    //画进度条具体实现,线形的
-    canvas.width = canvas.clientWidth
-    canvas.height = canvas.clientHeight
-    const ctx = canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // 设置背景条样式
-    ctx.fillStyle = '#e0e0e0'; // 背景条颜色
-    ctx.fillRect(0, 0, canvas.width, canvas.height); // 绘制背景条
 
-    // 计算进度条宽度
-    const progressWidth = (progress / 100) * canvas.width;
+let lastIndex = 0;
 
-    // 设置进度条样式
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primaryColor'); // 进度条颜色
-    ctx.fillRect(0, 0, progressWidth, canvas.height);
-    if(progress == 100){
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.width = 0
-        canvas.height = 0
+
+window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
+  let index1 = video_detail_view.value.findIndex(item => item.id === loadingVideoId.value)
+  if (index1 < 0) {
+    if (lastIndex >= 0) {
+      const canvas = getCanvaasList.value[lastIndex]
+      canvas.width = canvas.clientWidth
+      canvas.height = canvas.clientHeight
+      const ctx = canvas.getContext('2d')!;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+    lastIndex = index1
+    return
+  }
+  const canvas: HTMLCanvasElement = getCanvaasList.value[0] as HTMLCanvasElement
+  //画进度条具体实现,线形的
+  canvas.width = canvas.clientWidth
+  canvas.height = canvas.clientHeight
+  const ctx = canvas.getContext('2d')!;
+
+
+  if (lastIndex > 0) {
+    const canvasLast = getCanvaasList.value[lastIndex]
+    canvasLast.width = canvas.clientWidth
+    canvasLast.height = canvas.clientHeight
+    const ctxLast = canvas.getContext('2d')!;
+    ctxLast.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+
+  // 设置背景条样式
+  ctx.fillStyle = '#e0e0e0'; // 背景条颜色
+  ctx.fillRect(0, 0, canvas.width, canvas.height); // 绘制背景条
+
+  // 计算进度条宽度
+  const progressWidth = (progress / 100) * canvas.width;
+
+  // 设置进度条样式
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primaryColor'); // 进度条颜色
+  ctx.fillRect(0, 0, progressWidth, canvas.height);
+  if (progress == 100) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = 0
+    canvas.height = 0
+  }
 })
 </script>
 
@@ -442,7 +483,7 @@ main {
           opacity: 1;
         }
 
-        
+
         img {
           height: 80%;
           aspect-ratio: 3 / 2;
@@ -494,7 +535,8 @@ main {
           padding: .5em;
           box-sizing: border-box;
         }
-        canvas{
+
+        canvas {
           width: 90%;
           height: 5px;
           position: absolute;

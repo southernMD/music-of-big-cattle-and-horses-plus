@@ -2270,3 +2270,18 @@ export const useNM = defineStore('NM',{
         }
     }
 })
+
+export const useVideo = defineStore('video', {
+    state: () => {
+        return {
+            loadingVideoId:0,
+            loadingVideoFolderId:0
+        }
+    },
+    actions:{
+
+    },
+    persist:{
+
+    } 
+})
