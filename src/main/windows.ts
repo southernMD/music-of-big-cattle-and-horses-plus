@@ -1089,6 +1089,17 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     }).on('codecData', ({ duration }) => {
       total = duration
     })
+    ipcMain.on("dueTo-del-nedd-close-ffmpeg",()=>{
+      ffmpegCommand.kill("SIGTERM");
+      writableStream.destroy()
+      if(fs.existsSync(join(__dirname, basePath,fileName))){
+        fs.unlink(join(__dirname, basePath,fileName), (err) => {
+          if (err) {
+            event.reply('save-video-error',  {err});
+          }
+        });
+      }
+    })
     writableStream.on("error",(err)=>{
       writableStream.destroy();
     })

@@ -2280,8 +2280,5 @@ export const useVideo = defineStore('video', {
     },
     actions:{
 
-    },
-    persist:{
-
-    } 
+    }
 })

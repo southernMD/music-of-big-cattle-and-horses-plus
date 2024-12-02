@@ -185,6 +185,12 @@ watch(() => globalVar.delVideo, async () => {
     } else {
       updateAideoListAfterDelete(globalVar.delVideo.videoId)
     }
+    if (globalVar.delVideo.videoId === loadingVideoId.value) {
+      window.electron.ipcRenderer.send('dueTo-del-nedd-close-ffmpeg')
+      drawLoading(100)
+      loadingVideoId.value = 0
+      loadingVideoFolderId.value = 0
+    }
     globalVar.delVideo.flag = false
   }
 }, { deep: true })
@@ -203,7 +209,7 @@ try {
 }
 const editVideoFlag = ref(false)
 watch(() => globalVar.editVideo.flag, () => {
-  if(loadingVideoId.value !==0){
+  if (loadingVideoId.value !== 0) {
     editVideoFlag.value = false
     globalVar.editVideo.flag = false
     return
@@ -301,8 +307,7 @@ const getCanvaasRef = (el, index) => {
 
 let lastIndex = 0;
 
-
-window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
+const drawLoading = (progress) => {
   let index1 = video_detail_view.value.findIndex(item => item.id === loadingVideoId.value)
   if (index1 < 0) {
     if (lastIndex >= 0) {
@@ -346,6 +351,10 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
     canvas.width = 0
     canvas.height = 0
   }
+}
+
+window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
+  drawLoading(progress)
 })
 </script>
 

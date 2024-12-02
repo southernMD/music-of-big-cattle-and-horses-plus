@@ -10,7 +10,7 @@
                 </el-radio-group>
                 <div class="btns">
                     <div class="btn btn1" :class="{ 'btn-oneself': globalVar.oneself == 1 }"
-                        @click="loadingVideoId === 0?addVideoFlag = true: addVideoFlag = false">
+                        @click="loadingVideoId === 0 ? addVideoFlag = true : addVideoFlag = false">
                         <i class="iconfont icon-xiazai1"></i>
                         <div class="txt">
                             <span>上传</span>
@@ -119,8 +119,9 @@ const getCanvaasRef = (el: HTMLCanvasElement, folder_index: string | number, vid
 
 const videoPinia = useVideo()
 
-const loadingVideoId = toRef(videoPinia,'loadingVideoId')
-const loadingVideoFolderId = toRef(videoPinia,'loadingVideoFolderId')
+const loadingVideoId = toRef(videoPinia, 'loadingVideoId')
+const loadingVideoFolderId = toRef(videoPinia, 'loadingVideoFolderId')
+console.log(loadingVideoId.value, "KJHGIOIJP^&&&&&&&&&&&&&&&&&&&&&&&&&&&");
 
 const $router = useRouter()
 const searchInput = ref('')
@@ -138,7 +139,7 @@ watch(() => searchTypeid.value, (newVal) => {
             searchType.value = "查询别名"
             break;
     }
-        searchInputFn()
+    searchInputFn()
 })
 
 const videoList: Ref<videoFolderList[] | undefined> = ref()
@@ -314,6 +315,12 @@ watch(() => globalVar.delVideo, async () => {
         await db.videos.delete(globalVar.delVideo.videoId)
         await db.videos_data.delete(globalVar.delVideo.videoId)
         updateAideoListAfterDelete()
+        if (globalVar.delVideo.videoId === loadingVideoId.value) {
+            window.electron.ipcRenderer.send('dueTo-del-nedd-close-ffmpeg')
+            drawLoading(100)
+            loadingVideoId.value = 0
+            loadingVideoFolderId.value = 0
+        }
         globalVar.delVideo.flag = false
     }
 }, { deep: true })
@@ -321,13 +328,13 @@ watch(() => globalVar.delVideo, async () => {
 //editForm
 const editVideoFlag = ref(false)
 watch(() => globalVar.editVideo.flag, () => {
-    if(loadingVideoId.value !==0){
+    if (loadingVideoId.value !== 0) {
         editVideoFlag.value = false
         globalVar.editVideo.flag = false
         return
     }
     editVideoFlag.value = globalVar.editVideo.flag
-    
+
 }, { deep: true })
 const updateFolder = ({ id, folderName }) => {
     videoList.value?.unshift({
@@ -363,9 +370,9 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
     })
     nextTick(() => {
         searchInput.value = ""
-        if(searchTypeid.value === "folder"){
+        if (searchTypeid.value === "folder") {
             searchInputFn()
-        }else{
+        } else {
             searchTypeid.value = "folder"
         }
     })
@@ -410,10 +417,7 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
 }
 
 const EddVideoFormRef = ref()
-onMounted(() => {
-    console.log(EddVideoFormRef.value);
-})
-const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table, originalFolderId: number }) => {    
+const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table, originalFolderId: number }) => {
     if (!ifSearch.value || searchTypeid.value === 'folder') {
         const index = viewVidoListWithPinyin.value?.findIndex(item => item.id === form.folderId)!;
         viewVidoListWithPinyin.value![index].updateTime = nowTime
@@ -467,7 +471,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
     updateOriginObj.type = form.type
     updateOriginObj.videoPath = form.videoPath;
     origin.list.unshift(updateOriginObj)
-    origin.list.splice(originIndex + 1,1)
+    origin.list.splice(originIndex + 1, 1)
     if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
         if (form.type === 1 || form.type === 2) {
             loadingVideoId.value = id
@@ -495,8 +499,8 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                     db.videos.update(id, {
                         coverPath: `${imageBase64}`
                     })
-                    updateOriginObj.coverPath =  `${imageBase64}`
-                    if(!ifSearch.value || searchTypeid.value === 'folder')viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
+                    updateOriginObj.coverPath = `${imageBase64}`
+                    if (!ifSearch.value || searchTypeid.value === 'folder') viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
                     else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
                 }
                 loadingVideoId.value = 0
@@ -524,21 +528,20 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
 
 let lastIndex1 = 0;
 let lastIndex2 = 0;
-
-window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
-    let index1 = 0,index2 = 0
-    if(!ifSearch.value || searchTypeid.value === 'folder'){
+const drawLoading = (progress) => {
+    let index1 = 0, index2 = 0
+    if (!ifSearch.value || searchTypeid.value === 'folder') {
         index1 = viewVidoListWithPinyin.value.findIndex(item => item.id === loadingVideoFolderId.value)
-        index2 = index1 >= 0 ? viewVidoListWithPinyin.value[index1].list.findIndex(item => item.id === loadingVideoId.value):-1
-    }else{
+        index2 = index1 >= 0 ? viewVidoListWithPinyin.value[index1].list.findIndex(item => item.id === loadingVideoId.value) : -1
+    } else {
         index1 = 0,
-        index2 = viewVidoListWithPinyinOther.value.findIndex(item => item.id === loadingVideoId.value)
+            index2 = viewVidoListWithPinyinOther.value.findIndex(item => item.id === loadingVideoId.value)
     }
-    console.log(index1,index2,"正在绘制的cnavasindex为");
-    console.log(lastIndex1,lastIndex2,"上一次的cnavasindex为");
-    
-    if(index1 < 0 || index2 < 0){
-        if(lastIndex1 >=0 && lastIndex2 >= 0){
+    console.log(index1, index2, "正在绘制的cnavasindex为");
+    console.log(lastIndex1, lastIndex2, "上一次的cnavasindex为");
+
+    if (index1 < 0 || index2 < 0) {
+        if (lastIndex1 >= 0 && lastIndex2 >= 0) {
             const canvas = getCanvaasList.value[lastIndex1][lastIndex2]
             canvas.width = canvas.clientWidth
             canvas.height = canvas.clientHeight
@@ -556,7 +559,7 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
     canvas.height = canvas.clientHeight
     const ctx = canvas.getContext('2d')!;
 
-    if(lastIndex1 >=0 && lastIndex2 >= 0){
+    if (lastIndex1 >= 0 && lastIndex2 >= 0) {
         const canvasLast = getCanvaasList.value[lastIndex1][lastIndex2]
         canvasLast.width = canvas.clientWidth
         canvasLast.height = canvas.clientHeight
@@ -581,6 +584,9 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
     }
     lastIndex1 = index1
     lastIndex2 = index2
+}
+window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
+    drawLoading(progress)
 })
 </script>
 
@@ -895,6 +901,3 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
 
 }
 </style>
-
-// canvas的位置不正确
-//删除正在上传的video时，需要取消请求
