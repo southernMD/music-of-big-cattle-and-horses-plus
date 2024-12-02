@@ -1563,6 +1563,7 @@ const liangRef = ref<InstanceType<typeof HTMLElement>>()
 const keyDownWatch = (e: KeyboardEvent) => {
     const activeEl = document.activeElement;
     if (!activeEl || activeEl.tagName.toLowerCase() === 'input') return
+    if($route.name === 'video_detail')return
     let keys:string[] = []
     if(e.ctrlKey)keys.push('Ctrl')
     if(e.shiftKey)keys.push('Shift')
@@ -1616,18 +1617,21 @@ const reduce_10_volum = ()=>{
 //主进程播放
 onMounted(() => {
     window.electron.ipcRenderer.on('main-prev', ({},flag) => {
+        if($route.name === 'video_detail')return
         if (playingList.value.length != 0 && (globalVar.setting.closeGlWay || flag)) {
             console.log('上一首');
             prevSongThor();
         }
     })
     window.electron.ipcRenderer.on('main-next', ({},flag) => {
+        if($route.name === 'video_detail')return
         if (playingList.value.length != 0 &&  (globalVar.setting.closeGlWay || flag)) {
             console.log('下一首');
             nextSongThor();
         }
     })
     window.electron.ipcRenderer.on('main-play', ({},flag) => {
+        if($route.name === 'video_detail')return
         if (playingList.value.length != 0 &&  (globalVar.setting.closeGlWay || flag)) {
             console.log('播放');
             changPlayStatus();
@@ -1636,22 +1640,26 @@ onMounted(() => {
         }
     })
     window.electron.ipcRenderer.on('main-add-volum',()=>{
+        if($route.name === 'video_detail')return
         if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
             add_10_volum()
         }
     })
     window.electron.ipcRenderer.on('main-reduce-volum',()=>{
+        if($route.name === 'video_detail')return
         if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
             reduce_10_volum()
         }
     })
     window.electron.ipcRenderer.on('main-like',()=>{
+        if($route.name === 'video_detail')return
         if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
             if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ')likeOrDislikeRadio()
             else likeOrDislike()
         }
     })
     window.electron.ipcRenderer.on('main-open-ci',()=>{
+        if($route.name === 'video_detail')return
         if (playingList.value.length != 0 && globalVar.setting.closeGlWay) {
             openCi()
         }
@@ -2430,6 +2438,14 @@ const likeOrDislikeRadio = async()=>{
         playingList.value[playingindex.value - 1].liked = false
     }
 }
+
+//video_detail
+watch(()=>$route.name,() => {
+    if($route.name === 'video_detail'){
+        playStatus.value = 'stop'
+        showCi.value = false
+    }
+})
 </script>
 
 <style lang="less" scoped>
