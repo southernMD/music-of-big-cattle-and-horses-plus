@@ -10,10 +10,6 @@ function sendWindowId(windowName: string, id: number) {
 }
 
 addEventListener('message', (event) => {
-    console.log("收到请求");
-    console.log("类型为",event.data);
-    
-    
     if (event.data.type === 'requestId') {
         const { windowName } = event.data;
         switch (windowName) {
@@ -44,17 +40,14 @@ addEventListener('message', (event) => {
         switch (windowName) {
             case 'drageMessage':
                 clearInterval(intervalDragMessageId)
-                console.log("clearInterval","drageMessage");
                 loadingStep++;
                 break;
             case 'Ci':
                 clearInterval(intervalCiId)
-                console.log("clearInterval","Ci");
                 loadingStep++;
                 break;
             case 'Main':
                 clearInterval(intervalMainId)
-                console.log("clearInterval","Main");
                 loadingStep++;
                 break;
         }

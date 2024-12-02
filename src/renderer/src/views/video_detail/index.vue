@@ -525,9 +525,9 @@ main {
         background-color: @left-click-color;
       }
 
-      .active {
-        background-color: @left-click-color;
-      }
+      // .active {
+      //   background-color: @left-click-color;
+      // }
     }
   }
 

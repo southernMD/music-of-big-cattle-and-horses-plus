@@ -29,16 +29,19 @@
             <div class="title-txt">视频列表</div>
         </div>
         <div class="video-group">
-            <el-collapse v-model="activeNames">
+            <el-collapse v-model="activeNames" v-if="!ifSearch || searchTypeid === 'folder'">
                 <el-collapse-item :title="folder_val.folderName" :name="folder_val.id"
-                    v-for="folder_val, folder_index in videoList">
+                    v-for="folder_val, folder_index in viewVidoListWithPinyin">
                     <div class="folder-video-item" v-for="video_val, video_index in folder_val.list">
-                        <div class="view" @click="goVideo(video_val, folder_val.folderName,folder_index, video_index)"
+                        <div class="view" @click="goVideo(video_val, folder_val.folderName, folder_index, video_index)"
                             :style="{ 'background-image': `url(${video_val.coverPath})` }">
-                            <canvas :ref="el => getCanvaasRef(el, folder_index, video_index)" width="0" height="0"></canvas>
+                            <canvas :ref="el => getCanvaasRef(el as HTMLCanvasElement, folder_index, video_index)"
+                                width="0" height="0"></canvas>
                         </div>
                         <div class="msg">
-                            <div class="txt" @click="goVideo(video_val, folder_val.folderName,folder_index, video_index)">{{ video_val.title }}
+                            <div class="txt"
+                                @click="goVideo(video_val, folder_val.folderName, folder_index, video_index)">{{
+                                    video_val.title }}
                             </div>
                             <div class="othername-and-time">
                                 <span class="oN">{{ video_val.otherName }}</span>
@@ -53,18 +56,48 @@
                     </div>
                 </el-collapse-item>
             </el-collapse>
+            <div class="other-folder" v-else>
+                <div class="folder-video-item" v-for="video_val, video_index in viewVidoListWithPinyinOther">
+                    <div class="view" @click="goVideo(video_val, video_val.folderName, 0, video_index)"
+                        :style="{ 'background-image': `url(${video_val.coverPath})` }">
+                        <canvas :ref="el => getCanvaasRef(el as HTMLCanvasElement, 0, video_index)" width="0"
+                            height="0"></canvas>
+                    </div>
+                    <div class="msg">
+                        <div class="txt" @click="goVideo(video_val, video_val.folderName, 0, video_index)">{{
+                            video_val.title }}
+                        </div>
+                        <div class="othername-and-time">
+                            <span class="oN">{{ video_val.otherName }}</span>
+                            <span class="t">{{ video_val.time }}</span>
+                        </div>
+                    </div>
+                    <div class="op" data-right="true" data-type="video" :data-id="video_val.id"
+                        :data-video-folderId="video_val.id" :data-video-folder="video_val.folderName"
+                        @mousedown.stop="onMouseDown($event)" @mouseup.stop="onMouseUp($event)" @click="rightClick">
+                        <i class="iconfont icon-gengduo"></i>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
     <AddVideoForm key="AddVideoForm" v-model:addVideoFlag="addVideoFlag" v-model:options="options"
         @updateFolder="updateFolder" @addVideo="addVideo"></AddVideoForm>
-    <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
-        @updateFolder="updateFolder" @editVideo="editVideo" :id="globalVar.editVideo.videoId" ></EddVideoForm>
+    <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag"
+        v-model:options="options" @updateFolder="updateFolder" @editVideo="editVideo" :id="globalVar.editVideo.videoId">
+    </EddVideoForm>
 </template>
 
 <script setup lang="ts">
 import { useGlobalVar } from '@renderer/store';
 import { onMounted, Ref, ref, toRaw, watch } from 'vue'
-import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo } from './indexType.d.ts';
+import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo, videoSearchInfo } from './indexType.d.ts';
+
+import pinyin from "pinyin";
+import * as wanakana from 'wanakana';
+import Fuse from 'fuse.js';
+
 import { useRouter } from 'vue-router';
 import MyInput from '@renderer/components/myVC/MyInput.vue';
 // import MyInputSelect from '@renderer/components/myVC/MyInputSelect.vue';
@@ -75,7 +108,7 @@ import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64';
 import { videos_folders_table, videos_table } from '@renderer/indexDB/dbType';
 
 const getCanvaasList = ref<HTMLCanvasElement[][]>([]);
-const getCanvaasRef = (el, folder_index, video_index) => {
+const getCanvaasRef = (el: HTMLCanvasElement, folder_index: string | number, video_index: string | number) => {
     if (el) {
         if (!getCanvaasList.value[folder_index]) {
             getCanvaasList.value[folder_index] = [];
@@ -83,7 +116,9 @@ const getCanvaasRef = (el, folder_index, video_index) => {
         getCanvaasList.value[folder_index][video_index] = el;
     }
 };
-console.log(getCanvaasList.value);
+watch(() => getCanvaasList.value, (newVal) => {
+    console.log(newVal, "(*&^%$^#%$^&*()(*&^%$%^&*()())))))))))))))))))))))))))))))))");
+}, { deep: true })
 
 const $router = useRouter()
 const searchInput = ref('')
@@ -101,6 +136,7 @@ watch(() => searchTypeid.value, (newVal) => {
             searchType.value = "查询别名"
             break;
     }
+        searchInputFn()
 })
 
 const videoList: Ref<videoFolderList[] | undefined> = ref()
@@ -140,12 +176,86 @@ try {
 
 const globalVar = useGlobalVar();
 
-const searchInputFn = () => {
+console.log(videoList.value);
+
+let videoListWithPinyin: videoSearchInfo[]
+let viewVidoListWithPinyin: Ref<videoSearchInfo[]> = ref([])
+let viewVidoListWithPinyinOther: Ref<(videoSearchInfo["list"])> = ref([])
+
+watch(() => videoList.value, (newVal) => {
+    videoListWithPinyin = videoList.value!.map(folder => ({
+        ...folder,
+        folderSearchName: pinyin(folder.folderName, { style: 0 }).flat().join(''),
+        folderSearchNameFl: pinyin(folder.folderName, { style: 4 }).flat().join(''),
+        romoji: wanakana.isJapanese(folder.folderName) ? wanakana.toRomaji(folder.folderName) : '',
+        list: folder.list.map(video => ({
+            ...video,
+            titleSearchName: pinyin(video.title, { style: 0 }).flat().join(''),
+            titleSearchNameFl: pinyin(video.title, { style: 4 }).flat().join(''),
+            otherNameSearchName: video.otherName.split(" ").map(item => pinyin(item, { style: 0 }).flat().join('')),
+            otherNameSearchNameFl: video.otherName.split(" ").map(item => pinyin(item, { style: 4 }).flat().join('')),
+            romojiTitle: wanakana.isJapanese(video.title) ? wanakana.toRomaji(video.title) : '',
+            romojiOtherName: video.otherName.split(" ").map(item => wanakana.isJapanese(item) ? wanakana.toRomaji(item) : ''),
+        }))
+    }));
+    if (viewVidoListWithPinyin.value.length === 0) {
+        viewVidoListWithPinyin.value = videoListWithPinyin
+    }
+    console.log(videoListWithPinyin, "查询列表");
+}, { deep: true })
+const ifSearch = ref(false)
+const searchInputFn = async () => {
+    // first_letter
     console.log(searchInput.value);
+    if (searchInput.value.trim() === "") {
+        viewVidoListWithPinyin.value = videoListWithPinyin
+        ifSearch.value = false
+        return
+    } else {
+        ifSearch.value = true
+    }
+    const searchKey = pinyin(searchInput.value, { style: 0 }).flat().join('')
+    const allVideo = videoListWithPinyin.flatMap(folder =>
+        folder.list.map(video => ({
+            ...video,
+            folderName: folder.folderName
+        }))
+    );
+    switch (searchTypeid.value) {
+        case "folder":
+            const fuse = new Fuse(videoListWithPinyin, {
+                threshold: 0.1,
+                keys: [
+                    'folderSearchName', 'folderSearchNameFl', 'romoji'
+                ]
+            })
+            viewVidoListWithPinyin.value = fuse.search(searchKey).map(i => i.item)
+            console.log(viewVidoListWithPinyin.value, searchKey);
+            break;
+        case "title":
+            const fuse2 = new Fuse(allVideo, {
+                threshold: 0.1,
+                keys: [
+                    "titleSearchName", "titleSearchNameFl", "romojiTitle"
+                ]
+            })
+            viewVidoListWithPinyinOther.value = fuse2.search(searchKey).map(i => i.item)
+            break;
+        case "otherName":
+            const fuse3 = new Fuse(allVideo, {
+                threshold: 0.1,
+                keys: [
+                    "otherNameSearchName", "otherNameSearchNameFl", "romojiOtherName"
+                ]
+            })
+            viewVidoListWithPinyinOther.value = fuse3.search(searchKey).map(i => i.item)
+            break;
+    }
 }
-const goVideo = (videMsg: VideoInfo, folderName: string,folder_index:number, video_index:number) => {
+
+const goVideo = (videMsg: VideoInfo, folderName: string, folder_index: number, video_index: number) => {
     console.log(getCanvaasList.value[folder_index][video_index].width);
-    if(getCanvaasList.value[folder_index][video_index].width !== 0){
+    if (getCanvaasList.value[folder_index][video_index].width !== 0) {
         return
     }
     $router.push({
@@ -240,6 +350,12 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
         updateTime: nowTime,
         folderId: videoList.value?.[0].id
     })
+    searchInput.value = ""
+    if(searchTypeid.value === "folder"){
+        searchInputFn()
+    }else{
+        searchTypeid.value = "folder"
+    }
     if (form.save) {
         if (form.type === 1 || form.type === 2) {
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
@@ -261,7 +377,7 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                     videoList.value![0].list[0].coverPath = `${imageBase64}`
                 }
             })
-            window.electron.ipcRenderer.once('save-video-error',async(error)=>{
+            window.electron.ipcRenderer.once('save-video-error', async (error) => {
                 videoList.value?.[0].list.shift()
                 await db.videos.delete(id)
                 alert(error)
@@ -274,22 +390,61 @@ const EddVideoFormRef = ref()
 onMounted(() => {
     console.log(EddVideoFormRef.value);
 })
-const editVideo = ({ id, form, nowTime, reloadFlag,base_video }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean,base_video:videos_table }) => {
-    const index = videoList.value?.findIndex(item => item.id === form.folderId)!;
-    videoList.value![index].updateTime = nowTime
-    videoList.value?.sort((a, b) => {
-        return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
-    })
-    videoList.value?.[0].list.unshift(videoList.value?.[0].list.find(item => item.id === id)!)
-    videoList.value?.[0].list.splice(videoList.value?.[0].list.findLastIndex(item => item.id === id)!, 1)
-    videoList.value![0].list[0].coverPath = form.coverPath;
-    videoList.value![0].list[0].title = form.title;
-    videoList.value![0].list[0].description = form.description;
-    videoList.value![0].list[0].updateTime = nowTime;
-    videoList.value![0].list[0].folderId = form.folderId
-    videoList.value![0].list[0].otherName = form.otherName.join(" ");
-    videoList.value![0].list[0].type = form.type
-    videoList.value![0].list[0].videoPath = form.videoPath;
+const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table, originalFolderId: number }) => {
+    if (!ifSearch || searchTypeid.value === 'folder') {
+        const index = viewVidoListWithPinyin.value?.findIndex(item => item.id === form.folderId)!;
+        viewVidoListWithPinyin.value![index].updateTime = nowTime
+        viewVidoListWithPinyin.value?.sort((a, b) => {
+            return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
+        })
+        console.log(viewVidoListWithPinyin.value?.[0].list, id);
+        //如果selfId的值为undefined，说明是跨文件夹变动，否则为自变动
+        const selfId = viewVidoListWithPinyin.value?.[0].list.find(item => item.id == id)
+        if (selfId) {
+            viewVidoListWithPinyin.value?.[0].list.unshift(viewVidoListWithPinyin.value?.[0].list.find(item => item.id == id)!)
+            viewVidoListWithPinyin.value?.[0].list.splice(viewVidoListWithPinyin.value?.[0].list.findLastIndex(item => item.id === id)!, 1)
+        } else {
+            const updateFolderListObj = viewVidoListWithPinyin.value?.find(item => item.id === originalFolderId)!.list
+            viewVidoListWithPinyin.value?.[0].list.unshift(updateFolderListObj.find(item => item.id === id)!)
+            updateFolderListObj.splice(updateFolderListObj.findLastIndex(item => item.id === id)!, 1)
+        }
+        viewVidoListWithPinyin.value![0].list[0].coverPath = form.coverPath;
+        viewVidoListWithPinyin.value![0].list[0].title = form.title;
+        viewVidoListWithPinyin.value![0].list[0].description = form.description;
+        viewVidoListWithPinyin.value![0].list[0].updateTime = nowTime;
+        viewVidoListWithPinyin.value![0].list[0].folderId = form.folderId
+        viewVidoListWithPinyin.value![0].list[0].otherName = form.otherName.join(" ");
+        viewVidoListWithPinyin.value![0].list[0].type = form.type
+        viewVidoListWithPinyin.value![0].list[0].videoPath = form.videoPath;
+    } else {
+        const index = viewVidoListWithPinyinOther.value.findIndex(item => item.id === id)
+        viewVidoListWithPinyinOther.value.unshift(viewVidoListWithPinyinOther.value[index])
+        viewVidoListWithPinyinOther.value.splice(index + 1, 1)
+
+        viewVidoListWithPinyinOther.value![0].coverPath = form.coverPath;
+        viewVidoListWithPinyinOther.value![0].title = form.title;
+        viewVidoListWithPinyinOther.value![0].description = form.description;
+        viewVidoListWithPinyinOther.value![0].updateTime = nowTime;
+        viewVidoListWithPinyinOther.value![0].folderId = form.folderId
+        viewVidoListWithPinyinOther.value![0].otherName = form.otherName.join(" ");
+        viewVidoListWithPinyinOther.value![0].type = form.type
+        viewVidoListWithPinyinOther.value![0].videoPath = form.videoPath;
+    }
+    //查询原数据更新
+    const origin = videoListWithPinyin.find(item => item.id === originalFolderId)!
+    origin.updateTime = nowTime;
+    const updateOriginObj = origin.list.find(item => item.id === id)!
+    const originIndex = origin.list.findIndex(item => item.id === id)!
+    updateOriginObj.coverPath = form.coverPath;
+    updateOriginObj.title = form.title;
+    updateOriginObj.description = form.description;
+    updateOriginObj.updateTime = nowTime;
+    updateOriginObj.folderId = form.folderId
+    updateOriginObj.otherName = form.otherName.join(" ");
+    updateOriginObj.type = form.type
+    updateOriginObj.videoPath = form.videoPath;
+    origin.list.unshift(updateOriginObj)
+    origin.list.splice(originIndex + 1,1)
     if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
         if (form.type === 1 || form.type === 2) {
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
@@ -315,13 +470,15 @@ const editVideo = ({ id, form, nowTime, reloadFlag,base_video }: { id: number, f
                     db.videos.update(id, {
                         coverPath: `${imageBase64}`
                     })
-                    videoList.value![0].list[0].coverPath = `${imageBase64}`
+                    updateOriginObj.coverPath =  `${imageBase64}`
+                    if(!ifSearch || searchTypeid.value === 'folder')viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
+                    else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
                 }
                 EddVideoFormRef.value.updateBaseVideo(id)
             })
-            window.electron.ipcRenderer.once('save-video-error',(_,{error})=>{
+            window.electron.ipcRenderer.once('save-video-error', (_, { error }) => {
                 //@ts-ignore id only undefined in table create
-                videoList.value![0].list[0] = base_video
+                viewVidoListWithPinyin.value![0].list[0] = base_video
                 db.videos.update(id, base_video)
                 EddVideoFormRef.value.rollBackForm()
                 alert("\n视频缓存修改失败，已自动回滚")
@@ -330,14 +487,15 @@ const editVideo = ({ id, form, nowTime, reloadFlag,base_video }: { id: number, f
     } else if (!form.save) {
         db.videos_data.delete(id)
         EddVideoFormRef.value.updateBaseVideo(id)
-    }else{
+    } else {
         EddVideoFormRef.value.updateBaseVideo(id)
     }
+
 }
 
 
-window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
-    const canvas:HTMLCanvasElement =  getCanvaasList.value[0][0] as HTMLCanvasElement
+window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
+    const canvas: HTMLCanvasElement = getCanvaasList.value[0][0] as HTMLCanvasElement
     //画进度条具体实现,线形的
     canvas.width = canvas.clientWidth
     canvas.height = canvas.clientHeight
@@ -353,7 +511,7 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
     // 设置进度条样式
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primaryColor'); // 进度条颜色
     ctx.fillRect(0, 0, progressWidth, canvas.height);
-    if(progress == 100){
+    if (progress == 100) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = 0
         canvas.height = 0
@@ -482,8 +640,10 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
                         &:hover {
                             transform: scale(1.03);
                         }
+
                         position: relative;
-                        canvas{
+
+                        canvas {
                             position: absolute;
                             bottom: 0;
                             left: 0;
@@ -515,6 +675,7 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
                         .othername-and-time {
                             display: flex;
                             justify-content: space-between;
+                            font-size: 12px;
 
                             .oN,
                             .t {
@@ -563,6 +724,108 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress}) => {
             }
         }
 
+        .other-folder {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 200px));
+            gap: 30px;
+
+            >.folder-video-item {
+                aspect-ratio: 3 / 2;
+                position: relative;
+
+                .view {
+                    margin: 2% 0;
+                    width: 100%;
+                    padding-top: 70%;
+                    background-size: cover;
+                    background-repeat: no-repeat;
+                    border-radius: .5em;
+                    cursor: pointer;
+                    transition: transform .2s ease;
+
+                    &:hover {
+                        transform: scale(1.03);
+                    }
+
+                    position: relative;
+
+                    canvas {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        height: 5px;
+                        width: calc(100% - .2em);
+                        margin: 0 auto;
+                        border-radius: 2em;
+                    }
+                }
+
+                .msg {
+                    .txt {
+                        display: -webkit-box;
+                        -webkit-box-orient: vertical;
+                        -webkit-line-clamp: 2;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        width: 100%;
+                        color: @font-color;
+                        font-size: 16px;
+                        cursor: pointer;
+                        height: 28px;
+                        line-height: 28px;
+
+                        &:hover {
+                            color: @primary-color;
+                        }
+                    }
+
+                    .othername-and-time {
+                        display: flex;
+                        justify-content: space-between;
+
+                        .oN,
+                        .t {
+                            //限制1行
+                            display: -webkit-box;
+                            -webkit-box-orient: vertical;
+                            -webkit-line-clamp: 1;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            width: 50%;
+                            font-size: 12px;
+                            height: 21px;
+                            line-height: 21px;
+                        }
+                    }
+                }
+
+                .op {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    cursor: pointer;
+                    border-radius: 2em;
+                    padding: .5em;
+                    box-sizing: border-box;
+                }
+
+                .pressed {
+                    background-color: @span-color-hover;
+                    animation: pressAnimation 0.3s forwards;
+                }
+
+                @keyframes pressAnimation {
+                    0% {
+                        background-color: transparent;
+                    }
+
+                    100% {
+                        background-color: @span-color-hover;
+                    }
+                }
+            }
+        }
     }
 
 }

@@ -193,9 +193,9 @@ const confirmAddDialog = () => {
                 updateTime: nowTime
             })
             if(base_video.videoPath!=form.value.videoPath && form.value.save){
-                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:true,base_video })
+                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:true,base_video,originalFolderId:base_video.folderId })
             } else{
-                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:false,base_video })
+                $emit("editVideo", { id:form.value.id, form: form.value, nowTime,reloadFlag:false,base_video,originalFolderId:base_video.folderId })
             }
             $emit('update:editVideoFlag', false)
         } else {
