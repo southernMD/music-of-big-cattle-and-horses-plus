@@ -192,8 +192,6 @@ import {
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useMain, useBasicApi, useMainMenu, useGlobalVar,useNM } from '@renderer/store';
-import PromiseQueue, { QueueAddOptions } from 'p-queue'
-import { Queue, RunFunction } from 'p-queue/dist/queue';
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 const BasicApi = useBasicApi();
@@ -616,7 +614,7 @@ router.afterEach((to) => {
 })
 
 
-const downloadQueue = inject('downloadQueue') as ShallowRef<PromiseQueue<Queue<RunFunction, QueueAddOptions>, QueueAddOptions>>
+const downloadQueue = inject('downloadQueue') 
 let oldlength = 0
 const promises: Promise<any>[] = []
 const dowloadAll = async () => {

@@ -42,8 +42,6 @@
 import { watch,watchEffect,ref, nextTick,Ref, inject, ShallowRef, toRef, computed } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
 import { useMain ,useGlobalVar,useBasicApi,useNM} from '@renderer/store'
-import PromiseQueue, { QueueAddOptions } from 'p-queue'
-import { Queue, RunFunction } from 'p-queue/dist/queue';
 const Main = useMain()
 const NM = useNM()
 const BasicApi = useBasicApi()
@@ -791,7 +789,7 @@ const share = (id:string)=>{
     globalVar.share.imgUrl = props.shareAvg as string
 
 }
-const downloadQueue = inject('downloadQueue') as ShallowRef<PromiseQueue<Queue<RunFunction, QueueAddOptions>, QueueAddOptions>>
+const downloadQueue = inject('downloadQueue') 
 const promises: Promise<any>[] = []
 const dowloadAll = async (id) => {
     // globalVar.downloadId.push(...Main.openPlayListId.filter((num) => !globalVar.downloadId.includes(num)));

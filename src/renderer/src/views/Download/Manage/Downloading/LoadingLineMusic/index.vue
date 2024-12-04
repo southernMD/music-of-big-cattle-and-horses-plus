@@ -29,8 +29,6 @@
 <script setup lang="ts">
 import { toRef, watch,computed, getCurrentInstance, ComponentInternalInstance, ref, inject, ShallowRef } from 'vue'
 import { useGlobalVar, useMain } from '@renderer/store';
-import PromiseQueue, { QueueAddOptions } from 'p-queue'
-import { Queue, RunFunction } from 'p-queue/dist/queue';
 
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const globalVar = useGlobalVar()
@@ -87,7 +85,7 @@ if (globalVar.initDownloadButton == false) {
 } else {
     downloadingFlag.value = true
 }
-const downloadQueue = inject('downloadQueue') as ShallowRef<PromiseQueue<Queue<RunFunction, QueueAddOptions>, QueueAddOptions>>
+const downloadQueue = inject('downloadQueue') 
 
 const stop = (flag: boolean) => {
     downloadingFlag.value = flag

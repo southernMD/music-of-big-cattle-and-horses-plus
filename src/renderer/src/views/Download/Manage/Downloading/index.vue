@@ -47,11 +47,9 @@
 import { useMain, useGlobalVar } from '@renderer/store';
 import { inject, ShallowRef, toRef, getCurrentInstance, ComponentInternalInstance, ref, nextTick, watch, ComponentPublicInstance } from 'vue';
 import LoadingLineMusic from './LoadingLineMusic/index.vue'
-import PromiseQueue, { QueueAddOptions } from 'p-queue'
-import { Queue, RunFunction } from 'p-queue/dist/queue';
 const Main = useMain()
 const globalVar = useGlobalVar()
-const downloadQueue = inject('downloadQueue') as ShallowRef<PromiseQueue<Queue<RunFunction, QueueAddOptions>, QueueAddOptions>>
+const downloadQueue = inject('downloadQueue')
 const downloadALL = () => {
   const refs = loadingLineMusicRefs.value.slice(); // 复制数组
   globalVar.downloadList.forEach(async(item,index) => {
