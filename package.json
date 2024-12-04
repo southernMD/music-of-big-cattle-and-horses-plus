@@ -42,6 +42,7 @@
     "md5": "^2.3.0",
     "mysql": "^2.18.1",
     "nanoid": "3",
+    "node-fetch": "2",
     "node-id3": "^0.2.6",
     "node-vibrant": "3.1.6",
     "nodemailer": "^6.9.1",

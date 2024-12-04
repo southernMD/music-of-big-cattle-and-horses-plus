@@ -2,7 +2,7 @@
   <div class="video_detail">
     <main>
       <div class="left">
-        <video ref="video" :src="vide_url" controls loop></video>
+        <video ref="video" :src="vide_url" controls loop autoplay></video>
         <div class="title">
           <h1>
             {{ activeVideo.title }}
@@ -26,10 +26,10 @@
         <el-scrollbar>
           <ul id="vedio_list">
             <li v-for="val, index in video_detail_view" @click="goVideo(val, index)">
-              <div class="playing" :class="{ active: val.id === activeVideo.id }">
+              <div class="playing" :class="{ active: val.id === activeVideo.id }" >
                 <i class="icon-youjiantou iconfont"></i>
               </div>
-              <img :src="val.coverPath" alt="" />
+              <img :src="val.coverPath" alt="" :data-forceUpdate="val.id"/>
               <div class="msg">
                 <div class="title">
                   {{ val.title }}
@@ -50,6 +50,8 @@
   </div>
   <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
     @editVideo="editVideo" :id="globalVar.editVideo.videoId" :folderFormFlag="false"></EddVideoForm>
+  <ChoicePage v-model:choicePageFlag="choicePageFlag" v-model:choiceIndex="choiceIndex" :pageSize="pageSize"></ChoicePage>
+
 </template>
 
 <script setup lang="ts">
@@ -142,12 +144,12 @@ const onMouseUp = (event: MouseEvent) => {
   target.classList.remove('pressed')
 }
 
-const goVideo = (videMsg: videos_table, index: number) => {
+const goVideo = async (videMsg: videos_table, index: number) => {
   if (getCanvaasList.value[index].width !== 0) {
     return
   }
   try {
-    init(videMsg.id!, videMsg.folderId)
+    await init(videMsg.id!, videMsg.folderId)
   } catch (error) {
     activeVideo.value = {
       id: 0,
@@ -218,6 +220,7 @@ watch(() => globalVar.editVideo.flag, () => {
 }, { deep: true })
 
 const EddVideoFormRef = ref()
+let bilibiliErrorFlag = false
 const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table }) => {
   const index = video_detail_view.value?.findIndex(item => item.id === form.id)!;
   video_detail_view.value![index].updateTime = nowTime
@@ -232,17 +235,16 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
   video_detail_view.value![0].otherName = form.otherName.join(" ");
   video_detail_view.value![0].type = form.type
   video_detail_view.value![0].videoPath = form.videoPath;
-  let arrayBufferBlob: null | Blob = null
   if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
+    loadingVideoId.value = id
+    loadingVideoFolderId.value = floderId.value
     if (form.type === 1 || form.type === 2) {
-      loadingVideoId.value = id
-      loadingVideoFolderId.value = video_detail_view.value?.[0].id!
       window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
       window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
         console.log("save-video-finish");
         //创建链接
         //arrayBuffer转blob
-        arrayBufferBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
+        let arrayBufferBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
         let t = await db.videos_data.get(id)
         if (t) {
           db.videos_data.update(id, {
@@ -264,27 +266,92 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
             coverPath: `${imageBase64}`
           })
           video_detail_view.value![0].coverPath = `${imageBase64}`
+          //路由切换返回后无法更新图片，因此强制更新真实dom
+          const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
+          forceUpdateList.forEach(item=>{
+              // item.style.backgroundImage = `url(${imageBase64})`
+              if(item instanceof HTMLImageElement){
+                  item.src= imageBase64 as string
+              }else{
+                item.style.backgroundImage = `url(${imageBase64})`
+              }
+          })
         }
         loadingVideoId.value = 0
         loadingVideoFolderId.value = 0
         console.log("updateBaseVideo");
-        EddVideoFormRef.value.updateBaseVideo(id)
+        EddVideoFormRef.value?.updateBaseVideo(id)
       })
       window.electron.ipcRenderer.once('save-video-error', (_, { error }) => {
+        loadingVideoId.value = 0
+        loadingVideoFolderId.value = 0
         // @ts-ignore id only undefined in table create
         video_detail_view.value![0] = base_video
         db.videos.update(id, base_video)
         EddVideoFormRef.value.rollBackForm()
         alert("\n视频缓存修改失败，已自动回滚")
       })
+    } else {
+      bilibiliErrorFlag = true
+      window.electron.ipcRenderer.send("download-bilibili", { videoPath: form.videoPath,sessdata:globalVar.setting.sessdata })
+      window.electron.ipcRenderer.once('download-bilibili-finish', async (_, { video, cover }) => {
+        const imageBase64 = await bufferToBase64(cover)
+        if (form.updatePic) {
+          video_detail_view.value![0].coverPath = `${imageBase64}`
+          db.videos.update(id, {
+            coverPath: imageBase64 as string
+          })
+          //路由切换返回后无法更新图片，因此强制更新真实dom
+          const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLImageElement[] | HTMLElement[]
+          forceUpdateList.forEach(item=>{
+              // item.style.backgroundImage = `url(${imageBase64})`
+              if(item instanceof HTMLImageElement){
+                  item.src= imageBase64 as string
+              }else{
+                item.style.backgroundImage = `url(${imageBase64})`
+              }
+          })
+        }
+        const videoBlob = new Blob([video], { type: 'video/mp4' });
+        let t = await db.videos_data.get(id)
+        console.log(t,"目标位");
+        if (t) {
+          db.videos_data.update(id, {
+            data: videoBlob
+          })
+        } else {
+          db.videos_data.add({
+            id,
+            data: videoBlob
+          })
+        }
+        if (activeVideo.value.id == id) {
+          activeVideo.value.src = videoBlob
+        }
+        loadingVideoId.value = 0
+        loadingVideoFolderId.value = 0
+        EddVideoFormRef.value?.updateBaseVideo(id)
+      })
+      //download-bilibili-error on
+      window.electron.ipcRenderer.once('download-bilibili-error', (_, { error }) => {
+        if (bilibiliErrorFlag) {
+          bilibiliErrorFlag = false
+          video_detail_view.value![0] = base_video
+          db.videos.update(id, base_video)
+          EddVideoFormRef.value.rollBackForm()
+          loadingVideoId.value = 0
+          loadingVideoFolderId.value = 0
+        }
+        alert(error)
+      })
     }
   } else if (!form.save) {
     db.videos_data.delete(id)
     console.log("updateBaseVideo");
-    EddVideoFormRef.value.updateBaseVideo(id)
+    EddVideoFormRef.value?.updateBaseVideo(id)
   } else {
     console.log("updateBaseVideo");
-    EddVideoFormRef.value.updateBaseVideo(id)
+    EddVideoFormRef.value?.updateBaseVideo(id)
   }
   if (activeVideo.value.id == id) {
     activeVideo.value = {
@@ -308,7 +375,11 @@ const getCanvaasRef = (el, index) => {
 let lastIndex = 0;
 
 const drawLoading = (progress) => {
+  console.log(loadingVideoId.value,"video_detail");
   let index1 = video_detail_view.value.findIndex(item => item.id === loadingVideoId.value)
+  console.log("在video_detail的index1",index1);
+  
+  if(!getCanvaasList.value[index1])return
   if (index1 < 0) {
     if (lastIndex >= 0) {
       const canvas = getCanvaasList.value[lastIndex]
@@ -354,8 +425,38 @@ const drawLoading = (progress) => {
 }
 
 window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
-  drawLoading(progress)
+  if($route.name != 'video_detail')return
+    drawLoading(progress)
 })
+
+//哔站下载解析
+
+//download-bilibili-downloading on
+window.electron.ipcRenderer.on('download-bilibili-downloading', (_, { progress }) => {
+  if($route.name != 'video_detail')return
+    drawLoading(progress)
+})
+const choicePageFlag = ref(true)
+const choiceIndex = ref(1)
+const pageSize = ref(0)
+//download-bilibili-choice on 
+//download-bilibili-choice-result send
+window.electron.ipcRenderer.on('download-bilibili-choice', (_, { number }) => {
+    if($route.name != 'video_detail')return
+    pageSize.value = number
+    choicePageFlag.value = true
+})
+
+watch(()=>choicePageFlag.value,()=>{
+    if(choicePageFlag.value == false && pageSize.value > 1){
+        window.electron.ipcRenderer.send('download-bilibili-choice-result', { index: choiceIndex.value })
+      if($route.name != 'video_detail')return
+        choiceIndex.value = 1
+        pageSize.value = 0
+    }
+})
+
+
 </script>
 
 <style scoped lang="less">

@@ -15,7 +15,7 @@
                             <el-radio-group v-model="form.type">
                                 <el-radio :label="VideoType.local">本地视频</el-radio>
                                 <el-radio :label="VideoType.web">网络视频</el-radio>
-                                <el-radio disabled :label="VideoType.bilibili">b站视频</el-radio>
+                                <el-radio :label="VideoType.bilibili">b站视频</el-radio>
                             </el-radio-group>
                         </el-form-item>
                         <el-form-item label="视频标题" prop="title">
@@ -40,7 +40,7 @@
                                 添加别名
                             </button>
                         </el-form-item>
-                        <el-form-item label="是否缓存">
+                        <el-form-item label="是否缓存" prop="save">
                             <el-checkbox v-model="form.save" size="large"></el-checkbox>
                         </el-form-item>
                         <el-form-item label="更新图片？" v-if="form.save">
@@ -66,6 +66,7 @@ import type { AddVideoInfo, EditVideoInfo, videoFolder } from '@renderer/views/v
 import { VideoType } from '@renderer/views/video/index';
 import { reactive, ref, Ref, nextTick } from 'vue'
 import { videos_table } from '@renderer/indexDB/dbType';
+import { useGlobalVar } from '@renderer/store';
 const flag = ref(false)
 const props = defineProps({
     editVideoFlag: {
@@ -203,15 +204,26 @@ const confirmAddDialog = () => {
         }
     })
 }
+const globalVar = useGlobalVar()
 watch(() => form.value.videoPath, () => {
     const linkRegex = /^http/;
-    if (linkRegex.test(form.value.videoPath)) {
+    const bilibiliRegex = /^https:\/\/www\.bilibili\.com\/video\/BV[A-Za-z0-9]+/;
+    if (linkRegex.test(form.value.videoPath.trim()) && !bilibiliRegex.test(form.value.videoPath.trim())) {
         form.value.type = VideoType.web
-    } else {
+    } else if(bilibiliRegex.test(form.value.videoPath.trim())){
+        form.value.type = VideoType.bilibili
+    }else{
         form.value.type = VideoType.local
     }
     console.log(form.value)
 })
+watch(()=>form.value.type,(newValue,oldValue)=>{
+    const bilibiliRegex = /^https:\/\/www\.bilibili\.com\/video\/BV[A-Za-z0-9]+/;
+    if(oldValue === VideoType.bilibili && bilibiliRegex.test(form.value.videoPath.trim())){
+        form.value.type = VideoType.bilibili
+    }
+})
+
 
 const rollBackForm = () => {
     form.value =
@@ -233,6 +245,7 @@ const rollBackForm = () => {
 const updateBaseVideo = async (id: number) => {
     console.log("updateBaseVideo");
     base_video = (await db.videos.get(id))!
+    rollBackForm()
 }
 
 defineExpose({rollBackForm,updateBaseVideo})
@@ -281,15 +294,31 @@ const rules = reactive<any>({
             validator: (rule: any, value: any, callback: any) => {
                 const linkRegex = /^(http|https):\/\/[^ "]+$/;
                 const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/;
+                const bilibiliRegex = /^https:\/\/www\.bilibili\.com\/video\/BV[A-Za-z0-9]+/;
 
                 if (!value) {
                     callback();
-                } else if (form.value.type === VideoType.web && linkRegex.test(value)) {
+                } else if (form.value.type === VideoType.web && linkRegex.test(value.trim())) {
                     callback();
-                } else if (form.value.type === VideoType.local && localFileRegex.test(value)) {
+                } else if (form.value.type === VideoType.local && localFileRegex.test(value.trim())) {
                     callback();
+                }else if(form.value.type === VideoType.bilibili && bilibiliRegex.test(value.trim())){
+                    if(globalVar.setting.sessdata.trim().length === 0){
+                        callback(new Error('你必须要先设置哔哩哔哩SESSDATA才能使用bilibili解析'));
+                    }else{
+                        callback();
+                    }
                 } else {
-                    callback(new Error(`请输入有效的${form.value.type === VideoType.web ? '链接' : '本地文件路径'}`));
+                    callback(new Error(`请输入有效的${
+                    (()=>{
+                        switch(form.value.type){
+                            case VideoType.web: return '链接'
+                            case VideoType.local: return '本地文件路径'
+                            case VideoType.bilibili: return 'bilibiliBV视频链接'
+                            default: return '链接'
+                        }
+                    })()
+                    }`));
                 }
             },
             trigger: 'blur'
@@ -299,9 +328,9 @@ const rules = reactive<any>({
         {
             validator: (rule: any, value: any, callback: any) => {
                 if (value) {
-                    const isUrl = /^(http|https):\/\/.+/.test(value);
-                    const isBase64 = /^data:image\/\w+;base64,.+$/.test(value);
-                    const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/.test(value);
+                    const isUrl = /^(http|https):\/\/.+/.test(value.trim());
+                    const isBase64 = /^data:image\/\w+;base64,.+$/.test(value.trim());
+                    const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/.test(value.trim());
 
                     if (!isUrl && !isBase64 && !localFileRegex) {
                         callback(new Error('请输入有效的图片地址或 base64 图片'));
@@ -314,6 +343,23 @@ const rules = reactive<any>({
                     } else {
                         callback();
                     }
+                }
+            },
+            trigger: 'blur'
+        }
+    ],
+    save:[
+        {
+            validator:(rule: any, value: any, callback: any) => {
+                if(form.value.type === VideoType.bilibili){
+                    console.log(value);
+                    if(value === false){
+                        callback(new Error('如果你要上传的的是一个B站视频，那么必须缓存'));
+                    }else{
+                        callback();
+                    }
+                }else{
+                    callback();
                 }
             },
             trigger: 'blur'

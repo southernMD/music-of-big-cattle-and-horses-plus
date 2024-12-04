@@ -185,6 +185,13 @@
             </div>
         </div>
     </div>
+    <div class="video">
+        <div class="title">视频</div>
+        <div class="sessdata">
+            <div class="title">输入bilibili SESSDATA</div>
+            <MyInput :width="`80%`" v-model="globalVar.setting.sessdata" placeholder="SESSDATA" />
+        </div>
+    </div>
     <div class="about">
         <div class="title">关于</div>
         <div class="now-version">
@@ -205,6 +212,7 @@ import {onMounted, toRef,ref, watch, watchEffect,toRaw} from 'vue'
 import {githubUpdate} from '@renderer/api/index'
 import {useGlobalVar, useMain} from '@renderer/store'
 import dropDown from '@renderer/components/myVC/dropDown.vue'
+import MyInput from '@renderer/components/myVC/MyInput.vue'
 const Main = useMain()
 const globalVar = useGlobalVar()
 const fontList = toRef(globalVar,'fontList')
@@ -221,6 +229,7 @@ const lrcWeight = ref([{name:'标准'},{name:'加粗'}])
 const lrcBorder = ref([{name:'有描边'},{name:'无描边'}])
 const lrcColor = ref([{name:'默认'},{name:'自定义'}])
 console.log(quick.value,quickGlobal.value);
+const sessdata = toRef(globalVar.setting,'sessdata')
 const version = toRef(globalVar.setting,'version')
 
 const changeFontFamily = (ms)=>{
@@ -885,6 +894,17 @@ const searchUpdate = async()=>{
                 font-size:12px;
             }
         }
+    }
+    .video{
+        .sessdata{
+            .title{
+                font-weight: bolder;
+                font-size: 12px;
+                color: var(--smallFontColor, #969696);
+                margin-bottom: 1em;
+            }
+        }
+
     }
 }
 :deep(.el-checkbox){

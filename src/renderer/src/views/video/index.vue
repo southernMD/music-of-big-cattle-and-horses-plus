@@ -9,6 +9,7 @@
                     <el-radio label="otherName" size="large">别名</el-radio>
                 </el-radio-group>
                 <div class="btns">
+                    <div class="goSetting" @click="goSetting">去设置bilibili SESSDATA</div>
                     <div class="btn btn1" :class="{ 'btn-oneself': globalVar.oneself == 1 }"
                         @click="loadingVideoId === 0 ? addVideoFlag = true : addVideoFlag = false">
                         <i class="iconfont icon-xiazai1"></i>
@@ -28,13 +29,13 @@
         <div class="title">
             <div class="title-txt">视频列表</div>
         </div>
-        <div class="video-group">
+        <div class="video-group" >
             <el-collapse v-model="activeNames" v-if="!ifSearch || searchTypeid === 'folder'">
                 <el-collapse-item :title="folder_val.folderName" :name="folder_val.id"
                     v-for="folder_val, folder_index in viewVidoListWithPinyin">
-                    <div class="folder-video-item" v-for="video_val, video_index in folder_val.list">
+                    <div  class="folder-video-item" v-for="video_val, video_index in folder_val.list">
                         <div class="view" @click="goVideo(video_val, folder_val.folderName, folder_index, video_index)"
-                            :style="{ 'background-image': `url(${video_val.coverPath})` }">
+                            :style="{ 'background-image': `url(${video_val.coverPath})` }" :data-forceUpdate="video_val.id">
                             <canvas :ref="el => getCanvaasRef(el as HTMLCanvasElement, folder_index, video_index)"
                                 width="0" height="0"></canvas>
                         </div>
@@ -59,7 +60,7 @@
             <div class="other-folder" v-else>
                 <div class="folder-video-item" v-for="video_val, video_index in viewVidoListWithPinyinOther">
                     <div class="view" @click="goVideo(video_val, video_val.folderName, 0, video_index)"
-                        :style="{ 'background-image': `url(${video_val.coverPath})` }">
+                        :style="{ 'background-image': `url(${video_val.coverPath})` }" :data-forceUpdate="video_val.id">
                         <canvas :ref="el => getCanvaasRef(el as HTMLCanvasElement, 0, video_index)" width="0"
                             height="0"></canvas>
                     </div>
@@ -87,18 +88,19 @@
     <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag"
         v-model:options="options" @updateFolder="updateFolder" @editVideo="editVideo" :id="globalVar.editVideo.videoId">
     </EddVideoForm>
+    <ChoicePage v-model:choicePageFlag="choicePageFlag" v-model:choiceIndex="choiceIndex" :pageSize="pageSize"></ChoicePage>
 </template>
 
 <script setup lang="ts">
 import { useGlobalVar, useVideo } from '@renderer/store';
-import { nextTick, onMounted, Ref, ref, toRaw, toRef, watch } from 'vue'
+import { ComponentInternalInstance, getCurrentInstance, nextTick, onMounted, Ref, ref, toRaw, toRef, watch } from 'vue'
 import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo, videoSearchInfo } from './indexType.d.ts';
 
 import pinyin from "pinyin";
 import * as wanakana from 'wanakana';
 import Fuse from 'fuse.js';
 
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import MyInput from '@renderer/components/myVC/MyInput.vue';
 // import MyInputSelect from '@renderer/components/myVC/MyInputSelect.vue';
 import AddVideoForm from '@renderer/components/video/AddVideoForm.vue'
@@ -124,6 +126,7 @@ const loadingVideoFolderId = toRef(videoPinia, 'loadingVideoFolderId')
 console.log(loadingVideoId.value, "KJHGIOIJP^&&&&&&&&&&&&&&&&&&&&&&&&&&&");
 
 const $router = useRouter()
+const $route = useRoute()
 const searchInput = ref('')
 const searchType = ref("查询视频标题")
 const searchTypeid = ref("folder")
@@ -328,6 +331,7 @@ watch(() => globalVar.delVideo, async () => {
 //editForm
 const editVideoFlag = ref(false)
 watch(() => globalVar.editVideo.flag, () => {
+    console.log(loadingVideoId.value);
     if (loadingVideoId.value !== 0) {
         editVideoFlag.value = false
         globalVar.editVideo.flag = false
@@ -378,9 +382,9 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
     })
 
     if (form.save) {
+        loadingVideoId.value = id
+        loadingVideoFolderId.value = videoList.value?.[0].id!
         if (form.type === 1 || form.type === 2) {
-            loadingVideoId.value = id
-            loadingVideoFolderId.value = videoList.value?.[0].id!
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
             window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
                 console.log("save-video-finish");
@@ -412,11 +416,48 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                 await db.videos.delete(id)
                 alert(error)
             })
+        }else{
+            //b站下载
+            bilibiliErrorFlag = true
+            window.electron.ipcRenderer.send("download-bilibili",{ videoPath: form.videoPath,sessdata:globalVar.setting.sessdata })
+            //download-bilibili-finish on
+            window.electron.ipcRenderer.on('download-bilibili-finish',async (_, { video, cover}) => {
+                const imageBase64 = await bufferToBase64(cover)
+                videoList.value![0].list[0].coverPath = imageBase64 as string
+                const videoBlob = new Blob([video], { type: 'video/mp4' });
+                db.videos.update(id, {
+                    coverPath: imageBase64 as string
+                })
+                db.videos_data.add({
+                    id,
+                    data: videoBlob
+                })
+                nextTick(() => {
+                    searchInputFn()
+                })
+                loadingVideoId.value = 0
+                loadingVideoFolderId.value = 0
+            })
+            //download-bilibili-error on
+            window.electron.ipcRenderer.once('download-bilibili-error', (_, { error }) => {
+                if(bilibiliErrorFlag){
+                    bilibiliErrorFlag = false
+                    videoList.value?.shift()
+                    db.videos.delete(loadingVideoId.value)
+                    nextTick(()=>{
+                        searchInputFn()
+                    })
+                    loadingVideoId.value = 0
+                    loadingVideoFolderId.value = 0
+                }
+                alert(error)
+            })
         }
     }
 }
 
 const EddVideoFormRef = ref()
+let bilibiliErrorFlag = false //删除操作只触发一次
 const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId }: { id: number, form: EditVideoInfo, nowTime: string, reloadFlag: boolean, base_video: videos_table, originalFolderId: number }) => {
     if (!ifSearch.value || searchTypeid.value === 'folder') {
         const index = viewVidoListWithPinyin.value?.findIndex(item => item.id === form.folderId)!;
@@ -473,9 +514,9 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
     origin.list.unshift(updateOriginObj)
     origin.list.splice(originIndex + 1, 1)
     if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
+        loadingVideoId.value = id
+        loadingVideoFolderId.value = form.folderId
         if (form.type === 1 || form.type === 2) {
-            loadingVideoId.value = id
-            loadingVideoFolderId.value = form.folderId
             window.electron.ipcRenderer.send('saveVideo', { videoPath: form.videoPath, coverPath: form.coverPath })
             window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
                 console.log("save-video-finish");
@@ -498,14 +539,30 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                     const imageBase64 = await bufferToBase64(coverArrayBuffer)
                     db.videos.update(id, {
                         coverPath: `${imageBase64}`
-                    })
-                    updateOriginObj.coverPath = `${imageBase64}`
-                    if (!ifSearch.value || searchTypeid.value === 'folder') viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
+                    }) 
+                    updateOriginObj.coverPath = imageBase64 as string
+                    console.log(imageBase64);
+                    videoList.value!.find(item=>item.id === loadingVideoFolderId.value)!.list.find(item=>item.id === id)!.coverPath = `${imageBase64}`
+                    if (!ifSearch.value || searchTypeid.value === 'folder') {
+                        viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
+                    }
                     else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
+                    //路由切换返回后无法更新图片，因此强制更新真实dom
+                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
+                    forceUpdateList.forEach(item=>{
+                        if(item instanceof HTMLImageElement){
+                            item.src= imageBase64 as string
+                        }else{
+                            item.style.backgroundImage = `url(${imageBase64})`
+                        }
+                    })
+                    nextTick(() => {
+                        searchInputFn()
+                    })
                 }
                 loadingVideoId.value = 0
                 loadingVideoFolderId.value = 0
-                EddVideoFormRef.value.updateBaseVideo(id)
+                EddVideoFormRef.value?.updateBaseVideo(id)
             })
             window.electron.ipcRenderer.once('save-video-error', (_, { error }) => {
                 loadingVideoId.value = 0
@@ -516,12 +573,72 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                 EddVideoFormRef.value.rollBackForm()
                 alert("\n视频缓存修改失败，已自动回滚")
             })
+        }else{
+            loadingVideoId.value = id
+            loadingVideoFolderId.value = form.folderId
+            bilibiliErrorFlag = true
+            window.electron.ipcRenderer.send("download-bilibili",{ videoPath: form.videoPath ,sessdata:globalVar.setting.sessdata})
+            window.electron.ipcRenderer.once('download-bilibili-finish',async (_, { video, cover}) => {
+                const imageBase64 = await bufferToBase64(cover)
+                if(form.updatePic){
+                    updateOriginObj.coverPath = imageBase64 as string
+                    if (!ifSearch.value || searchTypeid.value === 'folder') viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
+                    else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
+                    db.videos.update(id, {
+                        coverPath: imageBase64 as string
+                    })
+                    videoList.value!.find(item=>item.id === loadingVideoFolderId.value)!.list.find(item=>item.id === id)!.coverPath = `${imageBase64}`
+                    if (!ifSearch.value || searchTypeid.value === 'folder') viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
+                    else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
+                    //路由切换返回后无法更新图片，因此强制更新真实dom
+                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[]
+                    forceUpdateList.forEach(item=>{
+                        if(item instanceof HTMLImageElement){
+                            item.src= imageBase64 as string
+                        }else{
+                            item.style.backgroundImage = `url(${imageBase64})`
+                        }
+                    })
+                    nextTick(() => {
+                        searchInputFn()
+                    })
+                }
+                const videoBlob = new Blob([video], { type: 'video/mp4' });
+                let t = await db.videos_data.get(id)
+                console.log(t,"目标位");
+                if (t) {
+                    db.videos_data.update(id, {
+                        data: videoBlob
+                    })
+                } else {
+                    db.videos_data.add({
+                        id,
+                        data: videoBlob
+                    })
+                }
+                loadingVideoId.value = 0
+                loadingVideoFolderId.value = 0
+                EddVideoFormRef.value?.updateBaseVideo(id)
+            })
+            //download-bilibili-error on
+            window.electron.ipcRenderer.once('download-bilibili-error', (_, { error }) => {
+                if(bilibiliErrorFlag){
+                    bilibiliErrorFlag = false
+                    //@ts-ignore id only undefined in table create
+                    viewVidoListWithPinyin.value![0].list[0] = base_video
+                    db.videos.update(id, base_video)
+                    EddVideoFormRef.value.rollBackForm()
+                    loadingVideoId.value = 0
+                    loadingVideoFolderId.value = 0
+                }
+                alert(error)
+            })
         }
     } else if (!form.save) {
         db.videos_data.delete(id)
-        EddVideoFormRef.value.updateBaseVideo(id)
+        EddVideoFormRef.value?.updateBaseVideo(id)
     } else {
-        EddVideoFormRef.value.updateBaseVideo(id)
+        EddVideoFormRef.value?.updateBaseVideo(id)
     }
 
 }
@@ -530,7 +647,10 @@ let lastIndex1 = 0;
 let lastIndex2 = 0;
 const drawLoading = (progress) => {
     let index1 = 0, index2 = 0
+    if(!getCanvaasList.value[index1] || !getCanvaasList.value[index1][index2])return
     if (!ifSearch.value || searchTypeid.value === 'folder') {
+        console.log(viewVidoListWithPinyin.value,"自我");
+        console.log(loadingVideoFolderId.value,"草屋");
         index1 = viewVidoListWithPinyin.value.findIndex(item => item.id === loadingVideoFolderId.value)
         index2 = index1 >= 0 ? viewVidoListWithPinyin.value[index1].list.findIndex(item => item.id === loadingVideoId.value) : -1
     } else {
@@ -586,8 +706,48 @@ const drawLoading = (progress) => {
     lastIndex2 = index2
 }
 window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
+    if($route.name != 'video')return
     drawLoading(progress)
 })
+
+//哔站下载解析
+
+//download-bilibili-downloading on
+window.electron.ipcRenderer.on('download-bilibili-downloading', (_, { progress }) => {
+    if($route.name != 'video')return
+    drawLoading(progress)
+})
+const choicePageFlag = ref(true)
+const choiceIndex = ref(1)
+const pageSize = ref(0)
+//download-bilibili-choice on 
+//download-bilibili-choice-result send
+window.electron.ipcRenderer.on('download-bilibili-choice', (_, { number }) => {
+    if($route.name != 'video')return
+    pageSize.value = number
+    choicePageFlag.value = true
+})
+
+watch(()=>choicePageFlag.value,()=>{
+    if(choicePageFlag.value == false && pageSize.value > 1){
+        window.electron.ipcRenderer.send('download-bilibili-choice-result', { index: choiceIndex.value })
+        if($route.name != 'video')return
+        choiceIndex.value = 1
+        pageSize.value = 0
+    }
+})
+
+
+const goSetting = () => {
+    $router.push({name:'setting'})
+    let t = setInterval(()=>{
+        if($route.name === 'setting'){
+            globalVar.changeMainScroll = 2000
+            clearInterval(t)
+        }
+    },100)
+}
+
 </script>
 
 <style scoped lang="less">
@@ -603,7 +763,18 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
 
             .btns {
                 display: flex;
-
+                .goSetting{
+                    height: 32px;
+                    line-height: 32px;
+                    user-select: none;
+                    cursor: pointer;
+                    font-size: 12px;
+                    text-decoration: underline;
+                    color: @url-color;
+                    &:hover{
+                        color: @url-color-hover;
+                    }
+                }
                 .btn {
                     justify-content: center;
                     cursor: pointer;

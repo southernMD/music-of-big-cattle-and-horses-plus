@@ -13,6 +13,7 @@ declare module '@vue/runtime-core' {
     AddTipDialog: typeof import('./src/components/myVC/AddTipDialog.vue')['default']
     AddVideoForm: typeof import('./src/components/video/AddVideoForm.vue')['default']
     ChangeSkin: typeof import('./src/components/MyMainMenu/changeSkin/index.vue')['default']
+    ChoicePage: typeof import('./src/components/video/ChoicePage.vue')['default']
     ColorBlock: typeof import('./src/components/myVC/ColorBlock.vue')['default']
     ColorPick: typeof import('./src/components/ColorPick.vue')['default']
     Comment: typeof import('./src/components/myVC/Comment.vue')['default']

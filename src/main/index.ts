@@ -8,6 +8,7 @@ import videoServer from './video-server'
 // import httpSever from './http/app'
 import {createWindow,lrcwindow,dragWindw} from './windows'
 import log from 'electron-log'
+import "./dowloadBiliBili"
 // import *  as bytenode from 'bytenode'
 // 检查应用程序是否已经在运行
 const argv = process.argv;

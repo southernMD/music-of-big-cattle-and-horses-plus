@@ -16,7 +16,7 @@
                             <el-radio-group v-model="form.type">
                                 <el-radio :label="VideoType.local">本地视频</el-radio>
                                 <el-radio :label="VideoType.web">网络视频</el-radio>
-                                <el-radio disabled :label="VideoType.bilibili">b站视频</el-radio>
+                                <el-radio :label="VideoType.bilibili">b站视频</el-radio>
                             </el-radio-group>
                         </el-form-item>
                         <el-form-item label="视频标题" prop="title">
@@ -41,7 +41,7 @@
                                 添加别名
                             </button>
                         </el-form-item>
-                        <el-form-item label="是否缓存">
+                        <el-form-item label="是否缓存" prop="save">
                             <el-checkbox v-model="form.save" size="large"></el-checkbox>
                         </el-form-item>
                         <el-form-item label="描述信息">
@@ -64,6 +64,7 @@ import type  { AddVideoInfo, videoFolder } from '@renderer/views/video/indexType
 import { VideoType } from '@renderer/views/video/index';
 
 import { reactive, ref,Ref ,nextTick} from 'vue'
+import { useGlobalVar } from '@renderer/store';
 const flag = ref(false)
 const props = defineProps({
     addVideoFlag:{
@@ -116,64 +117,32 @@ const confirmAddDialog = () => {
                 updateTime: nowTime
             })
             $emit("addVideo",{id,form:form.value,nowTime})
-            //查找id与form.value.folderId相同的项
-            // const index = videoList.value?.findIndex(item => item.id === form.value.folderId)!;
-            // videoList.value![index].updateTime = nowTime
-            // videoList.value?.sort((a, b) => {
-            //     return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
-            // })
-            // //把form.value.folderId对应的放到videoList.value 的第一个
-            // videoList.value?.unshift(videoList.value?.find(item => item.id === form.value.folderId)!)
-            // videoList.value?.splice(videoList.value?.findIndex(item => item.id === form.value.folderId)!, 1)
-            // videoList.value?.[0].list.unshift({
-            //     id,
-            //     title: form.value.title,
-            //     type: form.value.type,
-            //     videoPath: form.value.videoPath,
-            //     coverPath: form.value.coverPath,
-            //     otherName: form.value.otherName.join(" "),
-            //     description: form.value.description,
-            //     time: nowTime,
-            //     updateTime: nowTime,
-            //     folderId: videoList.value?.[0].id
-            // })
-            // if (form.value.save) {
-            //     if (form.value.type === 1 || form.value.type === 2) {
-            //         window.electron.ipcRenderer.send('saveVideo', { videoPath: form.value.videoPath, coverPath: form.value.coverPath })
-            //         window.electron.ipcRenderer.once('save-video-finish', async (_, { arrayBuffer, coverArrayBuffer }) => {
-            //             console.log("save-video-finish");
-            //             //创建链接
-            //             //arrayBuffer转blob
-            //             const arrayBufferBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
-            //             db.videos_data.add({
-            //                 id,
-            //                 data: arrayBufferBlob
-            //             })
-            //             if (form.value.coverPath.length == 0) {
-            //                 //coverArrayBuffer转base64
-            //                 const imageBase64 = await bufferToBase64(coverArrayBuffer)
-            //                 db.videos.update(id, {
-            //                     coverPath: `${imageBase64}`
-            //                 })
-            //                 videoList.value![0].list[0].coverPath = `${imageBase64}`
-            //             }
-            //         })
-            //     }
-            // }
             $emit('update:addVideoFlag',false)
         } else {
             console.log(form.value);
         }
     })
 }
+const globalVar = useGlobalVar()
 watch(() => form.value.videoPath, () => {
     const linkRegex = /^http/;
-    if (linkRegex.test(form.value.videoPath)) {
+    const bilibiliRegex = /^https:\/\/www\.bilibili\.com\/video\/BV[A-Za-z0-9]+/;
+    if (linkRegex.test(form.value.videoPath.trim()) && !bilibiliRegex.test(form.value.videoPath.trim())) {
         form.value.type = VideoType.web
-    } else {
+    } else if(bilibiliRegex.test(form.value.videoPath.trim())){
+        console.log(globalVar.setting.sessdata);
+
+        form.value.type = VideoType.bilibili
+    }else{
         form.value.type = VideoType.local
     }
     console.log(form.value)
+})
+watch(()=>form.value.type,(newValue,oldValue)=>{
+    const bilibiliRegex = /^https:\/\/www\.bilibili\.com\/video\/BV[A-Za-z0-9]+/;
+    if(oldValue === VideoType.bilibili && bilibiliRegex.test(form.value.videoPath.trim())){
+        form.value.type = VideoType.bilibili
+    }
 })
 
 const cancelAddDialog = () => {
@@ -186,13 +155,6 @@ const updateOptions = async (folderName: string) => {
         updateTime: new Date().toLocaleString()
     })
     $emit('updateFolder',{id,folderName})
-    // videoList.value?.unshift({
-    //     id: id,
-    //     folderName: folderName,
-    //     list: [],
-    //     updateTime: new Date().toLocaleString()
-    // })
-    // activeNames.value.unshift(id)
     return id
 
 }
@@ -228,15 +190,30 @@ const rules = reactive<any>({
             validator: (rule: any, value: any, callback: any) => {
                 const linkRegex = /^(http|https):\/\/[^ "]+$/;
                 const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/;
-
+                const bilibiliRegex = /^https:\/\/www\.bilibili\.com\/video\/BV[A-Za-z0-9]+/;
                 if (!value) {
                     callback();
-                } else if (form.value.type === VideoType.web && linkRegex.test(value)) {
+                } else if (form.value.type === VideoType.web && linkRegex.test(value.trim())) {
                     callback();
-                } else if (form.value.type === VideoType.local && localFileRegex.test(value)) {
+                } else if (form.value.type === VideoType.local && localFileRegex.test(value.trim())) {
                     callback();
+                }else if(form.value.type === VideoType.bilibili && bilibiliRegex.test(value.trim())){
+                    if(globalVar.setting.sessdata.trim().length === 0){
+                        callback(new Error('你必须要先设置哔哩哔哩SESSDATA才能使用bilibili解析'));
+                    }else{
+                        callback();
+                    }
                 } else {
-                    callback(new Error(`请输入有效的${form.value.type === VideoType.web ? '链接' : '本地文件路径'}`));
+                    callback(new Error(`请输入有效的${
+                    (()=>{
+                        switch(form.value.type){
+                            case VideoType.web: return '链接'
+                            case VideoType.local: return '本地文件路径'
+                            case VideoType.bilibili: return 'bilibiliBV视频链接'
+                            default: return '链接'
+                        }
+                    })()
+                    }`));
                 }
             },
             trigger: 'blur'
@@ -246,9 +223,9 @@ const rules = reactive<any>({
         {
             validator: (rule: any, value: any, callback: any) => {
                 if (value) {
-                    const isUrl = /^(http|https):\/\/.+/.test(value);
-                    const isBase64 = /^data:image\/\w+;base64,.+$/.test(value);
-                    const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/.test(value);
+                    const isUrl = /^(http|https):\/\/.+/.test(value.trim());
+                    const isBase64 = /^data:image\/\w+;base64,.+$/.test(value.trim());
+                    const localFileRegex = /^([a-zA-Z]:\\|\/|\.\/|\.\.\/)[^ "]*$/.test(value.trim());
 
                     if (!isUrl && !isBase64 && !localFileRegex) {
                         callback(new Error('请输入有效的图片地址或 base64 图片'));
@@ -265,7 +242,25 @@ const rules = reactive<any>({
             },
             trigger: 'blur'
         }
+    ],
+    save:[
+        {
+            validator:(rule: any, value: any, callback: any) => {
+                if(form.value.type === VideoType.bilibili){
+                    console.log(value);
+                    if(value === false){
+                        callback(new Error('如果你要上传的的是一个B站视频，那么必须缓存'));
+                    }else{
+                        callback();
+                    }
+                }else{
+                    callback();
+                }
+            },
+            trigger: 'blur'
+        }
     ]
+
 });
 
 const handleClose = (tag: string) => {
