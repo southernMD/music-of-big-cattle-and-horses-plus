@@ -189,7 +189,13 @@
         <div class="title">视频</div>
         <div class="sessdata">
             <div class="title">输入bilibili SESSDATA</div>
-            <MyInput :width="`80%`" v-model="globalVar.setting.sessdata" placeholder="SESSDATA" />
+            <MyInput :width="`80%`" v-model="sessdata" placeholder="SESSDATA" />
+        </div>
+        <div class="transcoed">
+            <div class="open">
+            <el-checkbox v-model="transcoed" label="上传视频时是否重新编码" size="large" />
+            <span>（如果上传视频无法播放，请勾选此选项，会走两遍进度条）</span>
+        </div>
         </div>
     </div>
     <div class="about">
@@ -230,6 +236,7 @@ const lrcBorder = ref([{name:'有描边'},{name:'无描边'}])
 const lrcColor = ref([{name:'默认'},{name:'自定义'}])
 console.log(quick.value,quickGlobal.value);
 const sessdata = toRef(globalVar.setting,'sessdata')
+const transcoed = toRef(globalVar.setting,'transcoed')
 const version = toRef(globalVar.setting,'version')
 
 const changeFontFamily = (ms)=>{
@@ -898,12 +905,23 @@ const searchUpdate = async()=>{
     .video{
         .sessdata{
             .title{
-                font-weight: bolder;
+                font-weight: normal;
                 font-size: 12px;
-                color: var(--smallFontColor, #969696);
                 margin-bottom: 1em;
             }
         }
+        .transcoed{
+            .open{
+                display: flex;
+                align-items: center;
+                margin-top: 0px;
+                >span{
+                    font-size: 12px;
+                    color: @small-font-color;
+                }
+            }
+        }
+
 
     }
 }

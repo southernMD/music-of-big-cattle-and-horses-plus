@@ -293,7 +293,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
       })
     } else {
       bilibiliErrorFlag = true
-      window.electron.ipcRenderer.send("download-bilibili", { videoPath: form.videoPath,sessdata:globalVar.setting.sessdata })
+      window.electron.ipcRenderer.send("download-bilibili", { videoPath: form.videoPath,sessdata:globalVar.setting.sessdata ,transcoed: globalVar.setting.transcoed})
       window.electron.ipcRenderer.once('download-bilibili-finish', async (_, { video, cover }) => {
         const imageBase64 = await bufferToBase64(cover)
         if (form.updatePic) {

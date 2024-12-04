@@ -9,7 +9,7 @@
                     <el-radio label="otherName" size="large">别名</el-radio>
                 </el-radio-group>
                 <div class="btns">
-                    <div class="goSetting" @click="goSetting">去设置bilibili SESSDATA</div>
+                    <div class="goSetting" @click="goSetting">去设置视频选项</div>
                     <div class="btn btn1" :class="{ 'btn-oneself': globalVar.oneself == 1 }"
                         @click="loadingVideoId === 0 ? addVideoFlag = true : addVideoFlag = false">
                         <i class="iconfont icon-xiazai1"></i>
@@ -189,6 +189,7 @@ let viewVidoListWithPinyin: Ref<videoSearchInfo[]> = ref([])
 let viewVidoListWithPinyinOther: Ref<(videoSearchInfo["list"])> = ref([])
 
 watch(() => videoList.value, (newVal) => {
+    console.log(videoList.value);
     videoListWithPinyin = videoList.value!.map(folder => ({
         ...folder,
         folderSearchName: pinyin(folder.folderName, { style: 0 }).flat().join(''),
@@ -198,10 +199,10 @@ watch(() => videoList.value, (newVal) => {
             ...video,
             titleSearchName: pinyin(video.title, { style: 0 }).flat().join(''),
             titleSearchNameFl: pinyin(video.title, { style: 4 }).flat().join(''),
-            otherNameSearchName: video.otherName.split(" ").map(item => pinyin(item, { style: 0 }).flat().join('')),
-            otherNameSearchNameFl: video.otherName.split(" ").map(item => pinyin(item, { style: 4 }).flat().join('')),
+            otherNameSearchName: video.otherName.split(",").map(item => pinyin(item, { style: 0 }).flat().join('')),
+            otherNameSearchNameFl: video.otherName.split(",").map(item => pinyin(item, { style: 4 }).flat().join('')),
             romojiTitle: wanakana.isJapanese(video.title) ? wanakana.toRomaji(video.title) : '',
-            romojiOtherName: video.otherName.split(" ").map(item => wanakana.isJapanese(item) ? wanakana.toRomaji(item) : ''),
+            romojiOtherName: video.otherName.split(",").map(item => wanakana.isJapanese(item) ? wanakana.toRomaji(item) : ''),
         }))
     }));
     if (viewVidoListWithPinyin.value.length === 0) {
@@ -254,7 +255,11 @@ const searchInputFn = async () => {
                     "otherNameSearchName", "otherNameSearchNameFl", "romojiOtherName"
                 ]
             })
+            console.log(videoListWithPinyin);
+            console.log(allVideo);
+            console.log(searchKey);
             viewVidoListWithPinyinOther.value = fuse3.search(searchKey).map(i => i.item)
+            console.log(viewVidoListWithPinyinOther.value );
             break;
     }
 }
@@ -352,6 +357,8 @@ const updateFolder = ({ id, folderName }) => {
 
 const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTime: string }) => {
     // 查找id与form.value.folderId相同的项
+    console.log(form);
+    console.log(videoList.value);
     const index = videoList.value?.findIndex(item => item.id === form.folderId)!;
     videoList.value![index].updateTime = nowTime
     videoList.value?.sort((a, b) => {
@@ -366,7 +373,7 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
         type: form.type,
         videoPath: form.videoPath,
         coverPath: form.coverPath,
-        otherName: form.otherName.join(" "),
+        otherName: form.otherName.join(","),
         description: form.description,
         time: nowTime,
         updateTime: nowTime,
@@ -395,13 +402,21 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                     id,
                     data: arrayBufferBlob
                 })
-                if (form.coverPath.length == 0) {
+                if (form.coverPath.trim().length == 0) {
                     //coverArrayBuffer转base64
                     const imageBase64 = await bufferToBase64(coverArrayBuffer)
                     db.videos.update(id, {
                         coverPath: `${imageBase64}`
                     })
                     videoList.value![0].list[0].coverPath = `${imageBase64}`
+                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
+                    forceUpdateList.forEach(item=>{
+                        if(item instanceof HTMLImageElement){
+                            item.src= imageBase64 as string
+                        }else{
+                            item.style.backgroundImage = `url(${imageBase64})`
+                        }
+                    })
                     nextTick(() => {
                         searchInputFn()
                     })
@@ -419,19 +434,32 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
         }else{
             //b站下载
             bilibiliErrorFlag = true
-            window.electron.ipcRenderer.send("download-bilibili",{ videoPath: form.videoPath,sessdata:globalVar.setting.sessdata })
+            window.electron.ipcRenderer.send("download-bilibili",{ videoPath: form.videoPath,sessdata:globalVar.setting.sessdata,transcoed: globalVar.setting.transcoed})
             //download-bilibili-finish on
-            window.electron.ipcRenderer.on('download-bilibili-finish',async (_, { video, cover}) => {
+            window.electron.ipcRenderer.once('download-bilibili-finish',async (_, { video, cover}) => {
                 const imageBase64 = await bufferToBase64(cover)
-                videoList.value![0].list[0].coverPath = imageBase64 as string
+                console.log(form.coverPath);
+                if(form.coverPath.trim().length === 0){
+                    console.log("是我干的");
+                    videoList.value![0].list[0].coverPath = imageBase64 as string
+                    db.videos.update(id, {
+                        coverPath: imageBase64 as string
+                    })
+                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
+                    forceUpdateList.forEach(item=>{
+                        if(item instanceof HTMLImageElement){
+                            item.src= imageBase64 as string
+                        }else{
+                            item.style.backgroundImage = `url(${imageBase64})`
+                        }
+                    })
+                }
                 const videoBlob = new Blob([video], { type: 'video/mp4' });
-                db.videos.update(id, {
-                    coverPath: imageBase64 as string
-                })
                 db.videos_data.add({
                     id,
                     data: videoBlob
                 })
+
                 nextTick(() => {
                     searchInputFn()
                 })
@@ -442,7 +470,7 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
             window.electron.ipcRenderer.once('download-bilibili-error', (_, { error }) => {
                 if(bilibiliErrorFlag){
                     bilibiliErrorFlag = false
-                    videoList.value?.shift()
+                    videoList.value?.[0].list.shift()
                     db.videos.delete(loadingVideoId.value)
                     nextTick(()=>{
                         searchInputFn()
@@ -481,7 +509,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
         viewVidoListWithPinyin.value![0].list[0].description = form.description;
         viewVidoListWithPinyin.value![0].list[0].updateTime = nowTime;
         viewVidoListWithPinyin.value![0].list[0].folderId = form.folderId
-        viewVidoListWithPinyin.value![0].list[0].otherName = form.otherName.join(" ");
+        viewVidoListWithPinyin.value![0].list[0].otherName = form.otherName.join(",");
         viewVidoListWithPinyin.value![0].list[0].type = form.type
         viewVidoListWithPinyin.value![0].list[0].videoPath = form.videoPath;
     } else {
@@ -494,7 +522,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
         viewVidoListWithPinyinOther.value![0].description = form.description;
         viewVidoListWithPinyinOther.value![0].updateTime = nowTime;
         viewVidoListWithPinyinOther.value![0].folderId = form.folderId
-        viewVidoListWithPinyinOther.value![0].otherName = form.otherName.join(" ");
+        viewVidoListWithPinyinOther.value![0].otherName = form.otherName.join(",");
         viewVidoListWithPinyinOther.value![0].type = form.type
         viewVidoListWithPinyinOther.value![0].videoPath = form.videoPath;
     }
@@ -508,11 +536,18 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
     updateOriginObj.description = form.description;
     updateOriginObj.updateTime = nowTime;
     updateOriginObj.folderId = form.folderId
-    updateOriginObj.otherName = form.otherName.join(" ");
+    updateOriginObj.otherName = form.otherName.join(",");
     updateOriginObj.type = form.type
     updateOriginObj.videoPath = form.videoPath;
+    updateOriginObj.titleSearchName = pinyin(form.title, { style: 0 }).flat().join('')
+    updateOriginObj.titleSearchNameFl = pinyin(form.title, { style: 4 }).flat().join('')
+    updateOriginObj.otherNameSearchName = form.otherName.map(item => pinyin(item, { style: 0 }).flat().join(''))
+    updateOriginObj.otherNameSearchNameFl = form.otherName.map(item => pinyin(item, { style: 4 }).flat().join(''))
+    updateOriginObj.romojiTitle =  wanakana.isJapanese(form.title) ? wanakana.toRomaji(form.title) : ''
+    updateOriginObj.romojiOtherName = form.otherName.map(item => wanakana.isJapanese(item) ? wanakana.toRomaji(item) : '')
     origin.list.unshift(updateOriginObj)
     origin.list.splice(originIndex + 1, 1)
+    console.log(videoListWithPinyin);
     if (form.save && reloadFlag && form.videoPath != base_video.videoPath) {
         loadingVideoId.value = id
         loadingVideoFolderId.value = form.folderId

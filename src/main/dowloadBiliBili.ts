@@ -8,6 +8,7 @@ import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15'
 let SESSDATA:string | undefined
+let TRANSCOED:boolean | undefined
 const option = {
     headers: {
         'User-Agent': `${UA}`,
@@ -165,6 +166,7 @@ const dowloading = async (videoData: any, url: string, event: Electron.IpcMainEv
     const videoUrl = videoData.video.baseUrl
     const audioUrl = videoData.audio.baseUrl
     intervalTimer = setInterval(async () => {
+        console.log(loading);
         event.reply('download-bilibili-downloading', { progress: weightComputed(loading) })
     }, 500)
     const downloadTask = await Promise.all([
@@ -181,18 +183,20 @@ const dowloading = async (videoData: any, url: string, event: Electron.IpcMainEv
     const combinePath: string[] = []
     for (let i = 0; i < downloadTask.length; i++) {
         const item = downloadTask[i];
-        if (item.contentType === "application/octet-stream" || item.contentType === "video/mp4") {
+        console.log(item);
+        //"application/octet-stream"  "video/mp4" 'application/json'
+        if (item.contentType === "image/jpeg") {
+            savePromise.push(saveFile(join(__dirname, basePath, `${nowTime}.jpg`), downloadTask[i].buffer))
+        } else {
             savePromise.push(saveFile(join(__dirname, basePath, `${nowTime}-${i + 1}`), downloadTask[i].buffer))
             combinePath.push(join(__dirname, basePath, `${nowTime}-${i + 1}`))
-        } else {
-            savePromise.push(saveFile(join(__dirname, basePath, `${nowTime}.jpg`), downloadTask[i].buffer))
         }
     }
     await Promise.all(savePromise)
-    return combineVideo(combinePath, join(__dirname, basePath, nowTime), nowTime)
+    return combineVideo(combinePath, join(__dirname, basePath, nowTime), nowTime, event)
 }
 
-const combineVideo = async (combinePath: string[], basecombinePath: string, filename: string) => {
+const combineVideo = async (combinePath: string[], basecombinePath: string, filename: string,event: Electron.IpcMainEvent) => {
     if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
         ffmpeg.setFfmpegPath(ffmpegPath.path);
     } else {
@@ -204,38 +208,48 @@ const combineVideo = async (combinePath: string[], basecombinePath: string, file
         cover: Buffer | undefined,
         filename: string
     }>((resolve, reject) => {
-        ffmpegCommand = ffmpeg()
+        if(TRANSCOED){
+            ffmpegCommand = ffmpeg()
+            .input(combinePath[0])
+            .input(combinePath[1])
+            .audioCodec('aac') // 使用 AAC 音频编码
+            .videoCodec('libx264') // 使用 H.264 视频编码
+            .outputOptions('-preset', 'fast') // 使用快速编码预设
+            .outputOptions('-crf', '23') // 设置质量（23 是默认值，越小质量越高，文件越大）
+        }else{
+            ffmpegCommand = ffmpeg()
             .input(combinePath[0])
             .input(combinePath[1])
             .audioCodec('copy')
             .videoCodec('copy')
-            .on('start', () => {
-            })
-            .on('progress', function ({ timemark }) {
-                console.log(Math.ceil(pickTime(timemark) / pickTime(total) * 100));
-            })
-            .on('end', () => {
-                const videoData: {
-                    video: Buffer | undefined,
-                    cover: Buffer | undefined,
-                    filename: string
-                } = {
-                    video: undefined,
-                    cover: undefined,
-                    filename
-                }
-                videoData.video = fs.readFileSync(basecombinePath + '.mp4')
-                videoData.cover = fs.readFileSync(basecombinePath + '.jpg')
-                resolve(videoData)
-                ffmpegCommand = null
-            })
-            .on('error', (err: any) => {
-                ffmpegCommand = null
-                reject(err)
-            }).on('codecData', ({ duration }) => {
-                total = duration
-            })
-            .save(basecombinePath + '.mp4')
+        }
+        ffmpegCommand!.on('start', () => {
+        })
+        .on('progress', function ({ timemark }) {
+            event.reply('download-bilibili-downloading', { progress:  Math.round(pickTime(timemark) / pickTime(total) * 100)})
+        })
+        .on('end', () => {
+            const videoData: {
+                video: Buffer | undefined,
+                cover: Buffer | undefined,
+                filename: string
+            } = {
+                video: undefined,
+                cover: undefined,
+                filename
+            }
+            videoData.video = fs.readFileSync(basecombinePath + '.mp4')
+            videoData.cover = fs.readFileSync(basecombinePath + '.jpg')
+            resolve(videoData)
+            ffmpegCommand = null
+        })
+        .on('error', (err: any) => {
+            ffmpegCommand = null
+            reject(err)
+        }).on('codecData', ({ duration }) => {
+            total = duration
+        })
+        .save(basecombinePath + '.mp4')
     })
 }
 const pickTime = (time: string) => {
@@ -257,10 +271,11 @@ const handleDeleteFile = (filename: string) => {
     })
 }
 let bilibiliFilename:string | null = null
-ipcMain.on('download-bilibili', async (event, { videoPath,sessdata }) => {
+ipcMain.on('download-bilibili', async (event, { videoPath,sessdata,transcoed }) => {
     try {
         if(!sessdata || sessdata.trim() === '')throw new Error('SESSDATA is empty')
         SESSDATA = sessdata.trim()
+        TRANSCOED = transcoed
         let videoData = await getVideoMsg(videoPath)
         if (videoData.pages.length > 1) {
             event.reply('download-bilibili-choice', { number: videoData.pages.length })
@@ -301,6 +316,7 @@ ipcMain.on('download-bilibili', async (event, { videoPath,sessdata }) => {
             bilibiliFilename = null
             ffmpegCommand = null
             SESSDATA = undefined
+            TRANSCOED = undefined
             console.log(error);
             event.reply('download-bilibili-error', { error })
         }
@@ -317,6 +333,7 @@ ipcMain.on("dueTo-del-nedd-close-ffmpeg", () => {
         bilibiliFilename = null
         ffmpegCommand = null
         SESSDATA = undefined
+        TRANSCOED = undefined
     } catch (error) {
         if(bilibiliFilename)handleDeleteFile(bilibiliFilename)
         if(intervalTimer)clearInterval(intervalTimer)
@@ -324,6 +341,7 @@ ipcMain.on("dueTo-del-nedd-close-ffmpeg", () => {
         bilibiliFilename = null
         ffmpegCommand = null
         SESSDATA = undefined
+        TRANSCOED = undefined
     }
 
 })

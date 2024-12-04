@@ -74,7 +74,6 @@ declare module '@vue/runtime-core' {
     SmallTips: typeof import('./src/components/myVC/smallTips.vue')['default']
     SongDetail: typeof import('./src/components/MusicRadio/songDetail/index.vue')['default']
     Tag: typeof import('./src/components/myVC/Tag.vue')['default']
-    VideoUpdateForm: typeof import('./src/components/video/videoUpdateForm.vue')['default']
     WriteCommit: typeof import('./src/components/myVC/WriteCommit/index.vue')['default']
     ZhuanJi: typeof import('./src/components/myVC/LineMusic/ZhuanJi/index.vue')['default']
   }

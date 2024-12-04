@@ -1497,6 +1497,7 @@ interface V {
         updataUrl:string
         newVersion:string
         sessdata:string
+        transcoed:boolean
     }
     clearList:boolean
     radioReady:boolean
@@ -1589,7 +1590,8 @@ export const useGlobalVar = defineStore('globalVar', {
                 version:'',
                 updataUrl:'',
                 newVersion:'',
-                sessdata:''
+                sessdata:'',
+                transcoed:false
             },
             clearList:false,
             radioReady:false,

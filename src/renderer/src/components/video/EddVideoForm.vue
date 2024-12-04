@@ -135,7 +135,7 @@ watch(() => props.id, async () => {
                 type: base_video?.type,
                 videoPath: base_video?.videoPath,
                 coverPath: base_video?.coverPath,
-                otherName:base_video?.otherName.length!=0 ? base_video?.otherName.split(" "):[],
+                otherName:base_video?.otherName.length!=0 ? base_video?.otherName.split(","):[],
                 description: base_video?.description,
                 updateTime: base_video?.updateTime,
                 save: save_flag,
@@ -170,7 +170,7 @@ const confirmAddDialog = () => {
                 base_video.type === form.value.type &&
                 base_video.videoPath === form.value.videoPath &&
                 base_video.coverPath === form.value.coverPath &&
-                base_video.otherName === form.value.otherName.join(" ") &&
+                base_video.otherName === form.value.otherName.join(",") &&
                 base_video.description === form.value.description &&
                 base_video.folderId === form.value.folderId &&
                 save_flag === form.value.save
@@ -185,7 +185,7 @@ const confirmAddDialog = () => {
                 type: form.value.type,
                 videoPath: form.value.videoPath,
                 coverPath: form.value.coverPath,
-                otherName: form.value.otherName.join(" "),
+                otherName: form.value.otherName.join(","),
                 description: form.value.description,
                 folderId: form.value.folderId!,
                 updateTime: nowTime
@@ -234,7 +234,7 @@ const rollBackForm = () => {
         type: base_video?.type,
         videoPath: base_video?.videoPath,
         coverPath: base_video?.coverPath,
-        otherName:base_video?.otherName.length!=0 ? base_video?.otherName.split(" "):[],
+        otherName:base_video?.otherName.length!=0 ? base_video?.otherName.split(","):[],
         description: base_video?.description,
         updateTime: base_video?.updateTime,
         save: save_flag,

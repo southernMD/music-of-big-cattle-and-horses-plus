@@ -100,6 +100,7 @@ const addFormRef = ref()
 const $emit = defineEmits(['updateFolder','addVideo','update:addVideoFlag'])
 const confirmAddDialog = () => {
     addFormRef.value.validate(async (valid: boolean) => {
+        console.log(form.value);
         if (valid) {
             const nowTime = new Date().toLocaleString()
             const id = await db.videos.add({
@@ -107,7 +108,7 @@ const confirmAddDialog = () => {
                 type: form.value.type,
                 videoPath: form.value.videoPath,
                 coverPath: form.value.coverPath,
-                otherName: form.value.otherName.join(" "),
+                otherName: form.value.otherName.join(","),
                 description: form.value.description,
                 folderId: form.value.folderId!,
                 time: nowTime,
