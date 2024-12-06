@@ -9,11 +9,11 @@
           </h1>
         </div>
         <div class="describe">
-          <span class="txt" ref="des_txt" :style="{ '-webkit-line-clamp': (open ? 'inherit' : '4') }">
-            <span class="title_txt">创建时间：{{ activeVideo.time }}<br>更新时间：{{ activeVideo.updateTime }}</span>
-            <pre class="main_txt">
+          <span class="txt" ref="des_txt" >
+            <span class="title_txt">创建时间：{{ activeVideo.time }}<br>更新时间：{{ activeVideo.updateTime }}<br></span>
+            <span class="main_txt" :style="{ '-webkit-line-clamp': (open ? 'none' : '4') }">
 {{ activeVideo.description }}
-</pre>
+</span>
           </span>
           <div class="open-jiantou">
             <i class="open_btn" @click="changeDescribe">{{ open ? "收起" : "展开" }}</i>
@@ -509,8 +509,6 @@ main {
 
       &>.txt {
         margin-top: 5px;
-        overflow: hidden;
-        text-overflow: ellipsis;
         height: auto;
         line-height: 1.2em;
         margin: 0;
@@ -526,6 +524,10 @@ main {
           font-family: inherit;
           margin: 0;
           margin-bottom: 5px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
         }
       }
 
