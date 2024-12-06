@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen, dialog, session, nativeImage, globalShortcut, Menu, Tray } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, screen, dialog, session, nativeImage, globalShortcut, Menu, Tray, MessageChannelMain } from 'electron'
 import { join, extname, parse, resolve } from 'path'
 import fs from 'fs'
 import exfs from 'fs-extra'
@@ -1104,6 +1104,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       writableStream.destroy();
     })
   })
+
   return mainWindow
 }
 
@@ -1129,7 +1130,7 @@ const pares163Key = (comment: string) => {
 }
 
 
-export const lrcwindow = (): any => {
+export const lrcwindow = (): BrowserWindow => {
   const child = new BrowserWindow({
     frame: false, //隐藏默认控件
     transparent: true,
@@ -1227,6 +1228,7 @@ export const lrcwindow = (): any => {
   ipcMain.on('change-lrc-position', ({ }, flag) => {
     child.setAlwaysOnTop(flag, 'pop-up-menu')
   })
+
   return child
 }
 
@@ -1307,8 +1309,6 @@ export const dragWindw = (): BrowserWindow => {
   })
   return win
 }
-
-
 
 
 //合并音频切片

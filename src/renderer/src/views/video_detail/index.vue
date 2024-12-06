@@ -375,9 +375,9 @@ const getCanvaasRef = (el, index) => {
 let lastIndex = 0;
 
 const drawLoading = (progress) => {
-  console.log(loadingVideoId.value,"video_detail");
+  // console.log(loadingVideoId.value,"video_detail");
   let index1 = video_detail_view.value.findIndex(item => item.id === loadingVideoId.value)
-  console.log("在video_detail的index1",index1);
+  // console.log("在video_detail的index1",index1);
   
   if(!getCanvaasList.value[index1])return
   if (index1 < 0) {

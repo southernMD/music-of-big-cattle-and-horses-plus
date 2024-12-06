@@ -23,7 +23,7 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin(),bytecodePlugin()]
+    plugins: [externalizeDepsPlugin(),bytecodePlugin()],
   },
   renderer: {
     resolve: {

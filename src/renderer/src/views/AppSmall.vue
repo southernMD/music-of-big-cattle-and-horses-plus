@@ -60,6 +60,8 @@
 <script setup lang="ts">
 import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect } from 'vue'
 import { useMainMenu, useGlobalVar, useBasicApi, useMain,useNM } from '@renderer/store'
+// mainWindow 渲染进程
+// 发送消息
 // const MusicRadio = shallowRef()
 // const MyMainMenu = shallowRef()
 // const Main = shallowRef()
@@ -485,12 +487,14 @@ watch(draggable, (newValue, oldValue) => {
     if (newValue == true) {
         console.log('拖动开始');
         window.electron.ipcRenderer.send('begin-drag')
-        window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-Message', { message: MainPinia.dragMessage })
+        window.electron.ipcRenderer.send('transpond-window-message', {to:dragMessageId.value,name:'send-to-drag-Message',data:MainPinia.dragMessage})
+        // window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-Message', { message: MainPinia.dragMessage })
     }
     if (newValue == false) {
         console.log('拖动结束');
         window.electron.ipcRenderer.send('end-drag')
-        window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-end')
+        window.electron.ipcRenderer.send('transpond-window-message', {to:dragMessageId.value,name:'send-to-drag-end',data:null})
+        // window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-end')
 
     }
 })
@@ -498,22 +502,31 @@ watch(() => MainMenu.colorBlock, (newValue) => {
     if (newValue === 'NMblack' || globalVar.oneself) {
         let t = setInterval(() => {
             if (dragMessageId.value) {
-                window.electron.ipcRenderer.sendTo(dragMessageId.value, 'send-to-drag-bkColor',
-                    {
-                        backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
-                        fontColor: document.documentElement.style.getPropertyValue('--fontColor')
-                    })
+                window.electron.ipcRenderer.send('transpond-window-message', {to:dragMessageId.value,name:'send-to-drag-bkColor',data:{
+                    backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
+                    fontColor: document.documentElement.style.getPropertyValue('--fontColor')
+                }})
+
+                // window.electron.ipcRenderer.sendTo(dragMessageId.value, 'send-to-drag-bkColor',
+                //     {
+                //         backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
+                //         fontColor: document.documentElement.style.getPropertyValue('--fontColor')
+                //     })
                 clearInterval(t);
             }
         }, 100)
     } else {
         let t = setInterval(() => {
             if (dragMessageId.value) {
-                window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-bkColor',
-                    {
-                        backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
-                        fontColor: document.documentElement.style.getPropertyValue('--fontColor')
-                    })
+                window.electron.ipcRenderer.send('transpond-window-message', {to:dragMessageId.value,name:'send-to-drag-bkColor',data:{
+                    backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
+                    fontColor: document.documentElement.style.getPropertyValue('--fontColor')
+                }})
+                // window.electron.ipcRenderer.sendTo(dragMessageId.value as number, 'send-to-drag-bkColor',
+                //     {
+                //         backGroundColor: document.documentElement.style.getPropertyValue('--otherBkColor'),
+                //         fontColor: document.documentElement.style.getPropertyValue('--fontColor')
+                //     })
                 clearInterval(t)
             }
         }, 100)
@@ -624,28 +637,42 @@ watch(()=>globalVar.setting.downloadPath,async()=>{
 
 let ciId = toRef(MainPinia,"ciId")
 
-window.electron.ipcRenderer.on('lrc-ready',()=>{
+window.electron.ipcRenderer.once('lrc-ready',()=>{
     console.log('lrc准备完毕');
-    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
-    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontSize',globalVar.setting.lrcSize )
-    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontWeight',globalVar.setting.lrcWeigth)
-    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-LrcBorder',globalVar.setting.lrcBorder)
-    window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value!,name:'lrc-fontFamily',data:globalVar.setting.lrcFontFamily})
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value!,name:'lrc-fontSize',data:globalVar.setting.lrcSize})
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value!,name:'lrc-fontWeight',data:globalVar.setting.lrcWeigth})
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value!,name:'lrc-LrcBorder',data:globalVar.setting.lrcBorder})
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value!,name:'lrc-changeLrcborderColor',data:toRaw(globalVar.setting.borderColor)})
+
+    // window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontFamily',globalVar.setting.lrcFontFamily)
+    // window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontSize',globalVar.setting.lrcSize )
+    // window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-fontWeight',globalVar.setting.lrcWeigth)
+    // window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-LrcBorder',globalVar.setting.lrcBorder)
+    // window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
     if(globalVar.setting.lrcColor == '默认'){
-        window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
+        window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value!,name:'lrc-changeLrcColor',data:{
             top:'rgb(255,255,0)',
             bottom:'rgb(255,0,0)'
-        })
+        }})
+        // window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
+        //     top:'rgb(255,255,0)',
+        //     bottom:'rgb(255,0,0)'
+        // })
     }else{
-        window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
+        window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value!,name:'lrc-changeLrcColor',data:{
             top:toRaw(globalVar.setting.topColor),
             bottom:toRaw(globalVar.setting.bottomColor)
-        })
+        }})
+        // window.electron.ipcRenderer.sendTo(ciId.value!,'lrc-changeLrcColor',{
+        //     top:toRaw(globalVar.setting.topColor),
+        //     bottom:toRaw(globalVar.setting.bottomColor)
+        // })
     }
 
 })
-window.electron.ipcRenderer.on('setting-size',({},{size})=>{
-    globalVar.setting.lrcSize = parseInt(size)
+window.electron.ipcRenderer.on('setting-size',({},{data})=>{
+    globalVar.setting.lrcSize = parseInt(data)
 })
 
 

@@ -162,6 +162,11 @@
             <component v-if="$route.meta.keepAlive && $route.path.includes('myStart')" :is="Component" />
           </keep-alive>
         </router-view>
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component v-if="$route.meta.keepAlive && $route.name == 'video'" :is="Component" />
+          </keep-alive>
+        </router-view>
         <router-view v-if="!$route.meta.keepAlive" />
       </el-scrollbar>
       <LocationSong v-show="Number(route.query.id) == Main.beforePlayListId" @scroolToSong="scroolToSong">

@@ -72,7 +72,6 @@ const electronToApp = useElectronToApp();
 const Main = useMain();
 const $el = getCurrentInstance() as ComponentInternalInstance;
 
-
 let mainId = ref(undefined)
 let t =setInterval(()=>{
     mainId.value = window.electron.ipcRenderer.sendSync('getWindowId', 'Main')
@@ -90,12 +89,13 @@ const fillHeight = computed(()=>{
 let ok = false
 let t2 = setInterval(()=>{
     if(ok) clearInterval(t2)
-    window.electron.ipcRenderer.sendTo(mainId.value,'lrc-ready')
+    // window.electron.ipcRenderer.sendTo(mainId.value,'lrc-ready')
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'lrc-ready',data:null})
 },2000)
 
 const yinOryi = ref([false,false])
-window.electron.ipcRenderer.on('yin-or-yi',({},arg:boolean[])=>{
-    yinOryi.value = arg
+window.electron.ipcRenderer.on('yin-or-yi',({},{data}:{data:boolean[]})=>{
+    yinOryi.value = data
 })
 
 
@@ -116,8 +116,9 @@ let playStatus = ref('')
 let eqi = ref(0) //歌词修正单位s
 let suoFlag = ref(false)
 let suoShowFlag = ref(false)
-window.electron.ipcRenderer.on('to-Ci', ({}, ...arg: any[]) => {
-    electronToApp.lrcArry = arg[0]
+window.electron.ipcRenderer.on('to-Ci', ({}, {data}) => {
+    console.log('to-ci窗口收到歌词————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————');
+    electronToApp.lrcArry = data
     indexLrc.value = 0
     indexRm.value = 0
     indexTr.value = 0
@@ -171,10 +172,11 @@ watch(indexTr, () => {
 })
 
 
-window.electron.ipcRenderer.on('to-currentTime', ({}, number: number) => {
-    playTime.value = Math.floor(number * 1000) + eqi.value * 1000;
+window.electron.ipcRenderer.on('to-currentTime', ({}, {data}:{data:number}) => {
+    playTime.value = Math.floor(data * 1000) + eqi.value * 1000;
     if (lrcArry.value?.lrc) showLrc(lrcArr, indexLrc)
-    window.electron.ipcRenderer.sendTo(mainId.value,'Main-Menu-song-lrc',lrcArr.value[indexLrc.value]?.lyric)
+    // window.electron.ipcRenderer.sendTo(mainId.value,'Main-Menu-song-lrc',lrcArr.value[indexLrc.value]?.lyric)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'Main-Menu-song-lrc',data:lrcArr.value[indexLrc.value]?.lyric})
     if (lrcArry.value?.romalrc) showLrc(romalrcArr, indexRm)
     if (lrcArry.value?.tlyric) showLrc(tlyricArr, indexTr)
     let dom = $el.refs.lyric as HTMLElement
@@ -209,8 +211,8 @@ window.electron.ipcRenderer.on('to-currentTime', ({}, number: number) => {
 
 })
 
-window.electron.ipcRenderer.on('to-title', ({}, str: string) => {
-    title.value = str
+window.electron.ipcRenderer.on('to-title', ({}, {data}) => {
+    title.value = data
 })
 
 
@@ -253,7 +255,8 @@ watch(lrcArry, () => {
      let t = setInterval(()=>{
         if(mainId.value){
             console.log(mainId.value,obj);
-            window.electron.ipcRenderer.sendTo(mainId.value,'resolved-lrc',obj)
+            window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'resolved-lrc',data:obj})
+            // window.electron.ipcRenderer.sendTo(mainId.value,'resolved-lrc',obj)
             clearInterval(t)
         }
      },100)
@@ -393,7 +396,8 @@ window.addEventListener('resize', async() => {
         let size = (obj.y - 123)/(291 - 123) * (96 - 20) + 20
         lrcBlock.style.fontSize = size + 'px'
         baseFontSize.value = size
-        window.electron.ipcRenderer.sendTo(mainId.value,'setting-size',{size})
+        window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'setting-size',data:size})
+        // window.electron.ipcRenderer.sendTo(mainId.value,'setting-size',{size})
         //291 - 123 = 168
         //obj.y - 123 = ? 
         //size = ? / 168 nowSize /(96 - 20)
@@ -411,47 +415,53 @@ const close = async () => {
     let dom = $el.refs.lyric as HTMLElement
     dom.style.backgroundColor = 'rgba(0,0,0,.0)';
     window.electron.ipcRenderer.send('open-lyric', false)
-    window.electron.ipcRenderer.sendTo(mainId.value, 'to-close-ci', false);
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'to-close-ci', false);
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'to-close-ci',data:false})
 }
 //播放状态
-window.electron.ipcRenderer.on('play-status', ({}, str: string) => {
-    playStatus.value = str
+window.electron.ipcRenderer.on('play-status', ({}, {data}:{data:string}) => {
+    playStatus.value = data
 })
 //暂停/播放
 const playOrStop = () => {
     console.log('playOrStop');
-    window.electron.ipcRenderer.sendTo(mainId.value, 'play-or-stop')
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'play-or-stop')
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'play-or-stop',data:null})
 }
 
 //上一首
 const prev = () => {
     console.log('prev');
-    window.electron.ipcRenderer.sendTo(mainId.value, 'prev-song')
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'prev-song',data:null})
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'prev-song')
     playStatus.value = 'play'
 }
 //下一首
 const next = () => {
     console.log('next',mainId.value);
-    window.electron.ipcRenderer.sendTo(mainId.value, 'next-song')
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'next-song')
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'next-song',data:null})
     playStatus.value = 'play'
 }
 
 //加0.5
 const jia = () => {
     eqi.value += 0.5
-    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'lyric-offset',data:eqi.value})
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
 }
 
 //减0.5
 const jian = () => {
     eqi.value -= 0.5
-    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'lyric-offset',data:eqi.value})
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
 }
 
 //偏移主修改
-window.electron.ipcRenderer.on('lyric-offset-ci',({},num:number)=>{
-    console.log('偏移主修改',num);
-    eqi.value = num
+window.electron.ipcRenderer.on('lyric-offset-ci',({},{data}:{data:number})=>{
+    console.log('偏移主修改',data);
+    eqi.value = data
 })
 
 
@@ -484,31 +494,32 @@ const jiesuo = () => {
 //打开音乐详情页
 const showDetail = ()=>{
     console.log('lrc-open-playDetail');
-    window.electron.ipcRenderer.sendTo(mainId.value,'lrc-open-playDetail')
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'lrc-open-playDetail',data:null})
+    // window.electron.ipcRenderer.sendTo(mainId.value,'lrc-open-playDetail')
     window.electron.ipcRenderer.send('lrc-open-playDetail')
 }
 
-window.electron.ipcRenderer.on('lrc-fontFamily',({},name)=>{
-    document.documentElement.style.setProperty('--fontFamily', name);
+window.electron.ipcRenderer.on('lrc-fontFamily',({},{data})=>{
+    document.documentElement.style.setProperty('--fontFamily', data);
 })
 
-window.electron.ipcRenderer.on('lrc-fontSize',({},size)=>{
+window.electron.ipcRenderer.on('lrc-fontSize',({},{data})=>{
     console.log('我拿到值'); 
-    if(!ok)baseFontSize.value = size
+    if(!ok)baseFontSize.value = data
     ok = true
-    const y = (size - 20) / (96 - 20) * (291 - 123) + 123
-    console.log(y,size,'重设');
+    const y = (data - 20) / (96 - 20) * (291 - 123) + 123
+    console.log(y,data,'重设');
     window.electron.ipcRenderer.sendSync('send-child-y',y)
     let dom = $el.refs.lyric as HTMLElement
     let lrcBlock = $el.refs.lrcBlock as HTMLElement
-    lrcBlock.style.fontSize = size + 'px'
+    lrcBlock.style.fontSize = data + 'px'
     dom.style.height = y + 'px'
     let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
     resize(obj)
 })
-window.electron.ipcRenderer.on('lrc-fontWeight',({},name)=>{
+window.electron.ipcRenderer.on('lrc-fontWeight',({},{data})=>{
     let str = ''
-    if(name == '标准'){
+    if(data == '标准'){
         str = 'normal'
         document.documentElement.style.setProperty('--lrcColorBorderWidth', '0.02em');
     }
@@ -520,22 +531,22 @@ window.electron.ipcRenderer.on('lrc-fontWeight',({},name)=>{
 //     @lrc-color-border-color:var(--lrcColorBorderColor,unset);
 // @lrc-font-weight:var(--lrcfontWeight,normal);
 })
-window.electron.ipcRenderer.on('lrc-LrcBorder',({},name)=>{
+window.electron.ipcRenderer.on('lrc-LrcBorder',({},{data})=>{
     let str = ''
-    if(name == '有描边'){
+    if(data == '有描边'){
       if(getComputedStyle(document.documentElement).getPropertyValue('--lrcfontWeight') == 'bolder')  str = '0.005em'
       else str = '0.02em'
     }
     else str = 'unset'
     document.documentElement.style.setProperty('--lrcColorBorderWidth', str);
 })
-window.electron.ipcRenderer.on('lrc-changeLrcColor',({},{top,bottom})=>{
+window.electron.ipcRenderer.on('lrc-changeLrcColor',({},{data:{top,bottom}})=>{
     document.documentElement.style.setProperty('--lrcColorTop', top);
     document.documentElement.style.setProperty('--lrcColorBottom', bottom);
 })
 
-window.electron.ipcRenderer.on('lrc-changeLrcborderColor',({},color)=>{
-    document.documentElement.style.setProperty('--lrcColorBorderColor', color);
+window.electron.ipcRenderer.on('lrc-changeLrcborderColor',({},{data})=>{
+    document.documentElement.style.setProperty('--lrcColorBorderColor', data);
 })
 </script>
 

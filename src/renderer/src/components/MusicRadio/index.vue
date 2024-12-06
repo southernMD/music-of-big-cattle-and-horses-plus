@@ -703,8 +703,10 @@ const sendLyric = ()=>{
         str += element.name
         if (index != singerArr.length - 1) str += ' / '
     })
-    window.electron.ipcRenderer.sendTo(ciId.value, 'to-title', str);
-    window.electron.ipcRenderer.sendTo(ciId.value, 'to-Ci', lyric.value);
+    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'to-title',data:str})
+    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'to-Ci',data:lyric.value})
+    // window.electron.ipcRenderer.sendTo(ciId.value, 'to-title', str);
+    // window.electron.ipcRenderer.sendTo(ciId.value, 'to-Ci', lyric.value);
 }
 
 
@@ -715,7 +717,9 @@ watch(currentTime, () => {
 })
 watch(playingId, () => {
     globalVar.lyricOffset = 0
-    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', 0)
+    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'lyric-offset-ci',data:0})
+
+    // window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', 0)
 })
 
 onMounted(async () => {
@@ -778,7 +782,8 @@ onMounted(async () => {
     //播放进度
     audio.addEventListener('timeupdate', () => {
         if (!audioPlayFlag.value) {
-            window.electron.ipcRenderer.sendTo(ciId.value, 'to-currentTime', audio.currentTime);
+            window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'to-currentTime',data:audio.currentTime})
+            // window.electron.ipcRenderer.sendTo(ciId.value, 'to-currentTime', audio.currentTime);
             currentTime.value = audio.currentTime
             let bar = (audio.currentTime / audio.duration) * 100
             playLine.style.width = bar + '%'
@@ -1115,13 +1120,14 @@ watch(playingList,()=>{
 })
 
 //关闭歌词
-window.electron.ipcRenderer.on('to-close-ci', ({ }, flag:boolean ) => {
+window.electron.ipcRenderer.on('to-close-ci', ({ }, {data} ) => {
     showCi.value = flag
 })
 //监视播放给另一个进程
 let playStatus = toRef(Main, 'playStatus')
 watch(playStatus, async () => {
-    window.electron.ipcRenderer.sendTo(ciId.value, 'play-status', playStatus.value)
+    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'play-status',data:playStatus.value})
+    // window.electron.ipcRenderer.sendTo(ciId.value, 'play-status', playStatus.value)
     stopOrPlay()
 })
 //另一进程play or stop
@@ -1138,9 +1144,9 @@ window.electron.ipcRenderer.on('next-song', () => {
 })
 //另一进程歌词偏离
 let lyricOffset = toRef(globalVar, 'lyricOffset')
-window.electron.ipcRenderer.on('lyric-offset', ({ }, num: number) => {
+window.electron.ipcRenderer.on('lyric-offset', ({ }, {data}:{data:number}) => {
     offsetFlag.value = true
-    lyricOffset.value = num
+    lyricOffset.value = data
 })
 
 //上一首

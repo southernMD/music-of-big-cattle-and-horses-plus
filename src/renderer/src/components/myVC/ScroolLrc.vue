@@ -120,9 +120,9 @@ let lrc = ref<lrcType>([{ lyric: "", time: 0 }]);
 let romalrc = ref<lrcType>([{ lyric: "", time: 0 }]);
 let tlyric = ref<lrcType>([{ lyric: "", time: 0 }]);
 //歌词
-window.electron.ipcRenderer.on("resolved-lrc", ({}, objArr: any) => {
+window.electron.ipcRenderer.on("resolved-lrc", ({}, {data}: any) => {
     if(props.type == Main.songType){
-      const lrcObj = JSON.parse(objArr)
+      const lrcObj = JSON.parse(data)
       lrc.value = lrcObj.lrc;
       romalrc.value = lrcObj.romalrc;
       tlyric.value = lrcObj.tlyric;
@@ -318,22 +318,29 @@ const isClick = (index:number) => {
 //加0.5
 const jia = () => {
     eqi.value += 0.5
-    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
-    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'lyric-offset-ci',data:eqi.value})
+    // window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'lyric-offset',data:eqi.value})
 }
 
 //减0.5
 const jian = () => {
     eqi.value -= 0.5
-    window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
-    window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
+    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'lyric-offset-ci',data:eqi.value})
+    // window.electron.ipcRenderer.sendTo(ciId.value, 'lyric-offset-ci', eqi.value)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'lyric-offset',data:eqi.value})
+    // window.electron.ipcRenderer.sendTo(mainId.value, 'lyric-offset', eqi.value)
 }
 
 //歌词状态
 // ciId
 watch(yinOryi,()=>{
   console.log(toRaw(yinOryi.value));
-  if(ciId.value)window.electron.ipcRenderer.sendTo(ciId.value,'yin-or-yi',toRaw(yinOryi.value))
+  if(ciId.value){
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'yin-or-yi',data:toRaw(yinOryi.value)})
+    // window.electron.ipcRenderer.sendTo(ciId.value,'yin-or-yi',toRaw(yinOryi.value))
+  }
 },{immediate:true,deep:true})
 
 //隐藏时切换模式

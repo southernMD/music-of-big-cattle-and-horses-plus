@@ -75,6 +75,9 @@ const routes: Array<RouteRecordRaw> = [
                 path:'video',
                 name:'video',
                 component:()=>import('@renderer/views/video/index.vue'),
+                meta:{
+                    keepAlive:true
+                }
             },
             {
                 path:'video_detail',

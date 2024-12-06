@@ -1,7 +1,7 @@
-import { ipcMain } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
  
 // 存储所有窗口的 id
-const windowIdMap:any = {}
+export const windowIdMap:any = {}
  
 // 注册窗口
 export const registerWindowId = function(key:any, value:any) {

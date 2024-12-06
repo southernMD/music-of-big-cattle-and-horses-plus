@@ -339,7 +339,7 @@ onMounted(() => {
     // 定义两段圆弧旋转的速度
 
     // 开始动画循环
-    draw();
+    // draw();
 })
 // 绘制两段圆弧并旋转角度
 function drawStatic(){

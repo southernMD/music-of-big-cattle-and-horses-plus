@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import {ref,watch } from 'vue'
-
+const $emit = defineEmits(['update:choicePageFlag','update:choiceIndex'])
 const props = defineProps({
     choicePageFlag:{
         type:Boolean,
@@ -47,7 +47,6 @@ watch(()=>props.pageSize,()=>{
     }
 },{immediate:true})
 
-const $emit = defineEmits(['update:choicePageFlag','update:choiceIndex'])
 
 const confirmAddDialog = ()=>{
     $emit('update:choicePageFlag',false)

@@ -4,10 +4,10 @@ import express from 'express';
 import {is} from '@electron-toolkit/utils'
 import {join} from 'path'
 import cors from 'cors'
-import { ipcMain,BrowserWindow } from 'electron';
+import { ipcMain } from 'electron';
 import portfinder from 'portfinder'
 import fs from 'fs'
-export default async(window:BrowserWindow) =>{
+export default async() =>{
     const app = express();
     app.use(cors())
     app.get('/video', (req, res) => {

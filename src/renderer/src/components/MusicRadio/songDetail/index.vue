@@ -221,8 +221,8 @@ defineProps<{
 
 
 let mainMenuPlayingLrc = ref('')
-window.electron.ipcRenderer.on('Main-Menu-song-lrc', ({ }, str: string) => {
-  mainMenuPlayingLrc.value = str;
+window.electron.ipcRenderer.on('Main-Menu-song-lrc', ({ },{data}) => {
+  mainMenuPlayingLrc.value = data;
 })
 //回到顶部
 const goToTop = () => {

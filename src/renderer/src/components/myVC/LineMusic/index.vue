@@ -282,9 +282,10 @@ const fnMouseDrag = async (e: any) => {
     console.log('取消mousedownTimer');
     window.removeEventListener('mouseup', fnMouseDrag)
     // window.removeEventListener('mousemove', fnMouseDragMoving)
-    for (let i = 0; i < e.path.length; i++) {
-        if (e.path[i].classList != undefined && e.path[i].classList.contains('dragMouseStyleAdd')) {
-            let dom = e.path[i] as HTMLElement
+    const doms = e.composedPath() as HTMLElement[]
+    for (let i = 0; i < doms.length; i++) {
+        if (doms[i].classList != undefined && doms[i].classList.contains('dragMouseStyleAdd')) {
+            let dom = doms[i] as HTMLElement
             if (String(playListid.value) != String(dom.getAttribute('data-id')) && Number(dom.getAttribute('data-index')) <= Main.createPlay) {
                 if(Number(dom.getAttribute('data-index')) == 0){
                     Main.dragMouse = false

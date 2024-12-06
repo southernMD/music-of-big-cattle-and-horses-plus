@@ -216,6 +216,7 @@ const searchInputFn = async () => {
     console.log(searchInput.value);
     if (searchInput.value.trim() === "") {
         viewVidoListWithPinyin.value = videoListWithPinyin
+        // viewVidoListWithPinyin.value![0].list[0].coverPath = "https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg"
         ifSearch.value = false
         return
     } else {
@@ -409,14 +410,6 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                         coverPath: `${imageBase64}`
                     })
                     videoList.value![0].list[0].coverPath = `${imageBase64}`
-                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
-                    forceUpdateList.forEach(item=>{
-                        if(item instanceof HTMLImageElement){
-                            item.src= imageBase64 as string
-                        }else{
-                            item.style.backgroundImage = `url(${imageBase64})`
-                        }
-                    })
                     nextTick(() => {
                         searchInputFn()
                     })
@@ -445,26 +438,24 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                     db.videos.update(id, {
                         coverPath: imageBase64 as string
                     })
-                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
-                    forceUpdateList.forEach(item=>{
-                        if(item instanceof HTMLImageElement){
-                            item.src= imageBase64 as string
-                        }else{
-                            item.style.backgroundImage = `url(${imageBase64})`
-                        }
-                    })
                 }
                 const videoBlob = new Blob([video], { type: 'video/mp4' });
                 db.videos_data.add({
                     id,
                     data: videoBlob
                 })
-
                 nextTick(() => {
                     searchInputFn()
                 })
                 loadingVideoId.value = 0
                 loadingVideoFolderId.value = 0
+                // console.log(cover,video);
+                // const imageBase64 = await bufferToBase64(cover)
+                // const videoBlob = new Blob([video], { type: 'video/mp4' });
+                // arrayBuffer = videoBlob
+                // localStorage.setItem("coverArrayBuffer", imageBase64)
+                // coverArrayBuffer= imageBase64 
+
             })
             //download-bilibili-error on
             window.electron.ipcRenderer.once('download-bilibili-error', (_, { error }) => {
@@ -582,15 +573,6 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                         viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
                     }
                     else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
-                    //路由切换返回后无法更新图片，因此强制更新真实dom
-                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
-                    forceUpdateList.forEach(item=>{
-                        if(item instanceof HTMLImageElement){
-                            item.src= imageBase64 as string
-                        }else{
-                            item.style.backgroundImage = `url(${imageBase64})`
-                        }
-                    })
                     nextTick(() => {
                         searchInputFn()
                     })
@@ -625,15 +607,6 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                     videoList.value!.find(item=>item.id === loadingVideoFolderId.value)!.list.find(item=>item.id === id)!.coverPath = `${imageBase64}`
                     if (!ifSearch.value || searchTypeid.value === 'folder') viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
                     else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
-                    //路由切换返回后无法更新图片，因此强制更新真实dom
-                    const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[]
-                    forceUpdateList.forEach(item=>{
-                        if(item instanceof HTMLImageElement){
-                            item.src= imageBase64 as string
-                        }else{
-                            item.style.backgroundImage = `url(${imageBase64})`
-                        }
-                    })
                     nextTick(() => {
                         searchInputFn()
                     })
@@ -684,16 +657,16 @@ const drawLoading = (progress) => {
     let index1 = 0, index2 = 0
     if(!getCanvaasList.value[index1] || !getCanvaasList.value[index1][index2])return
     if (!ifSearch.value || searchTypeid.value === 'folder') {
-        console.log(viewVidoListWithPinyin.value,"自我");
-        console.log(loadingVideoFolderId.value,"草屋");
+        // console.log(viewVidoListWithPinyin.value,"自我");
+        // console.log(loadingVideoFolderId.value,"草屋");
         index1 = viewVidoListWithPinyin.value.findIndex(item => item.id === loadingVideoFolderId.value)
         index2 = index1 >= 0 ? viewVidoListWithPinyin.value[index1].list.findIndex(item => item.id === loadingVideoId.value) : -1
     } else {
         index1 = 0,
             index2 = viewVidoListWithPinyinOther.value.findIndex(item => item.id === loadingVideoId.value)
     }
-    console.log(index1, index2, "正在绘制的cnavasindex为");
-    console.log(lastIndex1, lastIndex2, "上一次的cnavasindex为");
+    // console.log(index1, index2, "正在绘制的cnavasindex为");
+    // console.log(lastIndex1, lastIndex2, "上一次的cnavasindex为");
 
     if (index1 < 0 || index2 < 0) {
         if (lastIndex1 >= 0 && lastIndex2 >= 0) {

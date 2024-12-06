@@ -17,7 +17,7 @@ onMounted(() => {
     // 监听 Worker 的消息
     windowsWorker.addEventListener('message', (e) => {
         console.log(e.data);
-        const { windowName, id } = e.data;
+        const { windowName, id,type } = e.data;
         if (id !== undefined) {
             // 将结果发送回主进程
             const idRes = window.electron.ipcRenderer.sendSync('getWindowId', windowName);
@@ -52,6 +52,7 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault()
     }
 })
+
 </script>
 
 <template>

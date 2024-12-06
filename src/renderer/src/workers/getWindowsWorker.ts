@@ -54,6 +54,7 @@ addEventListener('message', (event) => {
     }
     if(loadingStep >= 3){
         console.log("全部加载完毕关闭getWindowsWorker");
+        postMessage({type:"close"})
         close();
     }
 });

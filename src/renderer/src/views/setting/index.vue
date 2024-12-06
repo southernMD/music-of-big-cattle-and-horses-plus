@@ -466,21 +466,24 @@ const lrcPositionHandle = ()=>{
 const txtRef = ref()
 const changeLrcFamily = (ms)=>{
     globalVar.setting.lrcFontFamily = ms.name
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',ms.name)
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontFamily',ms.name)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-fontFamily',data:ms.name})
     txtRef.value.style.setProperty('--fontFamilyLrc',  ms.name);
 }
 
 const changeLrcSize = (ms)=>{
     globalVar.setting.lrcSize = +ms.name
     globalVar.lrcFlag = true
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',+ms.name)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-fontSize',data:+ms.name})
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontSize',+ms.name)
     txtRef.value.style.setProperty('--fontSizeLrc',  ms.name + 'px');
 }
 
 
 const changeLrcWeight = (ms)=>{
     globalVar.setting.lrcWeigth = ms.name
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontWeight',ms.name)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-fontWeight',data:ms.name})
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-fontWeight',ms.name)
     if(ms.name == "标准")txtRef.value.style.setProperty('--fontWeightLrc', 'normal');
     else txtRef.value.style.setProperty('--fontWeightLrc', 'bolder');
     
@@ -488,8 +491,10 @@ const changeLrcWeight = (ms)=>{
 
 const changeLrcBorder = (ms)=>{
     globalVar.setting.lrcBorder = ms.name
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-LrcBorder',ms.name)
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-LrcBorder',data:ms.name})
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-LrcBorder',ms.name)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-changeLrcborderColor',data:toRaw(globalVar.setting.borderColor)})
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
     let str = ''
     if(ms.name == '有描边'){
       if(getComputedStyle(document.documentElement).getPropertyValue('--lrcfontWeight') == 'bolder')  str = '0.005em'
@@ -510,7 +515,8 @@ const changeLrcColor = (ms)=>{
         t.top = toRaw(globalVar.setting.topColor)
         t.bottom = toRaw(globalVar.setting.bottomColor)
     }
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-changeLrcColor',data:t})
     document.documentElement.style.setProperty('--lrcColorTop', t.top);
     document.documentElement.style.setProperty('--lrcColorBottom', t.bottom);
 }
@@ -520,7 +526,8 @@ const topColorChange = ()=>{
         top:toRaw(globalVar.setting.topColor),
         bottom:toRaw(globalVar.setting.bottomColor)
     }
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-changeLrcColor',data:t})
     document.documentElement.style.setProperty('--lrcColorTop', t.top);
     document.documentElement.style.setProperty('--lrcColorBottom', t.bottom);
 }
@@ -529,13 +536,15 @@ const bottomColorChange = ()=>{
         top:toRaw(globalVar.setting.topColor),
         bottom:toRaw(globalVar.setting.bottomColor)
     }
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcColor',t)
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-changeLrcColor',data:t})
     document.documentElement.style.setProperty('--lrcColorTop', t.top);
     document.documentElement.style.setProperty('--lrcColorBottom', t.bottom);
 }
 
 const borderColorChange = ()=>{
-    window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
+    window.electron.ipcRenderer.send('transpond-window-message', {to:ciId.value,name:'lrc-changeLrcborderColor',data:toRaw(globalVar.setting.borderColor)})
+    // window.electron.ipcRenderer.sendTo(ciId.value,'lrc-changeLrcborderColor',toRaw(globalVar.setting.borderColor))
     document.documentElement.style.setProperty('--lrcColorBorderColor', toRaw(globalVar.setting.borderColor));
 }
 onMounted(()=>{
