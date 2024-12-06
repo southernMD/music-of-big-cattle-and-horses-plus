@@ -29,13 +29,14 @@
         <div class="title">
             <div class="title-txt">视频列表</div>
         </div>
-        <div class="video-group" >
+        <div class="video-group">
             <el-collapse v-model="activeNames" v-if="!ifSearch || searchTypeid === 'folder'">
                 <el-collapse-item :title="folder_val.folderName" :name="folder_val.id"
                     v-for="folder_val, folder_index in viewVidoListWithPinyin">
-                    <div  class="folder-video-item" v-for="video_val, video_index in folder_val.list">
+                    <div class="folder-video-item" v-for="video_val, video_index in folder_val.list">
                         <div class="view" @click="goVideo(video_val, folder_val.folderName, folder_index, video_index)"
-                            :style="{ 'background-image': `url(${video_val.coverPath})` }" :data-forceUpdate="video_val.id">
+                            :style="{ 'background-image': `url(${video_val.coverPath})` }"
+                            :data-forceUpdate="video_val.id">
                             <canvas :ref="el => getCanvaasRef(el as HTMLCanvasElement, folder_index, video_index)"
                                 width="0" height="0"></canvas>
                         </div>
@@ -85,15 +86,16 @@
     </div>
     <AddVideoForm key="AddVideoForm" v-model:addVideoFlag="addVideoFlag" v-model:options="options"
         @updateFolder="updateFolder" @addVideo="addVideo"></AddVideoForm>
-    <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag"
+    <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm2" v-model:editVideoFlag="editVideoFlag"
         v-model:options="options" @updateFolder="updateFolder" @editVideo="editVideo" :id="globalVar.editVideo.videoId">
     </EddVideoForm>
-    <ChoicePage v-model:choicePageFlag="choicePageFlag" v-model:choiceIndex="choiceIndex" :pageSize="pageSize"></ChoicePage>
+    <ChoicePage v-model:choicePageFlag="choicePageFlag" v-model:choiceIndex="choiceIndex" :pageSize="pageSize">
+    </ChoicePage>
 </template>
 
 <script setup lang="ts">
 import { useGlobalVar, useVideo } from '@renderer/store';
-import { ComponentInternalInstance, getCurrentInstance, nextTick, onMounted, Ref, ref, toRaw, toRef, watch } from 'vue'
+import { ComponentInternalInstance, getCurrentInstance, nextTick, onMounted, Ref, ref, toRaw, toRef, watch, onActivated, onDeactivated, WatchStopHandle } from 'vue'
 import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo, videoSearchInfo } from './indexType.d.ts';
 
 import pinyin from "pinyin";
@@ -108,7 +110,8 @@ import { db } from '@renderer/indexDB/db'
 // import saveVideoWorker from '@renderer/workers/saveVideoWorker?worker'
 import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64';
 import { videos_folders_table, videos_table } from '@renderer/indexDB/dbType';
-
+let stopWatchEdit: WatchStopHandle | null = null
+let stopWatchDel: WatchStopHandle | null = null
 const getCanvaasList = ref<HTMLCanvasElement[][]>([]);
 const getCanvaasRef = (el: HTMLCanvasElement, folder_index: string | number, video_index: string | number) => {
     if (el) {
@@ -123,7 +126,6 @@ const videoPinia = useVideo()
 
 const loadingVideoId = toRef(videoPinia, 'loadingVideoId')
 const loadingVideoFolderId = toRef(videoPinia, 'loadingVideoFolderId')
-console.log(loadingVideoId.value, "KJHGIOIJP^&&&&&&&&&&&&&&&&&&&&&&&&&&&");
 
 const $router = useRouter()
 const $route = useRoute()
@@ -173,12 +175,7 @@ const initFolder = async () => {
     videoList.value = newArr
     activeNames.value = toRaw(videoList.value?.map(item => item.id) ?? [])
 };
-try {
-    initFolder()
-} catch (error) {
-    options.value = []
-    videoList.value = []
-}
+
 
 const globalVar = useGlobalVar();
 
@@ -260,14 +257,14 @@ const searchInputFn = async () => {
             console.log(allVideo);
             console.log(searchKey);
             viewVidoListWithPinyinOther.value = fuse3.search(searchKey).map(i => i.item)
-            console.log(viewVidoListWithPinyinOther.value );
+            console.log(viewVidoListWithPinyinOther.value);
             break;
     }
 }
 
 const goVideo = (videMsg: VideoInfo, folderName: string, folder_index: number, video_index: number) => {
     console.log(getCanvaasList.value[folder_index][video_index].width);
-    if (getCanvaasList.value[folder_index][video_index].width !== 0) {
+    if (loadingVideoId.value == videMsg.id) {
         return
     }
     $router.push({
@@ -318,9 +315,9 @@ const updateAideoListAfterDelete = () => {
     }
 }
 
-watch(() => globalVar.delVideo, async () => {
+stopWatchEdit = watch(() => globalVar.delVideo, async () => {
     console.log(globalVar.delVideo);
-    if (globalVar.delVideo.flag) {
+    if (globalVar.delVideo.flag && $route.name == "video") {
         await db.videos.delete(globalVar.delVideo.videoId)
         await db.videos_data.delete(globalVar.delVideo.videoId)
         updateAideoListAfterDelete()
@@ -336,14 +333,14 @@ watch(() => globalVar.delVideo, async () => {
 
 //editForm
 const editVideoFlag = ref(false)
-watch(() => globalVar.editVideo.flag, () => {
+stopWatchDel = watch(() => globalVar.editVideo.flag, () => {
     console.log(loadingVideoId.value);
-    if (loadingVideoId.value !== 0) {
+    if (loadingVideoId.value !== 0 && $route.name == "video") {
         editVideoFlag.value = false
         globalVar.editVideo.flag = false
         return
     }
-    editVideoFlag.value = globalVar.editVideo.flag
+    editVideoFlag.value = toRaw(globalVar.editVideo.flag)
 
 }, { deep: true })
 const updateFolder = ({ id, folderName }) => {
@@ -354,6 +351,9 @@ const updateFolder = ({ id, folderName }) => {
         updateTime: new Date().toLocaleString()
     })
     activeNames.value.unshift(id)
+    nextTick(() => {
+        searchInputFn()
+    })
 }
 
 const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTime: string }) => {
@@ -388,7 +388,7 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
             searchTypeid.value = "folder"
         }
     })
-
+    activeNames.value.unshift(videoList.value?.[0].id)
     if (form.save) {
         loadingVideoId.value = id
         loadingVideoFolderId.value = videoList.value?.[0].id!
@@ -406,6 +406,10 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                 if (form.coverPath.trim().length == 0) {
                     //coverArrayBuffer转base64
                     const imageBase64 = await bufferToBase64(coverArrayBuffer)
+
+                    const broadcast = new BroadcastChannel('cover')
+                    broadcast.postMessage({ cover: imageBase64 })
+                    broadcast.close()
                     db.videos.update(id, {
                         coverPath: `${imageBase64}`
                     })
@@ -424,15 +428,18 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
                 await db.videos.delete(id)
                 alert(error)
             })
-        }else{
+        } else {
             //b站下载
             bilibiliErrorFlag = true
-            window.electron.ipcRenderer.send("download-bilibili",{ videoPath: form.videoPath,sessdata:globalVar.setting.sessdata,transcoed: globalVar.setting.transcoed})
+            window.electron.ipcRenderer.send("download-bilibili", { videoPath: form.videoPath, sessdata: globalVar.setting.sessdata, transcoed: globalVar.setting.transcoed })
             //download-bilibili-finish on
-            window.electron.ipcRenderer.once('download-bilibili-finish',async (_, { video, cover}) => {
+            window.electron.ipcRenderer.once('download-bilibili-finish', async (_, { video, cover }) => {
                 const imageBase64 = await bufferToBase64(cover)
+                const broadcast = new BroadcastChannel('cover')
+                broadcast.postMessage({ cover: imageBase64 })
+                broadcast.close()
                 console.log(form.coverPath);
-                if(form.coverPath.trim().length === 0){
+                if (form.coverPath.trim().length === 0) {
                     console.log("是我干的");
                     videoList.value![0].list[0].coverPath = imageBase64 as string
                     db.videos.update(id, {
@@ -459,11 +466,11 @@ const addVideo = ({ id, form, nowTime }: { id: number, form: AddVideoInfo, nowTi
             })
             //download-bilibili-error on
             window.electron.ipcRenderer.once('download-bilibili-error', (_, { error }) => {
-                if(bilibiliErrorFlag){
+                if (bilibiliErrorFlag) {
                     bilibiliErrorFlag = false
                     videoList.value?.[0].list.shift()
                     db.videos.delete(loadingVideoId.value)
-                    nextTick(()=>{
+                    nextTick(() => {
                         searchInputFn()
                     })
                     loadingVideoId.value = 0
@@ -534,7 +541,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
     updateOriginObj.titleSearchNameFl = pinyin(form.title, { style: 4 }).flat().join('')
     updateOriginObj.otherNameSearchName = form.otherName.map(item => pinyin(item, { style: 0 }).flat().join(''))
     updateOriginObj.otherNameSearchNameFl = form.otherName.map(item => pinyin(item, { style: 4 }).flat().join(''))
-    updateOriginObj.romojiTitle =  wanakana.isJapanese(form.title) ? wanakana.toRomaji(form.title) : ''
+    updateOriginObj.romojiTitle = wanakana.isJapanese(form.title) ? wanakana.toRomaji(form.title) : ''
     updateOriginObj.romojiOtherName = form.otherName.map(item => wanakana.isJapanese(item) ? wanakana.toRomaji(item) : '')
     origin.list.unshift(updateOriginObj)
     origin.list.splice(originIndex + 1, 1)
@@ -563,12 +570,15 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                 if (form.updatePic) {
                     //coverArrayBuffer转base64
                     const imageBase64 = await bufferToBase64(coverArrayBuffer)
+                    const broadcast = new BroadcastChannel('cover')
+                    broadcast.postMessage({ cover: imageBase64 })
+                    broadcast.close()
                     db.videos.update(id, {
                         coverPath: `${imageBase64}`
-                    }) 
+                    })
                     updateOriginObj.coverPath = imageBase64 as string
                     console.log(imageBase64);
-                    videoList.value!.find(item=>item.id === loadingVideoFolderId.value)!.list.find(item=>item.id === id)!.coverPath = `${imageBase64}`
+                    videoList.value!.find(item => item.id === loadingVideoFolderId.value)!.list.find(item => item.id === id)!.coverPath = `${imageBase64}`
                     if (!ifSearch.value || searchTypeid.value === 'folder') {
                         viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
                     }
@@ -590,21 +600,24 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                 EddVideoFormRef.value.rollBackForm()
                 alert("\n视频缓存修改失败，已自动回滚")
             })
-        }else{
+        } else {
             loadingVideoId.value = id
             loadingVideoFolderId.value = form.folderId
             bilibiliErrorFlag = true
-            window.electron.ipcRenderer.send("download-bilibili",{ videoPath: form.videoPath ,sessdata:globalVar.setting.sessdata})
-            window.electron.ipcRenderer.once('download-bilibili-finish',async (_, { video, cover}) => {
+            window.electron.ipcRenderer.send("download-bilibili", { videoPath: form.videoPath, sessdata: globalVar.setting.sessdata })
+            window.electron.ipcRenderer.once('download-bilibili-finish', async (_, { video, cover }) => {
                 const imageBase64 = await bufferToBase64(cover)
-                if(form.updatePic){
+                const broadcast = new BroadcastChannel('cover')
+                broadcast.postMessage({ cover: imageBase64 })
+                broadcast.close()
+                if (form.updatePic) {
                     updateOriginObj.coverPath = imageBase64 as string
                     if (!ifSearch.value || searchTypeid.value === 'folder') viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
                     else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
                     db.videos.update(id, {
                         coverPath: imageBase64 as string
                     })
-                    videoList.value!.find(item=>item.id === loadingVideoFolderId.value)!.list.find(item=>item.id === id)!.coverPath = `${imageBase64}`
+                    videoList.value!.find(item => item.id === loadingVideoFolderId.value)!.list.find(item => item.id === id)!.coverPath = `${imageBase64}`
                     if (!ifSearch.value || searchTypeid.value === 'folder') viewVidoListWithPinyin.value![0].list[0].coverPath = `${imageBase64}`
                     else viewVidoListWithPinyinOther.value![0].coverPath = `${imageBase64}`
                     nextTick(() => {
@@ -613,7 +626,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
                 }
                 const videoBlob = new Blob([video], { type: 'video/mp4' });
                 let t = await db.videos_data.get(id)
-                console.log(t,"目标位");
+                console.log(t, "目标位");
                 if (t) {
                     db.videos_data.update(id, {
                         data: videoBlob
@@ -630,7 +643,7 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video, originalFolderId
             })
             //download-bilibili-error on
             window.electron.ipcRenderer.once('download-bilibili-error', (_, { error }) => {
-                if(bilibiliErrorFlag){
+                if (bilibiliErrorFlag) {
                     bilibiliErrorFlag = false
                     //@ts-ignore id only undefined in table create
                     viewVidoListWithPinyin.value![0].list[0] = base_video
@@ -655,18 +668,18 @@ let lastIndex1 = 0;
 let lastIndex2 = 0;
 const drawLoading = (progress) => {
     let index1 = 0, index2 = 0
-    if(!getCanvaasList.value[index1] || !getCanvaasList.value[index1][index2])return
+    if (!getCanvaasList.value[index1] || !getCanvaasList.value[index1][index2]) return
     if (!ifSearch.value || searchTypeid.value === 'folder') {
-        // console.log(viewVidoListWithPinyin.value,"自我");
-        // console.log(loadingVideoFolderId.value,"草屋");
+        console.log(viewVidoListWithPinyin.value, "自我");
+        console.log(loadingVideoFolderId.value, "草屋");
         index1 = viewVidoListWithPinyin.value.findIndex(item => item.id === loadingVideoFolderId.value)
         index2 = index1 >= 0 ? viewVidoListWithPinyin.value[index1].list.findIndex(item => item.id === loadingVideoId.value) : -1
     } else {
         index1 = 0,
             index2 = viewVidoListWithPinyinOther.value.findIndex(item => item.id === loadingVideoId.value)
     }
-    // console.log(index1, index2, "正在绘制的cnavasindex为");
-    // console.log(lastIndex1, lastIndex2, "上一次的cnavasindex为");
+    console.log(index1, index2, "正在绘制的cnavasindex为");
+    console.log(lastIndex1, lastIndex2, "上一次的cnavasindex为");
 
     if (index1 < 0 || index2 < 0) {
         if (lastIndex1 >= 0 && lastIndex2 >= 0) {
@@ -714,7 +727,7 @@ const drawLoading = (progress) => {
     lastIndex2 = index2
 }
 window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
-    if($route.name != 'video')return
+    if ($route.name != 'video') return
     drawLoading(progress)
 })
 
@@ -722,7 +735,7 @@ window.electron.ipcRenderer.on('save-video-progress', (_, { progress }) => {
 
 //download-bilibili-downloading on
 window.electron.ipcRenderer.on('download-bilibili-downloading', (_, { progress }) => {
-    if($route.name != 'video')return
+    if ($route.name != 'video') return
     drawLoading(progress)
 })
 const choicePageFlag = ref(true)
@@ -731,15 +744,15 @@ const pageSize = ref(0)
 //download-bilibili-choice on 
 //download-bilibili-choice-result send
 window.electron.ipcRenderer.on('download-bilibili-choice', (_, { number }) => {
-    if($route.name != 'video')return
+    if ($route.name != 'video') return
     pageSize.value = number
     choicePageFlag.value = true
 })
 
-watch(()=>choicePageFlag.value,()=>{
-    if(choicePageFlag.value == false && pageSize.value > 1){
+watch(() => choicePageFlag.value, () => {
+    if (choicePageFlag.value == false && pageSize.value > 1) {
         window.electron.ipcRenderer.send('download-bilibili-choice-result', { index: choiceIndex.value })
-        if($route.name != 'video')return
+        if ($route.name != 'video') return
         choiceIndex.value = 1
         pageSize.value = 0
     }
@@ -747,14 +760,72 @@ watch(()=>choicePageFlag.value,()=>{
 
 
 const goSetting = () => {
-    $router.push({name:'setting'})
-    let t = setInterval(()=>{
-        if($route.name === 'setting'){
+    $router.push({ name: 'setting' })
+    let t = setInterval(() => {
+        if ($route.name === 'setting') {
             globalVar.changeMainScroll = 2000
             clearInterval(t)
         }
-    },100)
+    }, 100)
 }
+
+onActivated(async () => {
+    if (loadingVideoId.value == 0) {
+        drawLoading(100)
+    }
+    try {
+        await initFolder()
+        nextTick(() => {
+            searchInputFn()
+        })
+    } catch (error) {
+        options.value = []
+        videoList.value = []
+    }
+})
+
+onActivated(() => {
+    if (!stopWatchDel) {
+        stopWatchDel = watch(() => globalVar.delVideo, async () => {
+            console.log(globalVar.delVideo);
+            if (globalVar.delVideo.flag && $route.name == "video") {
+                await db.videos.delete(globalVar.delVideo.videoId)
+                await db.videos_data.delete(globalVar.delVideo.videoId)
+                updateAideoListAfterDelete()
+                if (globalVar.delVideo.videoId === loadingVideoId.value) {
+                    window.electron.ipcRenderer.send('dueTo-del-nedd-close-ffmpeg')
+                    drawLoading(100)
+                    loadingVideoId.value = 0
+                    loadingVideoFolderId.value = 0
+                }
+                globalVar.delVideo.flag = false
+            }
+        }, { deep: true })
+    }
+
+    if (!stopWatchEdit) {
+        stopWatchEdit = watch(() => globalVar.editVideo.flag, () => {
+            if (loadingVideoId.value !== 0 && $route.name == "video") {
+                editVideoFlag.value = false
+                globalVar.editVideo.flag = false
+                return
+            }
+            editVideoFlag.value = toRaw(globalVar.editVideo.flag)
+        }, { deep: true })
+    }
+})
+
+onDeactivated(() => {
+    if (stopWatchDel) {
+        stopWatchDel()
+        stopWatchDel = null
+    }
+    if (stopWatchEdit) {
+        stopWatchEdit()
+        stopWatchEdit = null
+    }
+})
+
 
 </script>
 
@@ -771,7 +842,8 @@ const goSetting = () => {
 
             .btns {
                 display: flex;
-                .goSetting{
+
+                .goSetting {
                     height: 32px;
                     line-height: 32px;
                     user-select: none;
@@ -779,10 +851,12 @@ const goSetting = () => {
                     font-size: 12px;
                     text-decoration: underline;
                     color: @url-color;
-                    &:hover{
+
+                    &:hover {
                         color: @url-color-hover;
                     }
                 }
+
                 .btn {
                     justify-content: center;
                     cursor: pointer;

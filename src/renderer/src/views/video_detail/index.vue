@@ -29,7 +29,7 @@
               <div class="playing" :class="{ active: val.id === activeVideo.id }" >
                 <i class="icon-youjiantou iconfont"></i>
               </div>
-              <img :src="val.coverPath" alt="" :data-forceUpdate="val.id"/>
+              <img :src="val.coverPath.length==0?blankImg:val.coverPath" :data-forceUpdate="val.id" onerror="this.src = blankImg"/>
               <div class="msg">
                 <div class="title">
                   {{ val.title }}
@@ -48,20 +48,21 @@
       </div>
     </main>
   </div>
-  <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
+  <EddVideoForm ref="EddVideoFormRef" key="EddVideoForm1" v-model:editVideoFlag="editVideoFlag" v-model:options="options"
     @editVideo="editVideo" :id="globalVar.editVideo.videoId" :folderFormFlag="false"></EddVideoForm>
   <ChoicePage v-model:choicePageFlag="choicePageFlag" v-model:choiceIndex="choiceIndex" :pageSize="pageSize"></ChoicePage>
 
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, computed, watch, toRef } from 'vue'
+import { Ref, ref, computed, watch, toRef, toRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@renderer/indexDB/db'
 import { videos_table } from '@renderer/indexDB/dbType'
 import { useGlobalVar, useVideo } from "@renderer/store/index"
 import { EditVideoInfo, videoFolder } from '../video/indexType'
 import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64'
+const blankImg = ref(`data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=`)
 const des_txt = ref()
 const open = ref(false)
 const video = ref() as Ref<HTMLVideoElement>
@@ -145,7 +146,7 @@ const onMouseUp = (event: MouseEvent) => {
 }
 
 const goVideo = async (videMsg: videos_table, index: number) => {
-  if (getCanvaasList.value[index].width !== 0) {
+  if (videMsg.id == loadingVideoId.value) {
     return
   }
   try {
@@ -179,7 +180,7 @@ const updateAideoListAfterDelete = async (id) => {
 
 watch(() => globalVar.delVideo, async () => {
   console.log(globalVar.delVideo);
-  if (globalVar.delVideo.flag) {
+  if (globalVar.delVideo.flag && $route.name=="video_detail") {
     await db.videos.delete(globalVar.delVideo.videoId)
     await db.videos_data.delete(globalVar.delVideo.videoId)
     if (globalVar.delVideo.videoId == activeVideo.value.id) {
@@ -211,12 +212,12 @@ try {
 }
 const editVideoFlag = ref(false)
 watch(() => globalVar.editVideo.flag, () => {
-  if (loadingVideoId.value !== 0) {
+  if (loadingVideoId.value !== 0 && $route.name=="video_detail") {
     editVideoFlag.value = false
     globalVar.editVideo.flag = false
     return
   }
-  editVideoFlag.value = globalVar.editVideo.flag
+  editVideoFlag.value = toRaw(globalVar.editVideo.flag)
 }, { deep: true })
 
 const EddVideoFormRef = ref()
@@ -266,16 +267,6 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
             coverPath: `${imageBase64}`
           })
           video_detail_view.value![0].coverPath = `${imageBase64}`
-          //路由切换返回后无法更新图片，因此强制更新真实dom
-          const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLElement[] | HTMLImageElement[]
-          forceUpdateList.forEach(item=>{
-              // item.style.backgroundImage = `url(${imageBase64})`
-              if(item instanceof HTMLImageElement){
-                  item.src= imageBase64 as string
-              }else{
-                item.style.backgroundImage = `url(${imageBase64})`
-              }
-          })
         }
         loadingVideoId.value = 0
         loadingVideoFolderId.value = 0
@@ -300,16 +291,6 @@ const editVideo = ({ id, form, nowTime, reloadFlag, base_video }: { id: number, 
           video_detail_view.value![0].coverPath = `${imageBase64}`
           db.videos.update(id, {
             coverPath: imageBase64 as string
-          })
-          //路由切换返回后无法更新图片，因此强制更新真实dom
-          const forceUpdateList = [...document.querySelectorAll(`[data-forceUpdate="${loadingVideoId.value}"]`)] as HTMLImageElement[] | HTMLElement[]
-          forceUpdateList.forEach(item=>{
-              // item.style.backgroundImage = `url(${imageBase64})`
-              if(item instanceof HTMLImageElement){
-                  item.src= imageBase64 as string
-              }else{
-                item.style.backgroundImage = `url(${imageBase64})`
-              }
           })
         }
         const videoBlob = new Blob([video], { type: 'video/mp4' });
@@ -455,8 +436,10 @@ watch(()=>choicePageFlag.value,()=>{
         pageSize.value = 0
     }
 })
-
-
+const broadcast = new BroadcastChannel('cover')
+broadcast.addEventListener("message",(event)=>{
+  video_detail_view.value![0].coverPath = event.data.cover
+})
 </script>
 
 <style scoped lang="less">
