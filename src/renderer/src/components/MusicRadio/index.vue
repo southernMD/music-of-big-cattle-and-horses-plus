@@ -130,18 +130,22 @@
             </div>
         </div>
         <div class="right" :class="{ 'right-oneself': globalVar.oneself }" v-show="playingList.length">
-            <div class="playLevel" id="playLevel" draggable="false" @click="showLevel">
+            <div class="playLevel" id="playLevel" draggable="false" @click="showLevel"  ref="playLevelRef">
                 <SmallBlock v-if="showLevelFlag" :id="114514" :if-level="true"
                     :max-have="playingPrivileges[playingindex - 1].maxBrLevel"
                     :max-level="playingPrivileges[playingindex - 1].plLevel" :now-level="nowLevel" @show="changeSpanLevel"
-                    @close="showLevelFlag = false"></SmallBlock>
+                    @close="showLevelFlag = false"
+                    :parentRef="playLevelRef"
+                    ></SmallBlock>
                 <div class="bk" :class="{ 'bk-oneself': globalVar.oneself }" v-if="Main.songType != 'DJ'">
                     <span draggable="false">{{ levelName }}</span>
                 </div>
             </div>
-            <div class="playSpeed" id="playSpeed" draggable="false" @click="showSpeed">
+            <div class="playSpeed" id="playSpeed" draggable="false" @click="showSpeed" ref="playSpeedRef">
                 <SmallBlock v-if="showSpeedFlag" :id="114514" :width="110" :height="170" :speedPower="speedPower"
-                    @close="showSpeedFlag = false" @show="changeSpanSpeed"></SmallBlock>
+                    @close="showSpeedFlag = false" @show="changeSpanSpeed"
+                    :parentRef="playSpeedRef"
+                    ></SmallBlock>
                 <div class="bk" :class="{ 'bk-oneself': globalVar.oneself }">
                     <span draggable="false">{{ speedPower == '1x' ? '倍速' : speedPower }}</span>
                 </div>
@@ -157,10 +161,10 @@
                     </div>
                 </div>
             </div>
-            <div class="playList" id="playlistIcon" v-show="Main.songType != 'FM'">
+            <div class="playList" id="playlistIcon" v-show="Main.songType != 'FM'" ref="playlistIcon">
                 <i class="iconfont icon-24gf-playlist" @click="showPlayListPanel"></i>
                 <div v-show="PlayListPanelFlag">
-                    <PlayListPanel @startAll="startAll" @close="PlayListPanelFlag = false" @stopPlay="clearList"></PlayListPanel>
+                    <PlayListPanel :parentRef="playlistIcon" @startAll="startAll" @close="PlayListPanelFlag = false" @stopPlay="clearList"></PlayListPanel>
                 </div>
             </div>
         </div>
@@ -258,6 +262,9 @@ import SongDetail from './songDetail/index.vue';
 import MyDialog from '../myVC/MyDialog.vue';
 import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
 
+const playSpeedRef = ref(null)
+const playLevelRef = ref(null)
+
 let myWorker:null | Worker = null
 let myWorkerFull:null | Worker = null
 const $el = getCurrentInstance() as ComponentInternalInstance;
@@ -265,6 +272,9 @@ const Main = useMain();
 const globalVar = useGlobalVar();
 const BasicApi = useBasicApi()
 const ElectronToApp = useElectronToApp()
+const playlistIcon = ref(null)
+
+
 const NM = useNM()
 const $router = useRouter();
 const $route = useRoute();

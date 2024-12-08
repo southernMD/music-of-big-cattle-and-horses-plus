@@ -1,5 +1,5 @@
 <template>
-    <div class="bk" id="bkChangeSkin">
+    <div class="bk" id="bkChangeSkin" ref="bkChangeSkinRef">
         <div class="list">
             <Tag message="主题" :ifClick="flagList[0]" @click="changeTag(0)" name="zhuti"></Tag>
             <Tag message="纯色" :ifClick="flagList[1]" @click="changeTag(1)" name="cunse"></Tag>
@@ -61,6 +61,8 @@ import icon from '@renderer/assets/icon.png'
 const MainMenu = useMainMenu();
 const globalVar = useGlobalVar();
 
+const bkChangeSkinRef = ref(null)
+
 let flagList = ref([true, false, false])
 const changeTag = (index: number) => {
     flagList.value.forEach((value, i) => {
@@ -74,7 +76,7 @@ const changeTag = (index: number) => {
 
 let deleteDilog: any;
 const $emit = defineEmits(['close'])
-useClickElsewhereToClose(deleteDilog, $emit, 'bkChangeSkin');
+useClickElsewhereToClose(deleteDilog, $emit, bkChangeSkinRef);
 
 let flagC = toRef(MainMenu, 'colorBlock')
 

@@ -20,32 +20,35 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, getCurrentInstance, ComponentInternalInstance, ref } from 'vue';
+import { onMounted, getCurrentInstance, ComponentInternalInstance, ref, PropType, toRef, Ref } from 'vue';
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose'
-const $el = getCurrentInstance() as ComponentInternalInstance
-const levelArray = ['standard', 'exhigh', 'lossless', 'hires'];
+const levelArray = ['standard', 'exhigh', ['jymaster',"sky","lossless"], 'hires'];
 const levelArrayName = ['标准音质', '极高音质', '无损音质', 'Hi-Res音质'];
 const speedList = ['2x','1.5x','1.25x','1x','0.75x','0.5x']
 // const levelArray = new Map([['standard','标准音质'],['exhigh','极高音质'],['lossless','无损音质'],['hires','Hi-Res音质']])
 
-defineProps<{
-    width?: number,
-    height?: number
-    ifLevel?: boolean,
-    maxLevel?: string,   //最大可用
-    maxHave?: string,    //该音乐最高音质
-    nowLevel?: string,   //选择的音质
-    id: number,           //音乐id
-    speedPower?:string   //加速倍率
-}>()
-let maxLevelIndex = ref(levelArray.indexOf($el.props.maxLevel as string))
-let maxHaveIndex = ref(levelArray.indexOf($el.props.maxHave as string) + 1)
-let clickLeve = ref(levelArray.indexOf($el.props.nowLevel as string))
+const props = defineProps({
+    width: Number,
+    height: Number,
+    ifLevel: Boolean,
+    maxLevel: String,   //最大可用
+    maxHave: String,    //该音乐最高音质
+    nowLevel: String,   //选择的音质
+    id: Number,         //音乐id
+    speedPower: String, //加速倍率
+    parentRef: {
+        type: Object as PropType<HTMLElement | null>,
+        default: null
+    }
+})
+let maxLevelIndex = ref(levelArray.findIndex(item => item.includes(props.maxLevel!) ))
+let maxHaveIndex = ref(levelArray.findIndex(item => item.includes(props.maxHave!)) + 1)
+let clickLeve = ref(levelArray.findIndex(item => item.includes(props.nowLevel!)))
 
-if($el.props.maxLevel == 'higher') maxLevelIndex.value = 0
-if($el.props.maxHave == 'higher') maxHaveIndex.value = 1
-console.log($el.props.maxLevel);
-console.log($el.props.maxHave);
+if(props.maxLevel == 'higher') maxLevelIndex.value = 0
+if(props.maxHave == 'higher') maxHaveIndex.value = 1
+console.log(props.maxLevel);
+console.log(props.maxHave);
 
 
 function searchFather(d: HTMLElement): HTMLElement {
@@ -76,24 +79,24 @@ const changeLeve = (e: MouseEvent) => {
 
 }
 
+const smallBlock = ref(null) as Ref<HTMLElement | null>
 onMounted(() => {
-    let dom = $el.refs.smallBlock as HTMLElement
-    if ($el.props.width) {
-        dom.style.width = $el.props.width + 'px'
+    if (props.width) {
+        smallBlock.value!.style.width = props.width + 'px'
     }
-    if ($el.props.height) {
-        dom.style.height = $el.props.height + 'px'
+    if (props.height) {
+        smallBlock.value!.style.height = props.height + 'px'
     }
-    let father = dom?.parentNode as HTMLElement
+    let father = smallBlock.value!.parentNode as HTMLElement
     father.style.position = 'relative'
-    let left = -(dom.offsetWidth / 2 - father.offsetWidth / 2)
-    dom.style.left = left + 'px'
-    dom.style.top = - dom.offsetHeight + -15 + 'px'
+    let left = -(smallBlock.value!.offsetWidth / 2 - father.offsetWidth / 2)
+    smallBlock.value!.style.left = left + 'px'
+    smallBlock.value!.style.top = - smallBlock.value!.offsetHeight + -15 + 'px'
 
 })
 
 //加速
-let speedPowerIndex = ref(speedList.indexOf($el.props.speedPower as string))
+let speedPowerIndex = ref(speedList.indexOf(props.speedPower as string))
 const changeSpeed = (index:number)=>{
     speedPowerIndex.value = index
     $emit('show',speedList[index])
@@ -102,11 +105,8 @@ const changeSpeed = (index:number)=>{
 
 //点击其他处关闭当前
 let deleteDilog: any;
-if ($el.props.ifLevel) {
-    useClickElsewhereToClose(deleteDilog, $emit, 'playLevel');
-} else {
-    useClickElsewhereToClose(deleteDilog, $emit, 'playSpeed');
-}
+const parentRef = toRef(props,'parentRef')
+useClickElsewhereToClose(deleteDilog, $emit, parentRef);
 
 </script>
 

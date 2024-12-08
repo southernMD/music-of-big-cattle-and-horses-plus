@@ -37,14 +37,24 @@
 
 <script lang="ts" setup>
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
-import { getCurrentInstance, ComponentInternalInstance, toRef, watch } from 'vue';
+import {  onMounted, toRef, watch } from 'vue';
+import type {PropType} from 'vue'
 import { useMain,useGlobalVar } from '@renderer/store';
-const $el = getCurrentInstance() as ComponentInternalInstance
 const $emit = defineEmits(['close','stopPlay','startAll'])
 const Main = useMain();
 const globalVar = useGlobalVar()
 let list = toRef(Main, 'playingList')
 console.log(list);
+
+const props = defineProps({
+    parentRef: {
+        type: Object as PropType<HTMLElement | null>,
+        default: null
+    }
+})
+
+const parentRef = toRef(props, 'parentRef')
+
 const clearList = ()=>{
     Main.playingList = []
     Main.playingPrivileges = []
@@ -60,7 +70,7 @@ const clearList = ()=>{
 
 
 let deleteDilog: any
-useClickElsewhereToClose(deleteDilog, $emit, "playlistIcon")
+useClickElsewhereToClose(deleteDilog, $emit, parentRef)
 
 const startAll = ()=>{
     $emit('startAll')

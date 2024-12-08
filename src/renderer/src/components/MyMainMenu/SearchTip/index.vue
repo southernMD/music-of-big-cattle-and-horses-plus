@@ -1,5 +1,5 @@
 <template>
-  <div class="bk" ref="bk" id="bkSearchTip">
+  <div class="bk" id="bkSearchTip" ref="bkSearchTipRef">
     <div class="scroll">
         <el-scrollbar>
             <div class="noLength" v-if="globalVar.searchKey.trim().length == 0">
@@ -26,10 +26,8 @@
 </template>
 <!-- 'confirm','cancel','closeDialog' -->
 <script setup lang="ts">
-// import {toRef,Ref,watch,onMounted,ComponentInternalInstance,getCurrentInstance} from 'vue'
 import {ref} from 'vue'
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
-// const $el = getCurrentInstance() as ComponentInternalInstance;
 import { useMain,useGlobalVar } from '@renderer/store';
 import { useRouter } from 'vue-router';
 defineProps<{
@@ -40,7 +38,8 @@ const Main = useMain()
 const globalVar = useGlobalVar()
 let deleteDilog: any;
 const $emit = defineEmits(['close','changeFlag'])
-useClickElsewhereToClose(deleteDilog,$emit,'bkSearchTip');
+const bkSearchTipRef = ref(null)
+useClickElsewhereToClose(deleteDilog,$emit,bkSearchTipRef);
 const del = (index:number)=>{
     Main.searchHistory.splice(index,1)
 }

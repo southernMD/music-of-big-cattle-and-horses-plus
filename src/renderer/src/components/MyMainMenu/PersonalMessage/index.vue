@@ -1,5 +1,7 @@
 <template>
-    <div class="bk" id="bkUserMessage" ref="bk">
+    <div class="bk" id="bkUserMessage" ref="bkUserMessageRef"
+    :style="{'left':l + 'px'}"
+    >
         <div class="top">
             <div class="dongtai" @click="goEvents">
                 <div class="number">{{ BasicApi.profile?.eventCount }}</div>
@@ -37,38 +39,25 @@
 </template>
 
 <script setup lang="ts">
-import { watch, Ref, ref, getCurrentInstance,
- ComponentInternalInstance, onMounted, toRef,  } from 'vue';
+import {  Ref, ref, } from 'vue';
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
-import {useBasicApi,useMain,useGlobalVar,useNM} from '@renderer/store'
+import {useBasicApi,useMain,useGlobalVar} from '@renderer/store'
 import { useRouter } from 'vue-router';
 const BasicApi = useBasicApi();
-const NM = useNM()
 const Main = useMain();
 const globalVar = useGlobalVar()
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const $router = useRouter() 
 
 defineProps<{
     l: number
 }>()
+const bkUserMessageRef = ref()
 
-let left: Ref<any> = toRef($el.props, 'l')
-
-watch(left, (newValue, oldValue) => {
-    let dom: HTMLElement = $el.refs.bk as HTMLElement
-    dom.style.left = newValue + 'px'
-})
-
-onMounted(() => {
-    let dom: HTMLElement = $el.refs.bk as HTMLElement
-    dom.style.left = left.value + 'px'
-})
 
 //点击其他处关闭
 let deleteDilog: any;
 const $emit = defineEmits(['close'])
-useClickElsewhereToClose(deleteDilog,$emit,'bkUserMessage');
+useClickElsewhereToClose(deleteDilog,$emit,bkUserMessageRef);
 
 //退出登陆
 let LoadingFlag: Ref<boolean> = ref(false)
