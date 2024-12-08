@@ -4,7 +4,7 @@
             <span :class="{noDrag:!Main.dragMouse}">每日推荐</span>
             <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
         </div>
-        <div class="main">
+        <div class="main" v-if="everyDaySong.length">
             <div class="imgae" :data-id="everyDaySong[index]?.id" data-right="1" data-type="song" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
                 <div class="play animate__animated" @click.self="playThis"
                 :class="{
@@ -51,6 +51,11 @@
                         <span>下一首</span>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="main" v-else>
+            <div class="error">
+                <span>没有内容</span>
             </div>
         </div>
 
@@ -328,6 +333,14 @@ const go = ()=>{
                         }
                     }
                 }
+            }
+            .error{
+                height: 85%;
+                display: flex;
+                align-items: center;
+                margin: 0 auto;
+                user-select: none;
+                font-size: 30px;
             }
         }
 

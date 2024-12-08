@@ -58,21 +58,8 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect } from 'vue'
+import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect, onErrorCaptured, ComponentPublicInstance } from 'vue'
 import { useMainMenu, useGlobalVar, useBasicApi, useMain,useNM } from '@renderer/store'
-// mainWindow 渲染进程
-// 发送消息
-// const MusicRadio = shallowRef()
-// const MyMainMenu = shallowRef()
-// const Main = shallowRef()
-// onMounted(()=>{
-//     MusicRadio.value = defineAsyncComponent(() =>
-//     import('@renderer/components/MusicRadio/index.vue'))
-//     MyMainMenu.value = defineAsyncComponent(() =>
-//     import('@renderer/components/MyMainMenu/index.vue'))
-//     Main.value = defineAsyncComponent(() =>
-//     import('@renderer/components/Main.vue'))
-// })
 const MusicRadio = defineAsyncComponent(() =>
     import('@renderer/components/MusicRadio/index.vue'))
 const MyMainMenu = defineAsyncComponent(() =>
@@ -84,6 +71,7 @@ import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
+import { ElMessage } from 'element-plus';
 
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
@@ -93,7 +81,6 @@ const flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 const loadDefault: Ref<boolean> = toRef(globalVar, 'loadDefault')
 const downloadQueue = shallowRef(new PromiseQueue({ concurrency: 3 }))
 
-globalVar.setting.version = window.electron.ipcRenderer.sendSync('app-version')
 
 provide('downloadQueue', downloadQueue)
 onMounted(() => {
@@ -103,7 +90,18 @@ let BKbase64 = ref('')
 provide('playListId', ref(-1))
 provide('BKbase64', BKbase64)
 const MainMenu = useMainMenu();
-window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) => {
+
+try {
+    globalVar.setting.version = await window.electron.ipcRenderer.invoke('app-version').then((res) => {
+        return res
+    })
+} catch (error) {
+    globalVar.setting.version = '1.0.0'
+}
+
+
+
+window.electron.ipcRenderer.once('memory-background', ({ }, { buffer, extname }) => {
     extname = '.' + extname
     console.log(buffer, extname);
     if (['.jpg', '.png', '.jpeg', '.webp'].includes(extname)) {
@@ -135,9 +133,6 @@ window.electron.ipcRenderer.on('memory-background', ({ }, { buffer, extname }) =
         localStorage.setItem('oneself', '1')
     })
 })
-// window.electron.ipcRenderer.on('ffmpeg-path',({},data)=>{
-//     console.log(data);
-// })
 
 onMounted(()=>{
     window.electron.ipcRenderer.send('renderer-ready')
@@ -207,7 +202,6 @@ window.electron.ipcRenderer.on('mp4-msg',({},{ msg })=>{
 })
 
 //换被景图
-//与下面代码无关
 
 window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
     console.log(liu, extname);
@@ -241,70 +235,93 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
     })
   
 })
-
-if (!sessionStorage.getItem('youkeCookie')) {
-    let result: any = await BasicApi.reqAnonimous(); //游客登陆
-    if (result.data.code == 200) {
-        sessionStorage.setItem('youkeCookie', result.data.cookie)
+//游客登陆
+try {
+    if (!sessionStorage.getItem('youkeCookie')) {
+    let result: any = await BasicApi.reqAnonimous();
+        if (result.data.code == 200) {
+            sessionStorage.setItem('youkeCookie', result.data.cookie)
+        }else{
+            throw new Error('游客登陆失败')
+        }
     }
+} catch (error) {
+    console.log(error);
+    sessionStorage.setItem('youkeCookie', "")
 }
-let cookie = localStorage.getItem('cookieUser')
-if (localStorage.getItem('NMcookie')) {
-    NM.reqLogin().then(()=>{
-        NM.reqUserPlaylist(BasicApi.profile?.userId)
-        NM.reqUserLike(BasicApi.profile?.userId)
-        NM.reqUserSubcount()
-        NM.reqartistSublist()
-        NM.reqalbumSublist()
-        NM.requserFollows(BasicApi.profile?.userId,99999999,0)
-    })
+try {
+    let cookie = localStorage.getItem('cookieUser')
+    if (localStorage.getItem('NMcookie')) {
+        NM.reqLogin().then(()=>{
+            NM.reqUserPlaylist(BasicApi.profile?.userId)
+            NM.reqUserLike(BasicApi.profile?.userId)
+            NM.reqUserSubcount()
+            NM.reqartistSublist()
+            NM.reqalbumSublist()
+            NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+        }).catch((err)=>{
+            throw new Error(err)
+        })
+    }
+    else if (!!cookie) {
+        BasicApi.reqLogin(cookie as string).then(() => {
+            MainPinia.reqUserPlaylist(BasicApi.account?.id)
+            MainPinia.reqUserLike(BasicApi.account?.id)
+            BasicApi.reqStartDj()
+            BasicApi.reqCreateDj(BasicApi.account?.id)
+            MainPinia.reqUserSubcount()
+            BasicApi.reqartistSublist()
+            BasicApi.reqalbumSublist()
+            BasicApi.requserFollows(BasicApi.account!.id)
+        }).catch((err)=>{
+            throw new Error(err)
+        })
+    }
+    // const p3 = BasicApi.reqDjProgramToplist(10)
+    await Promise.allSettled([
+        localStorage.getItem('NMcookie')? NM.reqLogin():BasicApi.reqLogin(cookie as string),
+        BasicApi.reqRecommendSongs(),
+        localStorage.getItem('NMcookie')? NM.reqRecommendPlayList():BasicApi.reqRecommendPlayList(), 
+        BasicApi.reqPlayListTags()   
+    ])
+} catch (error) {
+    console.log(error);
 }
-else if (!(cookie == '' || cookie == null || cookie == undefined)) {
-    BasicApi.reqLogin(cookie as string).then(() => {
-        MainPinia.reqUserPlaylist(BasicApi.account?.id)
-        MainPinia.reqUserLike(BasicApi.account?.id)
-        BasicApi.reqStartDj()
-        BasicApi.reqCreateDj(BasicApi.account?.id)
-        MainPinia.reqUserSubcount()
-        BasicApi.reqartistSublist()
-        BasicApi.reqalbumSublist()
-        BasicApi.requserFollows(BasicApi.account!.id)
-    })
-}
-const p0 = localStorage.getItem('NMcookie')? NM.reqLogin():BasicApi.reqLogin(cookie as string)
-const p1 = BasicApi.reqRecommendSongs()
-let p2
-if(localStorage.getItem('NMcookie')){
-    p2 = NM.reqRecommendPlayList()
-}else{
-    p2 = BasicApi.reqRecommendPlayList()
-}
-// const p3 = BasicApi.reqDjProgramToplist(10)
-const p4 = BasicApi.reqPlayListTags()
-await Promise.allSettled([p0,p1, p2, p4])
+
+
 
 onMounted(async()=>{
-    if(localStorage.getItem('NMcookie')){
-        Promise.allSettled([
-            NM.reqUserPlaylist(BasicApi.profile?.userId),
-            NM.reqUserLike(BasicApi.profile?.userId),
-            NM.reqUserSubcount(),
-            NM.requserFollows(BasicApi.profile?.userId,99999999,0)
-        ])
-    }else if(!(cookie == '' || cookie == null || cookie == undefined)){
-        Promise.allSettled([
-            MainPinia.reqUserPlaylist(BasicApi.account?.id),
-            MainPinia.reqUserLike(BasicApi.account?.id),
-            MainPinia.reqUserSubcount(),
-            BasicApi.requserFollows(BasicApi.account!.id)
-        ])
-        
+    let cookie = localStorage.getItem('cookieUser')
+    try {
+        if(localStorage.getItem('NMcookie')){
+            Promise.allSettled([
+                NM.reqUserPlaylist(BasicApi.profile?.userId),
+                NM.reqUserLike(BasicApi.profile?.userId),
+                NM.reqUserSubcount(),
+                NM.requserFollows(BasicApi.profile?.userId,99999999,0)
+            ])
+        }else if(!!cookie){
+            Promise.allSettled([
+                MainPinia.reqUserPlaylist(BasicApi.account?.id),
+                MainPinia.reqUserLike(BasicApi.account?.id),
+                MainPinia.reqUserSubcount(),
+                BasicApi.requserFollows(BasicApi.account!.id)
+            ])
+            
+        }
+    } catch (error) {
+        console.log(error);
     }
 })
 
-const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
-globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
-globalVar.fontList.unshift({name:'默认'})
+try {
+    const fontList:string[] = await window.electron.ipcRenderer.invoke('get-font-list')
+    globalVar.fontList = fontList.map(str=>str.replaceAll('\"','')).map(it=>{return {name:it}})
+    globalVar.fontList.unshift({name:'默认'})
+} catch (error) {
+    globalVar.fontList.unshift({name:'默认'})
+}
+
 
 let flagC = toRef(MainMenu, 'colorBlock')
 flagC.value = localStorage.getItem('colorBlock') as string
@@ -716,10 +733,16 @@ const cancleUpdate = ()=>{
     updateFlag.value = false
 }
 
-watch(()=>globalVar.downloadId,()=>{
-    console.log(globalVar.downloadId,'下载id列表变化');
-    
+onErrorCaptured((err: Error,
+  _,
+  info: string)=>{
+    console.log(err);
+    if(err.message === "request code error"){
+        flagLogin.value = false
+        ElMessage.error("获取登录窗口失败")
+    }
 })
+
 </script>
 
 <style scoped lang="less">

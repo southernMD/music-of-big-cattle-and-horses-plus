@@ -237,27 +237,37 @@ export const useBasicApi = defineStore('BaseApi', {
         },
         //我创建的dj
         async reqCreateDj(id: number): Promise<any> {
-            let result = await userDj(id)
-            if (result.data.code == 200) {
-                this.createDjArr = result.data.djRadios
-                return new Promise((resolve) => {
-                    resolve(result)
-                })
-            } else {
-                // alert('error')
+            try {
+                let result = await userDj(id)
+                if (result.data.code == 200) {
+                    this.createDjArr = result.data.djRadios
+                    return new Promise((resolve) => {
+                        resolve(result)
+                    })
+                } else {
+                    throw new Error('error')
+                }
+            } catch (error) {
+                throw new Error(error as string)
             }
+
         },
         //我收藏的dj
         async reqStartDj(): Promise<any> {
-            let result = await startDj()
-            if (result.data.code == 200) {
-                this.startDjArr = result.data.djRadios
-                return new Promise((resolve) => {
-                    resolve(result)
-                })
-            } else {
-                // alert('error')
+            try {
+                let result = await startDj()
+                if (result.data.code == 200) {
+                    this.startDjArr = result.data.djRadios
+                    return new Promise((resolve) => {
+                        resolve(result)
+                    })
+                } else {
+                    throw new Error('error')
+                }
+            } catch (error) {
+                throw new Error(error as string)
             }
+
         },
         //歌曲的tags
         async reqPlayListTags(){
@@ -306,11 +316,18 @@ export const useBasicApi = defineStore('BaseApi', {
         },
         //我的关注列表
         async requserFollows(id){
-            let result = await userFollows(id,99999999,0)
-            console.log(result);
-            if (result.data.code == 200) {
-                this.followsId = result.data.follow.map(item=>item.userId)
+            try {
+                let result = await userFollows(id,99999999,0)
+                console.log(result);
+                if (result.data.code == 200) {
+                    this.followsId = result.data.follow.map(item=>item.userId)
+                }else{
+                    this.followsId = []
+                }
+            } catch (error) {
+                throw error
             }
+
         },
     }
 })
@@ -447,33 +464,44 @@ export const useMain = defineStore('Main', {
     actions: {
         //获取用户信息 , 歌单，收藏，mv, dj 数量 是歌单数
         async reqUserSubcount() {
-            let result = await userSubcount();
-            if (result.data.code == 200) {
-                this.startDj = result.data.djRadioCount
-                this.createDj = result.data.createDjRadioCount
-                this.createPlay = result.data.createdPlaylistCount - 1
-                this.startPlay = result.data.subPlaylistCount
-                return new Promise((resolve) => {
-                    resolve(result)
-                })
+            try {
+                let result = await userSubcount();
+                if (result.data.code == 200) {
+                    this.startDj = result.data.djRadioCount
+                    this.createDj = result.data.createDjRadioCount
+                    this.createPlay = result.data.createdPlaylistCount - 1
+                    this.startPlay = result.data.subPlaylistCount
+                    return new Promise((resolve) => {
+                        resolve(result)
+                    })
+                }else{
+                    return Promise.reject(result)
+                }
+            } catch (error) {
+                throw error
             }
+
         },
         //获取用户创建歌单以及用户收藏歌单
         async reqUserPlaylist(uid: string) {
-            let result = await UserPlaylist(uid);
-            if (result.data.code == 200 && uid == useBasicApi()!.profile!.userId) {
-                this.playList = result.data.playlist.map((item,index)=>{
-                    item['index'] = index
-                    return item 
+            try {
+                let result = await UserPlaylist(uid);
+                if (result.data.code == 200 && uid == useBasicApi()!.profile!.userId) {
+                    this.playList = result.data.playlist.map((item,index)=>{
+                        item['index'] = index
+                        return item 
+                    })
+                    this.playListId = []
+                    this.playList.forEach((element) => {
+                        this.playListId.push(element.id)
+                    })
+                }
+                return new Promise<AxiosResponse>((resolve) => {
+                    resolve(result)
                 })
-                this.playListId = []
-                this.playList.forEach((element) => {
-                    this.playListId.push(element.id)
-                })
+            } catch (error) {
+                return Promise.reject(error)
             }
-            return new Promise<AxiosResponse>((resolve) => {
-                resolve(result)
-            })
         },
         //获取歌单详情页
         async reqPlaylistDetail(id: number | string): Promise<any> {
@@ -528,11 +556,15 @@ export const useMain = defineStore('Main', {
         },
         //调用此接口 , 传入用户 id, 可获取已喜欢音乐 id 列表(id 数组)
         async reqUserLike(id: number) {
-            let result = (await UserLike(id)).data;
-            this.likes = result.ids
-            return new Promise((resolve) => {
-                resolve(result)
-            })
+            try {
+                let result = (await UserLike(id)).data;
+                this.likes = result.ids
+                return new Promise((resolve) => {
+                    resolve(result)
+                })
+            } catch (error) {
+                return Promise.reject(error)
+            }
         },
         //获取音乐 url
         async reqSongUrl(id: number, level?: string) {

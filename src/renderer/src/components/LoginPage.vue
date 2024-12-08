@@ -1,5 +1,5 @@
 <template>
-    <div class="LoginPage" @mousedown="move" @mouseup="moveEnd">
+    <div class="LoginPage" @mousedown="move" @mouseup="moveEnd" ref="loginPageRef">
         <i class="iconfont icon-guanbi_o" @click="destroyVC"></i>
         <div v-show="otherLogin">
             <div class="title">扫码登陆</div>
@@ -59,10 +59,10 @@
 
 <script setup lang="ts">
 import { useBasicApi, useMain, useGlobalVar,useNM } from '../store'
-import { getCurrentInstance, ComponentInternalInstance, ref, Ref, onMounted, watch, toRef, onUnmounted, reactive, watchEffect } from 'vue'
+import { ref, Ref, onMounted, watch, toRef, onUnmounted, reactive} from 'vue'
 import { useRouter } from 'vue-router';
 import {NMCode,NMReg,NMlogin} from '@renderer/api/niuma'
-import type { FormInstance, FormRules } from 'element-plus'
+import  { FormInstance, FormRules } from 'element-plus'
 import p1 from '@renderer/assets/image/XW8rcLxOev.png'
 import p2 from '@renderer/assets/image/SgCjDdGyLg.png'
 import {modInput} from '../utils/modInput'
@@ -74,40 +74,41 @@ const globalVar = useGlobalVar()
 const inputRef1 = ref()
 const inputRef2 = ref()
 const inputRef3 = ref()
-let key: any = await BasicApi.reqQrKey()
-let imgBase64: any = await BasicApi.reqQrImage(key.data.data.unikey)
-// 轮询开始
-let time = setInterval(async () => {
-    let result: any = await BasicApi.reqCheck(key.data.data.unikey)
-    if (result.data.code == 800) { //过期
-        maskFlag.value = true
-        document.querySelector('.img')?.classList.add('imgHoverNo')
-    } else if (result.data.code == 802) {
-        okFlag.value = true
-    } else if (result.data.code == 803) {
+let key:any
+let imgBase64:any
+let qrimg:any
+try {
+    key = await BasicApi.reqQrKey()
+    imgBase64 = await BasicApi.reqQrImage(key.data.data.unikey)
+    // 轮询开始
+    let time = setInterval(async () => {
+        let result: any = await BasicApi.reqCheck(key.data.data.unikey)
+        if (result.data.code == 800) { //过期
+            maskFlag.value = true
+            document.querySelector('.img')?.classList.add('imgHoverNo')
+        } else if (result.data.code == 802) {
+            okFlag.value = true
+        } else if (result.data.code == 803) {
+            clearInterval(time);
+            localStorage.setItem('cookieUser', result.data.cookie)
+            login();
+        }
+    }, 1500)
+    onUnmounted(() => {
         clearInterval(time);
-        localStorage.setItem('cookieUser', result.data.cookie)
-        login();
-    }
-}, 1500)
-onUnmounted(() => {
-    clearInterval(time);
-})
-let qrimg = imgBase64.data.data.qrimg
+    })
+    qrimg = imgBase64.data.data.qrimg
+} catch (error) {
+    throw new Error("request code error")
+}
 
-const $el = getCurrentInstance() as ComponentInternalInstance;
+
 let showPhoneFlag: Ref<boolean> = ref(true)
-let dom1: any
-let dom2: any
 let moveFlag: Ref<boolean> = ref(false)
 let maskFlag: Ref<boolean> = ref(false)
 let okFlag: Ref<boolean> = ref(false)
-onMounted(() => {
-    dom1 = $el.refs.imgPhone as ComponentInternalInstance
-    dom2 = $el.refs.imgQr as ComponentInternalInstance
-    dom1 = dom1.$el
-    dom2 = dom2.$el
-})
+const imgPhone = ref(null)
+const imgQr = ref(null)
 
 let phoneFlag: Ref<boolean> = ref(true)
 
@@ -125,21 +126,20 @@ let X = 0;
 let Y = 0;
 let WX = 0;
 let WY = 0;
-let dom: HTMLElement
+const loginPageRef = ref()
 let Listener = (e: MouseEvent) => {
     if (moveFlag.value) {
-        let dom: HTMLElement = document.querySelector('.LoginPage') as HTMLElement
-        dom.style.left = WX + (e.pageX - X) + 'px';
-        dom.style.top = WY + (e.pageY - Y) + 'px';
+        loginPageRef.value!.style.left = WX + (e.pageX - X) + 'px';
+        loginPageRef.value!.style.top = WY + (e.pageY - Y) + 'px';
     }
 }
 const move = (e: MouseEvent) => {
     moveFlag.value = true
     X = e.pageX;
-    WX = dom.offsetLeft;
+    WX = loginPageRef.value!.offsetLeft;
     Y = e.pageY;
-    WY = dom.offsetTop;
-    dom.style.margin = '0 0';
+    WY = loginPageRef.value!.offsetTop;
+    loginPageRef.value!.style.margin = '0 0';
     window.addEventListener('mousemove', Listener)
 }
 const moveEnd = () => {
@@ -147,12 +147,11 @@ const moveEnd = () => {
     window.removeEventListener('mousemove', Listener)
 }
 onMounted(() => {
-    dom = document.querySelector('.LoginPage') as HTMLElement
     window.electron.ipcRenderer.send('get-screen-X-Y')
     window.electron.ipcRenderer.on('there-X-Y', ({}, obj: any) => {
         let { width, height } = obj;
-        dom.style.top = (height - dom.offsetHeight) / 2 + 'px';
-        dom.style.left = (width - dom.offsetWidth) / 2 + 'px';
+        loginPageRef.value!.style.top = (height - loginPageRef.value!.offsetHeight) / 2 + 'px';
+        loginPageRef.value!.style.left = (width - loginPageRef.value!.offsetWidth) / 2 + 'px';
     })
 })
 
@@ -216,7 +215,12 @@ const login = async () => {
                 resolve('ok')
             })
         })
-        Promise.all([p1,p2,p3,p4,p5,p6,p7,p8,p9]).then(()=>{
+        const p10 = new Promise<string>((resolve) => {
+            BasicApi.reqRecommendPlayList().then(()=>{
+                resolve('ok')
+            })
+        })
+        Promise.all([p1,p2,p3,p4,p5,p6,p7,p8,p9,p10]).then(()=>{
             LoadingFlag.value = false
             destroyVC();
             $router.replace({

@@ -186,8 +186,8 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   //应用版本
   console.log('当前版本', app.getVersion());
 
-  ipcMain.on('app-version', (event) => {
-    event.returnValue = app.getVersion()
+  ipcMain.handle('app-version', (event) => {
+    return app.getVersion()
   })
   //记忆背景
   ipcMain.on('renderer-ready', () => {

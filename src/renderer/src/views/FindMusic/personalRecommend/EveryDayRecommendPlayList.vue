@@ -5,7 +5,7 @@
                 <span :class="{noDrag:!Main.dragMouse}">推荐歌单</span>
                 <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
             </div>
-            <div class="img-list">
+            <div class="img-list" v-if="playListRand.length!=0">
                 <PlayListShow
                 data-type="playList"
                 v-for="({},index) in playListRand" 
@@ -25,13 +25,18 @@
                     </template>
                 </PlayListShow>
             </div>
+            <div class="img-list" v-else>
+                <div class="error">
+                    <span>没有内容</span>
+                </div>
+            </div>
         </div>
         
     </div>
 </template>
 
 <script lang='ts' setup>
-import { toRef,shallowRef } from 'vue'
+import { toRef,shallowRef ,ref} from 'vue'
 import { useMain, useBasicApi ,useGlobalVar,useNM} from '@renderer/store'
 import{useRouter} from 'vue-router'
 import {sampleSize} from 'lodash'
@@ -43,7 +48,9 @@ const BasicApi = useBasicApi()
 const $router = useRouter()
 
 let playList = toRef(BasicApi,'everyDayPlayList') 
-let playListRand = shallowRef(sampleSize(playList.value,10))
+let playListRand = ref(sampleSize(playList.value,10))
+console.log(playListRand.value);
+
 const playAll = async (id)=>{
     let result 
     if(localStorage.getItem('NMcookie')){
@@ -106,6 +113,14 @@ const go = ({id})=>{
             justify-content: start;
             flex-wrap: wrap;
             margin-bottom: 20px;
+            .error{
+                height: 85%;
+                display: flex;
+                align-items: center;
+                margin: 0 auto;
+                user-select: none;
+                font-size: 30px;
+            }
         }
     }
 }
