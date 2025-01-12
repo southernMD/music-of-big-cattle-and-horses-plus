@@ -358,8 +358,10 @@ const likeOrDislike = async () => {
         }
         likes.value.splice(likeIndex, 1)
         Main.playList[0].trackCount--
-        globalVar.loadMessageDefault = '取消喜欢成功'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+          message:'取消喜欢成功',
+          showTime:1000
+        })
         Main.likeChange = `${playingId.value},false`
     } else {
         if(localStorage.getItem('NMcookie')){
@@ -371,8 +373,10 @@ const likeOrDislike = async () => {
         }
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
-        globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+          message:'已添加到我喜欢的音乐',
+          showTime:1000
+        })
         Main.likeChange = `${playingId.value},true`
         Main.playList[0].trackCount++
     }
@@ -1969,8 +1973,10 @@ const addIn = async(id,index)=>{
         }
         console.log(playingId.value);
         likes.value.unshift(playingId.value)
-        globalVar.loadMessageDefault = '已添加到我喜欢的音乐'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+          message:'已添加到我喜欢的音乐',
+          showTime:1000
+        })
         Main.likeChange = `${playingId.value},true`
         Main.playList[0].trackCount++
     }else{
@@ -1990,8 +1996,10 @@ const addIn = async(id,index)=>{
         }
         destory()
         if (result.body.code == 200 || (result.code == 200 && localStorage.getItem('NMcookie'))) {
-            globalVar.loadMessageDefault = '已收藏到歌单'
-            globalVar.loadMessageDefaultFlag = true 
+            Loading({
+                message:'已收藏到歌单',
+                showTime:1000
+            })
             Main.playList[index].trackCount += willStartListId.value.length
             if($route.name == 'songPlaylist' && $route.query.id == id){
                 Main.likeChange = `${id},true`
@@ -2097,8 +2105,10 @@ const confirm = async()=>{
         // let result = await Main.reqShareResource(globalVar.share.type,Main.playing,zhuanfaMessage.value)
         destory()
         if(result.code == 200){
-            globalVar.loadMessageDefault = '分享成功'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'分享成功',
+                showTime:1000
+            })
             globalVar.share = {
                 imgUrl:'',
                 message:'',
@@ -2109,16 +2119,20 @@ const confirm = async()=>{
             }
             BasicApi.profile!.eventCount++
         }else{
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefault = '分享失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'分享失败',
+                showTime:1000
+            })
         }
         globalVar.share.txt = ''
     } catch (error) {
         console.log(error);
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefault = '分享失败'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'分享失败',
+            showTime:1000
+        })
         destory()
         globalVar.share.txt = ''
     }
@@ -2162,9 +2176,11 @@ provide('replayContent',replayContent)
 const confirmComment = async()=>{
     if(postByreplay.value){
         if(commitMessage.value == ''){
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefaultFlag = true;
-            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
+            Loading({
+                type:'error',
+                message:'写点东西吧，内容不能为空哦！',
+                showTime:1000
+            })
         }else{
             let result
             if(localStorage.getItem('NMcookie')){
@@ -2185,8 +2201,10 @@ const confirmComment = async()=>{
                 })).data
             }
             if(result.code == 200){
-                globalVar.loadMessageDefaultFlag = true;
-                globalVar.loadMessageDefault = '回复成功！'
+                Loading({
+                    message:'回复成功！',
+                    showTime:1000
+                })
                 WriteCommitRef2.value!.textarea = ''
                 commentDioalogFlag.value = false
                 let addComment = result.comment
@@ -2202,16 +2220,20 @@ const confirmComment = async()=>{
                 }]
                 addc.value = addComment
             }else{
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefaultFlag = true;
-                globalVar.loadMessageDefault = '回复失败！'
+                Loading({
+                    type:'error',
+                    message:'回复失败！',
+                    showTime:1000
+                })
             }
         }
     }else{
         if(commitMessage.value == ''){
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefaultFlag = true;
-            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
+            Loading({
+                type:'error',
+                message:'写点东西吧，内容不能为空哦！',
+                showTime:1000
+            })
         }else{
             let result
             if(localStorage.getItem('NMcookie')){
@@ -2230,8 +2252,10 @@ const confirmComment = async()=>{
                 })).data
             }
             if(result.code == 200){
-                globalVar.loadMessageDefaultFlag = true;
-                globalVar.loadMessageDefault = '评论成功！'
+                Loading({
+                    message:'评论成功！',
+                    showTime:1000
+                })
                 WriteCommitRef2.value!.textarea = ''
                 commentDioalogFlag.value = false
                 let addComment = result.comment
@@ -2241,9 +2265,11 @@ const confirmComment = async()=>{
                 addComment['beReplied'] = []
                 addc.value = addComment
             }else{
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefaultFlag = true;
-                globalVar.loadMessageDefault = '评论失败！'
+                Loading({
+                    type:'error',
+                    message:'评论失败！',
+                    showTime:1000
+                })
             }
         }
     }
@@ -2296,9 +2322,11 @@ window.electron.ipcRenderer.on('load-local-music',async({},{msg,error,flag})=>{
     console.log('load-local-music');
     if(flag == undefined)window.electron.ipcRenderer.send('radio-ok')
     if(error){
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefaultFlag = true
-        globalVar.loadMessageDefault = '播放失败'
+        Loading({
+            type:'error',
+            message:'播放失败',
+            showTime:1000
+        })
         return
     }
     const song = {

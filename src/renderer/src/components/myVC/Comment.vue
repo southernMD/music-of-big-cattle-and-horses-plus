@@ -49,6 +49,7 @@ import { regEmoji } from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
 import { useMain ,useGlobalVar, useBasicApi,useNM} from '@renderer/store'
 import  {throttle} from 'lodash'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const Main = useMain()
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
@@ -118,9 +119,11 @@ const dianzan = async()=>{
             liked2.value = !liked2.value
         }
         else {
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefault = '点赞失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'点赞失败',
+                showTime:1000
+            })
         }
     }else{
         let code
@@ -133,9 +136,11 @@ const dianzan = async()=>{
             likedCount2.value--
             liked2.value = !liked2.value
         }else{
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefault = '点赞失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'点赞失败',
+                showTime:1000
+            })
         }
     }
 }

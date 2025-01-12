@@ -379,8 +379,10 @@ const createPlayList = async () => {
     if (result.id) {
       if (globalVar.addPlayId.length == 0) {
         destory()
-        globalVar.loadMessageDefault = '创建歌单成功'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+          message:'创建歌单成功',
+          showTime:1000
+        })
         if (route.name == 'songPlaylist') {
           $router.replace({
             name: 'songPlaylist',
@@ -408,21 +410,24 @@ const createPlayList = async () => {
         }
         destory()
         if (result2.body.code == 200 || (result2.code == 200 && localStorage.getItem('NMcookie'))) {
-          globalVar.loadMessageDefault = '已收藏到歌单'
-          globalVar.loadMessageDefaultFlag = true
+          Loading({
+            message:'已收藏到歌单',
+            showTime:1000
+          })
           Main.playList[1].trackCount += globalVar.addPlayId.length
         }
         globalVar.addPlayId = []
       }
     } else {
       destory()
-      globalVar.loadMessageDefaultFlag = true
     }
   } catch (error) {
     destory()
-    globalVar.loadMessageDefaultType = 'error'
-    globalVar.loadMessageDefault = '发生错误'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+      type:'error',
+      message:'发生错误',
+      showTime:1000
+    })
   }
 
 }

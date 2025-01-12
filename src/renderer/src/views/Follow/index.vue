@@ -298,17 +298,21 @@ const confirm = async()=>{
         }
         destory()
         if(result.code == 200){
-            globalVar.loadMessageDefault = '分享成功'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'分享成功',
+                showTime:1000
+            })
             list.value.unshift(JSON.parse(result.event.json))
             let t  = result.event
             delete t['json']
             otherList.value.unshift(t)
             BasicApi.profile!.eventCount++
         }else{
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefault = '分享失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'分享失败',
+                showTime:1000
+            })
         }
         zhuanfaMessage.value = ''
     }else{

@@ -151,6 +151,7 @@ import { useMain,useMainMenu,useGlobalVar,useNM } from '@renderer/store';
 import { useRoute,useRouter } from 'vue-router';
 import { dayjsStamp } from '@renderer/utils/dayjs';
 import { useBasicApi } from '@renderer/store';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const Main = useMain()
 const $route = useRoute()
 const $router = useRouter()
@@ -383,11 +384,17 @@ const subSonger = async()=>{
         }
         if(flag){
             if(isSub.value){
-                globalVar.loadMessageDefault = '取消收藏成功'
+                Loading({
+                    message:'取消收藏成功',
+                    showTime:1000
+                })
                 BasicApi.startSongHand = BasicApi.startSongHand.filter(item=>item.id != $route.query.id)
             }
             else{
-                globalVar.loadMessageDefault = '收藏成功'
+                Loading({
+                    message:'收藏成功',
+                    showTime:1000
+                })
                 BasicApi.followsId.push(+$route.query.id!)
                 if(localStorage.getItem('NMcookie')){
                     NM.reqartistSublist()
@@ -397,16 +404,34 @@ const subSonger = async()=>{
             }
             isSub.value =!isSub.value
         }else{
-            globalVar.loadMessageDefaultType = 'error'
-            if(isSub.value)globalVar.loadMessageDefault = '取消收藏失败'
-            else globalVar.loadMessageDefault = '收藏失败'
+            if(isSub.value){
+                Loading({
+                    type:'error',
+                    message:'取消收藏失败',
+                    showTime:1000
+                })
+            }else{
+                Loading({
+                    type:'error',
+                    message:'收藏失败',
+                    showTime:1000
+                })
+            }
         }
-        globalVar.loadMessageDefaultFlag = true
     } catch (error) {
-        globalVar.loadMessageDefaultType = 'error'
-        if(isSub.value)globalVar.loadMessageDefault = '取消收藏失败'
-        else globalVar.loadMessageDefault = '收藏失败'
-        globalVar.loadMessageDefaultFlag = true
+        if(isSub.value){
+            Loading({
+                type:'error',
+                message:'取消收藏失败',
+                showTime:1000
+            })
+        }else{
+            Loading({
+                type:'error',
+                message:'收藏失败',
+                showTime:1000
+            })
+        }
     }
 }
 

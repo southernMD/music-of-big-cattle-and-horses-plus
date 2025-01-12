@@ -290,13 +290,17 @@ const confirm = async () => {
         }
         picFlag.value = false
         destory()
-        globalVar.loadMessageDefault = '保存成功!'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            message: '保存成功',
+            showTime: 1000
+        })
     } catch (error) {
         destory()
-        globalVar.loadMessageDefault = '保存失败!'
-        globalVar.loadMessageDefaultFlag = true
-        globalVar.loadMessageDefaultType ='error'
+        Loading({
+            type: 'error',
+            message: '保存失败',
+            showTime: 1000
+        })
     }
 
 }

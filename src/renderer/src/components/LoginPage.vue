@@ -383,11 +383,16 @@ const submit = async(formEl: FormInstance | undefined)=>{
                                 localStorage.removeItem('cookieUser')
                                 try {
                                     await loginNM()
-                                    globalVar.loadMessageDefault = '登录成功'
-                                    globalVar.loadMessageDefaultFlag = true
+                                    Loading({
+                                        message:'登录成功',
+                                        showTime:1000
+                                    })
                                 } catch (error) {
-                                    globalVar.loadMessageDefault = '登录失败'
-                                    globalVar.loadMessageDefaultFlag = true
+                                    Loading({
+                                        type:'error',
+                                        message:'登录失败',
+                                        showTime:1000
+                                    })
                                     destoryLoadingFn()
                                     destroyVC();
                                 }
@@ -417,11 +422,16 @@ const submit = async(formEl: FormInstance | undefined)=>{
                         localStorage.removeItem('cookieUser')
                         try {
                             await loginNM()
-                            globalVar.loadMessageDefault = '登录成功'
-                            globalVar.loadMessageDefaultFlag = true
+                            Loading({
+                                message:'登录成功',
+                                showTime:1000
+                            })
                         } catch (error) {
-                            globalVar.loadMessageDefault = '登录失败'
-                            globalVar.loadMessageDefaultFlag = true
+                            Loading({
+                                type:'error',
+                                message:'登录失败',
+                                showTime:1000
+                            })
                             destoryLoadingFn()
                             destroyVC();
                         }

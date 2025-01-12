@@ -9,10 +9,9 @@ interface LoadingProps {
     size?: number;
     message?: string;
     showTime?: number;
-    onClose?: () => void;
-  }
+}
 
-const Loading = defineComponent({
+export const Loading = defineComponent({
     props: {
         loading: {
             type: Boolean,

@@ -244,15 +244,19 @@ const changeFontFamily = (ms)=>{
     console.log(ms.name);
     document.documentElement.style.setProperty('--fontFamily', ms.name);
     globalVar.setting.fontFamily = ms.name
-    globalVar.loadMessageDefault = '设置已更新'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+        message:'设置已更新',
+        showTime:1000
+    })
 }
 const link = async()=>{
     //true添加注册表
    let flag = await window.electron.ipcRenderer.invoke('to-link-local',globalVar.setting.defaultMusic)
    if(flag){
-    globalVar.loadMessageDefault = '设置已更新'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+        message:'设置已更新',
+        showTime:1000
+    })
    }else{
     globalVar.setting.autoOpen = false
    }
@@ -261,8 +265,10 @@ const link = async()=>{
 const autoPlay = async()=>{
    let flag = await window.electron.ipcRenderer.invoke('auto-open',globalVar.setting.autoOpen)
    if(flag){
-    globalVar.loadMessageDefault = '设置已更新'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+        message:'设置已更新',
+        showTime:1000
+    })
    }else{
     globalVar.setting.autoOpen = false
    }
@@ -352,8 +358,10 @@ const fn1 = (event) => {
         }else{
             string = event.key.split('Arrow')[1] ?? (specialCharactersMap.has(event.code)?specialCharactersMap.get(event.code):event.key.slice(0,1).toUpperCase() + event.key.slice(1).toLowerCase())
         }
-        globalVar.loadMessageDefault = '设置已更新'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            message:'设置已更新',
+            showTime:1000
+        })
         // window.removeEventListener('keydown',fn1)
         // window.removeEventListener('keyup',fn2)
     }else if(s.length!=0){
@@ -387,14 +395,18 @@ const fn2 =(event)=>{
             }
         }
         flag2 = true
-        globalVar.loadMessageDefault = '设置已更新'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            message:'设置已更新',
+            showTime:1000
+        })
         return
     }
     if(!event.ctrlKey && !event.shiftKey && !event.altKey && !flag2){
         string='空'
-        globalVar.loadMessageDefault = '设置已更新'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            message:'设置已更新',
+            showTime:1000
+        })
     }
     else if(!flag2){
         let s:string[] = []
@@ -599,16 +611,20 @@ const searchUpdate = async()=>{
     let res =  await githubUpdate()
     destory()
     if(res == null){
-        globalVar.loadMessageDefault = '检测失败'
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'检测失败',
+            showTime:1000
+        })
     }else{
         const v = res.data.name.split('v')[1]
         console.log(v,globalVar.setting.version);
         // if(res.data.name.endsWith(version.value)){
         if(v <= globalVar.setting.version){
-            globalVar.loadMessageDefault = '当前版本已是最新'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'当前版本已是最新',
+                showTime:1000
+            })
         }else{
             newVersion.value = res.data.name
             globalVar.setting.updateFlag = true

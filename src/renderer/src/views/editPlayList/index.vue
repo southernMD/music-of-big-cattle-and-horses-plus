@@ -85,8 +85,10 @@ const onSubmit = async () => {
             await NM.reqUpdatePlayList(index.value, Main.playList[+index.value].id, form.name, form.description, form.tags.join(';'))
         }
         destory()
-        globalVar.loadMessageDefault = '保存成功!'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            message:'保存成功',
+            showTime:1000
+        })
         $router.replace({
             name: 'songPlaylist',
             query: {
@@ -96,8 +98,11 @@ const onSubmit = async () => {
 
     } catch (error) {
         destory()
-        globalVar.loadMessageDefault = '保存失败!'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'保存失败',
+            showTime:1000
+        })
     }
 
 }

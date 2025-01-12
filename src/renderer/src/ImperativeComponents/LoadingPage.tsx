@@ -1,5 +1,5 @@
 import { createApp, defineAsyncComponent, h, ref, watch } from 'vue';
-import Loading from '@renderer/components/myVC/Loading.vue';
+import {Loading} from './Loading/Loading'
 // import LoginPage from '@renderer/components/LoginPage.vue'
 import {Suspense,Teleport} from 'vue'
 import { ElMessage } from 'element-plus';
@@ -21,7 +21,7 @@ export default function LoadingPageImper() {
             return () => 
                 h(Teleport,{ to: 'body' },
                     h(Suspense,null,{
-                        fallback: () => h(Loading, { loading: true, message: '正在加载登陆页，请稍后' }),
+                        fallback: () => h(Loading, { loading: true, message: '正在加载登陆页，请稍后',tra:10 }),
                         default: () => h(AsyncLoginPage, {
                             onClose(){
                                 app.unmount();

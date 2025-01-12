@@ -47,6 +47,7 @@ import { ref, watch, Ref, toRef } from 'vue'
 import { useRoute } from 'vue-router';
 import { useGlobalVar, useMain } from '@renderer/store'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const globalVar = useGlobalVar()
 const $route = useRoute()
 const Main = useMain()
@@ -78,8 +79,10 @@ const showLrc = (index)=>{
   showLrcFlag.value[index] = !showLrcFlag.value[index]
 }
 const copy = async(lrcList:string[])=>{
-  globalVar.loadMessageDefaultFlag = true
-  globalVar.loadMessageDefault = '已复制到剪切板'
+  Loading({
+      message:'已复制到剪切板',
+      showTime:1000
+  })
   await navigator.clipboard.writeText(lrcList.join('\n'))
 }
 </script>

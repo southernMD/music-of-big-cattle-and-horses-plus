@@ -149,6 +149,7 @@ import Tag from '@renderer/components/myVC/Tag.vue';
 import PlayListShow from '@renderer/components/myVC/PlayListShow.vue';
 import HBlock from '@renderer/components/myVC/HBlock.vue';
 import HaveSongShow from '@renderer/components/myVC/HaveSongShow.vue';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const $route = useRoute()
 let openJiantou = ref(true);
 let openDescribeFlag = ref(true);
@@ -468,29 +469,37 @@ const followUser = async()=>{
         }
         if(flag){
             if(personalMessage.followed){
-                globalVar.loadMessageDefault = '取关成功'
+                Loading({
+                    message:'取关成功',
+                    showTime:1000
+                })
                 BasicApi.followsId = BasicApi.followsId.filter(it=>it != +$route.query.id!)
                 BasicApi.profile!.follows--
                 personalMessage.fans--
             }
             else{
-                globalVar.loadMessageDefault = '关注成功'
+                Loading({
+                    message:'关注成功',
+                    showTime:1000
+                })
                 BasicApi.followsId.push(+$route.query.id!)
                 BasicApi.profile!.follows++
                 personalMessage.fans++
             }
             personalMessage.followed =!personalMessage.followed
         }else{
-            globalVar.loadMessageDefaultType = 'error'
-            if(personalMessage.followed)globalVar.loadMessageDefault = '取关失败'
-            else globalVar.loadMessageDefault = '关注失败'
+            Loading({
+                type:'error',
+                message:'操作失败',
+                showTime:1000
+            })
         }
-        globalVar.loadMessageDefaultFlag = true
     } catch (error) {
-        globalVar.loadMessageDefaultType = 'error'
-        if(personalMessage.followed)globalVar.loadMessageDefault = '取关失败'
-        else globalVar.loadMessageDefault = '关注失败'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'操作失败',
+            showTime:1000
+        })
     }
 }
 

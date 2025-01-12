@@ -212,23 +212,33 @@ const onSubmit = async(formEl: FormInstance)=>{
                 if(await NM.reqUserUpdate(t)){
                     await NM.reqLogin()
                     destory()
-                    globalVar.loadMessageDefault = '保存成功!'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        message:'保存成功',
+                        showTime:1000
+                    })
                 }else{
                     destory()
-                    globalVar.loadMessageDefault = '保存失败!'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        type:'error',
+                        message:'保存失败',
+                        showTime:1000
+                    })
                 }
             }else{
                 if(await Main.reqUserUpdate(t)){
                     await BasicApi.reqLogin(localStorage.getItem('cookieUser') as string)
                     destory()
-                    globalVar.loadMessageDefault = '保存成功!'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        message:'保存成功',
+                        showTime:1000
+                    })
                 }else{
                     destory()
-                    globalVar.loadMessageDefault = '保存失败!'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        type:'error',
+                        message:'保存失败',
+                        showTime:1000
+                    })
                 }
             }
         } else {

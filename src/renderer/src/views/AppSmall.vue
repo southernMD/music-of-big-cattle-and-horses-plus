@@ -19,10 +19,6 @@
                 </el-radio-group>
             </template>
         </MyDialog>
-        <Loading :loading="true" message="" v-if="loadDefault" :width="20" tra="10"></Loading>
-        <Loading :loading="false" :type="globalVar.loadMessageDefaultType" :showTime="1000"
-            :message="globalVar.loadMessageDefault" v-if="globalVar.loadMessageDefaultFlag"
-            @close="globalVar.loadMessageDefaultFlag = false"></Loading>
         <Teleport to="body">
             <rightBlock :index="index" :evid="evid" :commentType="commentType" :path="path" :download="download" :shareTxt="txt" 
             :shareAvg="pic" :id="id" :left="eventBlockLeft" :top="eventBlockTop" 
@@ -68,7 +64,6 @@ const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
 const NM = useNM();
 const MainPinia = useMain();
-const loadDefault: Ref<boolean> = toRef(globalVar, 'loadDefault')
 const downloadQueue = shallowRef(new PromiseQueue({ concurrency: 3 }))
 
 
@@ -687,9 +682,7 @@ const newVersion = toRef(globalVar.setting,'newVersion')
 const url = toRef(globalVar.setting,'updataUrl')
 const updateFlag = toRef(globalVar.setting,'updateFlag')
 const searchUpdate = async()=>{
-    // globalVar.loadDefault = true
     let res =  await githubUpdate()
-    // globalVar.loadDefault = false
     if(res == null){
     }else{
         const v = res.data.name.split('v')[1]

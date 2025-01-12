@@ -897,8 +897,10 @@ const delPlayList = async(id)=>{
                 Main.playListId.splice(index,1)
                 Main.playList.splice(index,1)
                 Main.createPlay--
-                globalVar.loadMessageDefault = '删除成功'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    message:'删除成功',
+                    showTime:1000
+                })
                 if($route.name == 'songPlaylist' && index < +$route.query.index!){
                     $router.replace({
                         name:'songPlaylist',
@@ -911,9 +913,11 @@ const delPlayList = async(id)=>{
                     })
                 }
             }else{
-                globalVar.loadMessageDefault = '删除失败'
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    type:'error',
+                    message:'删除失败',
+                    showTime:1000
+                })
                 destory()
             }
         }else if(props.type == 'playListStart'){
@@ -929,19 +933,25 @@ const delPlayList = async(id)=>{
                 Main.playListId.splice(index,1)
                 Main.playList.splice(index,1)
                 Main.startPlay--
-                globalVar.loadMessageDefault = '删除成功'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    message:'删除成功',
+                    showTime:1000
+                })
             }else{
-                globalVar.loadMessageDefault = '删除失败'
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    type:'error',
+                    message:'删除失败',
+                    showTime:1000
+                })
             }
         }
 
     } catch (error) {
-        globalVar.loadMessageDefault = '删除失败'
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'删除失败',
+            showTime:1000
+        })
         destory()
     }
 }
@@ -1104,12 +1114,16 @@ const start = async(id:string)=>{
                 }else{
                     Main.reqUserPlaylist(BasicApi.profile!.userId)
                 }
-                globalVar.loadMessageDefault = '收藏成功'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    message:'收藏成功',
+                    showTime:1000
+                })
             }else{
-                globalVar.loadMessageDefault = '收藏失败'
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    type:'error',
+                    message:'收藏失败',
+                    showTime:1000
+                })
             }
         }else if(props.type == 'songHand'){
             let flag
@@ -1120,16 +1134,22 @@ const start = async(id:string)=>{
             }
             destory()
             if(flag){
-                globalVar.loadMessageDefault = '关注成功'
+                Loading({
+                    message:'关注成功',
+                    showTime:1000
+                })
                 if(localStorage.getItem('NMcookie')){
                     NM.reqartistSublist()
                 }else{
                     BasicApi.reqartistSublist()
                 }
             }else{
-                globalVar.loadMessageDefault = '关注失败'
+                Loading({
+                    type:'error',
+                    message:'关注失败',
+                    showTime:1000
+                })
             }
-            globalVar.loadMessageDefaultFlag = true
         }else if(props.type == 'al'){
             let flag
             if(localStorage.getItem('NMcookie')){
@@ -1139,21 +1159,29 @@ const start = async(id:string)=>{
             }
             destory()
             if(flag){
-                globalVar.loadMessageDefault = '收藏成功'
+                Loading({
+                    message:'收藏成功',
+                    showTime:1000
+                })
                 if(localStorage.getItem('NMcookie')){
                     NM.reqalbumSublist(1)
                 }else{
                     BasicApi.reqalbumSublist(1)
                 }
             }else{
-                globalVar.loadMessageDefault = '收藏失败'
+                Loading({
+                    type:'error',
+                    message:'收藏失败',
+                    showTime:1000
+                })
             }
-            globalVar.loadMessageDefaultFlag = true
         }
     } catch (error) {
-        globalVar.loadMessageDefault = '失败'
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'发生错误',
+            showTime:1000
+        })
         destory()
     }
 
@@ -1167,12 +1195,18 @@ const delstart = async(id)=>{
             flag = await Main.reqArtistSub(id,2)
         }
         if(flag){
-            globalVar.loadMessageDefault = '取关成功'
+            Loading({
+                message:'取关成功',
+                showTime:1000
+            })
             BasicApi.startSongHand = BasicApi.startSongHand.filter(item=>item.id != +id)
         }else{
-            globalVar.loadMessageDefault = '取关失败'
+            Loading({
+                type:'error',
+                message:'取关失败',
+                showTime:1000
+            })
         }
-        globalVar.loadMessageDefaultFlag = true
     }else if(props.type == 'alHad'){
         let flag
         if(localStorage.getItem('NMcookie')){
@@ -1181,12 +1215,18 @@ const delstart = async(id)=>{
             flag = await Main.reqAlbumSub(2,+id)
         }
         if(flag){
-            globalVar.loadMessageDefault = '专辑取消收藏成功'
+            Loading({
+                message:'专辑取消收藏成功',
+                showTime:1000
+            })
             BasicApi.startalbum = BasicApi.startalbum.filter(item=>item.id != +id)
         }else{
-            globalVar.loadMessageDefault = '专辑取消收藏失败'
+            Loading({
+                type:'error',
+                message:'专辑取消收藏失败',
+                showTime:1000
+            })
         }
-        globalVar.loadMessageDefaultFlag = true
     }
 }
 
@@ -1211,11 +1251,16 @@ const delComment = async(ids:string)=>{
             selectedElements.forEach((element) => {
                 element.remove()
             });
-            globalVar.loadMessageDefault = '删除成功'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'删除成功',
+                showTime:1000
+            })
         }else{
-            globalVar.loadMessageDefault = '删除失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'删除失败',
+                showTime:1000
+            })
         }
     }else{
         let res
@@ -1240,11 +1285,16 @@ const delComment = async(ids:string)=>{
             selectedElements.forEach((element) => {
                 element.remove()
             });
-            globalVar.loadMessageDefault = '删除成功'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'删除成功',
+                showTime:1000
+            })
         }else{
-            globalVar.loadMessageDefault = '删除失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'删除失败',
+                showTime:1000
+            })
         }
     }
 }
@@ -1258,21 +1308,29 @@ const delev = async(id)=>{
             flag = await Main.reqEventDel(props.evid)
         }
         if(flag){
-            globalVar.loadMessageDefault = '删除成功'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'删除成功',
+                showTime:1000
+            })
             const selectedElements = document.querySelectorAll(`[data-evid="${props.evid}"]`) as unknown as HTMLElement[] 
             selectedElements.forEach((it)=>{
                 it.remove()
             })
             BasicApi.profile!.eventCount--
         }else{
-            globalVar.loadMessageDefault = '删除失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message:'删除失败',
+                showTime:1000
+            })
         } 
     } catch (error) {
-        globalVar.loadMessageDefault = '删除失败'
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'删除失败',
+            showTime:1000
+        })
     }
 
 }
@@ -1280,12 +1338,16 @@ const delDownload = async({})=>{
    const res = await window.electron.ipcRenderer.invoke('del-music',props.path)
    console.log(res);
    if(res.length == 0){
-    globalVar.loadMessageDefault = '删除成功'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+        message:'删除成功',
+        showTime:1000
+    })
    }else {
-    globalVar.loadMessageDefault = '删除失败'
-    globalVar.loadMessageDefaultType = 'error'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+        type:'error',
+        message:'删除失败',
+        showTime:1000
+    })
    }
 }
 const delfromPlayList = async({id,index})=>{
@@ -1299,13 +1361,18 @@ const delfromPlayList = async({id,index})=>{
         Main.playList[+$route.query.index!].coverImgUrl = res.data.url
     }
   if(res.data.status == 200 || res.data.code == 200 ||  res.data.body.code == 200){
-    globalVar.loadMessageDefault = '删除成功'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+        message:'删除成功',
+        showTime:1000
+    })
     globalVar.delMyPlayListSongIndex = index
     Main.playList[+$route.query.index!].trackCount--
   }else{
-    globalVar.loadMessageDefault = '删除失败'
-    globalVar.loadMessageDefaultFlag = true
+    Loading({
+        type:'error',
+        message:'删除失败',
+        showTime:1000
+    })
   }
 }
 
@@ -1352,8 +1419,10 @@ const pushInto = async(index,id)=>{
             }
             console.log(res.data);
             if(res.data.body.code == 200 || (res.data.code == 200 && localStorage.getItem('NMcookie'))){
-                globalVar.loadMessageDefault ='添加成功'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    message:'添加成功',
+                    showTime:1000
+                })
                 Main.playList[index].trackCount++
             }else{
                 throw Error(res?.data?.body?.message ?? '添加失败')
@@ -1370,19 +1439,25 @@ const pushInto = async(index,id)=>{
                 Main.playList[index].coverImgUrl = res.data.url
             }
             if(res.data.body.code == 200 || (res.data.code == 200 && localStorage.getItem('NMcookie'))){
-                globalVar.loadMessageDefault ='添加成功'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    message:'添加成功',
+                    showTime:1000
+                })
                 Main.playList[index].trackCount+=ids.length
             }else{
                 throw Error(res?.data?.body?.message ?? '添加失败')
             }
-            globalVar.loadMessageDefault ='添加成功'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'添加成功',
+                showTime:1000
+            })
         }
     } catch (error) {
-        globalVar.loadMessageDefault = error as string
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:error as string,
+            showTime:1000
+        })
     }
 
 }

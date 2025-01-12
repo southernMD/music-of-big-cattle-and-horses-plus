@@ -795,11 +795,17 @@ const confirm = async(tag)=>{
             await Main.reqUpdatePlayListTags(+index.value,id.value,tag.join(';'))
         }
         tags.value = Main.playList[index.value].tags
-        globalVar.loadMessageDefault = '保存成功!'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'保存成功',
+            showTime:1000
+        })
     } catch (error) {
-        globalVar.loadMessageDefault = '保存失败!'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type:'error',
+            message:'保存失败!',
+            showTime:1000
+        })
     }
 }
 
@@ -887,8 +893,10 @@ const start = async()=>{
                 console.log(flag);
                 destory()
                 if(flag){
-                    globalVar.loadMessageDefault = '取消收藏成功'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        message:'取消收藏成功',
+                        showTime:1000
+                    })
                     if(dynamic?.value.subed === true){
                         dynamic.value.subCount--
                         Main.startPlay--
@@ -912,15 +920,19 @@ const start = async()=>{
                         }
                     }
                 }else{
-                    globalVar.loadMessageDefault = '取消收藏失败'
-                    globalVar.loadMessageDefaultType = 'error'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        type:'error',
+                        message:'取消收藏失败',
+                        showTime:1000
+                    })
                 } 
             } catch (error) {
                 destory()
-                globalVar.loadMessageDefault = '取消收藏失败'
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    type:'error',
+                    message:'取消收藏失败',
+                    showTime:1000
+                })
             }
         }else{
             //收藏
@@ -955,8 +967,10 @@ const start = async()=>{
                 console.log(flag);
                 destory()
                 if(flag){
-                    globalVar.loadMessageDefault = '收藏成功'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        message:'收藏成功',
+                        showTime:1000
+                    })
                     if(dynamic?.value.subed === false){
                         dynamic.value.subCount++
                         Main.startPlay++
@@ -983,15 +997,19 @@ const start = async()=>{
                         }
                     }
                 }else{
-                    globalVar.loadMessageDefault = '收藏失败'
-                    globalVar.loadMessageDefaultType = 'error'
-                    globalVar.loadMessageDefaultFlag = true
+                    Loading({
+                        type:'error',
+                        message:'收藏失败',
+                        showTime:1000
+                    })
                 } 
             } catch (error) {
                 destory()
-                globalVar.loadMessageDefault = '收藏失败'
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    type:'error',
+                    message:'收藏失败',
+                    showTime:1000
+                })
             }
         }
     }
@@ -1019,8 +1037,10 @@ const confirmPrivacy = async()=>{
     }
     destory()
     if(flag){
-        globalVar.loadMessageDefault = '歌单已公开'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            message:'歌单已公开',
+            showTime:1000
+        })
         suoFlag.value = false
         playList.value[index.value].privacy = 1
     }

@@ -315,9 +315,11 @@ const WriteCommitRef2 = ref()
 const subCommit = async()=>{
     if(postByreplay.value){
         if(commitMessage.value.split(`回复${replayName.value}:`)[1].length == 0){
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type: 'error',
+                message: '写点东西吧，内容不能为空哦！',
+                showTime: 1000
+            })
         }else{
             let obj:comment.sendComment,result
             if(localStorage.getItem('NMcookie')){
@@ -342,13 +344,17 @@ const subCommit = async()=>{
             console.log(obj);
             console.log(result);
             if(result.code == 200){
-                globalVar.loadMessageDefaultFlag = true;
-                globalVar.loadMessageDefault = '回复成功！'
+                Loading({
+                    message: '回复成功！',
+                    showTime: 1000
+                })
                 WriteCommitRef2.value.textarea = ''
             }else{
-                globalVar.loadMessageDefaultType = 'error'
-                globalVar.loadMessageDefault = '回复失败'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    type:'error',
+                    message: '回复失败',
+                    showTime: 1000
+                })
             }
             let addComment = result.comment
             addComment['likedCount'] = 0;
@@ -366,9 +372,11 @@ const subCommit = async()=>{
         
     }else{
         if(commitMessage.value == ''){
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefault = '写点东西吧，内容不能为空哦！'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type:'error',
+                message: '写点东西吧，内容不能为空哦！',
+                showTime: 1000
+            })
         }else{
             let obj:comment.sendComment,result;
             if(localStorage.getItem('NMcookie')){
@@ -389,12 +397,17 @@ const subCommit = async()=>{
                 result = (await Main.reqcomment(obj)).data;
             }
             if(result.code == 200){
-                globalVar.loadMessageDefault = '评论成功！'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    message: '评论成功！',
+                    showTime: 1000
+                })
                 WriteCommitRef2.value.textarea = ''
             }else{
-                globalVar.loadMessageDefault = '评论失败！'
-                globalVar.loadMessageDefaultFlag = true
+                Loading({
+                    type:'error',
+                    message: '评论失败！',
+                    showTime: 1000
+                })
             }
             let addComment = result.comment
             addComment['likedCount'] = 0;
@@ -662,9 +675,11 @@ const dianzan = async(id:string,t:1|2,T:'I'|'W')=>{
         else info.value.likedCount++
         info.value.liked = !info.value.liked
     }else{
-        globalVar.loadMessageDefaultFlag = true
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefault = '点赞失败'
+        Loading({
+            type:'error',
+            message: '点赞失败',
+            showTime: 1000
+        })
     }
 }
 const throttleDianzan = throttle(dianzan,1000,{leading:true})
@@ -722,12 +737,17 @@ const confirm = async()=>{
     }
     destory()
     if(result.code == 200){
-        globalVar.loadMessageDefaultFlag = true
-        globalVar.loadMessageDefault = '转发成功'
+        Loading({
+            message: '转发成功',
+            showTime: 1000
+        })
         BasicApi.profile!.eventCount++
     }else{
-        globalVar.loadMessageDefaultFlag = true
-        globalVar.loadMessageDefault = '转发失败'
+        Loading({
+            type:'error',
+            message: '转发失败',
+            showTime: 1000
+        })
     }
     zhuanfaMessage.value  = ''
 }
@@ -755,19 +775,25 @@ const download = ()=>{
         let flag = await window.electron.ipcRenderer.invoke('save-image',{buffer,ext})
         console.log(flag);
         if(flag == true){
-            globalVar.loadMessageDefault = '保存成功'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message: '保存成功',
+                showTime: 1000
+            })
         }else if(flag == false && flag != ''){
-            globalVar.loadMessageDefaultType = 'error'
-            globalVar.loadMessageDefault = '保存失败'
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                type: 'error',
+                message: '保存失败',
+                showTime: 1000
+            })
         }
         // 二进制数据处理
     })
     .catch(() => {
-        globalVar.loadMessageDefaultType = 'error'
-        globalVar.loadMessageDefault = '保存失败'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            type: 'error',
+            message: '保存失败',
+            showTime: 1000
+        })
     });
 }
 

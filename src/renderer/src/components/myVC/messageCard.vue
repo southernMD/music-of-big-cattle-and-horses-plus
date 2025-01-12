@@ -32,6 +32,7 @@ import {ref} from 'vue'
 import { useBasicApi,useNM,useMain,useGlobalVar } from '@renderer/store'
 import { numberSimp } from '@renderer/utils/numberSimp'
 import { useRouter } from 'vue-router'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const BasicApi = useBasicApi()
 const $router = useRouter()
 const Main = useMain()
@@ -68,14 +69,18 @@ const guanzhu = async()=>{
         flag = await Main.reqFollow(props.id,1)
     }
     if(flag){
-        globalVar.loadMessageDefault = '关注成功'
-        globalVar.loadMessageDefaultFlag = true
+        Loading({
+            message: '关注成功',
+            showTime: 1000
+        })
         followedMy.value = true
         BasicApi.profile!.follows++
     }else{
-        globalVar.loadMessageDefault = '关注失败'
-        globalVar.loadMessageDefaultFlag = true
-        globalVar.loadMessageDefaultType = 'error'
+        Loading({
+            type: 'error',
+            message: '关注失败',
+            showTime: 1000
+        })
     }
 }
 

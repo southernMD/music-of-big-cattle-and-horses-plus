@@ -218,13 +218,15 @@ const likeOrDislike = async () => {
             code = (await Main.reqLike(Number(props.id), false)).data.code
         }
         if (code == 405) {
-            likeMessage.value = '操作繁忙，请稍后再试'
-            globalVar.loadMessageDefault = likeMessage.value
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'操作繁忙，请稍后再试',
+                showTime:1000
+            })
         } else {
-            likeMessage.value = '取消喜欢成功'
-            globalVar.loadMessageDefault = likeMessage.value
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'取消喜欢成功',
+                showTime:1000
+            })
             Main.likes.splice(likeIndex, 1)
             Main.likeChange = `${props.id},false`
             Main.playList[0].trackCount--
@@ -241,12 +243,16 @@ const likeOrDislike = async () => {
         }
         if (code == 405) {
             likeMessage.value = '操作繁忙，请稍后再试'
-            globalVar.loadMessageDefault = likeMessage.value
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'操作繁忙，请稍后再试',
+                showTime:1000
+            })
         } else {
             likeMessage.value = '已添加到我喜欢的音乐'
-            globalVar.loadMessageDefault = likeMessage.value
-            globalVar.loadMessageDefaultFlag = true
+            Loading({
+                message:'已添加到我喜欢的音乐',
+                showTime:1000
+            })
             Main.likes.unshift(props.id)
             Main.likeChange = `${props.id},true`
             Main.playList[0].trackCount++
@@ -300,12 +306,16 @@ const fnMouseDrag = async (e: any) => {
                     }
                     if (code == 405) {
                         likeMessage.value = '操作繁忙，请稍后再试'
-                        globalVar.loadMessageDefault = likeMessage.value
-                        globalVar.loadMessageDefaultFlag = true
+                        Loading({
+                            message:'操作繁忙，请稍后再试',
+                            showTime:1000
+                        })
                     } else {
                         likeMessage.value = '已添加到我喜欢的音乐'
-                        globalVar.loadMessageDefault = likeMessage.value
-                        globalVar.loadMessageDefaultFlag = true
+                        Loading({
+                            message:'已添加到我喜欢的音乐',
+                            showTime:1000
+                        })
                         Main.likes.unshift(props.id)
                         Main.likeChange = `${props.id},true`
                         Main.playList[0].trackCount++
@@ -328,8 +338,10 @@ const fnMouseDrag = async (e: any) => {
                     }
                     destory()
                     if (result.body.code == 200 || (result.data.code == 200 && localStorage.getItem('NMcookie'))) {
-                        globalVar.loadMessageDefault = '已收藏到歌单'
-                        globalVar.loadMessageDefaultFlag = true 
+                        Loading({
+                            message:'已收藏到歌单',
+                            showTime:1000
+                        })
                         let index = Number(dom.getAttribute('data-index'))
                         Main.playList[index].trackCount += 1
                     }
