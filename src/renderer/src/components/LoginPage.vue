@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import { useBasicApi, useMain, useGlobalVar,useNM } from '../store'
-import { ref, Ref, onMounted, watch, toRef, onUnmounted, reactive} from 'vue'
+import { ref, Ref, onMounted, watch, toRef, onUnmounted, reactive, getCurrentInstance} from 'vue'
 import { useRouter } from 'vue-router';
 import {NMCode,NMReg,NMlogin} from '@renderer/api/niuma'
 import  { FormInstance, FormRules } from 'element-plus'
@@ -117,10 +117,11 @@ const sendUrl = (e: Event) => {
     let t: HTMLElement = e.target as HTMLElement
     window.electron.ipcRenderer.send('new-window', t.getAttribute('href'))
 }
-let flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 
+const $emit = defineEmits(['close'])
 const destroyVC = () => {
-    flagLogin.value = false
+    console.log('123');
+    $emit('close')
 }
 let X = 0;
 let Y = 0;

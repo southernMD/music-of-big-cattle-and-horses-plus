@@ -28,6 +28,7 @@
 </template>
 
 <script lang="ts" setup>
+import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 import { useMain,useGlobalVar, useBasicApi,useNM } from '@renderer/store'
 import { toRef, watch, ref, getCurrentInstance,ComponentInternalInstance } from 'vue';
 // import $route from '@/router'
@@ -143,7 +144,7 @@ const go = async () => {
     console.log(props.name,'&^$&*%^(*&)*(&*&*^&%&*())');
     clickFlag.value = true;
     if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') && !props.name ){
-        globalVar.flagLogin = true
+        LoadingPageImper()
     }
     if(props.id){
         let id = props.id as number
@@ -174,7 +175,7 @@ const go = async () => {
                 }
             })
         }else if(props.name == 'follow' && BasicApi.profile == null){
-            globalVar.flagLogin = true
+            LoadingPageImper()
         }else{
             $router.push({
                 name:`${props.name}`,

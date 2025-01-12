@@ -346,10 +346,11 @@ const showPlay = () => {
   playlistFlag.value = !playlistFlag.value
 }
 
+import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage'
 const addPlayFlag = toRef(globalVar, 'addPlayFlag')
 watch(addPlayFlag, () => {
   if (addPlayFlag.value == true && BasicApi.profile == null) {
-    globalVar.flagLogin = true
+    LoadingPageImper()
     addPlayFlag.value = false
   }
 })

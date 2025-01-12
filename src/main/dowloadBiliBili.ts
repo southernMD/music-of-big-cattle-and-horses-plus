@@ -185,7 +185,7 @@ const dowloading = async (videoData: any, url: string, event: Electron.IpcMainEv
         const item = downloadTask[i];
         console.log(item);
         //"application/octet-stream"  "video/mp4" 'application/json'
-        if (item.contentType === "image/jpeg") {
+        if (item.contentType.includes("image")) {
             savePromise.push(saveFile(join(__dirname, basePath, `${nowTime}.jpg`), downloadTask[i].buffer))
         } else {
             savePromise.push(saveFile(join(__dirname, basePath, `${nowTime}-${i + 1}`), downloadTask[i].buffer))

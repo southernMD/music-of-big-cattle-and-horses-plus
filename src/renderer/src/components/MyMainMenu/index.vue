@@ -93,6 +93,7 @@ import icon from '@renderer/assets/icon.png'
 import iconRed from '@renderer/assets/iconRed.png'
 import {throttle} from 'lodash'
 import {modInput} from '../../utils/modInput'
+import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 // const ChangeSkin = defineAsyncComponent(() => import('./changeSkin/index.vue'))
 // const PersonalMessage = defineAsyncComponent(() => import('./PersonalMessage/index.vue'))
 // const LoginPage = defineAsyncComponent(() => import('../LoginPage.vue'))
@@ -106,7 +107,6 @@ const $el = getCurrentInstance() as ComponentInternalInstance;
 const $router = useRouter();
 const $route = useRoute();
 let model: Ref<boolean> = toRef(MainMenu, 'model')
-let flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 // let time: any = null;
 
 // let moveFlag: Ref<boolean> = ref(false)
@@ -280,7 +280,7 @@ let userMessage = toRef(BasicApi, 'profile')
 const loginOrPerson = async (e: any): Promise<any> => {
     let arr = [...e.target.classList]
     if (!userMessage.value) { //无信息则扫码登陆
-        flagLogin.value = true;
+        LoadingPageImper()
     } else if (arr.includes('el-image__inner')) {
         $router.push({
             name:'PersonalCenter',

@@ -7,16 +7,6 @@
         <!-- <LoadingBig></LoadingBig> -->
         <Main></Main>
         <MusicRadio></MusicRadio>
-        <Teleport to="body">
-            <Suspense v-if="flagLogin">
-                <template #default>
-                    <LoginPage v-if="flagLogin"></LoginPage>
-                </template>
-                <template #fallback>
-                    <Loading :loading="true" message="正在加载登陆页，请稍后"></Loading>
-                </template>
-            </Suspense>
-        </Teleport>
         <MyDialog :flag="downloadFlag" @cancel="closed" @confirm="toDownload" @closeDialog="closed">
             <template #header>
                 <span class="title">下载音质选择</span>
@@ -77,7 +67,6 @@ const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
 const NM = useNM();
 const MainPinia = useMain();
-const flagLogin: Ref<boolean> = toRef(globalVar, 'flagLogin')
 const loadDefault: Ref<boolean> = toRef(globalVar, 'loadDefault')
 const downloadQueue = shallowRef(new PromiseQueue({ concurrency: 3 }))
 
@@ -732,16 +721,6 @@ const confirmUpdate = ()=>{
 const cancleUpdate = ()=>{
     updateFlag.value = false
 }
-
-onErrorCaptured((err: Error,
-  _,
-  info: string)=>{
-    console.log(err);
-    if(err.message === "request code error"){
-        flagLogin.value = false
-        ElMessage.error("获取登录窗口失败")
-    }
-})
 
 </script>
 

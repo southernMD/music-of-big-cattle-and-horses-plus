@@ -261,6 +261,7 @@ import PlayListPanel from './playListPanel/index.vue';
 import SongDetail from './songDetail/index.vue';
 import MyDialog from '../myVC/MyDialog.vue';
 import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
+import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 
 const playSpeedRef = ref(null)
 const playLevelRef = ref(null)
@@ -345,7 +346,7 @@ watch(playingId, () => {
 const likeOrDislike = async () => {
     if(Main.playing < 0) return
     if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
-        globalVar.flagLogin = true
+        LoadingPageImper()
         return
     }
     let likeIndex = likes.value.indexOf(playingId.value)
@@ -1902,7 +1903,7 @@ const todoHandle = (index)=>{
     if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ'){
         if(index == 0){
             if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
-                globalVar.flagLogin = true
+                LoadingPageImper()
                 return
             }
             startDialogFlag.value = true
@@ -2043,7 +2044,7 @@ const getZhuanfaText = (message:string)=>{
 const senddongtaiFlag = toRef(globalVar,'shareDialogFlag')
 watch(senddongtaiFlag,()=>{
     if(senddongtaiFlag.value == true && BasicApi.profile == null){
-        globalVar.flagLogin = true
+        LoadingPageImper()
         senddongtaiFlag.value = false
     }
 })
@@ -2439,7 +2440,7 @@ watch(playingId,()=>{
 const likeOrDislikeRadio = async()=>{
     if(Main.playing < 0) return
     if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
-        globalVar.flagLogin = true
+        LoadingPageImper()
         return
     }
     let programId = Main.playingList[Main.playingindex - 1].id

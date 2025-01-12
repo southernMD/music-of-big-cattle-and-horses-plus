@@ -194,6 +194,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMain, useBasicApi, useMainMenu, useGlobalVar,useNM } from '@renderer/store';
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
+import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 const BasicApi = useBasicApi();
 const Main = useMain()
 const route = useRoute();
@@ -827,7 +828,7 @@ const goPersonal = ()=>{
 
 const sharePlayList = ()=>{
     if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
-        globalVar.flagLogin = true
+        LoadingPageImper()
         return
     }
     globalVar.shareDialogFlag = true
@@ -846,7 +847,7 @@ const sharePlayList = ()=>{
 const start = async()=>{
     console.log(dynamic);
     if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
-        globalVar.flagLogin = true
+        LoadingPageImper()
         return
     }
     if(isStartStyle())return

@@ -1,6 +1,10 @@
 <template>
-    <div class="loading" ref="lo" @click.stop>
-        <div class="tra"  ref="tra">
+    <div class="loading" @click.stop
+     :style="{ maxWidth: width ? `${width}px` : `260px` }"
+    >
+        <div class="tra"  
+         :style="{ transform: tra ? `translateX(${tra}px)` : `translateX(0px)` }"
+        >
             <div class="moving" v-if="loading">
                 <span :style="`--i:${i - 1}`" v-for="i in 13"></span>
             </div>
@@ -8,21 +12,21 @@
                 <i class="iconfont icon-cuowu"></i>
             </div>
         </div>
-        <span class="message" ref="message"
+        <span class="message" 
         :class="{
             'error-red':type == 'error'
         }"
+        :style="{ fontSize: size ? `${size}px` : `inherit` }"
         >{{ message }}</span>
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, getCurrentInstance, ComponentInternalInstance } from 'vue';
+import { onMounted} from 'vue';
 import { useGlobalVar } from '@renderer/store';
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const $emit = defineEmits(['close'])
 const globalVar = useGlobalVar()
-defineProps<{
+const props = defineProps<{
     message?: string
     width?: string
     tra?: string
@@ -32,24 +36,12 @@ defineProps<{
     type?:string
 }>()
 onMounted(() => {
-    if ($el.props.width) {
-        let dom: HTMLElement = $el.refs.lo as HTMLElement
-        if(dom) dom.style.maxWidth = $el.props.width + 'px'
-    }
-    if ($el.props.tra) {
-        let dom: HTMLElement =  $el.refs.tra as HTMLElement
-        if(dom) dom.style.transform = `translateX(${$el.props.tra}px)`
-    }
-    if ($el.props.showTime) {
+    if (props.showTime) {
         let t = setTimeout(()=>{
             globalVar.loadMessageDefaultType = ''
             $emit('close')
             clearTimeout(t)
-        },$el.props.showTime as number)
-    }
-    if ($el.props.size) {
-        let dom: HTMLElement = $el.refs.message as HTMLElement
-        if(dom) dom.style.fontSize = $el.props.size + 'px'
+        },props.showTime as number)
     }
 })
 
@@ -74,7 +66,6 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     z-index: 999999;
-
     .message {
         color: white;
         margin-left: 5px;

@@ -1458,7 +1458,6 @@ interface V {
     loadingMp4Bk: boolean
     closePointOut: boolean   //全局播放提示
     closePointOutMessage: string
-    flagLogin: boolean //登录页面
     currentTime: number
     lyricOffset: number
     changeTimeFlag: boolean //修改播放时间
@@ -1552,7 +1551,6 @@ export const useGlobalVar = defineStore('globalVar', {
             loadingMp4Bk: false,
             closePointOut: false,
             closePointOutMessage: '',
-            flagLogin: false,
             currentTime: 0,
             lyricOffset: 0,
             changeTimeFlag: false,
