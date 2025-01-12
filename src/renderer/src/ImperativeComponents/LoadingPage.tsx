@@ -7,6 +7,7 @@ import { ElMessage } from 'element-plus';
 const AsyncLoginPage = defineAsyncComponent(() => import('@renderer/components/LoginPage.vue'));
 export default function LoadingPageImper() {
     const container = document.createElement('div');
+    let ifDestory = false
     document.body.appendChild(container);
 
     const app = createApp({
@@ -24,8 +25,11 @@ export default function LoadingPageImper() {
                         fallback: () => h(Loading, { loading: true, message: '正在加载登陆页，请稍后',tra:10 }),
                         default: () => h(AsyncLoginPage, {
                             onClose(){
-                                app.unmount();
-                                document.body.removeChild(container);
+                                if(!ifDestory){
+                                    ifDestory = true;
+                                    app.unmount();
+                                    document.body.removeChild(container);
+                                }
                               },
                           }),
                       }
@@ -38,8 +42,11 @@ export default function LoadingPageImper() {
 
     return {
         destroy() {
-            app.unmount(); // 卸载 Vue 应用
-            document.body.removeChild(container); // 清理挂载的 DOM 元素
+            if(!ifDestory){
+                ifDestory = true;
+                app.unmount(); // 卸载 Vue 应用
+                document.body.removeChild(container); // 清理挂载的 DOM 元素
+            }
         },
     };
 }

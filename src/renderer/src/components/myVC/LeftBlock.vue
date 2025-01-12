@@ -144,12 +144,18 @@ const movePlayListBegin = (e:MouseEvent)=>{
 }
 
 let clickFlag = ref(false)
+let LoadingPageDestory = null as any
 const go = async () => {
     console.log('触发go事件');
     console.log(props.name,'&^$&*%^(*&)*(&*&*^&%&*())');
     clickFlag.value = true;
     if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') && !props.name ){
-        LoadingPageImper()
+        if(LoadingPageDestory){
+            LoadingPageDestory()
+            LoadingPageDestory = null
+        }
+        const {destroy} = LoadingPageImper()
+        LoadingPageDestory = destroy
     }
     if(props.id){
         let id = props.id as number
@@ -180,7 +186,12 @@ const go = async () => {
                 }
             })
         }else if(props.name == 'follow' && BasicApi.profile == null){
-            LoadingPageImper()
+            if(LoadingPageDestory){
+                LoadingPageDestory()
+                LoadingPageDestory = null
+            }
+            const {destroy} = LoadingPageImper()
+            LoadingPageDestory = destroy
         }else{
             $router.push({
                 name:`${props.name}`,

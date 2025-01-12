@@ -833,9 +833,15 @@ const goPersonal = ()=>{
     })
 }
 
+let LoadingPageDestory = null as any
 const sharePlayList = ()=>{
     if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
-        LoadingPageImper()
+        if(LoadingPageDestory){
+            LoadingPageDestory()
+            LoadingPageDestory = null
+        }
+        const {destroy} = LoadingPageImper()
+        LoadingPageDestory = destroy
         return
     }
     globalVar.shareDialogFlag = true
@@ -854,7 +860,12 @@ const sharePlayList = ()=>{
 const start = async()=>{
     console.log(dynamic);
     if(!localStorage.getItem('NMcookie') && !localStorage.getItem('cookieUser')){
-        LoadingPageImper()
+        if(LoadingPageDestory){
+            LoadingPageDestory()
+            LoadingPageDestory = null
+        }
+        const {destroy} = LoadingPageImper()
+        LoadingPageDestory = destroy
         return
     }
     if(isStartStyle())return

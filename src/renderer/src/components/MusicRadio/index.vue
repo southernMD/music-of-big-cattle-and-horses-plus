@@ -340,10 +340,16 @@ watch(playingId, () => {
     }
 })
 
+let LoadingPageDestory = null as any
 const likeOrDislike = async () => {
     if(Main.playing < 0) return
     if(!localStorage.getItem('cookieUser') && !localStorage.getItem('NMcookie') ){
-        LoadingPageImper()
+        if(LoadingPageDestory){
+            LoadingPageDestory()
+            LoadingPageDestory = null
+        }
+        const {destroy} = LoadingPageImper()
+        LoadingPageDestory = destroy
         return
     }
     let likeIndex = likes.value.indexOf(playingId.value)

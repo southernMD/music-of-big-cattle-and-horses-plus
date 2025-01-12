@@ -1,5 +1,7 @@
 <template>
-    <div class="LoginPage" @mousedown="move" @mouseup="moveEnd" ref="loginPageRef">
+    <div class="LoginPage" @mousedown="move" @mouseup="moveEnd" ref="loginPageRef"
+    :style="{left:loginPageLeft + 'px',top:loginPageTop + 'px'}"
+    >
         <i class="iconfont icon-guanbi_o" @click="destroyVC"></i>
         <div v-show="otherLogin">
             <div class="title">扫码登陆</div>
@@ -65,6 +67,7 @@ import p2 from '@renderer/assets/image/SgCjDdGyLg.png'
 import {modInput} from '../utils/modInput'
 
 import Loading from '@renderer/ImperativeComponents/Loading/Loading'
+import { nextTick } from 'vue';
 const BasicApi = useBasicApi();
 const Main = useMain();
 const NM = useNM();
@@ -127,10 +130,12 @@ let Y = 0;
 let WX = 0;
 let WY = 0;
 const loginPageRef = ref()
+const loginPageLeft = ref(0)
+const loginPageTop = ref(0)
 let Listener = (e: MouseEvent) => {
     if (moveFlag.value) {
-        loginPageRef.value!.style.left = WX + (e.pageX - X) + 'px';
-        loginPageRef.value!.style.top = WY + (e.pageY - Y) + 'px';
+        loginPageLeft.value = WX + (e.pageX - X)
+        loginPageTop.value = WY + (e.pageY - Y)
     }
 }
 const move = (e: MouseEvent) => {
@@ -148,10 +153,17 @@ const moveEnd = () => {
 }
 onMounted(() => {
     window.electron.ipcRenderer.send('get-screen-X-Y')
+    const loginPageWidth = loginPageRef.value!.offsetWidth
+    const loginPageHeight = loginPageRef.value!.offsetHeight
+    console.log(loginPageRef.value);
     window.electron.ipcRenderer.on('there-X-Y', ({}, obj: any) => {
         let { width, height } = obj;
-        loginPageRef.value!.style.top = (height - loginPageRef.value!.offsetHeight) / 2 + 'px';
-        loginPageRef.value!.style.left = (width - loginPageRef.value!.offsetWidth) / 2 + 'px';
+        console.log(obj);
+        console.log(loginPageWidth,loginPageHeight);
+        loginPageTop.value = (height - loginPageHeight) / 2
+        loginPageLeft.value = (width - loginPageWidth) / 2
+        // loginPageRef.value!.style.top = (height - loginPageWidth) / 2 + 'px';
+        // loginPageRef.value!.style.left = (width - loginPageHeight) / 2 + 'px';
     })
 })
 

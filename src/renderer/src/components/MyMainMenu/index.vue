@@ -276,11 +276,16 @@ onMounted(() => {
 // //正式业务开始
 let userMessage = toRef(BasicApi, 'profile')
 
-
+let LoadingPageDestory = null as any
 const loginOrPerson = async (e: any): Promise<any> => {
     let arr = [...e.target.classList]
     if (!userMessage.value) { //无信息则扫码登陆
-        LoadingPageImper()
+        if(LoadingPageDestory){
+            LoadingPageDestory()
+            LoadingPageDestory = null
+        }
+        const {destroy} = LoadingPageImper()
+        LoadingPageDestory = destroy
     } else if (arr.includes('el-image__inner')) {
         $router.push({
             name:'PersonalCenter',

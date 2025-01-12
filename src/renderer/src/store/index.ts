@@ -1469,9 +1469,6 @@ interface V {
     loginQuit: boolean//退出登录
     downloadFlag: boolean
     downloadLevel: { play: string, download: string, songName: string, id: number }
-    loadMessageDefaultFlag:boolean //全局提示文本
-    loadMessageDefault:string //全局提示文本
-    loadMessageDefaultType:'error' | '' //全局提示文本类型
     downloadId: number[]    //下载id
     loadingValue: Map<number, [number, number]> //下载值
     downLoadAll: number //全下指标
@@ -1561,9 +1558,6 @@ export const useGlobalVar = defineStore('globalVar', {
             loginQuit: false,
             downloadFlag: false,
             downloadLevel: { play: '', download: '', songName: '', id: -1 },
-            loadMessageDefaultFlag:false,
-            loadMessageDefault:'',
-            loadMessageDefaultType:'',
             downloadId: [],
             loadingValue: new Map(),
             downLoadAll: 0,

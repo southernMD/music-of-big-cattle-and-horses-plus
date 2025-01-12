@@ -348,10 +348,16 @@ const showPlay = () => {
 }
 
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage'
+let LoadingPageDestory = null as any
 const addPlayFlag = toRef(globalVar, 'addPlayFlag')
 watch(addPlayFlag, () => {
   if (addPlayFlag.value == true && BasicApi.profile == null) {
-    LoadingPageImper()
+    if(LoadingPageDestory){
+      LoadingPageDestory()
+      LoadingPageDestory = null
+    }
+    const {destroy} = LoadingPageImper()
+    LoadingPageDestory = destroy
     addPlayFlag.value = false
   }
 })
