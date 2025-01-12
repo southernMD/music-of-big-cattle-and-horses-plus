@@ -4,10 +4,14 @@
     "src/renderer/src/env.d.ts",
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.vue",
+    "src/renderer/src/**/*.tsx",
     "src/preload/*.d.ts",
     "src/renderer/**/*.json"
   ],
   "compilerOptions": {
+    "jsx": "preserve",
+    "jsxFactory": "h", 
+    "jsxFragmentFactory": "Fragment",
     "composite": true,
     "baseUrl": ".",
     "paths": {

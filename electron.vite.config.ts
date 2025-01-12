@@ -6,6 +6,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import eslintPlugin from 'vite-plugin-eslint'
 import { terser } from 'rollup-plugin-terser';
+import vueJsx from '@vitejs/plugin-vue-jsx';
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin(),bytecodePlugin()],
@@ -47,6 +48,7 @@ export default defineConfig({
       //   include: ['src/**/*.ts', 'src/**/*.vue', 'src/*.ts', 'src/*.vue'],
       //   lintOnStart: false
       // }),
+      vueJsx(),
       terser({
         compress: {
           drop_console: true
