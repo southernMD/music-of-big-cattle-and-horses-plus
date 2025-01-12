@@ -1,6 +1,6 @@
 import { createApp, defineComponent, PropType, ref, onMounted, h } from 'vue';
 import { styled } from '@styils/vue';
-import { After, DivLoading, Icon, Message, Moving, Span, Tra } from './LoadingStyleComponents';
+import { After, DivLoading, Icon, Message, Moving, Span, Tra,Error as ErrorIcon } from './LoadingStyleComponents';
 interface LoadingProps {
     loading?: boolean;
     type?: 'error' | string;
@@ -75,10 +75,9 @@ const Loading = defineComponent({
                         </Moving>
                     )}
                     {props.type === 'error' && (
-                        // @ts-ignore
-                        <Error>
+                        <ErrorIcon>
                             <Icon class="iconfont icon-cuowu" />
-                        </Error>
+                        </ErrorIcon>
                     )}
                 </Tra>
                 <Message
@@ -104,7 +103,6 @@ export default function mountLoading(props?: LoadingProps) {
             return () => (<Loading
                 {...props}
                 onClose={handleClose}
-                on={{ close: handleClose }}
             />)
         }
     });
@@ -112,7 +110,7 @@ export default function mountLoading(props?: LoadingProps) {
     app.mount(div);
 
     return {
-        close: () => {
+        destory: () => {
             app.unmount();
             document.body.removeChild(div);
         }

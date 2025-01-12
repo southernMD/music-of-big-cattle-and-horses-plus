@@ -31,9 +31,6 @@
                     <span>退出登陆</span>
                 </div>
             </div>
-            <Teleport to="body">
-                <Loading  v-show="LoadingFlag" :loading="true" width="50" tra="10"></Loading>
-            </Teleport>
         </div>
     </div>
 </template>
@@ -43,6 +40,7 @@ import {  Ref, ref, } from 'vue';
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
 import {useBasicApi,useMain,useGlobalVar} from '@renderer/store'
 import { useRouter } from 'vue-router';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const BasicApi = useBasicApi();
 const Main = useMain();
 const globalVar = useGlobalVar()
@@ -59,8 +57,6 @@ let deleteDilog: any;
 const $emit = defineEmits(['close'])
 useClickElsewhereToClose(deleteDilog,$emit,bkUserMessageRef);
 
-//退出登陆
-let LoadingFlag: Ref<boolean> = ref(false)
 // async function login (){
 //     let cookie = localStorage.getItem('youkeCookie') as string
 //     let result: any
@@ -85,7 +81,11 @@ const destroyVC = () => {
 const quitLogin = async()=>{
     if(!localStorage.getItem('NMcookie')){
         let result:any
-        LoadingFlag.value = true
+        const { destory } = Loading({
+            loading:true,
+            width:50,
+            tra:20
+        })
         result = await BasicApi.reqQuitLogin();
         if(result.data.code == 200){
             BasicApi.account=null;
@@ -100,7 +100,7 @@ const quitLogin = async()=>{
             const p1 = BasicApi.reqRecommendSongs()
             const p2 = BasicApi.reqRecommendPlayList()  
             await Promise.allSettled([p1,p2])
-            LoadingFlag.value = false
+            destory()
             $router.replace({
                 name:`FixRoute`,
                 query:{
@@ -110,6 +110,11 @@ const quitLogin = async()=>{
             destroyVC();
         }
     }else{
+        const { destory } = Loading({
+            loading:true,
+            width:50,
+            tra:20
+        })
         BasicApi.account=null;
         BasicApi.profile=null;
         BasicApi.everyDaySong = []
@@ -122,7 +127,7 @@ const quitLogin = async()=>{
         const p1 = BasicApi.reqRecommendSongs()
         const p2 = BasicApi.reqRecommendPlayList()  
         await Promise.allSettled([p1,p2])
-        LoadingFlag.value = false
+        destory()
         $router.replace({
             name:`FixRoute`,
             query:{

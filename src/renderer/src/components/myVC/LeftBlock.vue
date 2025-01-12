@@ -28,6 +28,7 @@
 </template>
 
 <script lang="ts" setup>
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 import { useMain,useGlobalVar, useBasicApi,useNM } from '@renderer/store'
 import { toRef, watch, ref, getCurrentInstance,ComponentInternalInstance } from 'vue';
@@ -106,13 +107,17 @@ const moveingPlayListEnd = async()=>{
         MainPinia.playListId.splice(addInde,0,del[0])
         del = copyPlayList.splice(MainPinia.dragIndex,1)
         copyPlayList.splice(addInde,0,del[0])
-        globalVar.loadDefault = true
+        const { destory } = Loading({
+            loading:true,
+            width:20,
+            tra:20
+        })
         if(!localStorage.getItem('NMcookie')){
             await MainPinia.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
         }else{
             await NM.reqPlaylistOrderUpdate(MainPinia.playListId as [number])
         }
-        globalVar.loadDefault = false
+        destory()
         MainPinia.playList = copyPlayList
         //你现在浏览的是要拖动的        
         if($route.query.id == del[0].id){

@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted} from 'vue';
+import { onMounted } from 'vue';
 import { useGlobalVar } from '@renderer/store';
 const $emit = defineEmits(['close'])
 const globalVar = useGlobalVar()

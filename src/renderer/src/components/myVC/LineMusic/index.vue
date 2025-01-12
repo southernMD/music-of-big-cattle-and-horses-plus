@@ -103,6 +103,7 @@ import { useRouter,useRoute } from 'vue-router';
 import { useMain, useBasicApi, useGlobalVar,useNM } from '@renderer/store';
 import Singer from './Singer/index.vue'
 import ZhuanJi from './ZhuanJi/index.vue'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 // import {ElMessageBox} from 'element-plus'
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
@@ -311,7 +312,11 @@ const fnMouseDrag = async (e: any) => {
                     }
                 }else{
                     Main.dragMouse = false
-                    globalVar.loadDefault = true
+                    const { destory } = Loading({
+                        loading:true,
+                        width:20,
+                        tra:20
+                    })
                     let result 
                     if(localStorage.getItem('NMcookie')){
                         result = (await NM.reqPlaylistTracks('add', Number(dom.getAttribute('data-id')), [Number(props.id)])).data
@@ -321,7 +326,7 @@ const fnMouseDrag = async (e: any) => {
                     if(result.url){
                         Main.playList[Number(dom.getAttribute('data-index'))].coverImgUrl = result.url
                     }
-                    globalVar.loadDefault = false
+                    destory()
                     if (result.body.code == 200 || (result.data.code == 200 && localStorage.getItem('NMcookie'))) {
                         globalVar.loadMessageDefault = '已收藏到歌单'
                         globalVar.loadMessageDefaultFlag = true 
@@ -712,9 +717,13 @@ const gotoPlay = (e: MouseEvent) => {
 
 const downloadFlag = toRef(globalVar, 'downloadFlag')
 const download = async (id: number) => {
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     const result = await Main.reqSongDetail([id])
-    globalVar.loadDefault = false
+    destory()
     let songName = ''
     const arList = result.data.songs[0].ar as any[]
     arList.forEach((el, index) => {

@@ -42,6 +42,7 @@
 import { watch,watchEffect,ref, nextTick,Ref, inject, ShallowRef, toRef, computed } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
 import { useMain ,useGlobalVar,useBasicApi,useNM} from '@renderer/store'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const Main = useMain()
 const NM = useNM()
 const BasicApi = useBasicApi()
@@ -833,9 +834,13 @@ const dowloadAll = async (id) => {
 }
 const downloadFlag = toRef(globalVar, 'downloadFlag')
 const download = async (id: number) => {
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     const result = await Main.reqSongDetail([id])
-    globalVar.loadDefault = false
+    destory()
     let songName = ''
     const arList = result.data.songs[0].ar as any[]
     arList.forEach((el, index) => {
@@ -873,16 +878,20 @@ const gotoUpdatePlayList = (id)=>{
 
 //删除歌单
 const delPlayList = async(id)=>{
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     try {
         if(props.type == 'playListMy'){
-            globalVar.loadDefault = true
             let flag 
             if(localStorage.getItem('NMcookie')){
                 flag = await NM.reqPlaylistDelete(id)
             }else{
                 flag = await Main.reqPlaylistDelete(id)
             }
-            globalVar.loadDefault = false
+            destory()
             if(flag){
                 const index = Main.playListId.indexOf(+id)
                 Main.playListId.splice(index,1)
@@ -905,16 +914,16 @@ const delPlayList = async(id)=>{
                 globalVar.loadMessageDefault = '删除失败'
                 globalVar.loadMessageDefaultType = 'error'
                 globalVar.loadMessageDefaultFlag = true
+                destory()
             }
         }else if(props.type == 'playListStart'){
-            globalVar.loadDefault = true
             let flag 
             if(localStorage.getItem('NMcookie')){
                 flag = await NM.reqPlaylistSubscribe(2,id)
             }else{
                 flag = await Main.reqPlaylistSubscribe(2,id)
             }
-            globalVar.loadDefault = false
+            destory()
             if(flag){
                 const index = Main.playListId.indexOf(+id)
                 Main.playListId.splice(index,1)
@@ -933,7 +942,7 @@ const delPlayList = async(id)=>{
         globalVar.loadMessageDefault = '删除失败'
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefaultFlag = true
-        globalVar.loadDefault = false
+        destory()
     }
 }
 const br = (str: string) => {
@@ -1071,16 +1080,20 @@ const openFile = ({})=>{
     window.electron.ipcRenderer.send('open-path',props.path)
 }
 const start = async(id:string)=>{
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     try {
         if(props.type.startsWith('playList')){
-            globalVar.loadDefault = true
             let flag
             if(!localStorage.getItem('NMcookie')){
                 flag = await Main.reqPlaylistSubscribe(1,+id)
             }else{
                 flag = await NM.reqPlaylistSubscribe(1,+id)
             }
-            globalVar.loadDefault = false
+            destory()
             if(flag){
                 const index = Main.playListId.indexOf(+id)
                 Main.playListId.splice(index,1)
@@ -1105,6 +1118,7 @@ const start = async(id:string)=>{
             }else{
                 flag = await Main.reqArtistSub(id,1)
             }
+            destory()
             if(flag){
                 globalVar.loadMessageDefault = '关注成功'
                 if(localStorage.getItem('NMcookie')){
@@ -1123,6 +1137,7 @@ const start = async(id:string)=>{
             }else{
                 flag = await Main.reqAlbumSub(1,+id)
             }
+            destory()
             if(flag){
                 globalVar.loadMessageDefault = '收藏成功'
                 if(localStorage.getItem('NMcookie')){
@@ -1139,7 +1154,7 @@ const start = async(id:string)=>{
         globalVar.loadMessageDefault = '失败'
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefaultFlag = true
-        globalVar.loadDefault = false
+        destory()
     }
 
 }
@@ -1178,15 +1193,19 @@ const delstart = async(id)=>{
 const delComment = async(ids:string)=>{
     const id = ids.split(',')[0]
     const resId = ids.split(',')[1]
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     if(isNaN(+resId)){
-        globalVar.loadDefault = true
         let res = await Main.reqcomment({
             t:0,
             type:+props.commentType!,
             threadId:resId,
             commentId:+id
         })
-        globalVar.loadDefault = false
+        destory()
         if(res.data.code == 200){
             const selectedElements = document.querySelectorAll(`[data-id="${ids}"]`) as unknown as HTMLElement[] 
             selectedElements.forEach((element) => {
@@ -1199,7 +1218,6 @@ const delComment = async(ids:string)=>{
             globalVar.loadMessageDefaultFlag = true
         }
     }else{
-        globalVar.loadDefault = true
         let res
         if(localStorage.getItem('NMcookie')){
             res = await NM.reqcomment({
@@ -1216,8 +1234,7 @@ const delComment = async(ids:string)=>{
                 commentId:+id
             })
         }
-        globalVar.loadDefault = false
-        globalVar.loadDefault = false
+        destory()
         if(res.data.code == 200){
             const selectedElements = document.querySelectorAll(`[data-id="${ids}"]`) as unknown as HTMLElement[] 
             selectedElements.forEach((element) => {

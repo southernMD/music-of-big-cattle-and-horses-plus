@@ -1,14 +1,13 @@
 <template>
   <!-- <el-config-provider size="small" :z-index="3000" :locale="zhCn"> -->
   <!-- </el-config-provider> -->
-  <div class="main" :class="{ 
+  <div class="main" :class="{
     'main-oneself': globalVar.oneself == 1,
     'red-line': MainMenu.colorBlock == 'NMblack',
     'main-video-detail': $route.name == 'video_detail'
-   }">
+  }">
     <el-scrollbar v-show="$route.name != 'video_detail'" ref="scrollbarRefLeft" @scroll="barLeft" style="width: 200px;">
-      <aside @mouseover="leftOver"
-        :class="{ 'aside-right-color-oneself': globalVar.oneself == 1 }">
+      <aside @mouseover="leftOver" :class="{ 'aside-right-color-oneself': globalVar.oneself == 1 }">
         <div class="top">
           <LeftBlock message="发现音乐" :big="true" name="findMusic">
           </LeftBlock>
@@ -78,8 +77,8 @@
                   <i class="iconfont icon-aixin"></i>
                 </template>
                 <template #jump>
-                  <div class="bk" v-show="false" :class="{ 'bk-oneself': globalVar.oneself == 1 }" @click.stop="heartJump"
-                    title="开启鸡动模式">
+                  <div class="bk" v-show="false" :class="{ 'bk-oneself': globalVar.oneself == 1 }"
+                    @click.stop="heartJump" title="开启鸡动模式">
                     <i class="iconfont icon-xindong"></i>
                   </div>
                 </template>
@@ -110,7 +109,8 @@
           <div class="title">
             <div class="option" @click="showStart" :class="{ noDrag: !Main.dragMouse }">
               <span :class="{ 'onself': globalVar.oneself == 1 }">收藏的歌单</span>
-              <i :class="{ 'onself': globalVar.oneself == 1 }" class="iconfont icon-xiajiantou" v-if="startlistFlag"></i>
+              <i :class="{ 'onself': globalVar.oneself == 1 }" class="iconfont icon-xiajiantou"
+                v-if="startlistFlag"></i>
               <i :class="{ 'onself': globalVar.oneself == 1 }" class="iconfont icon-youjiantou" v-else></i>
             </div>
           </div>
@@ -136,7 +136,7 @@
         </div>
       </aside>
     </el-scrollbar>
-    <main @mouseover="rightOver" id="mainWindow" :class="{ 'main-video-detail': ($route.name =='video_detail' )}">
+    <main @mouseover="rightOver" id="mainWindow" :class="{ 'main-video-detail': ($route.name == 'video_detail') }">
       <div class="stopS"
         v-if="route.path.includes('setting') || route.path.includes('findMusic') || route.path.includes('download')">
         <header>
@@ -197,6 +197,7 @@ import { useRoute, useRouter } from 'vue-router';
 import LeftBlock from './myVC/LeftBlock.vue';
 import MyDialog from './myVC/MyDialog.vue';
 
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const MainMenu = useMainMenu();
 const Main = useMain();
 const route = useRoute();
@@ -362,58 +363,68 @@ const addPlay = () => {
 }
 const createPlayList = async () => {
   if (playListName.value.length == 0) return
-  globalVar.loadDefault = true
-  addPlayFlag.value = false
-  let result
-  if (!localStorage.getItem('NMcookie')) {
-    result = await Main.reqPlayListCreate(playListName.value, yinsi.value ? 10 : undefined)
-  } else {
-    result = await NM.reqPlayListCreate(playListName.value, yinsi.value ? 10 : undefined)
-  }
-  if (result.id) {
-    if (globalVar.addPlayId.length == 0) {
-      globalVar.loadDefault = false
-      globalVar.loadMessageDefault = '创建歌单成功'
-      globalVar.loadMessageDefaultFlag = true
-      if (route.name == 'songPlaylist') {
-        $router.replace({
-          name: 'songPlaylist',
-          query: {
-            my: 'true',
-            id: Main.playList[+route.query.index! + 1].id,
-            index: +route.query.index! + 1,
-            type: '歌单'
-          }
-        })
-      }
+  const { destory } = Loading({
+    loading: true,
+    width: 20,
+    tra: 20
+  })
+  try {
+    addPlayFlag.value = false
+    let result
+    if (!localStorage.getItem('NMcookie')) {
+      result = await Main.reqPlayListCreate(playListName.value, yinsi.value ? 10 : undefined)
+    } else {
+      result = await NM.reqPlayListCreate(playListName.value, yinsi.value ? 10 : undefined)
     }
-    Main.playListId.splice(1, 0, result.id)
-    Main.playList.splice(1, 0, result)
-    Main.createPlay++
-    if (globalVar.addPlayId.length != 0) {
-      let result2
-      if (localStorage.getItem('NMcookie')) {
-        result2 = (await NM.reqPlaylistTracks('add', result.id, globalVar.addPlayId)).data
-      } else {
-        result2 = (await Main.reqPlaylistTracks('add', result.id, globalVar.addPlayId)).data
-      }
-      if (result2.url) {
-        Main.playList[1].coverImgUrl = result.url
-      }
-      globalVar.loadDefault = false
-      if (result2.body.code == 200 || (result2.code == 200 && localStorage.getItem('NMcookie'))) {
-        globalVar.loadMessageDefault = '已收藏到歌单'
+    if (result.id) {
+      if (globalVar.addPlayId.length == 0) {
+        destory()
+        globalVar.loadMessageDefault = '创建歌单成功'
         globalVar.loadMessageDefaultFlag = true
-        Main.playList[1].trackCount += globalVar.addPlayId.length
+        if (route.name == 'songPlaylist') {
+          $router.replace({
+            name: 'songPlaylist',
+            query: {
+              my: 'true',
+              id: Main.playList[+route.query.index! + 1].id,
+              index: +route.query.index! + 1,
+              type: '歌单'
+            }
+          })
+        }
       }
-      globalVar.addPlayId = []
+      Main.playListId.splice(1, 0, result.id)
+      Main.playList.splice(1, 0, result)
+      Main.createPlay++
+      if (globalVar.addPlayId.length != 0) {
+        let result2
+        if (localStorage.getItem('NMcookie')) {
+          result2 = (await NM.reqPlaylistTracks('add', result.id, globalVar.addPlayId)).data
+        } else {
+          result2 = (await Main.reqPlaylistTracks('add', result.id, globalVar.addPlayId)).data
+        }
+        if (result2.url) {
+          Main.playList[1].coverImgUrl = result.url
+        }
+        destory()
+        if (result2.body.code == 200 || (result2.code == 200 && localStorage.getItem('NMcookie'))) {
+          globalVar.loadMessageDefault = '已收藏到歌单'
+          globalVar.loadMessageDefaultFlag = true
+          Main.playList[1].trackCount += globalVar.addPlayId.length
+        }
+        globalVar.addPlayId = []
+      }
+    } else {
+      destory()
+      globalVar.loadMessageDefaultFlag = true
     }
-  } else {
-    globalVar.loadDefault = false
+  } catch (error) {
+    destory()
+    globalVar.loadMessageDefaultType = 'error'
+    globalVar.loadMessageDefault = '发生错误'
     globalVar.loadMessageDefaultFlag = true
   }
 
-  console.log(result);
 }
 
 // const heartJump = async () => {
@@ -747,7 +758,8 @@ const inputRemove = () => {
       }
     }
   }
-  .main-video-detail{
+
+  .main-video-detail {
     width: 100vw;
     min-height: calc(100vh - 60px);
   }
@@ -759,7 +771,7 @@ const inputRemove = () => {
   color: @oneselfFontColor;
 }
 
-.main-video-detail{
+.main-video-detail {
   height: calc(100vh - 60px);
 }
 

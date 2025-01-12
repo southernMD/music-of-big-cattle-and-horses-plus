@@ -173,10 +173,6 @@
         <PlayingPointOut v-if="globalVar.closePointOut" @close="globalVar.closePointOut = false"
             :message="globalVar.closePointOutMessage"></PlayingPointOut>
     </div>
-    <div v-if="offsetFlag">
-        <Loading :loading="false" :message="lyricOffset + 's'" :showTime="1000" @close="offsetFlag = false" width="50">
-        </Loading>
-    </div>
     <transition name="songDetail">
         <SongDetail :currentTime="currentTime" :lyricOffset="lyricOffset" :simiSong="simiSong" :simiPlaylist="simiPlaylist"
             @goTotime="goTotime" @openCommentDialog="openCommentDialog"></SongDetail>
@@ -261,7 +257,9 @@ import PlayListPanel from './playListPanel/index.vue';
 import SongDetail from './songDetail/index.vue';
 import MyDialog from '../myVC/MyDialog.vue';
 import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
+
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 
 const playSpeedRef = ref(null)
 const playLevelRef = ref(null)
@@ -316,7 +314,6 @@ let playBall: HTMLElement;
 let line: HTMLElement
 let audioPlayFlag = ref(false)
 let lyric: Ref<Object> = shallowRef({});
-let offsetFlag = ref(false)
 let SongUrl = ref('')
 let nowTime = ref(dayjsSMMSS(0))
 let endTime = ref(dayjsSMMSS(0))
@@ -1156,7 +1153,11 @@ window.electron.ipcRenderer.on('next-song', () => {
 //另一进程歌词偏离
 let lyricOffset = toRef(globalVar, 'lyricOffset')
 window.electron.ipcRenderer.on('lyric-offset', ({ }, {data}:{data:number}) => {
-    offsetFlag.value = true
+    Loading({
+        message:lyricOffset.value + 's',
+        width:50,
+        showTime:1000,
+    })
     lyricOffset.value = data
 })
 
@@ -1973,7 +1974,11 @@ const addIn = async(id,index)=>{
         Main.likeChange = `${playingId.value},true`
         Main.playList[0].trackCount++
     }else{
-        globalVar.loadDefault = true
+        const { destory } = Loading({
+            loading:true,
+            width:20,
+            tra:20
+        })
         let result 
         if(localStorage.getItem('NMcookie')){
             result = (await NM.reqPlaylistTracks('add',id,willStartListId.value)).data
@@ -1983,7 +1988,7 @@ const addIn = async(id,index)=>{
         if(result.url){
             Main.playList[index].coverImgUrl = result.url
         }
-        globalVar.loadDefault = false
+        destory()
         if (result.body.code == 200 || (result.code == 200 && localStorage.getItem('NMcookie'))) {
             globalVar.loadMessageDefault = '已收藏到歌单'
             globalVar.loadMessageDefaultFlag = true 
@@ -2008,9 +2013,13 @@ watch(()=>globalVar.addPlayId,()=>{
 })
 
 const download = async (id: number) => {
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     const result = await Main.reqSongDetail([id])
-    globalVar.loadDefault = false
+    destory()
     let songName = ''
     const arList = result.data.songs[0].ar as any[]
     arList.forEach((el, index) => {
@@ -2065,9 +2074,13 @@ function base64toFile(base64Data) {
 }
 
 const confirm = async()=>{
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     try {
         senddongtaiFlag.value = false
-        globalVar.loadDefault  = true
         let result
         if(localStorage.getItem('NMcookie')){
             const formData = new FormData()
@@ -2082,7 +2095,7 @@ const confirm = async()=>{
             result = await Main.reqShareResource(globalVar.share.type,globalVar.share.id,globalVar.share.txt)
         }
         // let result = await Main.reqShareResource(globalVar.share.type,Main.playing,zhuanfaMessage.value)
-        globalVar.loadDefault  = false
+        destory()
         if(result.code == 200){
             globalVar.loadMessageDefault = '分享成功'
             globalVar.loadMessageDefaultFlag = true
@@ -2106,7 +2119,7 @@ const confirm = async()=>{
         globalVar.loadMessageDefaultType = 'error'
         globalVar.loadMessageDefault = '分享失败'
         globalVar.loadMessageDefaultFlag = true
-        globalVar.loadDefault  = false
+        destory()
         globalVar.share.txt = ''
     }
 

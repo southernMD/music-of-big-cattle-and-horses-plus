@@ -53,6 +53,7 @@ import { reactive, ref, toRaw, Ref, nextTick, onMounted, watch, ComponentPublicI
 import { useRoute, useRouter } from 'vue-router';
 import { useMain, useGlobalVar,useBasicApi,useNM } from '@renderer/store'
 import MyDialog from '@renderer/components/myVC/MyDialog.vue'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const $route = useRoute()
 const index = ref($route.query.index as string)
 const Main = useMain()
@@ -251,7 +252,11 @@ const mouseDargUp = () => {
 }
 const confirm = async () => {
     //保存
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     const nowWHValue = +pickRef.value!.style.width.split('px')[0]
     let imgX = +pickRef.value!.style.left.split('px')[0] - initX.value
     let imgY = +pickRef.value!.style.top.split('px')[0] - initY.value
@@ -284,11 +289,11 @@ const confirm = async () => {
             }
         }
         picFlag.value = false
-        globalVar.loadDefault = false
+        destory()
         globalVar.loadMessageDefault = '保存成功!'
         globalVar.loadMessageDefaultFlag = true
     } catch (error) {
-        globalVar.loadDefault = false
+        destory()
         globalVar.loadMessageDefault = '保存失败!'
         globalVar.loadMessageDefaultFlag = true
         globalVar.loadMessageDefaultType ='error'

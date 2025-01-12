@@ -56,6 +56,7 @@ import { useBasicApi,useMain,useGlobalVar,useNM } from '@renderer/store';
 import dropDown from '@renderer/components/myVC/dropDown.vue';
 import { useRouter } from 'vue-router';
 import { FormInstance, FormRules } from 'element-plus';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const Main = useMain()
@@ -202,26 +203,30 @@ const onSubmit = async(formEl: FormInstance)=>{
                 signature:form.description
             }
             console.log(t);
-            globalVar.loadDefault = true
+            const { destory } = Loading({
+                loading:true,
+                width:20,
+                tra:20
+            })
             if(localStorage.getItem('NMcookie')){
                 if(await NM.reqUserUpdate(t)){
                     await NM.reqLogin()
-                    globalVar.loadDefault = false
+                    destory()
                     globalVar.loadMessageDefault = '保存成功!'
                     globalVar.loadMessageDefaultFlag = true
                 }else{
-                    globalVar.loadDefault = false
+                    destory()
                     globalVar.loadMessageDefault = '保存失败!'
                     globalVar.loadMessageDefaultFlag = true
                 }
             }else{
                 if(await Main.reqUserUpdate(t)){
                     await BasicApi.reqLogin(localStorage.getItem('cookieUser') as string)
-                    globalVar.loadDefault = false
+                    destory()
                     globalVar.loadMessageDefault = '保存成功!'
                     globalVar.loadMessageDefaultFlag = true
                 }else{
-                    globalVar.loadDefault = false
+                    destory()
                     globalVar.loadMessageDefault = '保存失败!'
                     globalVar.loadMessageDefaultFlag = true
                 }

@@ -154,6 +154,7 @@ import MyDialog from './MyDialog.vue'
 import {throttle} from 'lodash'
 import { useRouter } from 'vue-router'
 import { regEmoji } from '@renderer/utils/regEmoji'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const $router = useRouter()
 // import {regEmoji} from '@/utils/regEmoji'
 const fenxiang = ref(true)
@@ -699,7 +700,11 @@ const closeDialog = (done: () => void)=>{
 const confirm = async()=>{
     WriteCommitRef.value.textarea = zhuanfadf.value
     zhuanfuFlag.value = false
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     let result 
     if(way.value == 'w'){
         if(localStorage.getItem('NMcookie')){
@@ -715,7 +720,7 @@ const confirm = async()=>{
             result =  await Main.reqEventForward( props.val.event.user.userId, props.val.event.id,zhuanfaMessage.value)
         }
     }
-    globalVar.loadDefault = false
+    destory()
     if(result.code == 200){
         globalVar.loadMessageDefaultFlag = true
         globalVar.loadMessageDefault = '转发成功'

@@ -195,6 +195,7 @@ import { useMain, useBasicApi, useMainMenu, useGlobalVar,useNM } from '@renderer
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const BasicApi = useBasicApi();
 const Main = useMain()
 const route = useRoute();
@@ -857,8 +858,12 @@ const start = async()=>{
             console.log(dynamic.value?.subscribed); //歌单
             console.log(dynamic.value?.isSub); //专辑
             console.log(dynamic?.value.subed);//声音
+            const { destory } = Loading({
+                loading:true,
+                width:20,
+                tra:20
+            })
             try {
-                globalVar.loadDefault = true
                 let flag = false
                 if(dynamic?.value.subed){
                     flag =  await Main.reqdjSub(route.query.id,2)
@@ -880,7 +885,7 @@ const start = async()=>{
                 }
 
                 console.log(flag);
-                globalVar.loadDefault = false
+                destory()
                 if(flag){
                     globalVar.loadMessageDefault = '取消收藏成功'
                     globalVar.loadMessageDefaultFlag = true
@@ -912,7 +917,7 @@ const start = async()=>{
                     globalVar.loadMessageDefaultFlag = true
                 } 
             } catch (error) {
-                globalVar.loadDefault = false
+                destory()
                 globalVar.loadMessageDefault = '取消收藏失败'
                 globalVar.loadMessageDefaultType = 'error'
                 globalVar.loadMessageDefaultFlag = true
@@ -921,8 +926,13 @@ const start = async()=>{
             //收藏
             console.log(dynamic.value?.subscribed); //歌单
             console.log(dynamic.value?.isSub); //专辑
+            const { destory } = Loading({
+                loading:true,
+                width:20,
+                tra:20
+            })
             try {
-                globalVar.loadDefault = true
+
                 let flag = false
                 if(dynamic?.value.subed === false){
                     flag =  await Main.reqdjSub(route.query.id,1)
@@ -943,7 +953,7 @@ const start = async()=>{
                     }
                 }
                 console.log(flag);
-                globalVar.loadDefault = false
+                destory()
                 if(flag){
                     globalVar.loadMessageDefault = '收藏成功'
                     globalVar.loadMessageDefaultFlag = true
@@ -978,7 +988,7 @@ const start = async()=>{
                     globalVar.loadMessageDefaultFlag = true
                 } 
             } catch (error) {
-                globalVar.loadDefault = false
+                destory()
                 globalVar.loadMessageDefault = '收藏失败'
                 globalVar.loadMessageDefaultType = 'error'
                 globalVar.loadMessageDefaultFlag = true
@@ -996,14 +1006,18 @@ const closePrivacy = (done : ()=>void)=>{
     done()
 }
 const confirmPrivacy = async()=>{
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     let flag
     if(localStorage.getItem('NMcookie')){
         flag = await NM.reqPlaylistPrivacy(id.value)
     }else{
         flag = await Main.reqPlaylistPrivacy(id.value)
     }
-    globalVar.loadDefault = false
+    destory()
     if(flag){
         globalVar.loadMessageDefault = '歌单已公开'
         globalVar.loadMessageDefaultFlag = true

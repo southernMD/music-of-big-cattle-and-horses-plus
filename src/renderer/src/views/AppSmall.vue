@@ -723,17 +723,6 @@ const cancleUpdate = ()=>{
     updateFlag.value = false
 }
 
-//测试
-import Loading2 from '@renderer/ImperativeComponents/Loading/Loading'
-onMounted(()=>{
-    Loading2({
-        message:'正在更新',
-        // type:'error',
-        loading:true,
-        tra:10,
-        showTime:2000
-    })
-})
 
 </script>
 

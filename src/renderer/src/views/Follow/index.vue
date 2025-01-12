@@ -151,6 +151,7 @@ import eventBlock from '@renderer/components/myVC/eventBlock.vue';
 import Tag from '@renderer/components/myVC/Tag.vue';
 import { useMain,useBasicApi,useGlobalVar,useNM } from '@renderer/store';
 import { useRouter } from 'vue-router';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const BasicApi = useBasicApi()
 const NM = useNM()
 const $router = useRouter()
@@ -277,7 +278,11 @@ function base64toFile(base64Data) {
 const confirm = async()=>{
     if(change.value){
         senddongtaiFlag.value = false
-        globalVar.loadDefault  = true
+        const { destory } = Loading({
+            loading:true,
+            width:20,
+            tra:20
+        })
         let result
         if(localStorage.getItem('NMcookie')){
             const formData = new FormData()
@@ -291,7 +296,7 @@ const confirm = async()=>{
         }else{
             result = await Main.reqShareResource(choiceType.value,choiceId.value,zhuanfaMessage.value)
         }
-        globalVar.loadDefault  = false
+        destory()
         if(result.code == 200){
             globalVar.loadMessageDefault = '分享成功'
             globalVar.loadMessageDefaultFlag = true

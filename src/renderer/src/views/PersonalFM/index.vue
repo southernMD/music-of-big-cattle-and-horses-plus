@@ -87,10 +87,6 @@
 
             </div>
         </div>
-        <Teleport to="body" v-if="errorFlag">
-            <Loading :type="typeError" :message="errorMassage" :width="loadingWidth" @close="errorFlag = false"
-                :showTime="1500"></Loading>
-        </Teleport>
     </div>
 </template>
 
@@ -99,6 +95,8 @@ import { onActivated, ref, Ref, getCurrentInstance, ComponentInternalInstance, n
 import { useMain, useGlobalVar,useNM } from '@renderer/store'
 import { throttle } from 'lodash'
 import { useRouter } from 'vue-router'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
+// import Loading from '@renderer/components/myVC/Loading.vue'
 const Main = useMain()
 const $router = useRouter()
 const globalVar = useGlobalVar()
@@ -261,10 +259,6 @@ const getText = (str: string) => {
     subCommitStr.value = str
 }
 
-let errorFlag = ref(false)
-let errorMassage = ref('')
-let typeError = ref('')
-let loadingWidth = ref('')
 const subCommit = async () => {
     let result 
     if(localStorage.getItem('NMcookie')){
@@ -284,16 +278,20 @@ const subCommit = async () => {
     }
     console.log(result);
     if (result.code == 200) {
-        typeError.value = ''
-        errorFlag.value = true;
-        errorMassage.value = '评论成功！'
-        loadingWidth.value = '150'
+        Loading({
+            type:'',
+            message:'评论成功！',
+            width:150,
+            showTime:1500,
+        })
         Main.clearText = true
     } else {
-        typeError.value = 'error'
-        errorFlag.value = true;
-        errorMassage.value = '评论失败！'
-        loadingWidth.value = '150'
+        Loading({
+            type:'error',
+            message:'评论失败！',
+            width:150,
+            showTime:1500,
+        })
     }
     let addComment = result.comment
     addComment['likedCount'] = 0;

@@ -219,6 +219,7 @@ import {githubUpdate} from '@renderer/api/index'
 import {useGlobalVar, useMain} from '@renderer/store'
 import dropDown from '@renderer/components/myVC/dropDown.vue'
 import MyInput from '@renderer/components/myVC/MyInput.vue'
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const Main = useMain()
 const globalVar = useGlobalVar()
 const fontList = toRef(globalVar,'fontList')
@@ -590,9 +591,13 @@ watch(()=>globalVar.setting.updataWay,()=>{
 const newVersion = toRef(globalVar.setting,'newVersion')
 const url = toRef(globalVar.setting,'updataUrl')
 const searchUpdate = async()=>{
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     let res =  await githubUpdate()
-    globalVar.loadDefault = false
+    destory()
     if(res == null){
         globalVar.loadMessageDefault = '检测失败'
         globalVar.loadMessageDefaultType = 'error'

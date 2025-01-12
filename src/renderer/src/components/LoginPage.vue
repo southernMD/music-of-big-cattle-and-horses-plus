@@ -51,9 +51,6 @@
             </div>
         </div>
         <div class="other" v-if="!okFlag" @click="changeLoginWay">{{ otherLogin ? '选择其他登陆方式 >' : '网易云音乐扫码登录 >' }}</div>
-        <Teleport to="body">
-            <Loading v-show="LoadingFlag" :loading="true" width="50" tra="10"></Loading>
-        </Teleport>
     </div>
 </template>
 
@@ -66,6 +63,8 @@ import  { FormInstance, FormRules } from 'element-plus'
 import p1 from '@renderer/assets/image/XW8rcLxOev.png'
 import p2 from '@renderer/assets/image/SgCjDdGyLg.png'
 import {modInput} from '../utils/modInput'
+
+import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const BasicApi = useBasicApi();
 const Main = useMain();
 const NM = useNM();
@@ -165,11 +164,16 @@ const updateQr = async () => {
     document.querySelector('.img')?.classList.remove('imgHoverNo')
 }
 // 登陆
-let LoadingFlag: Ref<boolean> = ref(false)
+let destoryLoadingFn = null as any
 const login = async () => {
     let cookie = localStorage.getItem('cookieUser') as string
     localStorage.removeItem('NMcookie')
-    LoadingFlag.value = true
+    const { destory } = Loading({
+        loading:true,
+        width:50,
+        tra:20
+    })
+    destoryLoadingFn = destory
     BasicApi.reqLogin(cookie).then(async (account: any) => {
         const p1 = new Promise<string>((resolve) => {
             Main.reqUserPlaylist(account.id).then(()=>{//获取用户创建歌单以及用户收藏歌单
@@ -222,7 +226,7 @@ const login = async () => {
             })
         })
         Promise.all([p1,p2,p3,p4,p5,p6,p7,p8,p9,p10]).then(()=>{
-            LoadingFlag.value = false
+            destoryLoadingFn()
             destroyVC();
             $router.replace({
                 name: `FixRoute`,
@@ -243,7 +247,7 @@ const loginNM = async ()=>{
         const p6 = NM.requserFollows(BasicApi.profile?.userId,99999999,0)
         const p7 = NM.reqRecommendPlayList()
         await Promise.allSettled([p1,p2,p3,p4,p5,p6,p7]).then(()=>{
-            LoadingFlag.value = false
+            destoryLoadingFn()
             destroyVC();
             $router.replace({
                 name: `FixRoute`,
@@ -384,7 +388,7 @@ const submit = async(formEl: FormInstance | undefined)=>{
                                 } catch (error) {
                                     globalVar.loadMessageDefault = '登录失败'
                                     globalVar.loadMessageDefaultFlag = true
-                                    LoadingFlag.value = false
+                                    destoryLoadingFn()
                                     destroyVC();
                                 }
                             }
@@ -418,7 +422,7 @@ const submit = async(formEl: FormInstance | undefined)=>{
                         } catch (error) {
                             globalVar.loadMessageDefault = '登录失败'
                             globalVar.loadMessageDefaultFlag = true
-                            LoadingFlag.value = false
+                            destoryLoadingFn()
                             destroyVC();
                         }
                     }

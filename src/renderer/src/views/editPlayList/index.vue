@@ -45,6 +45,7 @@ import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
 import { useMain, useGlobalVar, useBasicApi,useNM } from '@renderer/store'
 import { onMounted, reactive, ref, toRaw, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const AddTipDialogRef = ref<InstanceType<typeof AddTipDialog>>()
 const Main = useMain()
 const NM = useNM()
@@ -72,14 +73,18 @@ const onSubmit = async () => {
         && form.tags == Main.playList[+index.value].tags
         && ((Main.playList[+index.value].description ?? "").toString() == form.description.toString())
     ) return
-    globalVar.loadDefault = true
+    const { destory } = Loading({
+        loading:true,
+        width:20,
+        tra:20
+    })
     try {
         if(!localStorage.getItem('NMcookie')){
             await Main.reqUpdatePlayList(index.value, Main.playList[+index.value].id, form.name, form.description, form.tags.join(';'))
         }else{
             await NM.reqUpdatePlayList(index.value, Main.playList[+index.value].id, form.name, form.description, form.tags.join(';'))
         }
-        globalVar.loadDefault = false
+        destory()
         globalVar.loadMessageDefault = '保存成功!'
         globalVar.loadMessageDefaultFlag = true
         $router.replace({
@@ -90,7 +95,7 @@ const onSubmit = async () => {
         })
 
     } catch (error) {
-        globalVar.loadDefault = false
+        destory()
         globalVar.loadMessageDefault = '保存失败!'
         globalVar.loadMessageDefaultFlag = true
     }
