@@ -48,7 +48,6 @@ declare module '@vue/runtime-core' {
     HBlock: typeof import('./src/components/myVC/HBlock.vue')['default']
     LeftBlock: typeof import('./src/components/myVC/LeftBlock.vue')['default']
     LineMusic: typeof import('./src/components/myVC/LineMusic/index.vue')['default']
-    Loading: typeof import('./src/components/myVC/Loading.vue')['default']
     LoadingBig: typeof import('./src/components/myVC/LoadingBig.vue')['default']
     LocationSong: typeof import('./src/components/myVC/LocationSong.vue')['default']
     LoginPage: typeof import('./src/components/LoginPage.vue')['default']

@@ -1,6 +1,7 @@
 import request from "axios";
 
 const axios = request.create({
+    // baseURL:'https://api.csm.sayqz.com/',
     baseURL:'https://ncm.nekogan.com/',
     // baseURL:'https://netease-cloud-music-api-ruby-five.vercel.app/',
     timeout: 30000

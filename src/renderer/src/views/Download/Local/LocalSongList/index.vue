@@ -43,10 +43,9 @@ const props = defineProps<{
     list:id3Message[]
     searchKey:string
 }>()
-console.log(props.list);
-// watch(()=>props.list,async()=>{
-//     console.log(props.list);
-// },{immediate:true})
+watch(()=>props.list,async()=>{
+    console.log(props.list,"传递过来的idmessage");
+},{immediate:true})
 // let searchKey = ref(props.searchKey)
 // watch(()=>props.searchKey,()=>{
 //     searchKey.value = props.searchKey
@@ -95,6 +94,7 @@ const getSinger = (index:number,names: string | string[], detail: {description: 
         // console.log(props.list[index].comment?.text);
         return arr
     }else{
+        console.log(names,"?????????PPPPPP");
         const arr: { id: number, name: string }[] = []
         let namesList = names as string[]
         if(typeof(names)=='string') namesList = names.split('/')

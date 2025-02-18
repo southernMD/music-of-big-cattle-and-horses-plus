@@ -1138,7 +1138,7 @@ watch(playingList,()=>{
 })
 
 //关闭歌词
-window.electron.ipcRenderer.on('to-close-ci', ({ }, {data} ) => {
+window.electron.ipcRenderer.on('to-close-ci', ({ }, {flag} ) => {
     showCi.value = flag
 })
 //监视播放给另一个进程
@@ -2428,7 +2428,7 @@ const getSinger = (msg:id3Message,names: string | string[], detail: {description
         return arr
     }else{
         const arr: { id: number, name: string }[] = []
-        let namesList = names as string[]
+        let namesList = names as string[]        
         if(typeof(names)=='string') namesList = names.split('/')
         namesList.forEach(({ }, index) => {
             arr.push({ id: 0, name: namesList[index] })

@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, screen, dialog, session, nativeImage, globalShortcut, Menu, Tray, MessageChannelMain } from 'electron'
-import { join, extname, parse, resolve } from 'path'
+import { join, extname, parse, resolve, basename } from 'path'
 import fs from 'fs'
 import exfs from 'fs-extra'
 import os from 'os'
@@ -24,6 +24,7 @@ import log from 'electron-log'
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 import { Writable } from 'stream'
+import { DEFAULT_ID3_MESSAGE, DELAY_MS } from './defaultMessage'
 export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
   // let X: number, Y: number; //鼠标基于显示器的坐标
@@ -44,12 +45,10 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         // 文件不存在，创建文件并写入内容
         fs.writeFileSync(join(__dirname, basePath, 'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
         fontColor = "rgba(0,0,0,.7)"
-        downloadPath = resolve('download')
         res("rgb(255,255,255)")
       } else {
         // 文件存在，输出文件内容
         fontColor = JSON.parse(jsonString).color
-        downloadPath = JSON.parse(jsonString).dowloadPath
         res(JSON.parse(jsonString).background)
       }
     });
@@ -656,7 +655,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     if (paths == undefined) {
       return { canceled: true, path: [] }
     } else {
-      fs.writeFileSync(join(__dirname, basePath, 'dowloadPath.json'), `{"dowloadPath":"${paths[0].replaceAll("\\", "\\\\")}"}`, 'utf8');
+      // fs.writeFileSync(join(__dirname, basePath, 'dowloadPath.json'), `{"dowloadPath":"${paths[0].replaceAll("\\", "\\\\")}"}`, 'utf8');
       return { canceled: false, path: paths };
     }
   })
@@ -680,7 +679,6 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   let watcherLocalMusic: chokidar.FSWatcher | null = null;
   let paths: any[] = [];
   let delPath: any[] = []
-  const DELAY_MS = 500; // 设定延迟时间为 500ms
   let timer;
   let timer2;
   ipcMain.handle('watch-files-toread-music', ({ }, { readPath }) => {
@@ -695,7 +693,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       if (extname(path) == '.mp3') {
         console.log(event, path);
         if (event == 'add' || event == 'change') {
-          const t = Object.assign(NodeID3.read(path), { path })
+          const t = Object.assign({ ...DEFAULT_ID3_MESSAGE,path,title: basename(path)},NodeID3.read(path))
           if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
             t.comment.text = pares163Key(t.comment.text)
           }

@@ -354,10 +354,16 @@ watch(playStatus, () => {
 });
 const globalVar = useGlobalVar()
 const MyMainMenuRef = ref<InstanceType<typeof MyMainMenu>>()
-watch(playingindex, () => {
+watch(playingindex, async () => {
   if (playingindex.value != -1) {
     let pian = $el.refs.pian as HTMLElement;
-    pian.style.backgroundImage = "url(" + playingList.value[playingindex.value - 1]?.al?.picUrl + ")";
+    let imgUrl = playingList.value[playingindex.value - 1]?.al?.picUrl
+    if(!imgUrl){
+      const songAlId = playingList.value[playingindex.value - 1]?.al?.id!
+      imgUrl = (await Main.reqAlbum(songAlId)).data.album.picUrl
+      playingList.value[playingindex.value - 1]["al"]["picUrl"] = imgUrl
+  }
+    pian.style.backgroundImage = "url(" + imgUrl + ")";
     if (!globalVar.oneself && MainMenu.colorBlock != 'NMblack') {
       const image = new Image();
       image.crossOrigin = 'Anonymous'

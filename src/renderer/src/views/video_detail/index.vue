@@ -486,6 +486,7 @@ main {
     }
 
     .describe {
+      max-width: 60vw;
       align-items: flex-start;
       margin-top: 10px;
       border-radius: 1em;
