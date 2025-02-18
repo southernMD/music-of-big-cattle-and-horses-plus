@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref ,shallowRef,ShallowRef,toRaw,watch} from 'vue'
+import { provide, Ref, ref ,shallowRef,ShallowRef,toRaw,watch} from 'vue'
 import { useMain, useGlobalVar } from '@renderer/store';
 import MyDialog from '@renderer/components/myVC/MyDialog.vue'
 import LocalSongList from './LocalSongList/index.vue'
@@ -68,6 +68,7 @@ window.electron.ipcRenderer.invoke('get-download-path').then((data:string) => {
     Main.localListPathFlag.push(true)
   }
 })
+provide('playListId', ref(-2))
 //清除搜索内容
 const clearSearch = () => {
   searchKey.value = ''
@@ -121,6 +122,8 @@ const addDir = () => {
 }
 const list: Ref<id3Message[]> = ref([])
 window.electron.ipcRenderer.on('local-music-paths-add',({},paths:id3Message[])=>{
+  console.log(paths,"接受到的");
+  
   list.value.push(...paths)
 })
 

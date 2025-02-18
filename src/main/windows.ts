@@ -24,26 +24,23 @@ import log from 'electron-log'
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 import { Writable } from 'stream'
-import { DEFAULT_ID3_MESSAGE, DELAY_MS } from './defaultMessage'
+import { BASE_PATH, DEFAULT_ID3_MESSAGE, DELAY_MS } from './defaultMessage'
+import { getFileHashes } from './utils/createhash'
+import { cloneDeep } from 'lodash';
+import { id3Message } from './types'
 export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
   // let X: number, Y: number; //鼠标基于显示器的坐标
   let screenMove: any = null;  //鼠标移动监听
   // const primaryDisplay = screen.getPrimaryDisplay()
   // const { width, height } = primaryDisplay.workAreaSize
-  let basePath = ''
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    basePath = '../../resources'
-  } else {
-    basePath = '../../../app.asar.unpacked/resources'
-  }
   let fontColor
   let downloadPath
   const background = await new Promise<string>((res, reject) => {
-    fs.readFile(join(__dirname, basePath, 'color.json'), 'utf8', (err, jsonString) => {
+    fs.readFile(join(__dirname, BASE_PATH, 'color.json'), 'utf8', (err, jsonString) => {
       if (err) {
         // 文件不存在，创建文件并写入内容
-        fs.writeFileSync(join(__dirname, basePath, 'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
+        fs.writeFileSync(join(__dirname, BASE_PATH, 'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
         fontColor = "rgba(0,0,0,.7)"
         res("rgb(255,255,255)")
       } else {
@@ -54,10 +51,10 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     });
   })
   downloadPath = await new Promise<string>((res, reject) => {
-    fs.readFile(join(__dirname, basePath, 'dowloadPath.json'), 'utf8', (err, jsonString) => {
+    fs.readFile(join(__dirname, BASE_PATH, 'dowloadPath.json'), 'utf8', (err, jsonString) => {
       if (err) {
         // 文件不存在，创建文件并写入内容
-        fs.writeFileSync(join(__dirname, basePath, 'dowloadPath.json'), `{"dowloadPath":"${resolve("download").replaceAll("\\", "\\\\")}"}`, 'utf8');
+        fs.writeFileSync(join(__dirname, BASE_PATH, 'dowloadPath.json'), `{"dowloadPath":"${resolve("download").replaceAll("\\", "\\\\")}"}`, 'utf8');
         res(resolve('download'))
       } else {
         res(JSON.parse(jsonString).dowloadPath.replaceAll('\\\\', '\\'))
@@ -99,7 +96,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   })
 
   //第二次点击
-  app.on('second-instance', (event, argv, workingDirectory, additionalData) => {
+  app.on('second-instance', async (event, argv, workingDirectory, additionalData) => {
     try {
       console.log(argv, '__________', workingDirectory, '__________', additionalData);
       if (mainWindow) {
@@ -109,9 +106,15 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         mainWindow.focus();
         let path = argv.slice(2).join(' ')
         if (path.endsWith('.mp3')) {
-          const t = Object.assign(NodeID3.read(path), { path })
+          const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
           if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
             t.comment.text = pares163Key(t.comment.text)
+          }
+          const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
+          
+          if(songIdObject && songIdObject!.value.length == 0){
+            const endHash = (await getFileHashes([path]))
+            songIdObject.value = endHash[0]
           }
           // 向主窗口发送消息，以触发相应的聚焦逻辑
           mainWindow.webContents.send('load-local-music', { msg: t })
@@ -123,12 +126,18 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
 
   })
   //右键点击
-  ipcMain.on('right-click', ({ }, { path, flag }) => {
+  ipcMain.on('right-click', async ({ }, { path, flag }) => {
     if (!path.endsWith('.mp3')) path += '.mp3'
     try {
-      const t = Object.assign(NodeID3.read(path), { path })
+      const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
       if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
         t.comment.text = pares163Key(t.comment.text)
+      }
+      const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
+          
+      if(songIdObject && songIdObject!.value.length == 0){
+        const endHash = (await getFileHashes([path]))
+        songIdObject.value = endHash[0]
       }
       // 向主窗口发送消息，以触发相应的聚焦逻辑
       mainWindow.webContents.send('load-local-music', { msg: t, flag })
@@ -145,10 +154,16 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   if (path) {
     try {
       log.info(path)
-      pathRead = setInterval(() => {
-        const t = Object.assign(NodeID3.read(path), { path })
+      pathRead = setInterval(async () => {
+        const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
         if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
           t.comment.text = pares163Key(t.comment.text)
+        }
+        const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
+          
+        if(songIdObject && songIdObject!.value.length == 0){
+          const endHash = (await getFileHashes([path]))
+          songIdObject.value = endHash[0]
         }
         mainWindow.webContents.send('load-local-music', { msg: t, err })
         if (ok) clearInterval(pathRead)
@@ -190,7 +205,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   })
   //记忆背景
   ipcMain.on('renderer-ready', () => {
-    fs.readdir(join(__dirname, basePath), (err, list) => {
+    fs.readdir(join(__dirname, BASE_PATH), (err, list) => {
       let ext = ''
       if (err) console.log(err);
       else {
@@ -205,7 +220,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         if (list.some((item) => {
           return item.startsWith('background')
         })) {
-          fs.readFile(join(__dirname, basePath, `background.${ext}`), (err, data) => {
+          fs.readFile(join(__dirname, BASE_PATH, `background.${ext}`), (err, data) => {
             if (!err) {
               if (!ext.endsWith('mp4')) {
                 mainWindow.webContents.send('memory-background', { buffer: data, extname: ext })
@@ -418,16 +433,16 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
           })
         })
         if (!ifNeedChangeExtname) {
-          const path = join(__dirname, basePath, `background${extname(filePath)}`)
+          const path = join(__dirname, BASE_PATH, `background${extname(filePath)}`)
           const p1 = new Promise((resolve, reject) => {
-            fs.readdir(join(__dirname, basePath), (err, list) => {
+            fs.readdir(join(__dirname, BASE_PATH), (err, list) => {
               resolve(list)
             })
           }).then((list: any) => {
             for (let i = 0; i < list.length; i++) {
               console.log(list);
               if (list[i].startsWith('background')) {
-                exfs.removeSync(join(__dirname, basePath, list[i]))
+                exfs.removeSync(join(__dirname, BASE_PATH, list[i]))
               }
             }
           })
@@ -462,7 +477,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
               console.log('An error occurred: ' + err.message);
               if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
                 event.reply("mp4-error", { msg: "视频上传发生错误，请检查上传文件" })
-                exfs.removeSync(join(__dirname, basePath, `background_temporarily.mp4`))
+                exfs.removeSync(join(__dirname, BASE_PATH, `background_temporarily.mp4`))
                 ffmpegCommand.kill('SIGTERM')
                 console.log('An error occurred: ' + err.message);
               }
@@ -470,16 +485,16 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
             .on('end', function () {
               ffmpegCommand.kill('SIGTERM')
               //删除background.mp4然后把background_temporarily.mp4重命名为background.mp4
-              exfs.removeSync(join(__dirname, basePath, `background.mp4`))
-              exfs.renameSync(join(__dirname, basePath, `background_temporarily.mp4`), join(__dirname, basePath, `background.mp4`))
-              event.reply('mp4-ready', { flag: false, filePath: join(__dirname, basePath, `background.mp4`) })
+              exfs.removeSync(join(__dirname, BASE_PATH, `background.mp4`))
+              exfs.renameSync(join(__dirname, BASE_PATH, `background_temporarily.mp4`), join(__dirname, BASE_PATH, `background.mp4`))
+              event.reply('mp4-ready', { flag: false, filePath: join(__dirname, BASE_PATH, `background.mp4`) })
               console.log('Processing finished !');
             }).on('codecData', ({ duration }) => {
               total = duration
             })
           //filePath
           let videoStream = ffmpegCommand.pipe();
-          videoStream.pipe(fs.createWriteStream(join(__dirname, basePath, `background_temporarily.mp4`)))
+          videoStream.pipe(fs.createWriteStream(join(__dirname, BASE_PATH, `background_temporarily.mp4`)))
         }
         // const path = join(__dirname,`../renderer/assets/background${extname(filePath)}`)
       }
@@ -495,13 +510,13 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   }
   ipcMain.on('recove-background', () => {
     new Promise((resolve, reject) => {
-      fs.readdir(join(__dirname, basePath), (err, list) => {
+      fs.readdir(join(__dirname, BASE_PATH), (err, list) => {
         resolve(list)
       })
     }).then((list: any) => {
       for (let i = 0; i < list.length; i++) {
         if (list[i].startsWith('background')) {
-          fs.unlink(join(__dirname, basePath, list[i]), () => { })
+          fs.unlink(join(__dirname, BASE_PATH, list[i]), () => { })
         }
       }
     })
@@ -569,7 +584,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       const Files = fs.readdirSync(downloadPath)
       const detail: any[] = []
       Files.forEach((item) => {
-        detail.push(Object.assign(NodeID3.read(`${downloadPath}/${item}`), { path: downloadPath + '\\' + item }))
+        detail.push(Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path: downloadPath + '\\' + item,title: item},NodeID3.read(`${downloadPath}/${item}`)))
       })
       e.reply('look-download-list-detail', detail)
     } else {
@@ -655,7 +670,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     if (paths == undefined) {
       return { canceled: true, path: [] }
     } else {
-      // fs.writeFileSync(join(__dirname, basePath, 'dowloadPath.json'), `{"dowloadPath":"${paths[0].replaceAll("\\", "\\\\")}"}`, 'utf8');
+      // fs.writeFileSync(join(__dirname, BASE_PATH, 'dowloadPath.json'), `{"dowloadPath":"${paths[0].replaceAll("\\", "\\\\")}"}`, 'utf8');
       return { canceled: false, path: paths };
     }
   })
@@ -677,10 +692,9 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     });
   });
   let watcherLocalMusic: chokidar.FSWatcher | null = null;
-  let paths: any[] = [];
-  let delPath: any[] = []
-  let timer;
-  let timer2;
+
+  // let timer;
+  // let timer2;
   ipcMain.handle('watch-files-toread-music', ({ }, { readPath }) => {
     console.log(readPath);
     if (watcherLocalMusic !== null) {
@@ -689,27 +703,37 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     watcherLocalMusic = chokidar.watch(readPath, {
       persistent: true,
     })
-    watcherLocalMusic.on('all', (event, path) => {
+    watcherLocalMusic.on('all', async (event, path) => {
+      let paths: id3Message[] = [];
+      let delPath: any[] = []
       if (extname(path) == '.mp3') {
         console.log(event, path);
         if (event == 'add' || event == 'change') {
-          const t = Object.assign({ ...DEFAULT_ID3_MESSAGE,path,title: basename(path)},NodeID3.read(path))
+          const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
+          
           if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
             t.comment.text = pares163Key(t.comment.text)
           }
+          const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
+          
+          if(songIdObject && songIdObject!.value.length == 0){
+            const endHash = (await getFileHashes([path]))
+            songIdObject.value = endHash[0]
+          }
           paths.push(t);
-          clearTimeout(timer);
-          timer = setTimeout(() => {
+          // clearTimeout(timer);
+          // timer = setTimeout(() => {
+            console.log("发送前的值",paths.map(item=>item.userDefinedText));
             mainWindow.webContents.send('local-music-paths-add', paths);
             paths = [];
-          }, DELAY_MS);
+          // }, DELAY_MS);
         } else if (event == 'unlink') {
           delPath.push(path)
-          clearTimeout(timer2);
-          timer2 = setTimeout(() => {
+          // clearTimeout(timer2);
+          // timer2 = setTimeout(() => {
             mainWindow.webContents.send('local-music-paths-del', delPath);
             delPath = [];
-          }, DELAY_MS);
+          // }, DELAY_MS);
         }
       }
     })
@@ -1013,7 +1037,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   //记忆启动色
   ipcMain.on('set-background-color', ({ }, arr) => {
     console.log(arr[0], arr[1]);
-    fs.writeFileSync(join(__dirname, basePath, 'color.json'), `{"background":"${arr[0]}","color":"${arr[1]}"}`)
+    fs.writeFileSync(join(__dirname, BASE_PATH, 'color.json'), `{"background":"${arr[0]}","color":"${arr[1]}"}`)
   })
   ipcMain.on('get-background-color', (event) => {
     event.returnValue = { background, fontColor }
@@ -1057,7 +1081,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     ffmpegCommand.output(writableStream).screenshots({
       timestamps: ['1'], // 获取视频的第一帧截图
       filename:  fileName, // 保存为临时文件
-      folder: join(__dirname, basePath) , // 临时文件夹
+      folder: join(__dirname, BASE_PATH) , // 临时文件夹
     }).on('error', function (err) {
       if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
         event.reply("save-video-error",{err})
@@ -1070,7 +1094,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       writableStream.destroy();
       const buffer = Buffer.concat(chunks);
       event.reply("save-video-progress", { progress: 100 })
-      fs.readFile(join(__dirname, basePath,fileName), (err, data) => {
+      fs.readFile(join(__dirname, BASE_PATH,fileName), (err, data) => {
         if (err) {
           event.reply("save-video-error", {err})
           console.error('Error reading image file:', err);
@@ -1078,7 +1102,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         }
         event.reply('save-video-finish', { arrayBuffer:buffer.buffer,coverArrayBuffer:data.buffer });
         // 删除图片
-        fs.unlink(join(__dirname, basePath,fileName), (err) => {
+        fs.unlink(join(__dirname, BASE_PATH,fileName), (err) => {
           if (err) {
             event.reply('save-video-error',  {err});
           }
@@ -1090,8 +1114,8 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     ipcMain.on("dueTo-del-nedd-close-ffmpeg",()=>{
       ffmpegCommand.kill("SIGTERM");
       writableStream.destroy()
-      if(fs.existsSync(join(__dirname, basePath,fileName))){
-        fs.unlink(join(__dirname, basePath,fileName), (err) => {
+      if(fs.existsSync(join(__dirname, BASE_PATH,fileName))){
+        fs.unlink(join(__dirname, BASE_PATH,fileName), (err) => {
           if (err) {
             event.reply('save-video-error',  {err});
           }

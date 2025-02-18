@@ -2397,7 +2397,7 @@ const getZhuanji = (msg:id3Message,name: string ,detail: {description: string;va
 }
 const getSongid = (msg:id3Message,detail: {description: string;value: string;} | undefined,_163key:string | undefined)=>{
     if(detail && detail.description == 'song id'){
-        return +detail.value
+        return detail.value
     }
     else if(_163key){
         //@ts-ignore

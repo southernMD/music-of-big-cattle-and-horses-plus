@@ -12,6 +12,7 @@
         :path="val.path"
         :dataType="getSongid(index,val?.userDefinedText?.[0],val?.comment?.text)>0?'songLocal':'songLocalnor'"
         :imageBuffer="val.image?.imageBuffer"
+        :playListid="-2"
         @localPlay="localPlay"
         v-for="val,index in list" ></LineMusic>
         <LineMusic 
@@ -27,10 +28,10 @@
         :path="list[listCopy[index].indexList-1].path"
         :dataType="getSongid(index,list[listCopy[index].indexList-1]?.userDefinedText?.[0],list[listCopy[index].indexList-1]?.comment?.text)>0?'songLocal':'songLocalnor'"
         :imageBuffer="list[listCopy[index].indexList-1].image?.imageBuffer"
+        :playListid="-2"
 
         @localPlay="localPlay"
         v-for="val,index in listCopyLength" ></LineMusic>
-        <!-- @localPlay="localPlay" -->
 </template>
 
 <script setup lang="ts">
@@ -64,7 +65,7 @@ const getZhuanji = (index:number,name: string ,detail: {description: string;valu
 const getSongid = (index:number,detail: {description: string;value: string;} | undefined,_163key:string | undefined)=>{
     console.log(props.list[index],index);
     if(detail && detail.description == 'song id'){
-        return +detail.value
+        return detail.value
     }
     else if(_163key){
         //@ts-ignore
@@ -182,6 +183,8 @@ const pushPlayList = async(flag:number | undefined,list = Array.from(props.list)
 }
 
 const localPlay = async({index,id})=>{
+    console.log(id,"我是nan?");
+    
     if(globalVar.setting.playWay){//替换
         await pushPlayList(undefined)
         Main.playingindex = index

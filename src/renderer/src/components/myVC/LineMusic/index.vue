@@ -26,7 +26,7 @@
             <div class="small-jiantou">
                 <slot></slot>
             </div>
-            <div class="caozuo" v-if="index && showIndex" :class="{ 'caozuo-oneself': globalVar.oneself && oneselfColor }">
+            <div class="caozuo" :data="playListid" v-if="index && showIndex" :class="{ 'caozuo-oneself': globalVar.oneself && oneselfColor }">
                 <span v-if="Main.playing == id && Main.playStatus == 'play' && Main.beforePlayListId == playListid"><i
                         class="iconfont icon-shengyin_shiti songStatus"></i> </span>
                 <span v-else-if="Main.playing == id && Main.playStatus == 'stop' && Main.beforePlayListId == playListid"><i
@@ -517,7 +517,6 @@ const heartJust = async () => {
 
 
 const gotoPlay = (e: MouseEvent) => {
-    console.log('不会触发了把');
     if(e.button !== 0)return 
     clearTimeout(mousedownTimer)
     if(!globalVar.radioReady)return

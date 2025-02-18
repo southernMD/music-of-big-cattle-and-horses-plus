@@ -1,5 +1,5 @@
+import { is } from "@electron-toolkit/utils"
 import { id3Message } from "./types"
-
 export const DEFAULT_ID3_MESSAGE: id3Message = {
     title: '',
     album: '',
@@ -43,3 +43,5 @@ export const DEFAULT_ID3_MESSAGE: id3Message = {
 }
 
 export const DELAY_MS = 500
+
+export const BASE_PATH = is.dev && process.env['ELECTRON_RENDERER_URL'] ? '../../resources' : '../../../app.asar.unpacked/resources'

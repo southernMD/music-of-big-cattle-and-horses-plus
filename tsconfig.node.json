@@ -7,6 +7,8 @@
     "src/main/http/*",
     "src/main/http/api/*",
     "src/main/http/handles/*",
+    "src/main/utils/*",
+    "src/main/workers/*",
   ],
 
   "compilerOptions": {

@@ -6,6 +6,7 @@ import { join } from "path";
 import { Readable } from "stream";
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
+import { BASE_PATH } from "./defaultMessage";
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15'
 let SESSDATA:string | undefined
 let TRANSCOED:boolean | undefined
@@ -16,12 +17,7 @@ const option = {
         'cookie': `SESSDATA=${SESSDATA}`
     }
 }
-let basePath = ''
-if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    basePath = '../../resources'
-} else {
-    basePath = '../../../app.asar.unpacked/resources'
-}
+
 
 const getVideoMsg = async (videoPath) => {
     try {
@@ -186,14 +182,14 @@ const dowloading = async (videoData: any, url: string, event: Electron.IpcMainEv
         console.log(item);
         //"application/octet-stream"  "video/mp4" 'application/json'
         if (item.contentType.includes("image")) {
-            savePromise.push(saveFile(join(__dirname, basePath, `${nowTime}.jpg`), downloadTask[i].buffer))
+            savePromise.push(saveFile(join(__dirname, BASE_PATH, `${nowTime}.jpg`), downloadTask[i].buffer))
         } else {
-            savePromise.push(saveFile(join(__dirname, basePath, `${nowTime}-${i + 1}`), downloadTask[i].buffer))
-            combinePath.push(join(__dirname, basePath, `${nowTime}-${i + 1}`))
+            savePromise.push(saveFile(join(__dirname, BASE_PATH, `${nowTime}-${i + 1}`), downloadTask[i].buffer))
+            combinePath.push(join(__dirname, BASE_PATH, `${nowTime}-${i + 1}`))
         }
     }
     await Promise.all(savePromise)
-    return combineVideo(combinePath, join(__dirname, basePath, nowTime), nowTime, event)
+    return combineVideo(combinePath, join(__dirname, BASE_PATH, nowTime), nowTime, event)
 }
 
 const combineVideo = async (combinePath: string[], basecombinePath: string, filename: string,event: Electron.IpcMainEvent) => {
@@ -261,11 +257,11 @@ const pickTime = (time: string) => {
     return +(shi * 60 * 60 * 100 + feng * 60 * 100 + miao * 100 + hao).toFixed(2)
 }
 const handleDeleteFile = (filename: string) => {
-    fs.readdir(join(__dirname, basePath), (err, list) => {
+    fs.readdir(join(__dirname, BASE_PATH), (err, list) => {
         if (err) throw err
         for (let i = 0; i < list.length; i++) {
             if (list[i].startsWith(filename)) {
-                fs.unlink(join(__dirname, basePath, list[i]), (err) => { throw err })
+                fs.unlink(join(__dirname, BASE_PATH, list[i]), (err) => { throw err })
             }
         }
     })

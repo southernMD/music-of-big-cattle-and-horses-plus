@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef } from 'vue'
+import { ref, toRef ,provide} from 'vue'
 import { useGlobalVar, useMain } from '@renderer/store'
 import DownloadSongList from './DownloadSongList/index.vue'
 const Main = useMain()
@@ -51,6 +51,7 @@ const searchKey = ref('')
 const clearSearch = () => {
   searchKey.value = ''
 }
+provide('playListId', ref(0))
 
 const DownloadSongListRef = ref<InstanceType<typeof DownloadSongList>>()
 //播放全部按钮
