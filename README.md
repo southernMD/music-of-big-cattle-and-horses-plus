@@ -29,6 +29,7 @@
 [v0.0.7-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.7-beta/bingNMmusic-0.0.7-beta-setup.exe)牛马api的第一个版本，修复部分bug<br>
 [v0.0.8-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.8-beta/bingNMmusic-0.0.8-beta-setup.exe)优化启动<br>
 [v0.0.9-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.9-beta/bingNMmusic-0.0.9-beta-setup.exe)支持播客<br>
+[v1.1.0](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v1.1.0-beta/bingNMmusic-1.1.0-beta-setup.exe)目前最新的版本<br>
 ## 克隆项目
 
 ```shell
@@ -52,11 +53,8 @@ yarn build:win
 
 ### 注意
 注意一下几点
-- 更换了音乐接口为vercel，必须使用魔法访问
 - 下载浏览器报毒属于正常现象，本应用保证未窃取个人信息
 - 设置内最好不要设置为开机自动启动。
-- 启动时请务必联网，没有网络将导致项目无法启动。
-- 使用中不能断网，否则会导致电脑死机。
 - 如果使用自定义皮肤页面可能会很丑,建议使用黑色主题。
 - 运行不是很稳定所以默认会启动控制台，如果你不希望有控制台，注释src/main/windows.ts 内的win.webContents.toggleDevTools(),应用内可点击f12弹出开发者工具，可能弹不出来
 - 应该有很多bug，但是应该不影响使用
@@ -67,7 +65,6 @@ yarn build:win
 ### 已知问题
 - 播放暂停后一段时间音乐会无法播放，需要清空播放列表。
 - 长时间拖拽歌单内歌曲会时内存显著增加直到电脑死机。
-- 应用断网无法启动，使用中断网会导致电脑死机。
 - 下载模块目前占用主线程，大量下载会导致卡死。
 - 获取搜索时会触发两次搜索建议的提示。
 - 获取大量歌单歌曲会等待时间过长，后续做分页少量请求，缺点，搜索歌单内歌曲可能会搜不到，考虑超过500条使用。
