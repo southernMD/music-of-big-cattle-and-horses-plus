@@ -8,6 +8,7 @@
      ref="searchInputRef" 
      :placeholder="placeholder"
      :style="{width:width}"
+     v-bind="$attrs"
      >
      <template #suffix>
         <slot name="suffix"></slot>

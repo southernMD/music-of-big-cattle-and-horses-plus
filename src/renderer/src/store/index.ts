@@ -883,13 +883,11 @@ export const useMain = defineStore('Main', {
                 delete playinglist['tracks']
                 delete playinglist['trackIds']
                 this.playList[index] = playinglist
-                new Promise<boolean>((resolve, reject) => {
+                return new Promise<boolean>((resolve, reject) => {
                     resolve(result2)
                 })
             }else{
-                new Promise<boolean>((resolve, reject) => {
-                    resolve(false)
-                })
+                throw false
             }
         },
         async reqUpdatePlayListTags(index:number,id:number,tags:string){

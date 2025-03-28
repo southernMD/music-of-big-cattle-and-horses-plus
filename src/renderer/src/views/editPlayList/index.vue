@@ -9,7 +9,7 @@
             <el-form :model="form" label-width="120px">
                 <el-form-item label="歌单名：">
                     <div class="input-bk">
-                        <el-input v-model="form.name" />
+                        <MyInput v-model="form.name"></MyInput>
                     </div>
                 </el-form-item>
                 <el-form-item label="标签：">
@@ -22,7 +22,7 @@
                 </el-form-item>
                 <el-form-item label="简介：">
                     <div class="text-bk">
-                        <el-input :rows="5" type="textarea" resize="none" ref="text" v-model="form.description"
+                        <MyInput :rows="5" type="textarea" resize="none" ref="text" v-model="form.description"
                             maxlength="1000" spellcheck="false" />
                         <span class="limit">{{ 1000 - form.description.length }}</span>
                     </div>

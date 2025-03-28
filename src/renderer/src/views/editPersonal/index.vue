@@ -9,12 +9,12 @@
             <el-form :model="form" label-width="120px" :rules="rules" ref="ruleFormRef">
                 <el-form-item label="昵称：" prop="name" style="margin-bottom: 18px;" >
                     <div class="input-bk" >
-                        <el-input style="margin-bottom: 0;" @blur="checkName" v-model="form.name" />
+                        <MyInput style="margin-bottom: 0;" @blur="checkName" v-model="form.name" />
                     </div>
                 </el-form-item>
                 <el-form-item label="简介：">
                     <div class="text-bk">
-                        <el-input :rows="5" type="textarea" resize="none" ref="text" v-model="form.description"
+                        <MyInput :rows="5" type="textarea" resize="none" ref="text" v-model="form.description"
                             maxlength="300" spellcheck="false" />
                         <span class="limit">{{ 300 - form.description.length }}</span>
                     </div>
@@ -52,13 +52,12 @@
 
 <script setup lang="ts">
 import {Ref, reactive,ref,toRaw,watch} from 'vue'
-import { useBasicApi,useMain,useGlobalVar,useNM } from '@renderer/store';
+import { useBasicApi,useMain,useNM } from '@renderer/store';
 import dropDown from '@renderer/components/myVC/dropDown.vue';
 import { useRouter } from 'vue-router';
-import { FormInstance, FormRules } from 'element-plus';
+import type { FormInstance, FormRules } from 'element-plus';
 import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 const BasicApi = useBasicApi()
-const globalVar = useGlobalVar()
 const Main = useMain()
 const $router = useRouter()
 const NM = useNM()
