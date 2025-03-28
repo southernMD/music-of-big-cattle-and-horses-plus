@@ -6,9 +6,9 @@
 <br/>
 <p align="center">
   <a href=""><img src="https://img.shields.io/github/package-json/v/southernMD/music-of-big-cattle-and-horses-plus" alt="version "></a>
-  <a href=""><img src="https://img.shields.io/badge/vue-v3.2-brightgreen" alt="use vue3.2"></a>
+  <a href=""><img src="https://img.shields.io/badge/vue-v3.5-brightgreen" alt="use vue3.5"></a>
   <a href=""><img src="https://img.shields.io/github/license/southernMD/music-of-big-cattle-and-horses-plus" alt="GPL-3.0"></a>
-<a href=""><img src="https://img.shields.io/badge/electron-v21.3.3-brightgreen" alt="electron v21.3.3"></a>
+<a href=""><img src="https://img.shields.io/badge/electron-v33.2.1-brightgreen" alt="electron v33.2.1"></a>
 </p>
 
 # 大牛马音乐 bigNMuice
@@ -42,7 +42,7 @@ yarn
 
 ```shell
 yarn dev //开发环境
-yarn start //生产环境
+yarn start //生产环境 , 由于ffmpeg路径问题，无法使用
 ```
 如果命令行有报错是正常现象，不影响使用
 ### 构建
@@ -63,13 +63,14 @@ yarn build:win
 - 仅供学习交流个人使用
 
 ### 已知问题
-- 播放暂停后一段时间音乐会无法播放，需要清空播放列表。
+- 播放暂停后一段时间音乐会无法播放，需要清空播放列表(音乐链接403导致)。
 - 长时间拖拽歌单内歌曲会时内存显著增加直到电脑死机。
 - 下载模块目前占用主线程，大量下载会导致卡死。
 - 获取搜索时会触发两次搜索建议的提示。
 - 获取大量歌单歌曲会等待时间过长，后续做分页少量请求，缺点，搜索歌单内歌曲可能会搜不到，考虑超过500条使用。
 - 当桌面歌词被锁定时，拖动主窗口到歌词窗口内时，主窗口会鬼畜。
-
+- 音频可视化模块报错导致的进度条的无法拖动。
+  
 ### 浏览
 ![Alt Text](https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305221528523.png)
 ![Alt Text](https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305221536997.png)

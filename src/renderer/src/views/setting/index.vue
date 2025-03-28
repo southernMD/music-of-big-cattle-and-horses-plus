@@ -14,7 +14,7 @@
                 <span>启动：</span>
             </div>
             <div class="st-bt">
-                <el-checkbox  class="checkbox-oneself" @change="autoPlay" v-model="globalVar.setting.autoOpen" label="开机自动运行" size="large" />
+                <el-checkbox  class="checkbox-oneself" @change="autoPlay" v-model="globalVar.setting.autoOpen" label="开机自动运行（有问题不要开启）" size="large" />
             </div>
         </div>
         <div class="link">
