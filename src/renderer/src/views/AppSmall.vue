@@ -6,7 +6,7 @@
         <MyMainMenu></MyMainMenu>
         <!-- <LoadingBig></LoadingBig> -->
         <Main></Main>
-        <MusicRadio></MusicRadio>
+        <MusicRadio ref="musicRadioRef"></MusicRadio>
         <MyDialog :flag="downloadFlag" @cancel="closed" @confirm="toDownload" @closeDialog="closed">
             <template #header>
                 <span class="title">下载音质选择</span>
@@ -57,8 +57,6 @@ import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
-import { ElMessage } from 'element-plus';
-import Loading from '@renderer/components/myVC/Loading.vue'
 
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
@@ -716,6 +714,15 @@ const cancleUpdate = ()=>{
     updateFlag.value = false
 }
 
+// 捕获所有子组件错误
+const musicRadioRef = ref<InstanceType<typeof MusicRadio>>()
+onErrorCaptured((err, instance, info) => {
+  console.error('子组件错误:', err);
+  console.log('错误组件实例:', instance);
+  console.log(instance === musicRadioRef.value);
+  console.log('错误来源:', info); // 'lifecycle hook', 'event handler', 'render function', etc.
+  return false;
+});
 
 </script>
 
