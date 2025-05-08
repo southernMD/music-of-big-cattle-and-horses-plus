@@ -139,8 +139,7 @@ const getUrl = async (id, name) => {
             url = downloadObj?.url
         } else {
             if (downloadObj?.level) {
-                result = await Main.reqSongUrl(id, downloadObj?.level)
-                url = result.data.data[0].url
+                url = await Main.reqSongUrl(id, downloadObj?.level)
             } else if (downloadObj?.br) {
                 result = await Main.reqSongDlUrl(id, downloadObj?.br)
                 url = result.data.data.url
@@ -148,9 +147,7 @@ const getUrl = async (id, name) => {
                 result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
                 url = result.data.data.url
                 if (url == null) {
-                    result = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
-                    //@ts-ignore
-                    url = result.data.data[0].url
+                    url = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
                     //@ts-ignore
                     downloadObj.level = globalVar.setting.downloadlevel
                 } else {

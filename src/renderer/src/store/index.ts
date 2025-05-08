@@ -568,14 +568,9 @@ export const useMain = defineStore('Main', {
         },
         //获取音乐 url
         async reqSongUrl(id: number, level?: string) {
-            let result = await SongUrl(id, level);
-            if (result.data.code == 200) {
-                return new Promise((resolve) => {
-                    resolve(result)
-                })
-            } else {
-                // alert('error')
-            }
+            const res = (await SongUrl(id, level))
+            let url:string = res.data.data[0].url ?? '';
+            return url
         },
         //获取歌词
         async reqLyric(id: number): Promise<any> {

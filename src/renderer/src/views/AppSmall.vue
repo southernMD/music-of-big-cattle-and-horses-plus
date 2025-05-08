@@ -374,8 +374,7 @@ const getUrl = async (controller: AbortController) => {
     }
     try {
         if (dlWay.value == 0) {
-            result = await MainPinia.reqSongUrl(id, level.value)
-            url = result.data.data[0].url
+            url = await MainPinia.reqSongUrl(id, level.value)
             downloadObj.level = level.value
         } else {
             result = await MainPinia.reqSongDlUrl(id, br(level.value))

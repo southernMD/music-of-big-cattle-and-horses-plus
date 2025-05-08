@@ -982,9 +982,7 @@ const getUrl = async (id, name) => {
         //@ts-ignore
         url = result.data.data.url
         if (url == null) {
-            result = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
-            //@ts-ignore
-            url = result.data.data[0].url
+            url = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
             //@ts-ignore
             downloadObj.level = globalVar.setting.downloadlevel
         } else {

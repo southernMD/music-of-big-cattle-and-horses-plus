@@ -594,12 +594,12 @@ const normalPlayWay = async()=>{
         audio.currentTime = 0
         audio.pause()
         if(Main.songType != 'DJ'){
-            let result: any = await Main.reqSongUrl(playingId.value)
+            let url: any = await Main.reqSongUrl(playingId.value)
             lyric.value = (await Main.reqLyric(playingId.value)).data
             sendLyric()
             // await musicCanSee(result.data.data[0].url, 0, 0)
-            musicCanSeeNew(result.data.data[0].url, 0, 0)
-            SongUrl.value = result.data.data[0].url
+            musicCanSeeNew(url, 0, 0)
+            SongUrl.value = url
             nextTick(() => {
                 stopOrPlayFlag.value = false
                 audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
@@ -612,12 +612,12 @@ const normalPlayWay = async()=>{
             simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
             simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
         }else{
-            let result: any = await Main.reqSongUrl(playingId.value)
+            let url: any = await Main.reqSongUrl(playingId.value)
             lyric.value = {lrc:{lyric:''}}
             sendLyric()
             // await musicCanSee(result.data.data[0].url, 0, 0)
-            musicCanSeeNew(result.data.data[0].url, 0, 0)
-            SongUrl.value = result.data.data[0].url
+            musicCanSeeNew(url, 0, 0)
+            SongUrl.value = url
             nextTick(() => {
                 stopOrPlayFlag.value = false
                 audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
@@ -1505,11 +1505,11 @@ const changeSpanLevel = async (level: string, level2: string) => {
     nowLevel.value = level2
     audio = document.querySelector('audio') as HTMLAudioElement
     let t = audio.currentTime
-    let result: any = await Main.reqSongUrl(playingId.value, nowLevel.value)
-    SongUrl.value = result.data.data[0].url
+    let url = await Main.reqSongUrl(playingId.value, nowLevel.value)
+    SongUrl.value = url
     nextTick(async () => {
         // await musicCanSee(result.data.data[0].url, t, 100)
-        musicCanSeeNew(result.data.data[0].url, t, 100)
+        musicCanSeeNew(url, t, 100)
         audio = document.querySelector('audio') as HTMLAudioElement
         bufferSource.playbackRate.value = audio.playbackRate
         audio.currentTime = t
