@@ -13,7 +13,7 @@
 
 # 大牛马音乐 bigNMuice
 
-基于electron与vue3.2 环境的音乐播放器，只支持windows
+基于electron与vue3.5 环境的音乐播放器，只支持windows
 
 ## 基于
 
@@ -29,7 +29,10 @@
 [v0.0.7-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.7-beta/bingNMmusic-0.0.7-beta-setup.exe)牛马api的第一个版本，修复部分bug<br>
 [v0.0.8-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.8-beta/bingNMmusic-0.0.8-beta-setup.exe)优化启动<br>
 [v0.0.9-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.9-beta/bingNMmusic-0.0.9-beta-setup.exe)支持播客<br>
-[v1.1.0](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v1.1.0/bingNMmusic-1.1.0-setup.exe)目前最新的版本<br>
+
+后续版本不再列出，自行重release内查看。
+
+[目前最新的版本 v1.1.0](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v1.1.0/bingNMmusic-1.1.0-setup.exe)<br>
 ## 克隆项目
 
 ```shell
@@ -45,6 +48,10 @@ yarn dev //开发环境
 yarn start //生产环境 , 由于ffmpeg路径问题，无法使用
 ```
 如果命令行有报错是正常现象，不影响使用
+
+### .env
+开发环境下,接口服务(默认2233)与页面服务端口(默认5522)在.env文件下修改。
+打包环境下,接口服务(默认2233)在src/main/server/port下修改。无页面服务端口(file协议)
 ### 构建
 
 ```bash
