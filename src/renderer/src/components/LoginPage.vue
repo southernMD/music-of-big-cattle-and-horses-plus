@@ -67,7 +67,7 @@ import p2 from '@renderer/assets/image/SgCjDdGyLg.png'
 import {modInput} from '../utils/modInput'
 
 import Loading from '@renderer/ImperativeComponents/Loading/Loading'
-import { nextTick } from 'vue';
+import { removeCookie, setCookies } from '@renderer/utils/cookie';
 const BasicApi = useBasicApi();
 const Main = useMain();
 const NM = useNM();
@@ -93,6 +93,8 @@ try {
         } else if (result.data.code == 803) {
             clearInterval(time);
             localStorage.setItem('cookieUser', result.data.cookie)
+            removeCookie()
+            setCookies(result.data.cookie,true)
             login();
         }
     }, 1500)

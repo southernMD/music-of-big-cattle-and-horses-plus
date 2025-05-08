@@ -76,7 +76,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     // autoHideMenuBar: true,
     icon: iconW,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       webgl: true,
       sandbox: false
     }
@@ -1170,7 +1170,7 @@ export const lrcwindow = (): BrowserWindow => {
     webPreferences: {
       nodeIntegration: true,
       // contextIsolation: false,
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "../preload/index.mjs"),
     },
   })
   // child.webContents.toggleDevTools()
@@ -1270,7 +1270,7 @@ export const dragWindw = (): BrowserWindow => {
     webPreferences: {
       nodeIntegration: true,
       // contextIsolation: false,
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "../preload/index.mjs"),
     },
   })
   win.setPosition(9999, 9999)

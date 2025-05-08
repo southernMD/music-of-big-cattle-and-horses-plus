@@ -9,8 +9,9 @@
     "src/main/http/handles/*",
     "src/main/utils/*",
     "src/main/workers/*",
+    "src/main/server/*",
+    "src/main/server/netease/*",
   ],
-
   "compilerOptions": {
     "composite": true,
     "types": [

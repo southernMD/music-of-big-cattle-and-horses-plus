@@ -26,12 +26,10 @@ export const QrCheck = (key:string)=>{
 //登陆状态检查
 export const Login = (cookie:string)=>{
     //返回的是promise对象
+    const cookie_MUSIC_U = cookie.split(";").find(item=>item.startsWith("MUSIC_U"))
     return axios({
-        url:`/login/status?time=${new Date().getTime()}`,
+        url:`/login/status?time=${new Date().getTime()}&cookie=${encodeURIComponent(cookie_MUSIC_U!)}`,
         method:'POST',
-        data:{
-            cookie
-        }
     })
 }
 
@@ -919,7 +917,11 @@ export const checkMusic = (id,br = 999000)=>{
 export const githubUpdate = ()=>{
     try {
         // 获取最新发布的信息
-        return axios.get(`https://app-update-address.glitch.me`);
+        return fetch('https://app-update-address.glitch.me')
+        .then(response => response.json())
+        .then(data => {
+            return data;
+        });
     } catch (error) {
         return null
     }

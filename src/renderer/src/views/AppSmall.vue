@@ -57,6 +57,8 @@ import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
+import { setCookies } from '@renderer/utils/cookie'
+import { removeCookie } from '@renderer/utils/cookie'
 
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
@@ -125,9 +127,9 @@ const video = ref()
 let context
 window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
     if (!flag) globalVar.loadingMp4Bk = true
-    const port = window.electron.ipcRenderer.sendSync('vedio-server-port');
+    const port = window.electron.ipcRenderer.sendSync('server-port');
     nextTick(()=>{
-        video.value.src = `http://127.0.0.1:${port}/video?path=${filePath}`
+        video.value.src = `http://127.0.0.1:${port}/api/video?path=${filePath}`
         video.value.play()
         context = videoCanvas.value.getContext('2d')
 
@@ -231,6 +233,7 @@ try {
 } catch (error) {
     console.log(error);
     sessionStorage.setItem('youkeCookie', "")
+    removeCookie()
 }
 try {
     let cookie = localStorage.getItem('cookieUser')

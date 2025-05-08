@@ -41,6 +41,7 @@ import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
 import {useBasicApi,useMain,useGlobalVar} from '@renderer/store'
 import { useRouter } from 'vue-router';
 import Loading from '@renderer/ImperativeComponents/Loading/Loading'
+import { removeCookie } from '@renderer/utils/cookie';
 const BasicApi = useBasicApi();
 const Main = useMain();
 const globalVar = useGlobalVar()
@@ -97,6 +98,7 @@ const quitLogin = async()=>{
             Main.init()
             globalVar.loginQuit = true
             localStorage.removeItem('cookieUser');
+            removeCookie()
             const p1 = BasicApi.reqRecommendSongs()
             const p2 = BasicApi.reqRecommendPlayList()  
             await Promise.allSettled([p1,p2])

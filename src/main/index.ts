@@ -4,12 +4,12 @@ import { windowIdMap } from './windowManager'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'fs'
 import os from 'os'
-import videoServer from './video-server'
+import Server from './server/index'
 // import httpSever from './http/app'
 import { createWindow, lrcwindow, dragWindw } from './windows'
-import log from 'electron-log'
+import log,{cleanupOldLogs} from './utils/log'
 import "./dowloadBiliBili"
-import { findKeyByValue ,noPrintName} from './utils'
+import { findKeyByValue ,noPrintName } from './utils/findKeyByValue'
 // import *  as bytenode from 'bytenode'
 // 检查应用程序是否已经在运行
 const argv = process.argv;
@@ -23,6 +23,7 @@ for (let arg of argv) {
   }
 }
 log.info(path);
+cleanupOldLogs()
 const isAppAlreadyRunning = app.requestSingleInstanceLock();
 if (!isAppAlreadyRunning) {
   // 如果应用程序已经在运行，则退出当前实例
@@ -46,7 +47,7 @@ if (!isAppAlreadyRunning) {
     })
     // httpSever()
     const mainwin = await createWindow(path)
-    videoServer()
+    Server()
     const lrcwin = lrcwindow()
     const dragWin = dragWindw()
     //托盘事件

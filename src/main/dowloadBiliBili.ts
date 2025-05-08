@@ -55,10 +55,10 @@ const getAcceptQuality = async (cid, bvid) => {
 }
 
 
-// /**
-//  * @params videoInfo: 当前下载的视频详情 selected(移除)：所选的分p quality：所选的清晰度
-//  * @returns 返回下载数据 json
-//  */
+/**
+* @params videoInfo: 当前下载的视频详情 selected(移除)：所选的分p quality：所选的清晰度
+* @returns 返回下载数据 json
+*/
 const getVideoDowloadLink = async (cid, bvid) => {
     const acceptQuality = await getAcceptQuality(cid, bvid);
     return {

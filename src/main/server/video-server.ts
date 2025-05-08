@@ -1,40 +1,27 @@
 import express from 'express';
 // import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 // import ffmpeg from 'fluent-ffmpeg';
-import {is} from '@electron-toolkit/utils'
-import {join} from 'path'
-import cors from 'cors'
-import { ipcMain } from 'electron';
-import portfinder from 'portfinder'
+import { is } from '@electron-toolkit/utils'
+import { join } from 'path'
 import fs from 'fs'
-export default async() =>{
-    const app = express();
-    app.use(cors())
-    app.get('/video', (req, res) => {
-        let {path} = req.query
-        console.log(path);
-        let pathSrc = ''
-        if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-            pathSrc = join(__dirname,'../../resources/background.mp4') 
-        } else {
-            pathSrc = join(__dirname,'../../../app.asar.unpacked/resources/background.mp4') 
-        }
-        //@ts-ignore
-        if(path != 'undefined')pathSrc = path
-        res.setHeader('Content-Type', 'video/mp4');
-        const stream = fs.createReadStream(pathSrc)
-        stream.pipe(res)
-    })
-    const port = await portfinder.getPortPromise({
-        port: 2233
-    })
-    ipcMain.on('vedio-server-port', (event) => {
-        event.returnValue = port;
-    });
-    app.listen(port, () => {
-        console.log(`http open in ${port}`);
-    })
-}
+
+export const router = express.Router();
+router.get('/video', (req, res) => {
+    let {path} = req.query
+    console.log(path);
+    let pathSrc = ''
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+        pathSrc = join(__dirname,'../../resources/background.mp4') 
+    } else {
+        pathSrc = join(__dirname,'../../../app.asar.unpacked/resources/background.mp4') 
+    }
+    //@ts-ignore
+    if(path != 'undefined')pathSrc = path
+    res.setHeader('Content-Type', 'video/mp4');
+    const stream = fs.createReadStream(pathSrc)
+    stream.pipe(res)
+})
+
 
 // const pickTime = (time:string)=>{
 //     let hao = +time.split('.')[1]

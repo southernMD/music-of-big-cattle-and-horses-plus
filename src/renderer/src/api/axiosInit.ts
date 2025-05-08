@@ -1,10 +1,11 @@
 import request from "axios";
 
+const port = window.electron.ipcRenderer.sendSync('server-port') || 2233;
+const baseURL = import.meta.env.MODE === 'development' ? `/api/netease` : `http://localhost:${port}/api/netease`
 const axios = request.create({
-    // baseURL:'https://api.csm.sayqz.com/',
-    baseURL:'https://ncm.nekogan.com/',
-    // baseURL:'https://netease-cloud-music-api-ruby-five.vercel.app/',
-    timeout: 30000
+    baseURL,
+    timeout: 30000,
+    withCredentials: true,
 }) 
 
 //请求拦截器，在发起请求前做一些事情
