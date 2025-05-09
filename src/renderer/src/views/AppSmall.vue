@@ -356,13 +356,14 @@ const toDownload = () => {
 }
 const getUrl = async (controller: AbortController) => {
     let result
-    let url = ''
+    let url
     globalVar.initDownloadButton = true
     const id = downloadLevel.value.id
     downloadFlag.value = false
     globalVar.loadingValue.set(id, [0, 1])
     globalVar.downloadId.push(id)
     globalVar.downloadList.push({ id: id, name: downloadLevel.value.songName, controller, ifcancel: false, url: '' })
+    console.log("我是什么name",downloadLevel.value.songName);
     const downloadObj = globalVar.downloadList[globalVar.downloadList.length - 1]
     let chunks: Uint8Array[]
     if (globalVar.musicPick.get(id) == undefined) { //切片数据)
@@ -373,12 +374,15 @@ const getUrl = async (controller: AbortController) => {
         chunks = globalVar.musicPick.get(id)
     }
     try {
+        //a,b,c - N ---> N-a-b-c
+        const unlockName = downloadLevel.value.songName.split(' - ').reverse().join(',').replaceAll(",","-")
         if (dlWay.value == 0) {
-            url = await MainPinia.reqSongUrl(id, level.value)
+            url = await MainPinia.reqSongUrl(id,unlockName,'song',level.value)
             downloadObj.level = level.value
         } else {
             result = await MainPinia.reqSongDlUrl(id, br(level.value))
             url = result.data.data.url
+            if(!url) url = await MainPinia.reqSongUrl(id,unlockName,'song',level.value)
             downloadObj.br = br(level.value)
         }
     } catch (error) {
@@ -387,6 +391,18 @@ const getUrl = async (controller: AbortController) => {
     }
     let loaded = 0 //下载量
     downloadObj.url = url
+    if(!url){
+        ElMessage({
+            message: `${downloadLevel.value.songName}下载失败`,
+            type: 'error'
+        })
+        controller.abort()
+        globalVar.downloadId = globalVar.downloadId.filter(item => item != id)
+        globalVar.loadingValue.delete(id)
+        globalVar.downloadList = globalVar.downloadList.filter(item => item.id != id)
+        globalVar.musicPick.delete(id)
+        return 
+    }
     return fetch(url, {
         signal: downloadObj.controller.signal
     }).then(response => {

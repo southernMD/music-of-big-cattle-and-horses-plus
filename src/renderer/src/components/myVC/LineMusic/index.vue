@@ -745,11 +745,18 @@ const download = async (id: number) => {
     const dl = result.data.privileges[0].dlLevel
     const pl = result.data.privileges[0].plLevel
     if (dl == 'none' && pl == 'none') {
-        ElMessage({
-            type: 'error',
-            message: '无可下载资源',
-            duration: 1000
-        })
+        // ElMessage({
+        //     type: 'error',
+        //     message: '无可下载资源',
+        //     duration: 1000
+        // })
+        globalVar.downloadFlag = true
+        globalVar.downloadLevel = {
+            play: "standard",
+            download: "standard",
+            songName,
+            id
+        }
     } else {
         downloadFlag.value = true
         globalVar.downloadLevel = {

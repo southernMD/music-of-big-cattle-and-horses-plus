@@ -46,7 +46,8 @@ import {
     djProgramDetail,
     commentDj,
     djSub,
-    djsuber
+    djsuber,
+    unlockSong
 } from '../api/index';
 import { AxiosResponse } from 'axios';
 import {cloneDeep} from 'lodash'
@@ -567,9 +568,12 @@ export const useMain = defineStore('Main', {
             }
         },
         //获取音乐 url
-        async reqSongUrl(id: number, level?: string) {
+        async reqSongUrl(id: number,keyword:string, type:'DJ' | 'song',level?: string) {
             const res = (await SongUrl(id, level))
-            let url:string = res.data.data[0].url ?? '';
+            let url:string | null = res.data.data[0].url
+            if(url == null || [1,4].includes(res.data.data[0].fee) && type != 'DJ' && keyword){
+                url = (await unlockSong(keyword.replaceAll("/","-"))).url
+            }
             return url
         },
         //获取歌词

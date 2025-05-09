@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import NeteaseCloudMusicApi from 'NeteaseCloudMusicApi';
 import { pathCase } from "change-case";
+import log from '../../utils/log';
 
 // 注册 NeteaseCloudMusicApi 所有接口
 const getHandler = (name: string, neteaseApi: (params: any) => any) => {
@@ -10,6 +11,8 @@ const getHandler = (name: string, neteaseApi: (params: any) => any) => {
     ) => {
         // 获取 NcmAPI 数据
         try {
+            console.log(req.body.cookie ?? req.cookies,"cookies");
+            if(req.body.cookie ?? req.cookies) log.info(`请求 ${name} 接口未携带cookies`)
             const result = await neteaseApi(Object.assign(
                 {},
                 { cookie: req.body.cookie ?? req.cookies },

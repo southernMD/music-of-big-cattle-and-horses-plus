@@ -594,7 +594,15 @@ const normalPlayWay = async()=>{
         audio.currentTime = 0
         audio.pause()
         if(Main.songType != 'DJ'){
-            let url: any = await Main.reqSongUrl(playingId.value)
+            // Main.playingList[Main.playingindex - 1]
+            let str = playingList.value[playingindex.value - 1].name + ' - ';
+            let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
+            singerArr.forEach((element, index) => {
+                str += element.name
+                if (index != singerArr.length - 1) str += ' / '
+            })
+            str.replace(/<\/?[^>]+(>|$)/g, '')
+            let url: any = await Main.reqSongUrl(playingId.value,str,'song')
             lyric.value = (await Main.reqLyric(playingId.value)).data
             sendLyric()
             // await musicCanSee(result.data.data[0].url, 0, 0)
@@ -612,7 +620,7 @@ const normalPlayWay = async()=>{
             simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
             simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
         }else{
-            let url: any = await Main.reqSongUrl(playingId.value)
+            let url: any = await Main.reqSongUrl(playingId.value,'','DJ')
             lyric.value = {lrc:{lyric:''}}
             sendLyric()
             // await musicCanSee(result.data.data[0].url, 0, 0)
@@ -1501,12 +1509,20 @@ const showLevel = () => {
 let levelName = ref('标准')
 let nowLevel = ref('standard')
 const changeSpanLevel = async (level: string, level2: string) => {
-    levelName.value = level
-    nowLevel.value = level2
     audio = document.querySelector('audio') as HTMLAudioElement
     let t = audio.currentTime
-    let url = await Main.reqSongUrl(playingId.value, nowLevel.value)
+    let url = await Main.reqSongUrl(playingId.value,'','song', nowLevel.value)
+    if(!url){
+        ElMessage({
+            type: 'error',
+            message: '切换失败',
+            duration: 1000
+        })
+        return
+    }
     SongUrl.value = url
+    levelName.value = level
+    nowLevel.value = level2
     nextTick(async () => {
         // await musicCanSee(result.data.data[0].url, t, 100)
         musicCanSeeNew(url, t, 100)
@@ -2054,11 +2070,19 @@ const download = async (id: number) => {
     const dl = result.data.privileges[0].dlLevel
     const pl = result.data.privileges[0].plLevel
     if (dl == 'none' && pl == 'none') {
-        ElMessage({
-            type: 'error',
-            message: '无可下载资源',
-            duration: 1000
-        })
+        // ElMessage({
+        //     type: 'error',
+        //     message: '无可下载资源',
+        //     duration: 1000
+        // })
+        //假装有下载资源，交给reqSongUrl处理
+        globalVar.downloadFlag = true
+        globalVar.downloadLevel = {
+            play: "standard",
+            download: "standard",
+            songName,
+            id
+        }
     } else {
         globalVar.downloadFlag = true
         globalVar.downloadLevel = {

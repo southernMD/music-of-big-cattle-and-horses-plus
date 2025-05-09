@@ -6,6 +6,7 @@ import { router as videoRouter } from './video-server'
 import ncmRouter from './netease'
 import cookieParser from 'cookie-parser';
 import fileUpload from 'express-fileupload';
+import initUnlockApi from './unlock/index';
 export default async() =>{
     const app = express();
     app.use(cookieParser());
@@ -15,6 +16,7 @@ export default async() =>{
     app.use(fileUpload())
     app.use('/api', videoRouter)
     app.use('/api/netease', ncmRouter());
+    app.use('/api/unlock',initUnlockApi())
     ipcMain.on('server-port', (event) => {
         event.returnValue = port;
     });
@@ -22,3 +24,5 @@ export default async() =>{
         console.log(`http open in ${port}`);
     })
 }
+
+

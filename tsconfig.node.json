@@ -11,6 +11,7 @@
     "src/main/workers/*",
     "src/main/server/*",
     "src/main/server/netease/*",
+    "src/main/server/unlock/*",
   ],
   "compilerOptions": {
     "composite": true,

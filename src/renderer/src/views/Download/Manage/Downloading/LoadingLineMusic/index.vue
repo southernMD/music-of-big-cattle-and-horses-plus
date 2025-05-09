@@ -122,10 +122,11 @@ const getUrl = async (id, name) => {
     const downloadObj = globalVar.downloadList.find(item => item.id === id)
     const loadedBase = globalVar.loadingValue.get(id)?.[0] as number
     let totalBase = globalVar.loadingValue.get(id)?.[1] as number
-    let url = ''
+    let url
     let result;
     let chunks: Uint8Array[]
     console.log(downloadObj);
+    console.log('是继续下载对吧',name);
     if (globalVar.musicPick.get(id) == undefined) { //切片数据)
         globalVar.musicPick.set(id, [])
         //@ts-ignore
@@ -139,7 +140,7 @@ const getUrl = async (id, name) => {
             url = downloadObj?.url
         } else {
             if (downloadObj?.level) {
-                url = await Main.reqSongUrl(id, downloadObj?.level)
+                url = await Main.reqSongUrl(id,'','song',downloadObj?.level)
             } else if (downloadObj?.br) {
                 result = await Main.reqSongDlUrl(id, downloadObj?.br)
                 url = result.data.data.url
@@ -147,7 +148,7 @@ const getUrl = async (id, name) => {
                 result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
                 url = result.data.data.url
                 if (url == null) {
-                    url = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
+                    url = await Main.reqSongUrl(id,name.replaceAll(" ",""),'song',globalVar.setting.downloadlevel)
                     //@ts-ignore
                     downloadObj.level = globalVar.setting.downloadlevel
                 } else {

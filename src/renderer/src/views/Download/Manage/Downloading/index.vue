@@ -129,7 +129,7 @@ const getUrl = async (id, name) => {
   const downloadObj = globalVar.downloadList.find(item => item.id === id)
   const loadedBase = globalVar.loadingValue.get(id)?.[0] as number
   let totalBase = globalVar.loadingValue.get(id)?.[1] as number
-  let url = ''
+  let url
   let result;
   let chunks: Uint8Array[]
   console.log(downloadObj);
@@ -146,7 +146,7 @@ const getUrl = async (id, name) => {
       url = downloadObj?.url
     } else {
       if (downloadObj?.level) {
-        url= await Main.reqSongUrl(id, downloadObj?.level)
+        url= await Main.reqSongUrl(id,"",'song',downloadObj?.level)
       } else if (downloadObj?.br) {
         result = await Main.reqSongDlUrl(id, downloadObj?.br)
         url = result.data.data.url
@@ -154,7 +154,7 @@ const getUrl = async (id, name) => {
         result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
         url = result.data.data.url
         if (url == null) {
-          url = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
+          url = await Main.reqSongUrl(id,name.replaceAll(" ",""),"song",globalVar.setting.downloadlevel)
           //@ts-ignore
           downloadObj.level = globalVar.setting.downloadlevel
         } else {
@@ -169,9 +169,15 @@ const getUrl = async (id, name) => {
     globalVar.musicPick.set(id, chunks)
     //@ts-ignore
     downloadObj.ifcancel = true
+    return
   }
   const Range = loadedBase == 0 && totalBase == 1 ? `bytes=${loadedBase}-` : `bytes=${loadedBase}-${totalBase}`
-  //@ts-ignore
+  if (!url) {
+    globalVar.musicPick.set(id, chunks)
+      //@ts-ignore
+    downloadObj.ifcancel = true
+    return
+  }
   return fetch(url, {
     headers: {
       Range: Range // 下载前 范围

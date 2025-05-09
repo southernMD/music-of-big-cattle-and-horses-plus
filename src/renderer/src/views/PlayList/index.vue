@@ -658,7 +658,7 @@ const getUrl = async (id, name) => {
     globalVar.initDownloadButton = true
     const downloadObj = globalVar.downloadList.find(item => item.id === id)
     //判断请求是否被取消
-    let url = ''
+    let url
     let result
     let chunks: Uint8Array[]
     if (globalVar.musicPick.get(id) == undefined) { //切片数据)
@@ -673,7 +673,7 @@ const getUrl = async (id, name) => {
         //@ts-ignore
         url = result.data.data.url
         if (url == null) {
-            url = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
+            url = await Main.reqSongUrl(id,name.replaceAll(" ",""),"song",globalVar.setting.downloadlevel)
             //@ts-ignore
             downloadObj.level = globalVar.setting.downloadlevel
         } else {
@@ -690,7 +690,7 @@ const getUrl = async (id, name) => {
     }
     //@ts-ignore
     downloadObj.url = url
-    if (downloadObj?.controller.signal.aborted) return
+    if (downloadObj?.controller.signal.aborted && !url) return
     return fetch(url, {
         signal: downloadObj?.controller.signal
     }).then(response => {

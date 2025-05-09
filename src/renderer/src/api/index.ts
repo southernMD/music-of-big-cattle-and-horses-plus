@@ -1,4 +1,4 @@
-import {axios} from "./axiosInit"
+import {axios, port} from "./axiosInit"
 
 export const qrKey = ()=>{
     //返回的是promise对象
@@ -184,6 +184,8 @@ export const commentMusic = (id:number,limit?:number,offset?:number,before?:numb
     if(offset)t['offset'] = offset
     if(before)t['before'] = before
     t['cookie'] = localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
+    console.log("是我妈");
+    
     return axios({
         url:`/comment/music?time=${new Date().getTime()}`,
         method:'POST',
@@ -662,7 +664,7 @@ export const Album = (id:number)=>{
 //获取专辑全部歌曲
 export const AlbumTrackAll= (id:string | number)=>{
     return axios({
-        url:`/album/track/all?id=${id}&time=${new Date().getTime()}`,
+        url:`/album?id=${id}&time=${new Date().getTime()}`,
         method:'POST',
     })
 }
@@ -992,4 +994,14 @@ export const djsuber = (id,limit,time)=>{
         }
     })
     
+}
+
+//解锁歌曲
+
+
+export const unlockSong = (keyword:string)=>{
+    const url = import.meta.env.MODE === 'development' ? `/api/unlock` : `http://localhost:${port}/api/unlock`
+    return fetch(`${url}?keyword=${keyword}`,{
+        method:'GET',
+    }).then(res=>res.json())
 }

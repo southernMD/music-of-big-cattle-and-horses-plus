@@ -851,11 +851,18 @@ const download = async (id: number) => {
     const dl = result.data.privileges[0].dlLevel
     const pl = result.data.privileges[0].plLevel
     if (dl == 'none' && pl == 'none') {
-        ElMessage({
-            type: 'error',
-            message: '无可下载资源',
-            duration: 1000
-        })
+        // ElMessage({
+        //     type: 'error',
+        //     message: '无可下载资源',
+        //     duration: 1000
+        // })
+        globalVar.downloadFlag = true
+        globalVar.downloadLevel = {
+            play: "standard",
+            download: "standard",
+            songName,
+            id
+        }
     } else {
         downloadFlag.value = true
         globalVar.downloadLevel = {
@@ -967,7 +974,7 @@ const getUrl = async (id, name) => {
     globalVar.initDownloadButton = true
     const downloadObj = globalVar.downloadList.find(item => item.id === id)
     //判断请求是否被取消
-    let url = ''
+    let url
     let result
     let chunks: Uint8Array[]
     if (globalVar.musicPick.get(id) == undefined) { //切片数据)
@@ -977,12 +984,16 @@ const getUrl = async (id, name) => {
         //@ts-ignore
         chunks = globalVar.musicPick.get(id)
     }
+    const detail = (await Main.reqSongDetail([id])).data.songs[0]
     try {
         result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
         //@ts-ignore
         url = result.data.data.url
         if (url == null) {
-            url = await Main.reqSongUrl(id, globalVar.setting.downloadlevel)
+            const key = `${detail.name}-${(detail.ar.map((item)=>{
+                return `${item.name}`
+            })).join('/')}`
+            url = await Main.reqSongUrl(id,key,'song',globalVar.setting.downloadlevel)
             //@ts-ignore
             downloadObj.level = globalVar.setting.downloadlevel
         } else {
@@ -999,7 +1010,7 @@ const getUrl = async (id, name) => {
     }
     //@ts-ignore
     downloadObj.url = url
-    if (downloadObj?.controller.signal.aborted) return
+    if (downloadObj?.controller.signal.aborted || !url) return
     return fetch(url, {
         signal: downloadObj?.controller.signal
     }).then(response => {
@@ -1042,7 +1053,6 @@ const getUrl = async (id, name) => {
         .then(stream => new Response(stream))
         .then(response => response.arrayBuffer())
         .then(async () => {
-            const detail = (await Main.reqSongDetail([id])).data.songs[0]
             console.log(detail);
             const title = `${detail.name}`
             const artistId:any[] = []
