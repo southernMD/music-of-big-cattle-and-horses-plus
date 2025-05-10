@@ -104,8 +104,8 @@
                 </div>
                 <div class="start">
                     <div class="bk" :class="{ 'bk-oneself': globalVar.oneself == 1 }" @click="changPlayStatus"
-                        :title="`${stopOrPlayFlag ? '继续' : '暂停'}（${globalVar.setting.quick[0]}）`">
-                        <i class="iconfont icon-gf-play" v-if="stopOrPlayFlag"></i>
+                        :title="`${Main.playStatus == 'stop' ? '继续' : '暂停'}（${globalVar.setting.quick[0]}）`">
+                        <i class="iconfont icon-gf-play" v-if="Main.playStatus == 'stop'"></i>
                         <i class="iconfont icon-zanting" v-else></i>
                     </div>
                 </div>
@@ -303,7 +303,7 @@ let likes = toRef(Main, 'likes');
 let randQueue: Array<number> = [];
 let randIndex = ref(-1);
 
-let stopOrPlayFlag: Ref<Boolean> = ref(true)
+// let stopOrPlayFlag: Ref<Boolean> = ref(true)
 let wayIndex = toRef(Main, 'wayIndex');
 let MuteFlag = ref(true);
 let audioRef = ref<HTMLAudioElement>() 
@@ -317,7 +317,7 @@ let SongUrl = ref('')
 let nowTime = ref(dayjsSMMSS(0))
 let endTime = ref(dayjsSMMSS(0))
 let playListId = toRef(Main, 'beforePlayListId')
-
+const lockPlayBtn = ref(false)
 
 //喜欢和取消喜欢
 let likeFlag = ref(false)
@@ -508,23 +508,33 @@ let simiPlaylist = ref<any>()
 const loaclPlayWay = async()=>{
     if(audioRef.value){
         audioRef.value.currentTime = 0
-        audioRef.value.pause()
+        // audioRef.value.pause()
+        Main.playStatus = 'stop'
+        lockPlayBtn.value = true
     }
     console.log(playingId.value);
     lyric.value = {}
     simiSong.value = []
     simiPlaylist.value = []
     if(playingId.value > 0){
-        const [lyricData, simiSongData, simiPlaylistData] = await Promise.all([
-        Main.reqLyric(playingId.value),
-        Main.reqSimiSong(playingId.value),
-        Main.reqSimiPlaylist(playingId.value)
-    ]);
-        console.log(lyricData.data);
-        lyric.value = lyricData.data;
-        sendLyric()
-        simiSong.value = simiSongData.data.songs;
-        simiPlaylist.value = simiPlaylistData.data.playlists;
+        try {
+            const [lyricData, simiSongData, simiPlaylistData] = await Promise.all([
+                Main.reqLyric(playingId.value),
+                Main.reqSimiSong(playingId.value),
+                Main.reqSimiPlaylist(playingId.value)
+            ])
+            console.log(lyricData.data);
+            lyric.value = lyricData.data;
+            sendLyric()
+            simiSong.value = simiSongData.data.songs;
+            simiPlaylist.value = simiPlaylistData.data.playlists;
+        } catch (error) {
+            console.log('本地播放获取失败');
+            lyric.value = {lrc:{lyric:''}}
+            sendLyric()
+            simiSong.value = []
+            simiPlaylist.value = []
+        }
     }
     window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(async({ base64,error }) => {
         if(error){
@@ -534,15 +544,16 @@ const loaclPlayWay = async()=>{
         }
         SongUrl.value = `data:audio/mp3;base64,${base64}`
         await loaclMusicCanSee(base64)
-        stopOrPlayFlag.value = false
+        // stopOrPlayFlag.value = false
         nextTick(() => {
             if(audioRef.value){
                 audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
                 if (bufferSource) bufferSource.playbackRate.value = audioRef.value.playbackRate
-                audioRef.value.play()
+                // audioRef.value.play()
                 nowLevel.value = 'local'
                 levelName.value = '本地'
                 playStatus.value = 'play'
+                lockPlayBtn.value = false
             }
 
             // stopPlayAudip()
@@ -594,53 +605,75 @@ const normalPlayWay = async()=>{
         // }
         if(audioRef.value){
             audioRef.value.currentTime = 0
-            audioRef.value.pause()
+            // audioRef.value.pause()
+            Main.playStatus = 'stop'
+            lockPlayBtn.value = true
         }
         if(Main.songType != 'DJ'){
-            // Main.playingList[Main.playingindex - 1]
-            let str = playingList.value[playingindex.value - 1].name + ' - ';
-            let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
-            singerArr.forEach((element, index) => {
-                str += element.name
-                if (index != singerArr.length - 1) str += ' / '
-            })
-            str.replace(/<\/?[^>]+(>|$)/g, '')
-            let url: any = await Main.reqSongUrl(playingId.value,str,'song')
-            lyric.value = (await Main.reqLyric(playingId.value)).data
-            sendLyric()
-            // await musicCanSee(result.data.data[0].url, 0, 0)
-            musicCanSeeNew(url, 0, 0)
-            SongUrl.value = url
-            nextTick(() => {
-                stopOrPlayFlag.value = false
-                if(audioRef.value){
-                    audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                    if(bufferSource)bufferSource.playbackRate.value = audioRef.value.playbackRate
-                    audioRef.value.play()
-                }
-            })
-            nowLevel.value = 'standard'
-            levelName.value = '标准'
-            //喜欢这首歌的人也听与包含这首歌的歌单
-            simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
-            simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
+            try {
+                // Main.playingList[Main.playingindex - 1]
+                let str = playingList.value[playingindex.value - 1].name + ' - ';
+                let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
+                singerArr.forEach((element, index) => {
+                    str += element.name
+                    if (index != singerArr.length - 1) str += ' / '
+                })
+                str.replace(/<\/?[^>]+(>|$)/g, '')
+                let url: any = await Main.reqSongUrl(playingId.value,str,'song')
+                lyric.value = (await Main.reqLyric(playingId.value)).data
+                sendLyric()
+                // await musicCanSee(result.data.data[0].url, 0, 0)
+                musicCanSeeNew(url, 0, 0)
+                SongUrl.value = url
+                nextTick(() => {
+                    lockPlayBtn.value = false
+                    Main.playStatus = 'play'
+                    // stopOrPlayFlag.value = false
+                    if(audioRef.value){
+                        audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                        if(bufferSource)bufferSource.playbackRate.value = audioRef.value.playbackRate
+                        // audioRef.value.play()
+                    }
+                })
+                nowLevel.value = 'standard'
+                levelName.value = '标准'
+                //喜欢这首歌的人也听与包含这首歌的歌单
+                simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
+                simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
+            } catch (error) {
+                ElMessage({
+                    message: "播放歌曲失败",
+                    type: 'error',
+                    duration:1000
+                })
+            }
+
         }else{
-            let url: any = await Main.reqSongUrl(playingId.value,'','DJ')
-            lyric.value = {lrc:{lyric:''}}
-            sendLyric()
-            // await musicCanSee(result.data.data[0].url, 0, 0)
-            musicCanSeeNew(url, 0, 0)
-            SongUrl.value = url
-            nextTick(() => {
-                stopOrPlayFlag.value = false
-                if(audioRef.value){
-                    audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                    if(bufferSource)bufferSource.playbackRate.value = audioRef.value.playbackRate
-                    audioRef.value.play()
-                }
-            })
-            nowLevel.value = 'DJ'
-            levelName.value = '电台'
+            try {
+                let url: any = await Main.reqSongUrl(playingId.value,'','DJ')
+                lyric.value = {lrc:{lyric:''}}
+                sendLyric()
+                // await musicCanSee(result.data.data[0].url, 0, 0)
+                musicCanSeeNew(url, 0, 0)
+                SongUrl.value = url
+                nextTick(() => {
+                    Main.playStatus = 'play'
+                    // stopOrPlayFlag.value = false
+                    if(audioRef.value){
+                        audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                        if(bufferSource)bufferSource.playbackRate.value = audioRef.value.playbackRate
+                        // audioRef.value.play()
+                    }
+                })
+                nowLevel.value = 'DJ'
+                levelName.value = '电台'
+            } catch (error) {
+                ElMessage({
+                    message: "播放歌曲失败",
+                    type: 'error',
+                    duration:1000
+                })
+            }
         }
     }
 }
@@ -656,6 +689,7 @@ let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 watch(playingId, async ({},oldValue) => {
     if(playingId.value == -1)return
     nextTick(async ()=>{
+        // debugger
         console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
         console.log(Main.beforePlayListId,Main.playing);
         if(localStorage.getItem('NMcookie')){
@@ -733,6 +767,7 @@ const sendLyric = ()=>{
         str += element.name
         if (index != singerArr.length - 1) str += ' / '
     })
+    console.log(lyric.value,"发送lyric.value");
     window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'to-title',data:str})
     window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'to-Ci',data:lyric.value})
     // window.electron.ipcRenderer.sendTo(ciId.value, 'to-title', str);
@@ -834,7 +869,8 @@ onMounted(async () => {
         }else{
             Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
         }
-        stopOrPlayFlag.value = true;
+        Main.playStatus == 'stop'
+        // stopOrPlayFlag.value = true;
         if(bufferSource)bufferSource.stop()
         cancelAnimationFrame(animationId)
         if ((wayIndex.value == 0 && Main.playingList.length != 1)|| wayIndex.value == 4 || Main.songType == 'FM') {
@@ -860,7 +896,8 @@ onMounted(async () => {
                 draw()
             }
             audioRef.value!.play()
-            stopOrPlayFlag.value = false
+            Main.playStatus == 'play'
+            // stopOrPlayFlag.value = false
         } else if (wayIndex.value == 2) {
             playingindex.value = rand(1, playingList.value.length, playingindex.value)
             playingId.value = playingList.value[playingindex.value - 1].id
@@ -869,7 +906,8 @@ onMounted(async () => {
         } else if (wayIndex.value == 3) {
             if (playingindex.value == playingList.value.length) {
                 audioRef.value!.pause();
-                stopOrPlayFlag.value = false
+                // stopOrPlayFlag.value = false
+                Main.playStatus == 'play'
                 changPlayStatus()
             } else {
                 playingindex.value++;
@@ -961,7 +999,10 @@ watch(loginQuit, () => {
     if (loginQuit.value == true) {
         loginQuit.value = false
         if(bufferSource)bufferSource.stop(AC.currentTime)
-        if(audioRef.value)audioRef.value.pause()
+        if(audioRef.value){
+            // audioRef.value.pause()
+            Main.playStatus = 'stop'
+        }
     }
 })
 
@@ -1088,9 +1129,11 @@ const clickCanvas = (wh)=>{
 //点击播放按钮
 let wayIndex3Flag = false
 const stopOrPlay = () => {
+    console.log("触发了stopOrPlay",Main.playStatus);
     if(!audioRef.value) return
     if (playingList.value.length !== 0) {
-        stopOrPlayFlag.value = !stopOrPlayFlag.value
+        // changPlayStatus()
+        //播放
         if (audioRef.value.paused) {
             if (wayIndex.value == 3 && playingindex.value == playingList.value.length) {
                 if(!wayIndex3Flag){
@@ -1102,13 +1145,14 @@ const stopOrPlay = () => {
                 wayIndex3Flag = false
             } else {
                 audioRef.value.play();
-                Main.playStatus = 'play'
+                // Main.playStatus = 'play'
                 if (AC && AC.state === "suspended"  && globalVar.setting.opencanvas) AC.resume();
                 window.electron.ipcRenderer.send('render-play')
             }
-        } else if(!audioRef.value.paused){
+        } else {
+            //暂停
             audioRef.value.pause();
-            Main.playStatus = 'stop'
+            // Main.playStatus = 'stop'
             if (AC && AC.state === "running" && globalVar.setting.opencanvas) AC.suspend();
             window.electron.ipcRenderer.send('render-play-fail')
         }
@@ -1116,6 +1160,7 @@ const stopOrPlay = () => {
 }
 
 const changPlayStatus = () => {
+    if(lockPlayBtn.value)return
     if (playStatus.value == 'play') playStatus.value = 'stop'
     else playStatus.value = 'play'
 }
@@ -1388,7 +1433,8 @@ onMounted(() => {
 //禁用播放器
 const stopPlayAudip = () => {
     if (playingList.value.length == 0) {
-        stopOrPlayFlag.value = true
+        // stopOrPlayFlag.value = true
+        Main.playStatus == 'stop'
         nextTick(() => {
             let dom = $el.refs.top as HTMLElement
             if (globalVar.oneself == 1) {
@@ -1405,7 +1451,8 @@ const stopPlayAudip = () => {
         })
 
     } else {
-        stopOrPlayFlag.value = false
+        // stopOrPlayFlag.value = false
+        Main.playStatus == 'play'
         nextTick(() => {
             let dom = $el.refs.top as HTMLElement
             if (globalVar.oneself == 1) {
@@ -1514,34 +1561,42 @@ let levelName = ref('标准')
 let nowLevel = ref('standard')
 const changeSpanLevel = async (level: string, level2: string) => {
     console.log(level, level2,"发生音质切换");
-    let t = audioRef.value?.currentTime ?? 0
-
-    const song = Main.playingList[Main.playingindex - 1]
-    const keyWord = song.name + '-' + song.ar.map(item => item.name).join('-')
-    const searchLevel = level2.includes("lossless")?"lossless":level2
-    let url = await Main.reqSongUrl(playingId.value,keyWord,'song', searchLevel)
-    
-    if(!url){
-        ElMessage({
-            type: 'error',
-            message: '切换失败',
-            duration: 1000
+    Main.playStatus = 'stop'
+    nextTick(async ()=>{
+        let t = audioRef.value?.currentTime ?? 0
+        const song = Main.playingList[Main.playingindex - 1]
+        const keyWord = song.name + '-' + song.ar.map(item => item.name).join('-')
+        const searchLevel = level2.includes("lossless")?"lossless":level2
+        let url:string | null = null
+        try {
+            url = await Main.reqSongUrl(playingId.value,keyWord,'song', searchLevel)
+        } catch (error) {
+            url = null
+        }
+        
+        if(!url){
+            ElMessage({
+                type: 'error',
+                message: '切换失败',
+                duration: 1000
+            })
+            return
+        }
+        SongUrl.value = url
+        levelName.value = level
+        nowLevel.value = level2
+        nextTick(async () => {
+            // await musicCanSee(result.data.data[0].url, t, 100)
+            if(!audioRef.value)return
+            musicCanSeeNew(url, t, 100)
+            if(bufferSource)bufferSource.playbackRate.value = audioRef.value.playbackRate
+            audioRef.value.currentTime = t
+            audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+            Main.playStatus = 'play'
+            // audioRef.value.play()
         })
-        return
-    }
-    SongUrl.value = url
-    levelName.value = level
-    nowLevel.value = level2
-    nextTick(async () => {
-        // await musicCanSee(result.data.data[0].url, t, 100)
-        if(!audioRef.value)return
-        musicCanSeeNew(url, t, 100)
-        bufferSource.playbackRate.value = audioRef.value.playbackRate
-        audioRef.value.currentTime = t
-        audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-        Main.playStatus = 'play'
-        audioRef.value.play()
     })
+
 }
 
 // SongUrl.value = result.data.data[0].url
@@ -1580,7 +1635,8 @@ const showPlayListPanel = () => {
 //清空播放列表
 const clearList = () => {
     audioRef.value?.pause()
-    stopOrPlayFlag.value = true
+    Main.playStatus == 'stop'
+    // stopOrPlayFlag.value = true
     audioPlayFlag.value = false
     endTime.value = dayjsSMMSS(0)
     AC = new AudioContext()

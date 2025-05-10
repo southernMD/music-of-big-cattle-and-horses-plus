@@ -736,9 +736,9 @@ const cancleUpdate = ()=>{
 const musicRadioRef = ref<InstanceType<typeof MusicRadio>>()
 onErrorCaptured((err, instance, info) => {
   console.error('子组件错误:', err);
-  console.log('错误组件实例:', instance);
-  console.log(instance === musicRadioRef.value);
-  console.log('错误来源:', info); // 'lifecycle hook', 'event handler', 'render function', etc.
+  console.error('错误组件实例:', instance);
+  console.error(instance === musicRadioRef.value);
+  console.error('错误来源:', info); // 'lifecycle hook', 'event handler', 'render function', etc.
   return false;
 });
 

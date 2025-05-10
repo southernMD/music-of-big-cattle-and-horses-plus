@@ -179,7 +179,16 @@ const loadComment = async () => {
         if (localStorage.getItem('NMcookie')) {
             result = (await NM.reqCommentMusic(Number(routeId.value), 20, 0)).data
         } else {
-            result = (await Main.reqCommentMusic(Number(routeId.value), 20, 0)).data
+            try {
+                result = (await Main.reqCommentMusic(Number(routeId.value), 20, 0)).data
+            } catch (error) {
+                result = {
+                    hotComments:[],
+                    comments:[],
+                    total:0,
+                    moreHot:false
+                }
+            }
         }
     } else if ($route.query.type == '声音') {
         result = (await Main.reqCommentDj(Number(routeId.value), 20, 0)).data

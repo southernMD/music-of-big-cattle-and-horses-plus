@@ -140,6 +140,8 @@ export const SongUrl = (id:number,level?:string)=>{
         data:{
             cookie:localStorage.getItem('cookieUser') || sessionStorage.getItem('youkeCookie')
         }
+    }).catch(e=>{
+        throw e
     })
 }
 
@@ -148,6 +150,8 @@ export const Lyric = (id:number)=>{
     return axios({
         url:`/lyric?id=${id}`,
         method:'POST',
+    }).catch(e=>{
+        throw e
     })
 }
 
@@ -156,12 +160,16 @@ export const simiSong = (id:number)=>{
     return axios({
         url:`/simi/song?id=${id}`,
         method:'POST',
+    }).catch(e=>{
+        throw e
     })
 }
 export const simiPlaylist = (id:number)=>{
     return axios({
         url:`/simi/playlist?id=${id}`,
         method:'POST',
+    }).catch(e=>{
+        throw e
     })
 }
 
@@ -189,6 +197,8 @@ export const commentMusic = (id:number,limit?:number,offset?:number,before?:numb
         url:`/comment/music?time=${new Date().getTime()}`,
         method:'POST',
         data:t
+    }).catch(e=>{
+        throw e
     })
 }
 //歌单评论
@@ -1001,5 +1011,7 @@ export const unlockSong = (keyword:string,id:string,level:string = 'standard')=>
     const url = import.meta.env.MODE === 'development' ? `/api/unlock` : `http://localhost:${port}/api/unlock`
     return fetch(`${url}?keyword=${keyword}&id=${id}&level=${level}`,{
         method:'GET',
-    }).then(res=>res.json())
+    }).then(res=>res.json()).catch(e=>{
+        throw e
+    })
 }

@@ -314,9 +314,18 @@ watch(playingId, async () => {
     let result
     if(localStorage.getItem('NMcookie')){
         result = (await NM.reqCommentMusic(playingId.value, 20, 0)).data
-    }else[
-        result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
-    ]
+    }else{
+        try {
+            result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+        } catch (error) {
+            result = {
+                hotComments:[],
+                comments:[],
+                total:0,
+                moreHot:false
+            }
+        }
+    }
     console.log(result, '******&&&&&&&&');
     hotComments.value = result.hotComments;
     comments.value = result.comments;

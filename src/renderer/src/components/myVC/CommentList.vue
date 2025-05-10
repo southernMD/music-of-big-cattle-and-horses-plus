@@ -129,7 +129,16 @@ watch(nowPage, async () => {
         if(localStorage.getItem('NMcookie')){
           result = (await NM.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
         }else{
-          result = (await Main.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+          try {
+            result = (await Main.reqCommentMusic(id.value, 20, (nowPage.value - 1) * 20)).data
+          } catch (error) {
+            result = {
+              hotComments:[],
+              comments:[],
+              total:0,
+              moreHot:false
+            }
+          }
         }
         comments.value = result.comments;
         commentFlag.value = true

@@ -274,7 +274,16 @@ watch(playingId, async () => {
       if(localStorage.getItem('NMcookie')){
         result = (await NM.reqCommentMusic(playingId.value, 20, 0)).data
       }else{
-        result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+        try {
+          result = (await Main.reqCommentMusic(playingId.value, 20, 0)).data
+        } catch (error) {
+          result = {
+            hotComments:[],
+            comments:[],
+            total:0,
+            moreHot:false
+          }
+        }
       }
     }else{
       result = (await Main.reqCommentDj(Main.playingList[Main.playingindex - 1].id, 20, 0)).data

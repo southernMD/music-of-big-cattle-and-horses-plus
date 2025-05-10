@@ -518,38 +518,76 @@ const heartJust = async () => {
 
 
 const gotoPlay = (e: MouseEvent) => {
-    if(e.button !== 0)return 
-    clearTimeout(mousedownTimer)
-    if(!globalVar.radioReady)return
-    if (!props.local) {
-        let _this = $el.refs['line-music'] as HTMLElement
-        if (!_this) return
-        let father = _this?.parentNode as HTMLElement
-        if (originalList.value.length != 0 && father.getAttribute('id') != 'play-list-Panel-bottom') {
-            playingList.value = originalList.value as [any]
-            playingPrivileges.value = originalPrivileges.value as [any]
-        }
-        nextTick(async () => {
-            if (father.getAttribute('id') === 'song-sheet') {
-                console.log('添加到播放列表',$route.query.type);
-                if($route.query.type == '歌单'){
-                    if (Main.beforePlayListId == playListid.value) {
-                        Main.playing = props.id as number
-                        Main.playingindex = props.index as number
-                        Main.playStatus = 'play'
-                        Main.songType = 'song'
-                        heartJust()
-                        return;
-                    }else{
-                        if(globalVar.setting.playWay){
-                            let result
-                            if(localStorage.getItem('NMcookie')){
-                                result = (await NM.reqPlaylistTrackAll(playListid.value)).data;
+    try {
+        if(e.button !== 0)return 
+        clearTimeout(mousedownTimer)
+        if(!globalVar.radioReady)return
+        if (!props.local) {
+            let _this = $el.refs['line-music'] as HTMLElement
+            if (!_this) return
+            let father = _this?.parentNode as HTMLElement
+            if (originalList.value.length != 0 && father.getAttribute('id') != 'play-list-Panel-bottom') {
+                playingList.value = originalList.value as [any]
+                playingPrivileges.value = originalPrivileges.value as [any]
+            }
+            nextTick(async () => {
+                if (father.getAttribute('id') === 'song-sheet') {
+                    console.log('添加到播放列表',$route.query.type);
+                    if($route.query.type == '歌单'){
+                        if (Main.beforePlayListId == playListid.value) {
+                            Main.playing = props.id as number
+                            Main.playingindex = props.index as number
+                            Main.playStatus = 'play'
+                            Main.songType = 'song'
+                            heartJust()
+                            return;
+                        }else{
+                            if(globalVar.setting.playWay){
+                                let result
+                                if(localStorage.getItem('NMcookie')){
+                                    result = (await NM.reqPlaylistTrackAll(playListid.value)).data;
+                                }else{
+                                    result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                                }
+                                Main.playingList = result.songs
+                                Main.playingPrivileges = result.privileges
+                                Main.playingindex = props.index as number
+                                Main.playing = props.id as number
+                                Main.beforePlayListId = playListid.value
+                                Main.playStatus = 'play'
+                                Main.songType = 'song'
                             }else{
-                                result = (await Main.reqPlaylistTrackAll(playListid.value)).data;
+                                let result = (await Main.reqSongDetail([props.id])).data
+                                if(Main.playingindex == -1){
+                                    Main.playingList = result.songs
+                                    Main.playingPrivileges = result.privileges
+                                    Main.playingindex = 1
+                                    Main.playing = props.id
+                                    Main.playStatus = 'play'
+                                    Main.songType = 'song'
+                                }else{
+                                    const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                                    if(ifId == -1){
+                                        Main.playingList.splice(Main.playingindex,0,...result.songs)
+                                        Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
+                                        Main.playingindex++
+                                        Main.playing = props.id
+                                    }else{
+                                        Main.playing = props.id
+                                        Main.playingindex = ifId + 1
+                                    }
+                                    Main.playStatus = 'play'
+                                    Main.songType = 'song'
+                                }
                             }
+                        }
+                        console.log(Main.beforePlayListId, Main.playListId);
+                        heartJust()
+                    }else if($route.query.type == '专辑'){
+                        if(globalVar.setting.playWay){
+                            let result = (await Main.reqAlbumTrackAll(playListid.value)).data;
                             Main.playingList = result.songs
-                            Main.playingPrivileges = result.privileges
+                            Main.playingPrivileges = result.songs.map(item=>item.privilege)
                             Main.playingindex = props.index as number
                             Main.playing = props.id as number
                             Main.beforePlayListId = playListid.value
@@ -580,16 +618,25 @@ const gotoPlay = (e: MouseEvent) => {
                             }
                         }
                     }
-                    console.log(Main.beforePlayListId, Main.playListId);
-                    heartJust()
-                }else if($route.query.type == '专辑'){
+                } else if (father.getAttribute('id') == 'play-list-Panel-bottom') {
+                    Main.playing = props.id as number
+                    Main.playingindex = props.index as number + 1
+                    Main.playStatus = 'play'
+                    if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
+                        Main.songType = 'DJ'
+                    }else{
+                        Main.songType = 'song'
+                    }
+                } else if (father.getAttribute('id') === 'every-day') {
                     if(globalVar.setting.playWay){
-                        let result = (await Main.reqAlbumTrackAll(playListid.value)).data;
-                        Main.playingList = result.songs
-                        Main.playingPrivileges = result.songs.map(item=>item.privilege)
-                        Main.playingindex = props.index as number
-                        Main.playing = props.id as number
-                        Main.beforePlayListId = playListid.value
+                        Main.playingList = BasicApi.everyDaySong
+                        let playingPrivileges: Array<any> = []
+                        BasicApi.everyDaySong.forEach((val) => {
+                            playingPrivileges.push(val.privilege)
+                        })
+                        Main.playingPrivileges = playingPrivileges
+                        Main.playingindex = Number(props.index)
+                        Main.playing = BasicApi.everyDaySong[Number(props.index) - 1].id
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }else{
@@ -616,106 +663,63 @@ const gotoPlay = (e: MouseEvent) => {
                             Main.songType = 'song'
                         }
                     }
-                }
-            } else if (father.getAttribute('id') == 'play-list-Panel-bottom') {
-                Main.playing = props.id as number
-                Main.playingindex = props.index as number + 1
-                Main.playStatus = 'play'
-                if(Main.playingPrivileges[Main.playingindex - 1].maxBrLevel == 'DJ'){
-                    Main.songType = 'DJ'
-                }else{
-                    Main.songType = 'song'
-                }
-            } else if (father.getAttribute('id') === 'every-day') {
-                if(globalVar.setting.playWay){
-                    Main.playingList = BasicApi.everyDaySong
-                    let playingPrivileges: Array<any> = []
-                    BasicApi.everyDaySong.forEach((val) => {
-                        playingPrivileges.push(val.privilege)
-                    })
-                    Main.playingPrivileges = playingPrivileges
-                    Main.playingindex = Number(props.index)
-                    Main.playing = BasicApi.everyDaySong[Number(props.index) - 1].id
+                } else if (father.getAttribute('id') === 'search-line-list') {
+                    // if(Main.playStatus = 'play'){
+                    Main.playingList = reactive(removeDuplicatesKeepLast(Main.playingList.toSpliced(Main.playingindex,0,props.privilegeAndListSearchOnly)))
+                    Main.playingPrivileges = reactive(removeDuplicatesKeepLast(Main.playingPrivileges.toSpliced(Main.playingindex,0,props.privilegeAndListSearchOnly.privilege)))
+                    Main.playingindex = Main.playingList.findIndex(item => item.id == props.id) + 1
+                    Main.playing = props.id
                     Main.playStatus = 'play'
                     Main.songType = 'song'
-                }else{
-                    let result = (await Main.reqSongDetail([props.id])).data
-                    if(Main.playingindex == -1){
-                        Main.playingList = result.songs
-                        Main.playingPrivileges = result.privileges
-                        Main.playingindex = 1
-                        Main.playing = props.id
-                        Main.playStatus = 'play'
-                        Main.songType = 'song'
-                    }else{
-                        const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
-                        if(ifId == -1){
-                            Main.playingList.splice(Main.playingindex,0,...result.songs)
-                            Main.playingPrivileges.splice(Main.playingindex,0,...result.privileges)
-                            Main.playingindex++
-                            Main.playing = props.id
-                        }else{
-                            Main.playing = props.id
-                            Main.playingindex = ifId + 1
-                        }
-                        Main.playStatus = 'play'
-                        Main.songType = 'song'
-                    }
-                }
-            } else if (father.getAttribute('id') === 'search-line-list') {
-                // if(Main.playStatus = 'play'){
-                Main.playingList = reactive(removeDuplicatesKeepLast(Main.playingList.toSpliced(Main.playingindex,0,props.privilegeAndListSearchOnly)))
-                Main.playingPrivileges = reactive(removeDuplicatesKeepLast(Main.playingPrivileges.toSpliced(Main.playingindex,0,props.privilegeAndListSearchOnly.privilege)))
-                Main.playingindex = Main.playingList.findIndex(item => item.id == props.id) + 1
-                Main.playing = props.id
-                Main.playStatus = 'play'
-                Main.songType = 'song'
-            }else if(father.getAttribute('id') === 'lately'){
-                if(globalVar.setting.playWay){
-                    Main.playingList = Main.latelyPlay
-                    Main.playingPrivileges = Main.latelyPlay.map((it)=>{
-                        return it.privilege
-                    })
-                    Main.beforePlayListId = -3
-                    Main.playingindex = props.index as number
-                    Main.playing =  props.id
-                    Main.playStatus = 'play'
-                    Main.songType = 'song'
-                }else{
-                    if(Main.playingindex == -1){
-                        Main.playingList = Main.latelyPlay.slice(props.index!-1,props.index)
-                        Main.playingPrivileges = [Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege]
-                        Main.playingindex = 1
+                }else if(father.getAttribute('id') === 'lately'){
+                    if(globalVar.setting.playWay){
+                        Main.playingList = Main.latelyPlay
+                        Main.playingPrivileges = Main.latelyPlay.map((it)=>{
+                            return it.privilege
+                        })
+                        Main.beforePlayListId = -3
+                        Main.playingindex = props.index as number
                         Main.playing =  props.id
                         Main.playStatus = 'play'
                         Main.songType = 'song'
                     }else{
-                        const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
-                        if(ifId == -1){
-                            Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(props.index!-1,props.index)) 
-                            Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege])
-                            Main.playingindex++
-                            Main.playing = props.id
+                        if(Main.playingindex == -1){
+                            Main.playingList = Main.latelyPlay.slice(props.index!-1,props.index)
+                            Main.playingPrivileges = [Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege]
+                            Main.playingindex = 1
+                            Main.playing =  props.id
+                            Main.playStatus = 'play'
+                            Main.songType = 'song'
                         }else{
-                            Main.playing = props.id
-                            Main.playingindex = ifId + 1
+                            const ifId = Main.playingList.map((item)=>item.id).findIndex((id)=>props.id == id)
+                            if(ifId == -1){
+                                Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(props.index!-1,props.index)) 
+                                Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(props.index!-1,props.index)[0].privilege])
+                                Main.playingindex++
+                                Main.playing = props.id
+                            }else{
+                                Main.playing = props.id
+                                Main.playingindex = ifId + 1
+                            }
+                            Main.playStatus = 'play'
+                            Main.songType = 'song'
                         }
-                        Main.playStatus = 'play'
-                        Main.songType = 'song'
                     }
+                }else if(father.getAttribute('id') === 'record-list'){
+                    $emit('recordPlay',{index:props.index,id:props.id})
+                }else if(father.getAttribute('id') === 'short-play-list'){
+                    $emit('shorPlayList',{index:props.index,id:props.id})
                 }
-            }else if(father.getAttribute('id') === 'record-list'){
-                $emit('recordPlay',{index:props.index,id:props.id})
-            }else if(father.getAttribute('id') === 'short-play-list'){
-                $emit('shorPlayList',{index:props.index,id:props.id})
-            }
-            //通知主进程修改播放图片以及文字
-            // $el.props.title
-        })
-        globalVar.closePointOutMessage = '已开始播放'
-        globalVar.closePointOut = true
-    } else {
-        $emit('localPlay', { index: props.index, id: props.id })
+                //通知主进程修改播放图片以及文字
+                // $el.props.title
+            })
+            globalVar.closePointOutMessage = '已开始播放'
+            globalVar.closePointOut = true
+        } else {
+            $emit('localPlay', { index: props.index, id: props.id })
+        }
+    } catch (error) {
+        console.error(error)
     }
 }
 
