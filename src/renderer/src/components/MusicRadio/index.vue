@@ -168,7 +168,7 @@
                 </div>
             </div>
         </div>
-        <audio :src="SongUrl" @error="errorAudio"></audio>
+        <audio :src="SongUrl" ref="audioRef"></audio>
         <canvas id="canvasLook"></canvas>
         <PlayingPointOut v-if="globalVar.closePointOut" @close="globalVar.closePointOut = false"
             :message="globalVar.closePointOutMessage"></PlayingPointOut>
@@ -248,11 +248,11 @@ import {
     Ref, nextTick, toRef, watch, shallowRef, provide, inject
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
-import { before, throttle } from 'lodash'
+import { throttle } from 'lodash'
 import { useMain, useGlobalVar, useMainMenu ,useBasicApi,useNM} from '@renderer/store';
 import { rand } from '@renderer/utils/rand';
 import { useRouter,useRoute } from 'vue-router';
-import { useElectronToApp } from '@renderer/store/index'
+// import { useElectronToApp } from '@renderer/store/index'
 import PlayListPanel from './playListPanel/index.vue';
 import SongDetail from './songDetail/index.vue';
 import MyDialog from '../myVC/MyDialog.vue';
@@ -306,7 +306,7 @@ let randIndex = ref(-1);
 let stopOrPlayFlag: Ref<Boolean> = ref(true)
 let wayIndex = toRef(Main, 'wayIndex');
 let MuteFlag = ref(true);
-let audio: HTMLAudioElement
+let audioRef = ref<HTMLAudioElement>() 
 let loadingLine: HTMLElement
 let playLine: HTMLElement;
 let playBall: HTMLElement;
@@ -456,11 +456,9 @@ watch(wayIndex, async () => {
 
 //子组件修改播放时间
 const goTotime = (time: number) => {
-    audio = document.querySelector('audio') as HTMLAudioElement
-    console.log(audio, time);
 
-    if (audio) {
-        audio.currentTime = time / 1000;
+    if (audioRef.value) {
+        audioRef.value.currentTime = time / 1000;
         Main.playStatus = 'play'
     }
 }
@@ -508,9 +506,10 @@ const showDetail = () => {
 let simiSong = ref<any>()
 let simiPlaylist = ref<any>()
 const loaclPlayWay = async()=>{
-    audio = document.querySelector('audio') as HTMLAudioElement
-    audio.currentTime = 0
-    audio.pause()
+    if(audioRef.value){
+        audioRef.value.currentTime = 0
+        audioRef.value.pause()
+    }
     console.log(playingId.value);
     lyric.value = {}
     simiSong.value = []
@@ -529,6 +528,7 @@ const loaclPlayWay = async()=>{
     }
     window.electron.ipcRenderer.invoke('get-local-music', { path: Main.playingList[Main.playingindex - 1].localPath }).then(async({ base64,error }) => {
         if(error){
+            console.log(error);
             nextSong()
             return
         }
@@ -536,12 +536,14 @@ const loaclPlayWay = async()=>{
         await loaclMusicCanSee(base64)
         stopOrPlayFlag.value = false
         nextTick(() => {
-            audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            if (bufferSource) bufferSource.playbackRate.value = audio.playbackRate
-            audio.play()
-            nowLevel.value = 'local'
-            levelName.value = '本地'
-            playStatus.value = 'play'
+            if(audioRef.value){
+                audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                if (bufferSource) bufferSource.playbackRate.value = audioRef.value.playbackRate
+                audioRef.value.play()
+                nowLevel.value = 'local'
+                levelName.value = '本地'
+                playStatus.value = 'play'
+            }
 
             // stopPlayAudip()
         })
@@ -590,9 +592,10 @@ const normalPlayWay = async()=>{
         //     nextSongThor()
         //     return
         // }
-        audio = document.querySelector('audio') as HTMLAudioElement
-        audio.currentTime = 0
-        audio.pause()
+        if(audioRef.value){
+            audioRef.value.currentTime = 0
+            audioRef.value.pause()
+        }
         if(Main.songType != 'DJ'){
             // Main.playingList[Main.playingindex - 1]
             let str = playingList.value[playingindex.value - 1].name + ' - ';
@@ -610,9 +613,11 @@ const normalPlayWay = async()=>{
             SongUrl.value = url
             nextTick(() => {
                 stopOrPlayFlag.value = false
-                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
-                audio.play()
+                if(audioRef.value){
+                    audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                    if(bufferSource)bufferSource.playbackRate.value = audioRef.value.playbackRate
+                    audioRef.value.play()
+                }
             })
             nowLevel.value = 'standard'
             levelName.value = '标准'
@@ -628,9 +633,11 @@ const normalPlayWay = async()=>{
             SongUrl.value = url
             nextTick(() => {
                 stopOrPlayFlag.value = false
-                audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                if(bufferSource)bufferSource.playbackRate.value = audio.playbackRate
-                audio.play()
+                if(audioRef.value){
+                    audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+                    if(bufferSource)bufferSource.playbackRate.value = audioRef.value.playbackRate
+                    audioRef.value.play()
+                }
             })
             nowLevel.value = 'DJ'
             levelName.value = '电台'
@@ -645,7 +652,7 @@ const br = (str: string) => {
     else if (str == 'exhigh') return 320000
     else return 999000
 }
-
+let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
 watch(playingId, async ({},oldValue) => {
     if(playingId.value == -1)return
     nextTick(async ()=>{
@@ -659,28 +666,29 @@ watch(playingId, async ({},oldValue) => {
         }else{
             Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
         }
-        const playList = document.querySelector("#play-list-Panel-bottom")!.children
+        let cleanFileName = (playingList.value[playingindex.value - 1].ar 
+                            ?? playingList.value[playingindex.value - 1].mainSong.artists)
+                            .map(item=>item.name).join(',') + ' - ' + playingList.value[playingindex.value - 1].name
+        cleanFileName = cleanFileName.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
         if(Main.playingList[Main.playingindex - 1].localPath){
+            console.log(Main.playingList[Main.playingindex - 1].localPath);
             loaclPlayWay()
-        }else if(eval(playList[Main.playingindex - 1].getAttribute('data-download')!)){
-            setTimeout(()=>{
-                console.log(playList[Main.playingindex - 1].getAttribute('data-download')!);
-                console.log(playList[Main.playingindex - 1].getAttribute('data-path'));
-                let path = playList[Main.playingindex - 1].getAttribute('data-path')
-                if(!path?.endsWith('.mp3'))path+='.mp3'
-                Main.playingList[Main.playingindex - 1]['localPath'] = path
-                console.log(Main.playingList[Main.playingindex - 1]);
-                Main.playingPrivileges[Main.playingindex - 1] = {
-                    id:playingId.value,
-                    maxBrLevel: "local",
-                    playMaxBrLevel: "local",
-                    downloadMaxBrLevel: "local",
-                    plLevel: "local",
-                    dlLevel: "local",
-                    flLevel: "local",
-                }
-                loaclPlayWay()
-            })
+        }else if(downloadList.value.includes(cleanFileName)){
+            let path = await window.electron.ipcRenderer.invoke('get-song-path',cleanFileName)
+            console.log(cleanFileName,path);
+            if(!path?.endsWith('.mp3'))path+='.mp3'
+            Main.playingList[Main.playingindex - 1]['localPath'] = path
+            console.log(Main.playingList[Main.playingindex - 1]);
+            Main.playingPrivileges[Main.playingindex - 1] = {
+                id:playingId.value,
+                maxBrLevel: "local",
+                playMaxBrLevel: "local",
+                downloadMaxBrLevel: "local",
+                plLevel: "local",
+                dlLevel: "local",
+                flLevel: "local",
+            }
+            loaclPlayWay()
         }else{
             if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
                 loaclPlayWay()
@@ -745,17 +753,16 @@ watch(playingId, () => {
 })
 
 onMounted(async () => {
-    audio = document.querySelector('audio') as HTMLAudioElement
     loadingLine = $el.refs['line-loading'] as HTMLElement
     playLine = $el.refs['line-play'] as HTMLElement
     playBall = $el.refs['block'] as HTMLElement
     line = $el.refs['audio-line'] as HTMLElement
     let timeValueFlag = true
-    audio.addEventListener('timeupdate', () => {
-        if (audio.currentTime >= 1 && timeValueFlag) {
+    audioRef.value!.addEventListener('timeupdate', () => {
+        if (audioRef.value!.currentTime >= 1 && timeValueFlag) {
             timeValueFlag = false
             if(globalVar.timeValue!=0){
-                audio.currentTime = globalVar.timeValue / 1000
+                audioRef.value!.currentTime = globalVar.timeValue / 1000
                 if(globalVar.setting.opencanvas){
                     const currentTime = AC.currentTime;
                     AC = new AudioContext()
@@ -786,36 +793,36 @@ onMounted(async () => {
 
     // })
     //加载进度
-    audio.addEventListener('progress', () => {
-        console.log(audio.duration);
-        if (!isNaN(audio.duration)) {
-            let timeRanges = audio.buffered;
+    audioRef.value!.addEventListener('progress', () => {
+        console.log(audioRef.value!.duration);
+        if (!isNaN(audioRef.value!.duration)) {
+            let timeRanges = audioRef.value!.buffered;
             // 获取以缓存的时间
             let timeBuffered = timeRanges.end(timeRanges.length - 1);
             // 获取缓存进度，值为0到1
-            let bufferPercent = timeBuffered / audio.duration;
+            let bufferPercent = timeBuffered / audioRef.value!.duration;
             loadingLine.style.width = bufferPercent * 100 + '%'
         }
     })
     //末时间
-    audio.addEventListener('canplaythrough', () => {
-        endTime.value = dayjsSMMSS(Math.floor(audio.duration))
+    audioRef.value!.addEventListener('canplaythrough', () => {
+        endTime.value = dayjsSMMSS(Math.floor(audioRef.value!.duration))
     })
     //播放进度
-    audio.addEventListener('timeupdate', () => {
+    audioRef.value!.addEventListener('timeupdate', () => {
         if (!audioPlayFlag.value) {
-            window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'to-currentTime',data:audio.currentTime})
+            window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'to-currentTime',data:audioRef.value!.currentTime})
             // window.electron.ipcRenderer.sendTo(ciId.value, 'to-currentTime', audio.currentTime);
-            currentTime.value = audio.currentTime
-            let bar = (audio.currentTime / audio.duration) * 100
+            currentTime.value = audioRef.value!.currentTime
+            let bar = (audioRef.value!.currentTime / audioRef.value!.duration) * 100
             playLine.style.width = bar + '%'
-            playBall.style.left = (audio.currentTime / audio.duration) * line.offsetWidth - 4.5 + 'px'
+            playBall.style.left = (audioRef.value!.currentTime / audioRef.value!.duration) * line.offsetWidth - 4.5 + 'px'
             // console.log((audio.currentTime / audio.duration) * line.offsetWidth - 4.5);
-            nowTime.value = dayjsSMMSS(audio.currentTime)
+            nowTime.value = dayjsSMMSS(audioRef.value!.currentTime)
         }
     })
     //播放完毕
-    audio.addEventListener('ended', async () => {
+    audioRef.value!.addEventListener('ended', async () => {
         console.log('播放完毕');
         console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
         console.log(Main.beforePlayListId,Main.playing);
@@ -852,7 +859,7 @@ onMounted(async () => {
                 cancelAnimationFrame(animationId)
                 draw()
             }
-            audio.play()
+            audioRef.value!.play()
             stopOrPlayFlag.value = false
         } else if (wayIndex.value == 2) {
             playingindex.value = rand(1, playingList.value.length, playingindex.value)
@@ -861,7 +868,7 @@ onMounted(async () => {
             randIndex.value++;
         } else if (wayIndex.value == 3) {
             if (playingindex.value == playingList.value.length) {
-                audio.pause();
+                audioRef.value!.pause();
                 stopOrPlayFlag.value = false
                 changPlayStatus()
             } else {
@@ -921,10 +928,9 @@ const audioPlayMoving = (e: MouseEvent) => {
 
 let suo = ref(true)
 const audioPlayEnd = () => {
-    audio = document.querySelector('audio') as HTMLAudioElement
     playLine = $el.refs['line-play'] as HTMLElement
     let wh = playLine.style.width
-    audio.currentTime = Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01
+    audioRef.value!.currentTime = Number(wh.substring(0, wh.length - 1)) * audioRef.value!.duration * 0.01
     if(globalVar.setting.opencanvas){
         const currentTime = AC.currentTime;
         AC = new AudioContext()
@@ -937,7 +943,7 @@ const audioPlayEnd = () => {
         bufferSource.connect(AC.destination)
         bufferSource.connect(analyser);
         bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-        bufferSource.start(0, Number(wh.substring(0, wh.length - 1)) * audio.duration * 0.01);
+        bufferSource.start(0, Number(wh.substring(0, wh.length - 1)) * audioRef.value!.duration * 0.01);
         bufferSource.connect(gainNode)
         gainNode.connect(AC.destination);
         gainNode.gain.setValueAtTime(-1, AC.currentTime)
@@ -955,7 +961,7 @@ watch(loginQuit, () => {
     if (loginQuit.value == true) {
         loginQuit.value = false
         if(bufferSource)bufferSource.stop(AC.currentTime)
-        audio.pause()
+        if(audioRef.value)audioRef.value.pause()
     }
 })
 
@@ -967,16 +973,15 @@ const clickAudioPlay = (e: MouseEvent) => {
     if (loadingCanSeeUrl) return
     if (playingList.value.length) {
         if (suo.value) {
-            audio = document.querySelector('audio') as HTMLAudioElement
             playLine = $el.refs['line-play'] as HTMLElement
             playBall = $el.refs['block'] as HTMLElement
             line = $el.refs['audio-line'] as HTMLElement
             let wh = e.offsetX
             playBall.style.left = wh - 4.5 + 'px'
             playLine.style.width = wh / line.offsetWidth * 100 + '%'
-            nowTime.value = dayjsSMMSS(audio.duration * (wh / line.offsetWidth))
+            nowTime.value = dayjsSMMSS(audioRef.value!.duration * (wh / line.offsetWidth))
             suoFlag.value = true;
-            audio.currentTime = wh / line.offsetWidth * audio.duration
+            audioRef.value!.currentTime = wh / line.offsetWidth * audioRef.value!.duration
             clickCanvas(wh)
         } else {
             suo.value = true;
@@ -1069,7 +1074,7 @@ const clickCanvas = (wh)=>{
             bufferSource.connect(AC.destination)
             bufferSource.connect(analyser);
             bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-            bufferSource.start(0, wh / line.offsetWidth * audio.duration);
+            bufferSource.start(0, wh / line.offsetWidth * audioRef.value!.duration);
             bufferSource.connect(gainNode)
             gainNode.connect(AC.destination);
             gainNode.gain.setValueAtTime(-1, AC.currentTime)
@@ -1083,9 +1088,10 @@ const clickCanvas = (wh)=>{
 //点击播放按钮
 let wayIndex3Flag = false
 const stopOrPlay = () => {
+    if(!audioRef.value) return
     if (playingList.value.length !== 0) {
         stopOrPlayFlag.value = !stopOrPlayFlag.value
-        if (audio.paused) {
+        if (audioRef.value.paused) {
             if (wayIndex.value == 3 && playingindex.value == playingList.value.length) {
                 if(!wayIndex3Flag){
                     wayIndex3Flag = true
@@ -1095,13 +1101,13 @@ const stopOrPlay = () => {
                 playingId.value = playingList.value[playingindex.value - 1].id
                 wayIndex3Flag = false
             } else {
-                audio.play();
+                audioRef.value.play();
                 Main.playStatus = 'play'
                 if (AC && AC.state === "suspended"  && globalVar.setting.opencanvas) AC.resume();
                 window.electron.ipcRenderer.send('render-play')
             }
-        } else if(!audio.paused){
-            audio.pause();
+        } else if(!audioRef.value.paused){
+            audioRef.value.pause();
             Main.playStatus = 'stop'
             if (AC && AC.state === "running" && globalVar.setting.opencanvas) AC.suspend();
             window.electron.ipcRenderer.send('render-play-fail')
@@ -1258,10 +1264,9 @@ const prevSongThor = throttle(prevSong, 1000, { leading: true })
 
 //audio修改音量
 const audioVolume = () => {
-    audio = document.querySelector('audio') as HTMLAudioElement
     let value = Number(localStorage.getItem('baseLine')) / 100.0
     console.log(value);
-    audio.volume = value;
+    if(audioRef.value)audioRef.value.volume = value;
 }
 
 
@@ -1314,8 +1319,7 @@ const move = (e: MouseEvent) => {
     if (step == 0) MuteFlag.value = false;
     else MuteFlag.value = true;
     which.style.height = step + '%'
-    audio = document.querySelector('audio') as HTMLAudioElement
-    audio.volume = step / 100.0
+    if(audioRef.value)audioRef.value.volume = step / 100.0
 }
 
 
@@ -1509,8 +1513,7 @@ const showLevel = () => {
 let levelName = ref('标准')
 let nowLevel = ref('standard')
 const changeSpanLevel = async (level: string, level2: string) => {
-    audio = document.querySelector('audio') as HTMLAudioElement
-    let t = audio.currentTime
+    let t = audioRef.value?.currentTime ?? 0
     let url = await Main.reqSongUrl(playingId.value,'','song', nowLevel.value)
     if(!url){
         ElMessage({
@@ -1525,13 +1528,13 @@ const changeSpanLevel = async (level: string, level2: string) => {
     nowLevel.value = level2
     nextTick(async () => {
         // await musicCanSee(result.data.data[0].url, t, 100)
+        if(!audioRef.value)return
         musicCanSeeNew(url, t, 100)
-        audio = document.querySelector('audio') as HTMLAudioElement
-        bufferSource.playbackRate.value = audio.playbackRate
-        audio.currentTime = t
-        audio.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+        bufferSource.playbackRate.value = audioRef.value.playbackRate
+        audioRef.value.currentTime = t
+        audioRef.value.playbackRate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
         Main.playStatus = 'play'
-        audio.play()
+        audioRef.value.play()
     })
 }
 
@@ -1554,12 +1557,12 @@ const showSpeed = () => {
 }
 
 const changeSpanSpeed = (speedPowerName: string) => {
+    if(!audioRef.value) return
     speedPower.value = speedPowerName
-    audio = document.querySelector('audio') as HTMLAudioElement
     let rate = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-    audio.playbackRate = rate
+    audioRef.value.playbackRate = rate
     bufferSource.playbackRate.value = rate
-    console.log(audio.playbackRate);
+    console.log(audioRef.value.playbackRate);
 }
 
 //打开播放列表
@@ -1570,8 +1573,7 @@ const showPlayListPanel = () => {
 
 //清空播放列表
 const clearList = () => {
-    audio = document.querySelector('audio') as HTMLAudioElement
-    audio.pause()
+    audioRef.value?.pause()
     stopOrPlayFlag.value = true
     audioPlayFlag.value = false
     endTime.value = dayjsSMMSS(0)
@@ -1642,9 +1644,10 @@ const keyDownWatch = (e: KeyboardEvent) => {
     }
 }
 const add_10_volum = ()=>{
+    if(!audioRef.value) return
     let volum = +liangRef.value!.style.height.split('%')[0]
     MuteFlag.value = true
-    audio.volume = Math.min(audio.volume+0.1,1)
+    audioRef.value.volume = Math.min(audioRef.value.volume+0.1,1)
     liangRef.value!.style.height = Math.min(volum+10,100) + '%'
     localStorage.setItem('baseLine',Math.min(volum+10,100)+'')
     globalVar.closePointOutMessage = Math.min(volum+10,100) + '%'
@@ -1652,9 +1655,10 @@ const add_10_volum = ()=>{
 }
 
 const reduce_10_volum = ()=>{
+    if(!audioRef.value) return
     let volum = +liangRef.value!.style.height.split('%')[0]
-    audio.volume = Math.max(audio.volume-0.1,0)
-    if(audio.volume == 0)MuteFlag.value = false
+    audioRef.value.volume = Math.max(audioRef.value.volume-0.1,0)
+    if(audioRef.value.volume == 0)MuteFlag.value = false
     liangRef.value!.style.height = Math.max(volum-10,0) + '%'
     localStorage.setItem('baseLine',Math.max(volum-10,0)+'')
     globalVar.closePointOutMessage = Math.max(volum-10,0) + '%'
@@ -1743,49 +1747,49 @@ let analyser: AnalyserNode;
 let musicBuffer: AudioBuffer
 let dataArray: Uint8Array = new Uint8Array()
 let loadingCanSeeUrl: boolean = false
-const musicCanSee = (url: string, offset: number, timer: number) => {
-    if(globalVar.setting.opencanvas){
-        if (bufferSource) bufferSource.stop()
-        AC = new AudioContext()
-        gainNode = AC.createGain()
-        analyser = AC.createAnalyser();
-        loadingCanSeeUrl = true
-        return new Promise<any>((resolve) => {
-            fetch(url, { mode: 'cors' }).then((response) => {
-                return response.arrayBuffer()
-            }).then((buffer) => {
-                // console.log('拉取音频流解码成AudioBuffer',buffer);
-                //拉取音频流解码成AudioBuffer
-                //音频可视化
-                console.log(buffer);
-                AC.decodeAudioData(buffer).then((AudioBuffer) => {
-                    // console.log(AudioBuffer);
-                    musicBuffer = AudioBuffer
-                    bufferSource = AC.createBufferSource();
-                    analyser.fftSize = 256;
-                    bufferSource.connect(analyser);
-                    analyser.connect(AC.destination);
-                    bufferSource.buffer = AudioBuffer;
-                    bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
-                    bufferSource.connect(gainNode)
-                    gainNode.connect(AC.destination);
-                    gainNode.gain.setValueAtTime(-1, AC.currentTime)
-                    // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
-                    // color.addColorStop(0, 'rgba(102, 204, 255,1)');
-                    cancelAnimationFrame(animationId)
-                    draw()
-                    resolve('ok')
-                    const t = setTimeout(() => {
-                        bufferSource.start(0, offset)
-                        loadingCanSeeUrl = false
-                        clearTimeout(t)
-                    }, timer)
-                })
-            })
-        })
-    }
-    return
-}
+// const musicCanSee = (url: string, offset: number, timer: number) => {
+//     if(globalVar.setting.opencanvas){
+//         if (bufferSource) bufferSource.stop()
+//         AC = new AudioContext()
+//         gainNode = AC.createGain()
+//         analyser = AC.createAnalyser();
+//         loadingCanSeeUrl = true
+//         return new Promise<any>((resolve) => {
+//             fetch(url, { mode: 'cors' }).then((response) => {
+//                 return response.arrayBuffer()
+//             }).then((buffer) => {
+//                 // console.log('拉取音频流解码成AudioBuffer',buffer);
+//                 //拉取音频流解码成AudioBuffer
+//                 //音频可视化
+//                 console.log(buffer);
+//                 AC.decodeAudioData(buffer).then((AudioBuffer) => {
+//                     // console.log(AudioBuffer);
+//                     musicBuffer = AudioBuffer
+//                     bufferSource = AC.createBufferSource();
+//                     analyser.fftSize = 256;
+//                     bufferSource.connect(analyser);
+//                     analyser.connect(AC.destination);
+//                     bufferSource.buffer = AudioBuffer;
+//                     bufferSource.playbackRate.value = Number(speedPower.value.substring(0, speedPower.value.length - 1))
+//                     bufferSource.connect(gainNode)
+//                     gainNode.connect(AC.destination);
+//                     gainNode.gain.setValueAtTime(-1, AC.currentTime)
+//                     // var color = canvasCTX.createLinearGradient(oW / 2, oH, oW / 2, oH / 2 - 150);
+//                     // color.addColorStop(0, 'rgba(102, 204, 255,1)');
+//                     cancelAnimationFrame(animationId)
+//                     draw()
+//                     resolve('ok')
+//                     const t = setTimeout(() => {
+//                         bufferSource.start(0, offset)
+//                         loadingCanSeeUrl = false
+//                         clearTimeout(t)
+//                     }, timer)
+//                 })
+//             })
+//         })
+//     }
+//     return
+// }
 const musicCanSeeNew = (url: string, offset: number, timer: number) => {
     if(bufferSource) bufferSource.stop()
     if(myWorker) myWorker.terminate()
@@ -2355,7 +2359,7 @@ watch(()=>globalVar.setting.opencanvas,()=>{
     if(globalVar.setting.opencanvas){
         if(Main.playStatus !== 'play')return
         console.log(musicBuffer);
-        const currentTime = audio.currentTime;
+        const currentTime = audioRef.value?.currentTime;
         AC = new AudioContext()
         gainNode = AC.createGain()
         analyser = AC.createAnalyser();
@@ -2503,7 +2507,7 @@ const shareimages:Ref<ArrayBuffer[]> = ref([])
 const addShareImage = ()=>{
     window.electron.ipcRenderer.invoke('add-share-image',shareimages.value.length).then(async(lius:PromiseSettledResult<any>[])=>{
         let p = await Promise.allSettled(lius.map((item)=>{
-            return new Promise<any>((resolve, reject) => {
+            return new Promise<any>((resolve) => {
                 if(item.status == 'fulfilled'){
                     const blob = new Blob([item.value], { type: 'image/png' });
                     const reader = new FileReader();
@@ -2563,9 +2567,9 @@ watch(()=>$route.name,() => {
     }
 })
 
-const errorAudio = (e:MediaError)=>{
-    console.log(e);
-}
+// const errorAudio = (e:MediaError)=>{
+//     console.log(e);
+// }
 </script>
 
 <style lang="less" scoped>

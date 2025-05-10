@@ -27,9 +27,9 @@
                 <slot></slot>
             </div>
             <div class="caozuo" :data="playListid" v-if="index && showIndex" :class="{ 'caozuo-oneself': globalVar.oneself && oneselfColor }">
-                <span v-if="Main.playing == id && Main.playStatus == 'play' && Main.beforePlayListId == playListid"><i
+                <span v-if="Main.playing == id && Main.playStatus == 'play'"><i
                         class="iconfont icon-shengyin_shiti songStatus"></i> </span>
-                <span v-else-if="Main.playing == id && Main.playStatus == 'stop' && Main.beforePlayListId == playListid"><i
+                <span v-else-if="Main.playing == id && Main.playStatus == 'stop'"><i
                         class="iconfont icon-shengyin03-mianxing songStatus"></i></span>
                 <span v-else-if="indexSearch">{{ indexSearch > 9 ? indexSearch : `0${indexSearch}` }}</span>
                 <span v-else>{{ index > 9 ? index : `0${index}` }}</span>
@@ -97,13 +97,14 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect } from 'vue';
+import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect, reactive } from 'vue';
 import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
 import { useRouter,useRoute } from 'vue-router';
 import { useMain, useBasicApi, useGlobalVar,useNM } from '@renderer/store';
 import Singer from './Singer/index.vue'
 import ZhuanJi from './ZhuanJi/index.vue'
 import Loading from '@renderer/ImperativeComponents/Loading/Loading';
+import { removeDuplicatesKeepLast } from '@renderer/utils/removeDuplicatesKeepLast';
 // import {ElMessageBox} from 'element-plus'
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
@@ -663,18 +664,12 @@ const gotoPlay = (e: MouseEvent) => {
                 }
             } else if (father.getAttribute('id') === 'search-line-list') {
                 // if(Main.playStatus = 'play'){
-                let index = 0
-                if (Main.playingindex == -1) index = 0
-                else index = Main.playingindex
-                Main.playingList.splice(index, 0, props.privilegeAndListSearchOnly)
-                Main.playingPrivileges.splice(index, 0, props.privilegeAndListSearchOnly.privilege)
-                Main.playingindex = index + 1
+                Main.playingList = reactive(removeDuplicatesKeepLast(Main.playingList.toSpliced(Main.playingindex,0,props.privilegeAndListSearchOnly)))
+                Main.playingPrivileges = reactive(removeDuplicatesKeepLast(Main.playingPrivileges.toSpliced(Main.playingindex,0,props.privilegeAndListSearchOnly.privilege)))
+                Main.playingindex = Main.playingList.findIndex(item => item.id == props.id) + 1
                 Main.playing = props.id
                 Main.playStatus = 'play'
                 Main.songType = 'song'
-                // }else{
-
-                // }
             }else if(father.getAttribute('id') === 'lately'){
                 if(globalVar.setting.playWay){
                     Main.playingList = Main.latelyPlay

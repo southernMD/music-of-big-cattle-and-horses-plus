@@ -33,11 +33,12 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef, ShallowRef,nextTick, watch, Ref, ref } from 'vue'
+import { shallowRef, ShallowRef,nextTick, watch, Ref, ref, reactive } from 'vue'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import { useMain } from '@renderer/store';
 import {throttle} from 'lodash'
 import { useGlobalVar } from '@renderer/store';
+import { removeDuplicatesKeepLast } from '@renderer/utils/removeDuplicatesKeepLast';
 const globalVar = useGlobalVar()
 const props = defineProps<{
     searchKey:string
@@ -79,9 +80,10 @@ const pushPlayList = async(flag:1 | undefined,list2 = Array.from(list.value))=>{
     const playingList:any[] = []
     const playingPrivileges:any[] = []
     const promises = list2.map(async(item)=>{
+        const songId = Number(item?.userDefinedText?.[0]?.value || Date.now().toString())
         const song = {
             name:item.title,
-            id:+item.userDefinedText[0].value,
+            id:songId,
             ar:getSinger(item.artist,item.userDefinedText[2].value),
             al:{
                 id:item.userDefinedText[1].value,
@@ -95,7 +97,7 @@ const pushPlayList = async(flag:1 | undefined,list2 = Array.from(list.value))=>{
         playingList.push(song)
         playingList[playingList.length - 1].al.picUrl = await bufferToBase64(item.image.imageBuffer)
         const privilege = {
-            id:+item.userDefinedText[0].value,
+            id:songId,
             maxBrLevel: "local",
             playMaxBrLevel: "local",
             downloadMaxBrLevel: "local",
@@ -110,8 +112,8 @@ const pushPlayList = async(flag:1 | undefined,list2 = Array.from(list.value))=>{
             Main.playingList = playingList
             Main.playingPrivileges = playingPrivileges
         }else if(flag == 1){
-            Main.playingList.splice(Main.playingindex,0,...playingList)
-            Main.playingPrivileges.splice(Main.playingindex,0,...playingPrivileges)
+            Main.playingList = reactive(removeDuplicatesKeepLast(Main.playingList.toSpliced(Main.playingindex,0,...reactive(playingList))))
+            Main.playingPrivileges = reactive(removeDuplicatesKeepLast(Main.playingPrivileges.toSpliced(Main.playingindex,0,...reactive(playingPrivileges))))
         }
     })
 }
@@ -123,7 +125,7 @@ const localPlay = async({index,id})=>{
     }  
     else {
         await pushPlayList(1,[list.value[index - 1]])
-        Main.playingindex = Main.playingindex == -1?1:Main.playingindex+1
+        Main.playingindex = Main.playingList.findIndex(item=>item.id == id) + 1
     }
     Main.playStatus = 'play'
     Main.songType = 'song'

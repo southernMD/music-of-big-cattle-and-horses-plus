@@ -46,9 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import { } from 'vue'
+import { reactive } from 'vue'
 import { useGlobalVar, useMain } from '@renderer/store'
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
+import { removeDuplicatesKeepLast } from '@renderer/utils/removeDuplicatesKeepLast'
 
 const Main = useMain()
 const globalVar = useGlobalVar()
@@ -101,9 +102,11 @@ const localPlay = ({index,id})=>{
             Main.playStatus = 'play'
             Main.songType = 'song'
         }else{
-            Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(index!-1,index)) 
-            Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(index!-1,index)[0].privilege])
-            Main.playingindex++
+            Main.playingList = reactive(removeDuplicatesKeepLast(Main.playingList.toSpliced(Main.playingindex,0,...reactive(Main.latelyPlay.slice(index!-1,index)))))
+            Main.playingPrivileges = reactive(removeDuplicatesKeepLast(Main.playingPrivileges.toSpliced(Main.playingindex,0,...reactive([[Main.latelyPlay.slice(index!-1,index)[0].privilege]]))))
+            // Main.playingList.splice(Main.playingindex,0,...Main.latelyPlay.slice(index!-1,index)) 
+            // Main.playingPrivileges.splice(Main.playingindex,0,...[Main.latelyPlay.slice(index!-1,index)[0].privilege])
+            Main.playingindex = Main.playingList.findIndex(item => item.id == id) + 1
             Main.playing = id
             Main.playStatus = 'play'
             Main.songType = 'song'

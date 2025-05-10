@@ -35,10 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import {watch,nextTick,ref, Ref} from 'vue'
+import {watch,nextTick,ref, Ref, reactive} from 'vue'
 import { useGlobalVar, useMain } from '@renderer/store';
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import { throttle } from 'lodash';
+import { removeDuplicatesKeepLast } from '@renderer/utils/removeDuplicatesKeepLast'
 const globalVar = useGlobalVar()
 const props = defineProps<{
     list:id3Message[]
@@ -176,8 +177,9 @@ const pushPlayList = async(flag:number | undefined,list = Array.from(props.list)
             Main.playingList = playingList
             Main.playingPrivileges = playingPrivileges
         }else if(flag!=undefined){
-            Main.playingList.splice(Main.playingindex,0,...playingList)
-            Main.playingPrivileges.splice(Main.playingindex,0,...playingPrivileges)
+            console.log(removeDuplicatesKeepLast(Main.playingList.toSpliced(Main.playingindex,0,...reactive(playingList))));
+            Main.playingList = reactive(removeDuplicatesKeepLast(Main.playingList.toSpliced(Main.playingindex,0,...reactive(playingList))))
+            Main.playingPrivileges = reactive(removeDuplicatesKeepLast(Main.playingPrivileges.toSpliced(Main.playingindex,0,...reactive(playingPrivileges))))
         }
     })
 }
@@ -191,7 +193,7 @@ const localPlay = async({index,id})=>{
     }  
     else {
         await pushPlayList(index - 1,[props.list[index - 1]])
-        Main.playingindex = Main.playingindex == -1?1:Main.playingindex+1
+        Main.playingindex = Main.playingList.findIndex(item=>item.id == id) + 1
     }
     Main.playStatus = 'play'
     Main.songType = 'song'
