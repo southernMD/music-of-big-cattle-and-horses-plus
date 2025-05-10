@@ -997,9 +997,9 @@ export const djsuber = (id,limit,time)=>{
 //解锁歌曲
 
 
-export const unlockSong = (keyword:string)=>{
+export const unlockSong = (keyword:string,id:string,level:string = 'standard')=>{
     const url = import.meta.env.MODE === 'development' ? `/api/unlock` : `http://localhost:${port}/api/unlock`
-    return fetch(`${url}?keyword=${keyword}`,{
+    return fetch(`${url}?keyword=${keyword}&id=${id}&level=${level}`,{
         method:'GET',
     }).then(res=>res.json())
 }

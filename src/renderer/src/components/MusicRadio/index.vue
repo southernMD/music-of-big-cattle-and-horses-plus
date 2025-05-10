@@ -1513,8 +1513,14 @@ const showLevel = () => {
 let levelName = ref('标准')
 let nowLevel = ref('standard')
 const changeSpanLevel = async (level: string, level2: string) => {
+    console.log(level, level2,"发生音质切换");
     let t = audioRef.value?.currentTime ?? 0
-    let url = await Main.reqSongUrl(playingId.value,'','song', nowLevel.value)
+
+    const song = Main.playingList[Main.playingindex - 1]
+    const keyWord = song.name + '-' + song.ar.map(item => item.name).join('-')
+    const searchLevel = level2.includes("lossless")?"lossless":level2
+    let url = await Main.reqSongUrl(playingId.value,keyWord,'song', searchLevel)
+    
     if(!url){
         ElMessage({
             type: 'error',

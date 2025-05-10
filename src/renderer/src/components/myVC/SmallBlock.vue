@@ -3,9 +3,9 @@
         <ul id="level-list" v-if="ifLevel">
             <li class="li" :data-index="index" v-for="(valueIndex, index) in maxHaveIndex" @click="changeLeve">
                 <i class="iconfont icon-big-gou" v-show="clickLeve == index"></i>
-                <span class="vip" v-show="index > maxLevelIndex">
+                <!-- <span class="vip" v-show="index > maxLevelIndex">
                     <span class="txt">VIP</span>
-                </span>
+                </span> -->
                 <span class="cn" :class="{active: clickLeve == index}">{{ levelArrayName[index] }}</span>
             </li>
         </ul>
@@ -20,7 +20,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, getCurrentInstance, ComponentInternalInstance, ref, PropType, toRef, Ref } from 'vue';
+import { onMounted, ref, PropType, toRef, Ref } from 'vue';
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose'
 const levelArray = ['standard', 'exhigh', ['jymaster',"sky","lossless"], 'hires'];
 const levelArrayName = ['标准音质', '极高音质', '无损音质', 'Hi-Res音质'];
@@ -65,17 +65,17 @@ const changeLeve = (e: MouseEvent) => {
     console.log(e.target);
     let dom = e.target as HTMLElement
     let clickLi = searchFather(dom)
-    if (Number(clickLi.getAttribute('data-index')) <= maxLevelIndex.value) {
-        clickLeve.value = Number(clickLi.getAttribute('data-index'))
-        $emit('show', levelArrayName[clickLeve.value].substring(0, levelArrayName[clickLeve.value].length - 2), levelArray[clickLeve.value])
-        $emit('close')
-    } else {
-        ElMessage({
-            type: 'error',
-            message: 'vip暂不可用',
-            duration: 1000
-        })
-    }
+    // if (Number(clickLi.getAttribute('data-index')) <= maxLevelIndex.value) {
+    clickLeve.value = Number(clickLi.getAttribute('data-index'))
+    $emit('show', levelArrayName[clickLeve.value].substring(0, levelArrayName[clickLeve.value].length - 2), levelArray[clickLeve.value])
+    $emit('close')
+    // } else {
+    //     ElMessage({
+    //         type: 'error',
+    //         message: 'vip暂不可用',
+    //         duration: 1000
+    //     })
+    // }
 
 }
 

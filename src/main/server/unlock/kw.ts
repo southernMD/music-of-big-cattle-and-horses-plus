@@ -22,7 +22,8 @@ const getKuwoSongId = async (keyword: string): Promise<string | null> => {
         const songId = result.content[1].musicpage.abslist[0].MUSICRID;
         const songName = result.content[1].musicpage.abslist[0]?.SONGNAME;
         const originalName = keyword?.split("-") ?? keyword;
-        if (songName && stringSimilarity.compareTwoStrings(songName, originalName[0]) < 0.95) return null;
+        console.log("外链接与原歌曲相似度",stringSimilarity.compareTwoStrings(songName, originalName[0]));
+        if (songName && stringSimilarity.compareTwoStrings(songName, originalName[0]) < 0.50) return null;
         return songId.slice("MUSIC_".length);
     } catch (error) {
         return null;

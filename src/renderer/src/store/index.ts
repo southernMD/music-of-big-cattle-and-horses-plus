@@ -572,7 +572,7 @@ export const useMain = defineStore('Main', {
             const res = (await SongUrl(id, level))
             let url:string | null = res.data.data[0].url
             if(url == null || [1,4].includes(res.data.data[0].fee) && type != 'DJ' && keyword){
-                url = (await unlockSong(keyword.replaceAll("/","-"))).url
+                url = (await unlockSong(keyword.replaceAll("/","-"),`${id}`,level)).url
             }
             return url
         },
