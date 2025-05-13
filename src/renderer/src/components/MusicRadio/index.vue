@@ -249,7 +249,7 @@ import {
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
 import { throttle } from 'lodash'
-import { useMain, useGlobalVar, useMainMenu ,useBasicApi,useNM} from '@renderer/store';
+import { useMain, useGlobalVar, useMainMenu ,useBasicApi,useNM } from '@renderer/store';
 import { rand } from '@renderer/utils/rand';
 import { useRouter,useRoute } from 'vue-router';
 // import { useElectronToApp } from '@renderer/store/index'
@@ -260,6 +260,7 @@ import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
 
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 import Loading from '@renderer/ImperativeComponents/Loading/Loading'
+import { unlockSong } from '@renderer/api';
 
 const playSpeedRef = ref(null)
 const playLevelRef = ref(null)
@@ -552,7 +553,7 @@ const loaclPlayWay = async()=>{
                 // audioRef.value.play()
                 nowLevel.value = 'local'
                 levelName.value = '本地'
-                playStatus.value = 'play'
+                Main.playStatus = 'play'
                 lockPlayBtn.value = false
             }
 
@@ -611,6 +612,7 @@ const normalPlayWay = async()=>{
         }
         if(Main.songType != 'DJ'){
             try {
+                //debugger
                 // Main.playingList[Main.playingindex - 1]
                 let str = playingList.value[playingindex.value - 1].name + ' - ';
                 let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
@@ -641,6 +643,8 @@ const normalPlayWay = async()=>{
                 simiSong.value = (await Main.reqSimiSong(playingId.value)).data.songs;
                 simiPlaylist.value = (await Main.reqSimiPlaylist(playingId.value)).data.playlists;
             } catch (error) {
+                //debugger
+                console.log(error);
                 ElMessage({
                     message: "播放歌曲失败",
                     type: 'error',
@@ -686,69 +690,71 @@ const br = (str: string) => {
     else return 999000
 }
 let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
+//播放id_song
 watch(playingId, async ({},oldValue) => {
+    //debugger
+    console.log(playingId.value);
     if(playingId.value == -1)return
-    nextTick(async ()=>{
-        // debugger
-        console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
-        console.log(Main.beforePlayListId,Main.playing);
-        if(localStorage.getItem('NMcookie')){
-            let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
-            let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
-            console.log(NT,ET);
-            if(1-(ET-NT)/ET!=1) NM.reqScrobble(oldValue,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
-        }else{
-            Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
+    // //debugger
+    console.log(nowTime.value,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]));
+    console.log(Main.beforePlayListId,Main.playing);
+    if(localStorage.getItem('NMcookie')){
+        let NT = +nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1])
+        let ET = +endTime.value.split(':')[0]*60+(+endTime.value.split(':')[1])
+        console.log(NT,ET);
+        if(1-(ET-NT)/ET!=1) NM.reqScrobble(oldValue,Main.beforePlayListId,(1-(ET-NT)/ET).toFixed(2))
+    }else{
+        Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
+    }
+    let cleanFileName = (playingList.value[playingindex.value - 1].ar 
+                        ?? playingList.value[playingindex.value - 1].mainSong.artists)
+                        .map(item=>item.name).join(',') + ' - ' + playingList.value[playingindex.value - 1].name
+    cleanFileName = cleanFileName.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
+    if(Main.playingList[Main.playingindex - 1].localPath){
+        console.log(Main.playingList[Main.playingindex - 1].localPath);
+        await loaclPlayWay()
+    }else if(downloadList.value.includes(cleanFileName)){
+        let path = await window.electron.ipcRenderer.invoke('get-song-path',cleanFileName)
+        console.log(cleanFileName,path);
+        if(!path?.endsWith('.mp3'))path+='.mp3'
+        Main.playingList[Main.playingindex - 1]['localPath'] = path
+        console.log(Main.playingList[Main.playingindex - 1]);
+        Main.playingPrivileges[Main.playingindex - 1] = {
+            id:playingId.value,
+            maxBrLevel: "local",
+            playMaxBrLevel: "local",
+            downloadMaxBrLevel: "local",
+            plLevel: "local",
+            dlLevel: "local",
+            flLevel: "local",
         }
-        let cleanFileName = (playingList.value[playingindex.value - 1].ar 
-                            ?? playingList.value[playingindex.value - 1].mainSong.artists)
-                            .map(item=>item.name).join(',') + ' - ' + playingList.value[playingindex.value - 1].name
-        cleanFileName = cleanFileName.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
-        if(Main.playingList[Main.playingindex - 1].localPath){
-            console.log(Main.playingList[Main.playingindex - 1].localPath);
-            loaclPlayWay()
-        }else if(downloadList.value.includes(cleanFileName)){
-            let path = await window.electron.ipcRenderer.invoke('get-song-path',cleanFileName)
-            console.log(cleanFileName,path);
-            if(!path?.endsWith('.mp3'))path+='.mp3'
-            Main.playingList[Main.playingindex - 1]['localPath'] = path
-            console.log(Main.playingList[Main.playingindex - 1]);
-            Main.playingPrivileges[Main.playingindex - 1] = {
-                id:playingId.value,
-                maxBrLevel: "local",
-                playMaxBrLevel: "local",
-                downloadMaxBrLevel: "local",
-                plLevel: "local",
-                dlLevel: "local",
-                flLevel: "local",
-            }
-            loaclPlayWay()
-        }else{
-            if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
-                loaclPlayWay()
-            } else if(Main.beforePlayListId == -3){
-                nextTick(()=>{
-                    if(Main.playingList[Main.playingindex - 1].localPath){
-                        loaclPlayWay()
-                    }else{
-                        normalPlayWay()
-                    }
-                })
+        await loaclPlayWay()
+    }else{
+        if ((Main.beforePlayListId == 0 || Main.beforePlayListId == -2) && Main.songType != 'FM') {
+            await loaclPlayWay()
+        } else if(Main.beforePlayListId == -3){
+            nextTick(async ()=>{
+                if(Main.playingList[Main.playingindex - 1].localPath){
+                    await loaclPlayWay()
+                }else{
+                    await normalPlayWay()
+                }
+            })
 
-            }else{
-                normalPlayWay()
-            }
+        }else{
+           await normalPlayWay()
         }
-        let str = playingList.value[playingindex.value - 1].name + ' - ';
-        let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
-        singerArr.forEach((element, index) => {
-            str += element.name
-            if (index != singerArr.length - 1) str += ' / '
-        })
-        console.log('这个是主进程的名字',str);
-        window.electron.ipcRenderer.send('change-play-thum', str.replace(/<\/?[^>]+(>|$)/g, ''))
-        window.electron.ipcRenderer.send('render-play')
+    }
+    //debugger
+    let str = playingList.value[playingindex.value - 1].name + ' - ';
+    let singerArr = playingList.value[playingindex.value - 1].ar ?? playingList.value[playingindex.value - 1].mainSong.artists as unknown as Array<any>
+    singerArr.forEach((element, index) => {
+        str += element.name
+        if (index != singerArr.length - 1) str += ' / '
     })
+    console.log('这个是主进程的名字',str);
+    window.electron.ipcRenderer.send('change-play-thum', str.replace(/<\/?[^>]+(>|$)/g, ''))
+    window.electron.ipcRenderer.send('render-play')
 })
 function base64ToArrayBuffer(base64) {
     const binaryStr = atob(base64);
@@ -869,8 +875,8 @@ onMounted(async () => {
         }else{
             Main.reqScrobble(Main.playing,Main.beforePlayListId,+nowTime.value.split(':')[0]*60+(+nowTime.value.split(':')[1]))
         }
-        Main.playStatus == 'stop'
         // stopOrPlayFlag.value = true;
+        audioRef.value!.pause()
         if(bufferSource)bufferSource.stop()
         cancelAnimationFrame(animationId)
         if ((wayIndex.value == 0 && Main.playingList.length != 1)|| wayIndex.value == 4 || Main.songType == 'FM') {
@@ -896,7 +902,9 @@ onMounted(async () => {
                 draw()
             }
             audioRef.value!.play()
-            Main.playStatus == 'play'
+            // nextTick(() => {
+                // Main.playStatus = 'play'
+            // })
             // stopOrPlayFlag.value = false
         } else if (wayIndex.value == 2) {
             playingindex.value = rand(1, playingList.value.length, playingindex.value)
@@ -904,14 +912,19 @@ onMounted(async () => {
             randQueue.push(playingindex.value)
             randIndex.value++;
         } else if (wayIndex.value == 3) {
+            console.log(playingindex.value,"index是",playingList.value.length,"length是");
             if (playingindex.value == playingList.value.length) {
-                audioRef.value!.pause();
+                // audioRef.value!.pause();
                 // stopOrPlayFlag.value = false
-                Main.playStatus == 'play'
-                changPlayStatus()
+                console.log("暂停了");
+                
+                Main.playStatus = 'stop'
+                // nextTick(()=>{
+                //     changPlayStatus()
+                // })
             } else {
-                playingindex.value++;
-                playingId.value = playingList.value[playingindex.value - 1].id
+                debugger
+                nextSong()
             }
         }
     })
@@ -1023,6 +1036,7 @@ const clickAudioPlay = (e: MouseEvent) => {
             nowTime.value = dayjsSMMSS(audioRef.value!.duration * (wh / line.offsetWidth))
             suoFlag.value = true;
             audioRef.value!.currentTime = wh / line.offsetWidth * audioRef.value!.duration
+            Main.playStatus = 'play'
             clickCanvas(wh)
         } else {
             suo.value = true;
@@ -1127,30 +1141,32 @@ const clickCanvas = (wh)=>{
 
 
 //点击播放按钮
-let wayIndex3Flag = false
+// let wayIndex3Flag = false
 const stopOrPlay = () => {
     console.log("触发了stopOrPlay",Main.playStatus);
     if(!audioRef.value) return
     if (playingList.value.length !== 0) {
         // changPlayStatus()
         //播放
-        if (audioRef.value.paused) {
-            if (wayIndex.value == 3 && playingindex.value == playingList.value.length) {
-                if(!wayIndex3Flag){
-                    wayIndex3Flag = true
-                    return
-                }
-                playingindex.value = 1
-                playingId.value = playingList.value[playingindex.value - 1].id
-                wayIndex3Flag = false
-            } else {
+        if (audioRef.value.paused && Main.playStatus == "play") {
+            // if (wayIndex.value == 3 && playingindex.value == playingList.value.length) {
+            //     if(!wayIndex3Flag){
+            //         wayIndex3Flag = true
+            //         return
+            //     }
+            //     playingindex.value = 1
+            //     playingId.value = playingList.value[playingindex.value - 1].id
+            //     wayIndex3Flag = false
+            // } else {
+            // console.log("继续播放");
                 audioRef.value.play();
                 // Main.playStatus = 'play'
                 if (AC && AC.state === "suspended"  && globalVar.setting.opencanvas) AC.resume();
                 window.electron.ipcRenderer.send('render-play')
-            }
-        } else {
+            // }
+        } else if(!audioRef.value.paused && Main.playStatus === 'stop') {
             //暂停
+            console.log("暂停");
             audioRef.value.pause();
             // Main.playStatus = 'stop'
             if (AC && AC.state === "running" && globalVar.setting.opencanvas) AC.suspend();
@@ -1161,8 +1177,8 @@ const stopOrPlay = () => {
 
 const changPlayStatus = () => {
     if(lockPlayBtn.value)return
-    if (playStatus.value == 'play') playStatus.value = 'stop'
-    else playStatus.value = 'play'
+    if (Main.playStatus == 'play') Main.playStatus = 'stop'
+    else Main.playStatus = 'play'
 }
 
 
@@ -1204,10 +1220,11 @@ window.electron.ipcRenderer.on('to-close-ci', ({ }, {flag} ) => {
     showCi.value = flag
 })
 //监视播放给另一个进程
-let playStatus = toRef(Main, 'playStatus')
-watch(playStatus, async () => {
-    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'play-status',data:playStatus.value})
-    // window.electron.ipcRenderer.sendTo(ciId.value, 'play-status', playStatus.value)
+// let playStatus = toRef(Main, 'playStatus')
+watch(()=>Main.playStatus, async () => {
+    
+    window.electron.ipcRenderer.send('transpond-window-message',{to:ciId.value,name:'play-status',data:Main.playStatus})
+    // window.electron.ipcRenderer.sendTo(ciId.value, 'play-status', Main.playStatus)
     stopOrPlay()
 })
 //另一进程play or stop
@@ -1264,12 +1281,13 @@ const prevSong = () => {
         playingList.value[playingindex.value - 1].id:
         playingList.value[playingindex.value - 1].mainSong.id
 
-        playStatus.value = 'play'
+        // Main.playStatus = 'play'
 
     }
 }
 //下一首
 const nextSong = () => {
+    //debugger
     if (Main.songType == 'FM') {
         Main.FMindex++
     } else {
@@ -1294,12 +1312,12 @@ const nextSong = () => {
                 playingindex.value = 1
             }
         }
-
+        
         playingId.value = Main.playingPrivileges[playingindex.value - 1].maxBrLevel!='DJ'?
         playingList.value[playingindex.value - 1].id:
         playingList.value[playingindex.value - 1].mainSong.id
 
-        playStatus.value = 'play'
+        // Main.playStatus = 'play'
     }
 
 }
@@ -1434,7 +1452,8 @@ onMounted(() => {
 const stopPlayAudip = () => {
     if (playingList.value.length == 0) {
         // stopOrPlayFlag.value = true
-        Main.playStatus == 'stop'
+        // Main.playStatus = 'stop'
+        lockPlayBtn.value = true
         nextTick(() => {
             let dom = $el.refs.top as HTMLElement
             if (globalVar.oneself == 1) {
@@ -1452,7 +1471,8 @@ const stopPlayAudip = () => {
 
     } else {
         // stopOrPlayFlag.value = false
-        Main.playStatus == 'play'
+        // Main.playStatus = 'play'
+        lockPlayBtn.value = false
         nextTick(() => {
             let dom = $el.refs.top as HTMLElement
             if (globalVar.oneself == 1) {
@@ -1635,7 +1655,7 @@ const showPlayListPanel = () => {
 //清空播放列表
 const clearList = () => {
     audioRef.value?.pause()
-    Main.playStatus == 'stop'
+    Main.playStatus = 'stop'
     // stopOrPlayFlag.value = true
     audioPlayFlag.value = false
     endTime.value = dayjsSMMSS(0)
@@ -1951,8 +1971,8 @@ function draw() {
     }
 }
 
-watch(playStatus,()=>{
-    if(playStatus.value == 'stop'){
+watch(()=>Main.playStatus,()=>{
+    if(Main.playStatus == 'stop'){
         cancelAnimationFrame(animationId)
     }else{
         if(AC && gainNode && analyser)draw()
@@ -2624,7 +2644,7 @@ const likeOrDislikeRadio = async()=>{
 //video_detail
 watch(()=>$route.name,() => {
     if($route.name === 'video_detail'){
-        playStatus.value = 'stop'
+        Main.playStatus = 'stop'
         showCi.value = false
     }
 })

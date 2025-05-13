@@ -60,6 +60,7 @@
     "ref-napi": "^3.0.3",
     "request": "^2.88.2",
     "string-similarity": "^4.0.4",
+    "systeminformation": "^5.25.11",
     "timeago.js": "^4.0.2",
     "vue-router": "^4.5.0",
     "wanakana": "^5.3.1",

@@ -10,10 +10,11 @@ import { createWindow, lrcwindow, dragWindw } from './windows'
 import log,{cleanupOldLogs} from './utils/log'
 import "./dowloadBiliBili"
 import { findKeyByValue ,noPrintName } from './utils/findKeyByValue'
+import { getWindowsVersion } from './utils/os'
 // import *  as bytenode from 'bytenode'
+
 // 检查应用程序是否已经在运行
 const argv = process.argv;
-// fs.writeFileSync("C:\\Users\\southernMD\\Desktop\\txt.txt", argv.toString());
 log.info(argv);
 let path = ''
 for (let arg of argv) {
@@ -25,6 +26,12 @@ for (let arg of argv) {
 log.info(path);
 cleanupOldLogs()
 const isAppAlreadyRunning = app.requestSingleInstanceLock();
+const osVersion = await getWindowsVersion()
+if(osVersion == 0){
+  dialog.showErrorBox('启动失败', "你的操作系统不支持该应用，请使用Windows7版本以上windows系统运行该应用。");
+  app.quit(); // 终止程序
+}
+
 if (!isAppAlreadyRunning) {
   // 如果应用程序已经在运行，则退出当前实例
   app.quit();
@@ -51,17 +58,6 @@ if (!isAppAlreadyRunning) {
     const lrcwin = lrcwindow()
     const dragWin = dragWindw()
     //托盘事件
-    //右键菜单
-    ipcMain.on('show-context-menu', (event) => {
-      const menu = Menu.buildFromTemplate([{
-        label: '刷新', type: 'normal', role: 'reload'
-      },
-      {
-        label: '开发者工具', type: 'normal', role: 'toggleDevTools'
-      }
-      ])
-      menu.popup()
-    })
 
     app.on('activate', function () {
       // On macOS it's common to re-create a window in the app when the

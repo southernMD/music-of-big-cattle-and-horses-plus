@@ -19,11 +19,11 @@ const getKuwoSongId = async (keyword: string): Promise<string | null> => {
             return null;
         }
         // 获取歌曲信息
-        const songId = result.content[1].musicpage.abslist[0].MUSICRID;
-        const songName = result.content[1].musicpage.abslist[0]?.SONGNAME;
+        const songId:string = result.content[1].musicpage.abslist[0].MUSICRID;
+        const songName:string = result.content[1].musicpage.abslist[0]?.SONGNAME;
         const originalName = keyword?.split("-") ?? keyword;
-        console.log("外链接与原歌曲相似度",stringSimilarity.compareTwoStrings(songName, originalName[0]));
-        if (songName && stringSimilarity.compareTwoStrings(songName, originalName[0]) < 0.50) return null;
+        log.info("歌曲名",songName,"原歌曲名",originalName[0],"相似度",stringSimilarity.compareTwoStrings(songName, originalName[0]))
+        if (!songName && stringSimilarity.compareTwoStrings(songName, originalName[0]) < 0.50 && !songName.includes(originalName[0]) && !originalName[0].includes(songName)) return null;
         return songId.slice("MUSIC_".length);
     } catch (error) {
         return null;

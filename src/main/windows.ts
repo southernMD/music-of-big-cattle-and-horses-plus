@@ -2,7 +2,6 @@ import { app, shell, BrowserWindow, ipcMain, screen, dialog, session, nativeImag
 import { join, extname, parse, resolve, basename } from 'path'
 import fs from 'fs'
 import exfs from 'fs-extra'
-import os from 'os'
 import icon from '../../build/favicon.ico?asset'
 import iconW from '../../build/faviconW.ico?asset'
 import prevIcon from '../../build/prev.png?asset'
@@ -28,6 +27,7 @@ import { BASE_PATH, DEFAULT_ID3_MESSAGE, DELAY_MS } from './defaultMessage'
 import { getFileHashes } from './utils/createhash'
 import { cloneDeep } from 'lodash';
 import { id3Message } from './types'
+import { getWindowsVersion } from './utils/os'
 export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
   // let X: number, Y: number; //鼠标基于显示器的坐标
@@ -63,6 +63,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   })
   console.log('下载目录是', downloadPath);
   console.log('主题颜色是', background);
+  const osVersion = await getWindowsVersion()
   const mainWindow = new BrowserWindow({
     width: 1020,
     height: 670,
@@ -74,7 +75,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     minWidth: 1020,
     title: '大牛马音乐',
     // autoHideMenuBar: true,
-    icon: iconW,
+    icon: osVersion == 11?icon:iconW,
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       webgl: true,
@@ -84,7 +85,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   mainWindow.setAppDetails({
     appId: '大牛马音乐'
   })
-  mainWindow.webContents.toggleDevTools()
+  if(is.dev)mainWindow.webContents.toggleDevTools()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -179,7 +180,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     clearInterval(pathRead)
   })
   //托盘事件
-  let appIcon = new Tray(iconW)
+  let appIcon = new Tray(osVersion == 11?icon:iconW)
   appIcon.on('double-click', () => {
     mainWindow.show()
   })
@@ -192,6 +193,11 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     {
       label: '显示主页面', type: 'normal', click: () => {
         mainWindow.show();
+      }
+    },
+    {
+      label:'打开开发者工具',type:'normal',click:()=>{
+        mainWindow.webContents.openDevTools()
       }
     }
   ])
