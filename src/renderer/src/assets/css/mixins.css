@@ -1,78 +1,179 @@
-:deep(.el-overlay) {
+:root {
+  --primaryColor: #ec4141;
+  --broundColor: #ec4141;
+  --MainMenu: rgba(255, 255, 255, 0.7);
+  --MainTitle: #ffffff;
+  --MainMenuHover: #ffffff;
+  --bottomLinearColor: hsl(0, 100%, 70%);
+  --radioBkColor: #ffffff;
+  --mainbanBkColor: #ffffff;
+  --otherBkColor: #ffffff;
+  --otherBkColorOp: #ffffff;
+  --leftClickColor: #f6f6f6;
+  --fontColor: #000000;
+  --fontColorHover: #000000;
+  --spanColorHover: #f1f2f3;
+  --splitLineColor: #e0e0e0;
+  --lineColorOdd: #fafafa;
+  --lineColorEven: #ffffff;
+  --lineColorClick: #e5e5e5;
+  --lineColorHover: #f1f2f3;
+  --lineColorOddSmall: #fafafa;
+  --lineColorEvenSmall: #ffffff;
+  --lineColorClickSmall: #e5e5e5;
+  --lineColorHoverSmall: #f1f2f3;
+  --smallFontColor: #969696;
+  --smallFontColorHover: #303030;
+  --smallCanClick: #696969;
+  --smallFontRed: #ec4141;
+  --urlColor: #507daf;
+  --urlColorHover: #0b58b0;
+  --redLine: rgba(0, 0, 0, 0);
+  --playAllButtonHover: #cc3232;
+  --noneButton: #ffffff;
+  --noneFont: #b2b2b2;
+  --stopBtnBk: #f5f5f5;
+  --stopColorDisplay: #a6a6a6;
+  --hotBk: #e5e5e5;
+  --hotFill: #b9b9b9;
+  --playLineBk: #e4e4e4;
+  --playLineLoading: #cecece;
+  --shengyin: #ffffff;
+  --smallTips: #3d3d3d;
+  --lrcColorTop: red;
+  --lrcColorBottom: yellow;
+  --lrcColorBorderColor: unset;
+  --lrcColorBorderWidth: unset;
+  --lrcfontWeight: normal;
+  --audioBorderColor: #dbd4d4;
+  --selectColor: #b9c5c9;
+  --lrcDetail: #5f5f5f;
+  --lrcDetailHover: #494949;
+  --lrcDetailPlaying: #000000;
+  --lrcChoiceLine: #cccbcb;
+  --lrcOptionBk: #e0e0e0;
+  --commitBkColor: #f5f5f5;
+  --iconSmallColor: #666666;
+  --iconSmallColorHover: #333333;
+  --paginFontHoverColor: #f5f5f5;
+  --paginBkBtnColor: #ffffff;
+  --paginDisableFontColor: #cccccc;
+  --paginFont: #666666;
+  --floatTagFont: #303030;
+  --floatTagBk: #f1f1f1;
+  --floatTagHover: #e1e1e1;
+  --pointOutBorder: #000000;
+  --commitBlockBorderColor: #e5e5e5;
+  --commitBlockColor: #ffffff;
+  --commitBlockScrollLine: #ffffff;
+  --commitBlockScrollButton: #e0e0e0;
+  --emojiPointActive: #999999;
+  --emojiPointDisActive: #f2f2f2;
+  --FMAr: #2e5b8e;
+  --FMArHover: #2e598a;
+  --borderColor: #d8d8d8;
+  --pickBkColor: #000000;
+  --flowHoverColor: #efeff0;
+  --smallChoiceBlockColorDefault: #f2f2f2;
+  --smallChoiceBlockColorHover: #e7e7e7;
+  --smallChoiceBlockColorClick: #bfbfbf;
+  --myDialogBk: #ffffff;
+  --rightButtonhover: #f2f2f2;
+  --quickBk: #ffffff;
+  --quickBkStop: #dfe1e2;
+  --followRightBk: #f5f5f7;
+  --fontColorOneself: #000000;
+}
+.theme-dark {
+  --primaryColor: #ec4141;
+  --broundColor: #222225;
+  --radioBkColor: #222225;
+  --otherBkColor: #2b2b2b;
+  --otherBkColorOp: #2b2b2b;
+  --mainbanBkColor: #363636;
+  --fontColor: rgba(255, 255, 255, 0.7);
+  --fontColorHover: #ffffff;
+  --spanColorHover: #424242;
+  --splitLineColor: #3d3d40;
+  --lineColorOdd: #2f2f2f;
+  --lineColorEven: #2b2b2b;
+  --lineColorClick: #414141;
+  --smallFontColor: #696969;
+  --smallFontColorHover: #d4d4d4;
+  --leftClickColor: #333333;
+  --urlColor: #85b9e6;
+  --urlColorHover: #b3cee5;
+  --redLine: #740a0a;
+  --playAllButtonHover: #d93f3f;
+  --lineColorHover: #373737;
+  --noneButton: #393939;
+  --noneFont: #747474;
+  --hotBk: #3a3a3a;
+  --hotFill: #444444;
+  --smallCanClick: #8a8a8a;
+  --stopBtnBk: #2b2b2e;
+  --stopColorDisplay: #6e6e70;
+  --playLineBk: #39393b;
+  --playLineLoading: #4d4d4f;
+  --shengyin: #252525;
+  --lineColorOddSmall: #363636;
+  --lineColorEvenSmall: #3a3a3a;
+  --lineColorClickSmall: #4b4b4b;
+  --lineColorHoverSmall: #3e3e3e;
+  --smallTips: #232323;
+  --audioBorderColor: #353535;
+  --selectColor: #555555;
+  --lrcDetail: #6b6b6b;
+  --lrcDetailHover: #ffffff;
+  --lrcDetailPlaying: #ffffff;
+  --lrcChoiceLine: #555555;
+  --lrcOptionBk: #3a3a3a;
+  --commitBkColor: #333333;
+  --iconSmallColor: #8a8a8a;
+  --iconSmallColorHover: #d4d4d4;
+  --paginFontHoverColor: #282b32;
+  --paginBkBtnColor: #393939;
+  --paginDisableFontColor: #575757;
+  --paginFont: #888888;
+  --floatTagFont: #d8d8d8;
+  --floatTagBk: #3e3e3e;
+  --floatTagHover: #505050;
+  --pointOutBorder: #000000;
+  --commitBlockBorderColor: #272727;
+  --commitBlockColor: #3a3a3a;
+  --commitBlockScrollLine: #2b2b2b;
+  --commitBlockScrollButton: #404040;
+  --emojiPointActive: #676767;
+  --emojiPointDisActive: #303030;
+  --FMAr: #507daf;
+  --FMArHover: #0b58b0;
+  --borderColor: #515151;
+  --pickBkColor: #292b2f;
+  --flowHoverColor: #353638;
+  --smallChoiceBlockColorDefault: #343434;
+  --smallChoiceBlockColorHover: #3d3d3d;
+  --smallChoiceBlockColorClick: #5f5f5f;
+  --myDialogBk: #363636;
+  --rightButtonhover: #4a4a4a;
+  --quickBk: #383838;
+  --quickBkStop: #2e2e2e;
+  --followRightBk: #2e2e2e;
+  --fontColorOneself: rgba(255, 255, 255, 0.7);
+}
+.theme-white {
+  --primaryColor: #ec4141;
+  --broundColor: #f5f5f5;
+  --MainTitle: #313131;
+  --MainMenu: rgba(0, 0, 0, 0.7);
+  --MainMenuHover: #000000;
+}
+.theme-dark.oneself {
+  --broundColor: rgba(34, 34, 37, 0.8);
+}
+.theme-white.oneself {
+  --broundColor: rgba(245, 245, 245, 0.8);
+}
+.el-overlay {
   -webkit-app-region: no-drag;
   background-color: rgba(0, 0, 0, 0);
-}
-:deep(.el-dialog) {
-  min-height: 270px;
-  width: 500px;
-  background-color: var(--myDialogBk, #363636);
-  border-radius: 0.2em;
-}
-:deep(.el-dialog) .el-dialog__headerbtn {
-  color: var(--fontColor, #000000) !important;
-  width: auto;
-  height: auto;
-  text-shadow: none;
-  right: 5px;
-}
-:deep(.el-dialog) .el-dialog__headerbtn .el-dialog__close {
-  font-size: 25px;
-}
-:deep(.el-dialog) .el-dialog__headerbtn .el-dialog__close:hover {
-  color: var(--fontColor, #000000) !important;
-}
-:deep(.el-dialog) .el-dialog__headerbtn .el-dialog__close :not(:hover) {
-  color: var(--fontColor, #000000) !important;
-}
-:deep(.el-dialog) header {
-  text-align: center;
-}
-:deep(.el-dialog) .title {
-  color: var(--fontColor, #000000);
-  font-weight: bolder;
-  width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-:deep(.el-dialog) .list {
-  margin-left: 40px;
-  flex-direction: column;
-  align-items: start;
-}
-:deep(.el-dialog) label {
-  height: 25px;
-}
-:deep(.el-dialog) label .el-radio__label {
-  font-size: 13px;
-  color: var(--fontColor, #000000);
-}
-:deep(.el-dialog) .is-checked .el-radio__inner {
-  border-color: var(--primaryColor, #ec4141);
-  background-color: var(--primaryColor, #ec4141);
-}
-:deep(.el-dialog) .is-checked .el-radio__label {
-  color: var(--primaryColor, #ec4141);
-}
-:deep(.el-dialog) footer {
-  text-align: center;
-}
-:deep(.el-dialog) .go {
-  background-color: var(--primaryColor, #ec4141);
-  border: none;
-  color: #fff;
-  border-radius: 2em;
-  width: 100px;
-}
-:deep(.el-dialog) .go:hover {
-  background-color: var(--playAllButtonHover, #cc3232);
-}
-:deep(.el-dialog) .fa {
-  background-color: rgba(0, 0, 0, 0);
-  border: var(--splitLineColor, #e0e0e0) 1px solid;
-  width: 100px;
-  border-radius: 2em;
-}
-:deep(.el-dialog) .fa:hover {
-  background-color: var(--spanColorHover, #f1f2f3) !important;
 }

@@ -108,6 +108,12 @@ window.electron.ipcRenderer.once('memory-background', ({ }, { buffer, extname })
     MainMenu.colorBlock = extname
     globalVar.oneself = 1
     nextTick(()=>{
+        // 使用自定义主题类处理背景图片
+        const html = document.documentElement
+        html.classList.remove('theme-dark', 'theme-white')
+        html.classList.add('theme-custom', 'oneself')
+
+        // 只设置必要的变量
         document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
         document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
         document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
@@ -201,17 +207,19 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
         const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
         v.pause();
         v.src = ''
+        videoCanvas.value.style.display = 'none'
     };
     // const h = document.querySelector('#header') as HTMLElement
     // h.style.backgroundImage =   "data:image/png;base64," + base64
     globalVar.oneself = 1
     MainMenu.colorBlock = extname
     nextTick(()=>{
+        // 使用暗色主题类处理背景图片
+        const html = document.documentElement
+        html.classList.remove('theme-white', 'theme-custom')
+        html.classList.add('theme-dark', 'oneself')
+
         localStorage.setItem('broundColor', '33,33,36,.8')
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(33,33,36,.8)`)
-        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
         localStorage.setItem('MainTitle', `255, 255, 255`)
         localStorage.setItem('MainMenu', `255, 255, 255,.7`)
         localStorage.setItem('MainMenuHover', `255, 255, 255`)

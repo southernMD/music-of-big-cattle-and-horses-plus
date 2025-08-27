@@ -54,11 +54,18 @@ const showColor = () => {
         flagC.value = $el?.props.index as string
     }else if($el?.props.index == '1'){  //白色
         MainMenu.iconSrc = iconRed
-        document.documentElement.style.setProperty(`--primaryColor`, `rgb(236,65,65)`)
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(245,245,245,1)`)
-        document.documentElement.style.setProperty(`--MainTitle`, `rgb(49,49,49)`)
-        document.documentElement.style.setProperty(`--MainMenu`, `rgba(0,0,0,.7)`)
-        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(0,0,0)`)
+
+        // 使用白色主题类
+        const html = document.documentElement
+        html.classList.remove('theme-dark', 'theme-custom')
+        html.classList.add('theme-white')
+
+        if(globalVar.oneself){
+            html.classList.add('oneself')
+        } else {
+            html.classList.remove('oneself')
+        }
+
         localStorage.setItem('primaryColor',`236,65,65`)
         localStorage.setItem('broundColor',`245,245,245`)
         localStorage.setItem('MainTitle',`49,49,49`)
@@ -67,31 +74,37 @@ const showColor = () => {
         localStorage.setItem('colorBlock','1');
         flagC.value = $el?.props.index as string
         MainMenu.primaryColor = 'rgb(236,65,65)'
-        if(globalVar.oneself){
-            document.documentElement.style.setProperty(`--broundColor`, `rgba(245,245,245,.8)`)
-            localStorage.setItem('broundColor',`rgba(245,245,245,.8)`)
-        }
     }else{
         MainMenu.iconSrc = icon
         let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
         let arr = getPxColor(imageData, 0, 0)
+
+        // 使用自定义主题类，然后设置自定义颜色
+        const html = document.documentElement
+        html.classList.remove('theme-dark', 'theme-white')
+        html.classList.add('theme-custom')
+
+        if(globalVar.oneself){
+            html.classList.add('oneself')
+        } else {
+            html.classList.remove('oneself')
+        }
+
+        // 自定义颜色需要动态设置CSS变量
         document.documentElement.style.setProperty(`--primaryColor`, `rgb(${arr[0]}, ${arr[1]}, ${arr[2]})`)
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(${arr[0]}, ${arr[1]}, ${arr[2]},1)`)
+        document.documentElement.style.setProperty(`--broundColor`, `rgba(${arr[0]}, ${arr[1]}, ${arr[2]},${globalVar.oneself ? '.8' : '1'})`)
         document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
         document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
         document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
+
         localStorage.setItem('primaryColor',`${arr[0]},${arr[1]},${arr[2]}`)
-        localStorage.setItem('broundColor',`${arr[0]},${arr[1]},${arr[2]},1`)
+        localStorage.setItem('broundColor',`${arr[0]},${arr[1]},${arr[2]},${globalVar.oneself ? '.8' : '1'}`)
         localStorage.setItem('MainTitle',`255, 255, 255`)
         localStorage.setItem('MainMenu',`255, 255, 255,.7`)
         localStorage.setItem('MainMenuHover',`255, 255, 255`)
         localStorage.setItem('colorBlock',`${$el?.props.index}`);
         flagC.value = $el?.props.index as string
         MainMenu.primaryColor = `rgb(${arr[0]}, ${arr[1]}, ${arr[2]})`
-        if(globalVar.oneself){
-            document.documentElement.style.setProperty(`--broundColor`, `rgba(${arr[0]}, ${arr[1]}, ${arr[2]},.8)`)
-            localStorage.setItem('broundColor',`${arr[0]},${arr[1]},${arr[2]},.8`)
-        }
     }
 
 }

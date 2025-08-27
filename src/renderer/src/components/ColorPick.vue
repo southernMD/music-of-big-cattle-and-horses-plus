@@ -58,10 +58,24 @@ const beginMove = (e: MouseEvent) => {
     //改字
     MainMenu.iconSrc = icon
     MainMenu.colorBlock = 'Other'
+
+    // 切换到自定义主题类
+    const html = document.documentElement
+    html.classList.remove('theme-dark', 'theme-white')
+    html.classList.add('theme-custom')
+
+    if(globalVar.oneself) {
+        html.classList.add('oneself')
+    } else {
+        html.classList.remove('oneself')
+    }
+
     localStorage.setItem('colorBlock','Other');
     localStorage.setItem('MainTitle',`255, 255, 255`)
     localStorage.setItem('MainMenu',`255, 255, 255,.7`)
     localStorage.setItem('MainMenuHover',`255, 255, 255`)
+
+    // 只设置必要的颜色变量（自定义颜色需要动态设置）
     document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
     document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
     document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
@@ -92,15 +106,13 @@ function movingFn(e: MouseEvent) {
         ctx = SMask.getContext('2d') as CanvasRenderingContext2D;
         imageData = ctx.getImageData(0, 0, SMask.width, SMask.height)
         color = getPxColor(imageData, baseB, 2);
+
+        // 自定义颜色需要动态设置CSS变量
         document.documentElement.style.setProperty(`--primaryColor`, `rgb(${color[0]}, ${color[1]}, ${color[2]})`)
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},1)`)
+        document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},${globalVar.oneself ? '.8' : '1'})`)
         localStorage.setItem('primaryColor',`${color[0]},${color[1]},${color[2]}`)
-        localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},1`)
+        localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},${globalVar.oneself ? '.8' : '1'}`)
         MainMenu.primaryColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
-        if(globalVar.oneself){
-            document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},.8)`)
-            localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},.8`)
-        }
     } else if (which.classList.contains('mask')) {
         let moveDistance = e.pageX - clickX + baseB
         if (moveDistance < 0) moveDistance = 0
@@ -109,15 +121,13 @@ function movingFn(e: MouseEvent) {
         let ctx = SMask.getContext('2d') as CanvasRenderingContext2D;
         let imageData = ctx.getImageData(0, 0, SMask.width, SMask.height)
         let color = getPxColor(imageData, moveDistance, 2);
+
+        // 自定义颜色需要动态设置CSS变量
         document.documentElement.style.setProperty(`--primaryColor`, `rgb(${color[0]}, ${color[1]}, ${color[2]})`)
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},1)`)
+        document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},${globalVar.oneself ? '.8' : '1'})`)
         localStorage.setItem('primaryColor',`${color[0]},${color[1]},${color[2]}`)
-        localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},1`)
+        localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},${globalVar.oneself ? '.8' : '1'}`)
         MainMenu.primaryColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
-        if(globalVar.oneself){
-            document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},.8)`)
-            localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},.8`)
-        }
     }
 }
 function endMove(): void {

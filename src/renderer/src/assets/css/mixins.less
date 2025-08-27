@@ -106,6 +106,200 @@
 
 @font-color-oneself:var(--fontColorOneself,rgb(0, 0, 0,.7));
 
+// 主题类定义 - 基于CSS类的主题切换，完全替代document.documentElement.style.setProperty
+:root {
+  // 默认主题（NMred）
+  --primaryColor: rgb(236,65,65);
+  --broundColor: rgba(236,65,65,1);
+  --MainMenu: rgba(255, 255, 255, .7);
+  --MainTitle: rgb(255, 255, 255);
+  --MainMenuHover: rgb(255, 255, 255);
+  --bottomLinearColor: hsl(0, 100%, 70%);
+  --radioBkColor: rgb(255, 255, 255);
+  --mainbanBkColor: rgb(255, 255, 255);
+  --otherBkColor: rgb(255, 255, 255);
+  --otherBkColorOp: rgb(255, 255, 255,.7);
+  --leftClickColor: rgb(246, 246, 246);
+  --fontColor: rgb(0, 0, 0,.7);
+  --fontColorHover: rgb(0, 0, 0);
+  --spanColorHover: rgb(241, 242, 243);
+  --splitLineColor: rgb(224,224,224);
+  --lineColorOdd: rgb(250, 250, 250);
+  --lineColorEven: rgb(255, 255, 255);
+  --lineColorClick: rgb(229, 229, 229);
+  --lineColorHover: rgb(241, 242, 243);
+  --lineColorOddSmall: rgb(250, 250, 250);
+  --lineColorEvenSmall: rgb(255, 255, 255);
+  --lineColorClickSmall: rgb(229, 229, 229);
+  --lineColorHoverSmall: rgb(241, 242, 243);
+  --smallFontColor: rgb(150, 150, 150);
+  --smallFontColorHover: rgb(48, 48, 48);
+  --smallCanClick: rgb(105,105,105);
+  --smallFontRed: rgb(236, 65, 65);
+  --urlColor: rgb(80, 125, 175);
+  --urlColorHover: rgb(11, 88, 176);
+  --redLine: rgba(0,0,0,0);
+  --playAllButtonHover: rgb(204, 50, 50);
+  --noneButton: rgb(255, 255, 255);
+  --noneFont: rgb(178, 178, 178);
+  --stopBtnBk: rgb(245,245,245);
+  --stopColorDisplay: rgb(166, 166, 166);
+  --hotBk: rgb(229,229,229);
+  --hotFill: rgb(185,185,185);
+  --playLineBk: rgb(228, 228, 228);
+  --playLineLoading: rgb(206, 206, 206);
+  --shengyin: rgb(255, 255, 255);
+  --smallTips: rgb(61,61,61);
+  --lrcColorTop: red;
+  --lrcColorBottom: yellow;
+  --lrcColorBorderColor: unset;
+  --lrcColorBorderWidth: unset;
+  --lrcfontWeight: normal;
+  --audioBorderColor: rgb(219, 212, 212);
+  --selectColor: rgb(185, 197, 201);
+  --lrcDetail: rgb(95,95,95);
+  --lrcDetailHover: rgb(73,73,73);
+  --lrcDetailPlaying: rgb(0,0,0);
+  --lrcChoiceLine: rgb(204,203,203);
+  --lrcOptionBk: rgb(224,224,224);
+  --commitBkColor: rgba(245,245,245,1);
+  --iconSmallColor: rgb(102,102,102);
+  --iconSmallColorHover: rgb(51,51,51);
+  --paginFontHoverColor: rgb(245, 245, 245);
+  --paginBkBtnColor: rgb(255,255,255);
+  --paginDisableFontColor: rgb(204, 204, 204);
+  --paginFont: rgb(102,102,102);
+  --floatTagFont: rgb(48,48,48);
+  --floatTagBk: rgb(241,241,241);
+  --floatTagHover: rgb(225,225,225);
+  --pointOutBorder: rgb(0,0,0,.2);
+  --commitBlockBorderColor: rgb(229,229,229);
+  --commitBlockColor: rgb(255,255,255);
+  --commitBlockScrollLine: rgb(255,255,255);
+  --commitBlockScrollButton: rgb(224,224,224);
+  --emojiPointActive: rgb(153,153,153);
+  --emojiPointDisActive: rgb(242,242,242);
+  --FMAr: rgb(46,91,142);
+  --FMArHover: rgb(46,89,138);
+  --borderColor: rgb(216,216,216);
+  --pickBkColor: rgb(0, 0, 0);
+  --flowHoverColor: rgb(239, 239, 240);
+  --smallChoiceBlockColorDefault: rgb(242, 242, 242);
+  --smallChoiceBlockColorHover: rgb(231, 231, 231);
+  --smallChoiceBlockColorClick: rgb(191, 191, 191);
+  --myDialogBk: rgb(255, 255, 255);
+  --rightButtonhover: rgb(242, 242, 242);
+  --quickBk: rgb(255, 255, 255);
+  --quickBkStop: rgb(223, 225, 226);
+  --followRightBk: rgb(245, 245, 247);
+  --fontColorOneself: rgb(0, 0, 0,.7);
+}
+
+// NMblack 暗色主题
+.theme-dark {
+  --primaryColor: rgb(236,65,65);
+  --broundColor: rgba(34,34,37,1);
+  --radioBkColor: rgb(34,34,37);
+  --otherBkColor: rgb(43,43,43);
+  --otherBkColorOp: rgb(43,43,43,.7);
+  --mainbanBkColor: rgb(54,54,54);
+  --fontColor: rgba(255,255,255,.7);
+  --fontColorHover: rgb(255,255,255);
+  --spanColorHover: rgb(66, 66, 66);
+  --splitLineColor: rgb(61, 61, 64);
+  --lineColorOdd: rgb(47, 47, 47);
+  --lineColorEven: rgb(43, 43, 43);
+  --lineColorClick: rgb(65, 65, 65);
+  --smallFontColor: rgb(105, 105, 105);
+  --smallFontColorHover: rgb(212,212,212);
+  --leftClickColor: rgb(51, 51, 51);
+  --urlColor: rgb(133, 185, 230);
+  --urlColorHover: rgb(179, 206, 229);
+  --redLine: rgb(116, 10, 10);
+  --playAllButtonHover: rgb(217, 63, 63);
+  --lineColorHover: rgb(55, 55, 55);
+  --noneButton: rgb(57, 57, 57);
+  --noneFont: rgb(116, 116, 116);
+  --hotBk: rgb(58, 58, 58);
+  --hotFill: rgb(68, 68, 68);
+  --smallCanClick: rgb(138,138,138);
+  --stopBtnBk: rgb(43,43,46);
+  --stopColorDisplay: rgb(110, 110, 112);
+  --playLineBk: rgb(57, 57, 59);
+  --playLineLoading: rgb(77, 77, 79);
+  --shengyin: rgb(37, 37, 37);
+  --lineColorOddSmall: rgb(54, 54, 54);
+  --lineColorEvenSmall: rgb(58, 58, 58);
+  --lineColorClickSmall: rgb(75, 75, 75);
+  --lineColorHoverSmall: rgb(62, 62, 62);
+  --smallTips: rgb(35, 35, 35);
+  --audioBorderColor: rgb(53, 53, 53);
+  --selectColor: rgb(85, 85, 85);
+  --lrcDetail: rgb(107, 107, 107);
+  --lrcDetailHover: rgb(255, 255, 255);
+  --lrcDetailPlaying: rgb(255, 255, 255);
+  --lrcChoiceLine: rgb(85,85,85);
+  --lrcOptionBk: rgb(58,58,58);
+  --commitBkColor: rgba(51,51,51,1);
+  --iconSmallColor: rgb(138,138,138);
+  --iconSmallColorHover: rgb(212,212,212);
+  --paginFontHoverColor: rgb(40, 43, 50);
+  --paginBkBtnColor: rgb(57,57,57);
+  --paginDisableFontColor: rgb(87, 87, 87);
+  --paginFont: rgb(136,136,136);
+  --floatTagFont: rgb(216,216,216);
+  --floatTagBk: rgb(62,62,62);
+  --floatTagHover: rgb(80,80,80);
+  --pointOutBorder: rgb(0,0,0,.4);
+  --commitBlockBorderColor: rgb(39,39,39);
+  --commitBlockColor: rgb(58,58,58);
+  --commitBlockScrollLine: rgb(43,43,43);
+  --commitBlockScrollButton: rgb(64,64,64);
+  --emojiPointActive: rgb(103,103,103);
+  --emojiPointDisActive: rgb(48,48,48);
+  --FMAr: rgb(80,125,175);
+  --FMArHover: rgb(11,88,176);
+  --borderColor: rgb(81,81,81);
+  --pickBkColor: rgb(41, 43, 47);
+  --flowHoverColor: rgb(53, 54, 56);
+  --smallChoiceBlockColorDefault: rgb(52, 52, 52);
+  --smallChoiceBlockColorHover: rgb(61, 61, 61);
+  --smallChoiceBlockColorClick: rgb(95, 95, 95);
+  --myDialogBk: rgb(54, 54, 54);
+  --rightButtonhover: rgb(74, 74, 74);
+  --quickBk: rgb(56, 56, 56);
+  --quickBkStop: rgb(46, 46, 46);
+  --followRightBk: rgb(46, 46, 46);
+  --fontColorOneself: rgba(255,255,255,.7);
+}
+
+// 白色主题
+.theme-white {
+  --primaryColor: rgb(236,65,65);
+  --broundColor: rgba(245,245,245,1);
+  --MainTitle: rgb(49,49,49);
+  --MainMenu: rgba(0,0,0,.7);
+  --MainMenuHover: rgb(0,0,0);
+}
+
+// oneself 状态的特殊处理
+.theme-dark.oneself {
+  --broundColor: rgba(34,34,37,.8);
+}
+
+.theme-white.oneself {
+  --broundColor: rgba(245,245,245,.8);
+}
+
+// 自定义颜色主题 - 用于ColorPick组件和ColorBlock组件
+.theme-custom {
+  // 自定义颜色会通过CSS变量动态设置
+}
+
+.theme-custom.oneself {
+  // oneself状态下的自定义颜色透明度调整
+}
+
 .el-overlay{
     -webkit-app-region: no-drag;
     background-color: rgba(0, 0, 0, 0);
