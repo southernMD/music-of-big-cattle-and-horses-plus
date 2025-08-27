@@ -1,7 +1,8 @@
 import request from "axios";
 
 export const port = window.electron.ipcRenderer.sendSync('server-port') || 2233;
-const baseURL = import.meta.env.MODE === 'development' ? `/api/netease` : `http://localhost:${port}/api/netease`
+// const baseURL = import.meta.env.MODE === 'development' ? `/api/netease` : `http://localhost:${port}/api/netease`
+const baseURL = `/api/netease`
 const axios = request.create({
     baseURL,
     timeout: 30000,

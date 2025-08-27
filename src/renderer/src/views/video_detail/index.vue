@@ -7,6 +7,12 @@
           <h1>
             {{ activeVideo.title }}
           </h1>
+          <div class="btn" :class="{ 'btn-oneself': globalVar.oneself == 1 }" @click="exportVideo">
+            <i class="iconfont icon-xiazai1"></i>
+            <div class="txt">
+              <span>导出</span>
+            </div>
+          </div>
         </div>
         <div class="describe">
           <span class="txt" ref="des_txt" >
@@ -78,7 +84,7 @@ const loadingVideoId = toRef(videoPinia, 'loadingVideoId')
 const loadingVideoFolderId = toRef(videoPinia, 'loadingVideoFolderId')
 
 
-const activeVideo: Ref<video_detail_view> = ref({
+const activeVideo: Ref<videoDetailView> = ref({
   id: 0,
   src: "",
   title: "发生错误",
@@ -440,6 +446,19 @@ const broadcast = new BroadcastChannel('cover')
 broadcast.addEventListener("message",(event)=>{
   video_detail_view.value![0].coverPath = event.data.cover
 })
+
+const exportVideo = async () => {
+  const a = document.createElement('a')
+  a.href = vide_url.value
+  a.download = `${activeVideo.value.title}.mp4`
+  document.body.appendChild(a)
+  a.click()
+  
+  // 清理创建的元素
+  setTimeout(() => {
+    document.body.removeChild(a)
+  }, 100)
+}
 </script>
 
 <style scoped lang="less">
@@ -474,15 +493,51 @@ main {
       line-height: 2.8rem;
       font-weight: 700;
       overflow: hidden;
-      display: block;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       max-height: 5.6rem;
-      -webkit-line-clamp: 2;
-      display: box;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      text-overflow: ellipsis;
-      white-space: normal;
       margin-bottom: 10px;
+      
+      h1 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        text-overflow: ellipsis;
+        white-space: normal;
+        margin: 0;
+        flex: 1;
+      }
+      
+      .btn {
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        min-width: 100px;
+        height: 32px;
+        font-size: 14px;
+        border-radius: 2em;
+        border: var(--splitLineColor, #e0e0e0) 1px solid;
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        background-color: var(--stopBtnBk, #f5f5f5);
+        padding: 0 1em;
+        margin-left: 1rem;
+
+        .txt span {
+          color: @font-color;
+        }
+
+        &:hover {
+          background-color: @span-color-hover !important;
+        }
+      }
+      
+      .btn-oneself:hover {
+        background-color: rgb(66, 66, 66) !important;
+      }
     }
 
     .describe {

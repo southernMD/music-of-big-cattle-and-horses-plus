@@ -1,4 +1,4 @@
-interface video_detail_view{
+interface videoDetailView{
     id:number;
     src:Blob | string;
     title:string;

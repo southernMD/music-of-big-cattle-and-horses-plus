@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import { useGlobalVar, useVideo } from '@renderer/store';
-import { ComponentInternalInstance, getCurrentInstance, nextTick, onMounted, Ref, ref, toRaw, toRef, watch, onActivated, onDeactivated, WatchStopHandle } from 'vue'
+import { nextTick , Ref, ref, toRaw, toRef, watch, onActivated, onDeactivated, WatchStopHandle } from 'vue'
 import type { videoFolderList, VideoInfo, AddVideoInfo, videoFolder, EditVideoInfo, videoSearchInfo } from './indexType.d.ts';
 
 import pinyin from "pinyin";
