@@ -779,5 +779,29 @@ canvas{
     color: @font-color;
 }
 
+:deep(.el-radio-group) {
+    label {
+        --el-radio-input-border: var(--smallFontColor) 1px solid;
+        --el-radio-input-bg-color: none;
+        --el-radio-input-border-color-hover: @font-color-hover;
+        height: 25px;
 
+        .el-radio__label {
+            font-size: 13px;
+            color: @font-color-oneself;
+        }
+
+    }
+
+    .is-checked {
+        .el-radio__inner {
+            border-color: @primary-color;
+            background-color: @primary-color;
+        }
+
+        .el-radio__label {
+            color: @primary-color;
+        }
+    }
+}
 </style>
