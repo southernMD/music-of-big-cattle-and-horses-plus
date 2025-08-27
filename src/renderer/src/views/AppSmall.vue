@@ -1,7 +1,6 @@
 <template>
     <div class="AppSmall">
         <img src="" id="mainBackground" style="display: none;">
-        <video hidden src="" ref="video" id="mainBackgroundVideo" :muted="true" loop type="video/mp4"></video>
         <canvas ref="videoCanvas"></canvas>
         <MyMainMenu></MyMainMenu>
         <!-- <LoadingBig></LoadingBig> -->
@@ -44,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, onMounted, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect, onErrorCaptured, ComponentPublicInstance } from 'vue'
+import { toRef, onMounted, onBeforeUnmount, Ref, nextTick, provide, ref, watch, shallowRef, toRaw,ShallowRef, inject,defineAsyncComponent, watchEffect, onErrorCaptured, ComponentPublicInstance } from 'vue'
 import { useMainMenu, useGlobalVar, useBasicApi, useMain,useNM } from '@renderer/store'
 const MusicRadio = defineAsyncComponent(() =>
     import('@renderer/components/MusicRadio/index.vue'))
@@ -129,30 +128,156 @@ onMounted(()=>{
     window.electron.ipcRenderer.send('renderer-ready')
 })
 const videoCanvas = ref()
-const video = ref()
 let context
-window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
+let animationFrameId: number | null = null
+let currentVideo: HTMLVideoElement | null = null
+let isVideoLoading = false // 防止重复加载
+
+// 停止当前的视频渲染
+const stopVideoRendering = () => {
+    console.log('Stopping video rendering...')
+
+    isVideoLoading = false // 重置加载标志
+
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+        animationFrameId = null
+    }
+
+    if (currentVideo) {
+        try {
+            // 移除所有事件监听器（使用保存的引用）
+            if (currentVideo._handleLoadedMetadata) {
+                currentVideo.removeEventListener('loadedmetadata', currentVideo._handleLoadedMetadata)
+            }
+            if (currentVideo._handlePlay) {
+                currentVideo.removeEventListener('play', currentVideo._handlePlay)
+            }
+            if (currentVideo._handleError) {
+                currentVideo.removeEventListener('error', currentVideo._handleError)
+            }
+
+            // 停止视频
+            currentVideo.pause()
+            currentVideo.currentTime = 0
+            currentVideo.src = ''
+            currentVideo.load() // 重置video元素
+
+            console.log('Video stopped and cleaned up')
+        } catch (err) {
+            console.warn('Error stopping video:', err)
+        } finally {
+            currentVideo = null
+        }
+    }
+}
+
+// 开始视频渲染
+const startVideoRendering = (videoSrc: string) => {
+    console.log('Starting video rendering with src:', videoSrc)
+
+    // 防止重复加载
+    if (isVideoLoading) {
+        console.log('Video is already loading, skipping...')
+        return
+    }
+
+    isVideoLoading = true
+
+    // 先停止之前的渲染
+    stopVideoRendering()
+
+    // 创建新的video元素（不添加到DOM）
+    const video = document.createElement('video')
+    video.muted = true
+    video.loop = true
+    video.preload = 'metadata'
+    video.playsInline = true // 防止全屏播放
+    currentVideo = video
+
+    // 设置canvas上下文
+    if (!context && videoCanvas.value) {
+        context = videoCanvas.value.getContext('2d')
+    }
+
+    // 定义事件处理函数，这样可以正确移除
+    const handleLoadedMetadata = () => {
+        console.log('Video metadata loaded')
+        if (videoCanvas.value && context && currentVideo) {
+            videoCanvas.value.width = currentVideo.videoWidth
+            videoCanvas.value.height = currentVideo.videoHeight
+            context.imageSmoothingEnabled = false
+        }
+    }
+
+    const handlePlay = () => {
+        console.log('Video started playing')
+        isVideoLoading = false // 视频开始播放，重置加载标志
+
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId) // 确保没有重复的动画帧
+        }
+
+        const drawFrame = () => {
+            if (context && currentVideo && !currentVideo.paused && !currentVideo.ended) {
+                try {
+                    context.drawImage(currentVideo, 0, 0, videoCanvas.value.width, videoCanvas.value.height)
+                    animationFrameId = requestAnimationFrame(drawFrame)
+                } catch (err) {
+                    console.warn('Draw frame failed:', err)
+                    // 停止渲染循环
+                    animationFrameId = null
+                }
+            }
+        }
+        drawFrame()
+    }
+
+    const handleError = (err) => {
+        console.error('Video loading error:', err)
+        console.error('Video error details:', {
+            error: currentVideo?.error,
+            networkState: currentVideo?.networkState,
+            readyState: currentVideo?.readyState,
+            src: currentVideo?.src
+        })
+        isVideoLoading = false // 重置加载标志
+        stopVideoRendering()
+    }
+
+    // 添加事件监听器
+    video.addEventListener('loadedmetadata', handleLoadedMetadata)
+    video.addEventListener('play', handlePlay)
+    video.addEventListener('error', handleError)
+
+    // 保存事件处理函数的引用，用于清理
+    video._handleLoadedMetadata = handleLoadedMetadata
+    video._handlePlay = handlePlay
+    video._handleError = handleError
+
+    // 设置视频源并播放
+    video.src = videoSrc
+    video.load() // 确保重新加载
+
+    video.play().catch(err => {
+        console.warn('Video play failed:', err)
+        isVideoLoading = false // 重置加载标志
+        stopVideoRendering()
+    })
+}
+
+window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag, filePath }) => {
     if (!flag) globalVar.loadingMp4Bk = true
     const port = window.electron.ipcRenderer.sendSync('server-port');
-    nextTick(()=>{
-        video.value.src = `http://127.0.0.1:${port}/api/video?path=${filePath}`
-        video.value.play()
-        context = videoCanvas.value.getContext('2d')
 
-        video.value.addEventListener('loadedmetadata',()=>{
-            videoCanvas.value.width = video.value.videoWidth;
-            videoCanvas.value.height = video.value.videoHeight;
-            context.imageSmoothingEnabled = false;
-        })
-        video.value.addEventListener("play", function () {
-            const drawFrame = () => {
-                if (context && !video.value.paused && !video.value.ended) {
-                    context.drawImage(video.value, 0, 0, videoCanvas.value.width, videoCanvas.value.height);
-                    requestAnimationFrame(drawFrame);
-                }
-            };
-            drawFrame();
-        })
+    nextTick(() => {
+        const videoSrc = `http://127.0.0.1:${port}/api/video?path=${filePath}`
+        startVideoRendering(videoSrc)
+
+        // 显示canvas，隐藏图片背景
+        if (videoCanvas.value) {
+            videoCanvas.value.style.display = 'block'
+        }
         const h = document.getElementById('mainBackground') as HTMLImageElement
         h.style.display = 'none'
         h.src = ''
@@ -174,6 +299,12 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
 
         MainMenu.colorBlock = '.mp4'
         nextTick(()=>{
+            // 使用自定义主题类处理视频背景
+            const html = document.documentElement
+            html.classList.remove('theme-dark', 'theme-white')
+            html.classList.add('theme-custom', 'oneself')
+
+            // 只设置必要的变量
             document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
             document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
             document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
@@ -185,6 +316,20 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag,filePath }) => {
         })
     // })
 })
+
+// 组件卸载时清理视频资源
+onBeforeUnmount(() => {
+    stopVideoRendering()
+})
+
+// 监听主题切换，停止视频渲染
+watch(() => MainMenu.colorBlock, (newValue, oldValue) => {
+    console.log(newValue);
+    if (newValue === '.jpg') {
+        stopVideoRendering()
+    }
+})
+
 window.electron.ipcRenderer.on('mp4-error',({},{ msg })=>{
     alert(msg)
 })
@@ -204,9 +349,9 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
         const h: any = document.getElementById('mainBackground') as HTMLImageElement
         h.src = newUrl
         h.style.display = 'block'
-        const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-        v.pause();
-        v.src = ''
+
+        // 停止视频渲染
+        stopVideoRendering()
         videoCanvas.value.style.display = 'none'
     };
     // const h = document.querySelector('#header') as HTMLElement

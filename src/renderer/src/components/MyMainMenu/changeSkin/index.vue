@@ -131,15 +131,15 @@ const upload = ()=>{
 
 const recover = ()=>{
     const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-    v.src = ''
+    if(v)v.src = ''
     const h:any = document.getElementById('mainBackground') as HTMLImageElement
-    h.src = ''
+    if(h)h.src = ''
     window.electron.ipcRenderer.send('recove-background')
     changeNMred()
     localStorage.setItem('oneself','0')
     globalVar.oneself = 0
     const s = document.getElementById('songDetail') as HTMLImageElement
-    s.style.backgroundImage = ''
+    if(s)s.style.backgroundImage = ''
 }
 
 // window.electron.ipcRenderer.on('ffmpeg-error',()=>{

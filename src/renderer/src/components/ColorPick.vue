@@ -16,6 +16,7 @@ import { onMounted,toRef,watch,getCurrentInstance,ComponentInternalInstance,next
 import { hsl } from '../utils/hsl'
 import {getPxColor} from '../utils/getCanvasColor'
 import {useMainMenu,useGlobalVar} from '@renderer/store'
+import { applyCustomColorTheme } from '@renderer/hooks/useColor'
 import icon from '@renderer/assets/icon.png'
 
 const MainMenu = useMainMenu();
@@ -59,26 +60,17 @@ const beginMove = (e: MouseEvent) => {
     MainMenu.iconSrc = icon
     MainMenu.colorBlock = 'Other'
 
-    // 切换到自定义主题类
-    const html = document.documentElement
-    html.classList.remove('theme-dark', 'theme-white')
-    html.classList.add('theme-custom')
-
-    if(globalVar.oneself) {
-        html.classList.add('oneself')
-    } else {
-        html.classList.remove('oneself')
-    }
+    // 使用新的主题应用函数
+    applyCustomColorTheme({
+        MainTitle: 'rgb(255, 255, 255)',
+        MainMenu: 'rgba(255, 255, 255,.7)',
+        MainMenuHover: 'rgb(255, 255, 255)'
+    }, globalVar.oneself === 1)
 
     localStorage.setItem('colorBlock','Other');
     localStorage.setItem('MainTitle',`255, 255, 255`)
     localStorage.setItem('MainMenu',`255, 255, 255,.7`)
     localStorage.setItem('MainMenuHover',`255, 255, 255`)
-
-    // 只设置必要的颜色变量（自定义颜色需要动态设置）
-    document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-    document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-    document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
 }
 
 
@@ -94,7 +86,10 @@ function movingFn(e: MouseEvent) {
         let ctx = Hue.getContext('2d') as CanvasRenderingContext2D;
         let imageData = ctx.getImageData(0, 0, Hue.width, Hue.height)
         let color = getPxColor(imageData, moveDistance, 2);
-        document.documentElement.style.setProperty(`--bottomLinearColor`, `hsl(${hsl(color)[0]}, 100%, 70%)`)
+        // 使用新的主题应用函数设置底部渐变色
+        applyCustomColorTheme({
+            bottomLinearColor: `hsl(${hsl(color)[0]}, 100%, 70%)`
+        }, globalVar.oneself === 1)
         //取出下侧颜色 重画canvas
         ctx = SMask.getContext('2d') as CanvasRenderingContext2D;
         let linearGradient = ctx.createLinearGradient(0, 0, 240, 0) //创建线性渐变
@@ -107,9 +102,12 @@ function movingFn(e: MouseEvent) {
         imageData = ctx.getImageData(0, 0, SMask.width, SMask.height)
         color = getPxColor(imageData, baseB, 2);
 
-        // 自定义颜色需要动态设置CSS变量
-        document.documentElement.style.setProperty(`--primaryColor`, `rgb(${color[0]}, ${color[1]}, ${color[2]})`)
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},${globalVar.oneself ? '.8' : '1'})`)
+        // 使用新的主题应用函数设置主色调和背景色
+        applyCustomColorTheme({
+            primaryColor: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
+            broundColor: `rgba(${color[0]}, ${color[1]}, ${color[2]},${globalVar.oneself ? '.8' : '1'})`
+        }, globalVar.oneself === 1)
+
         localStorage.setItem('primaryColor',`${color[0]},${color[1]},${color[2]}`)
         localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},${globalVar.oneself ? '.8' : '1'}`)
         MainMenu.primaryColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
@@ -122,9 +120,12 @@ function movingFn(e: MouseEvent) {
         let imageData = ctx.getImageData(0, 0, SMask.width, SMask.height)
         let color = getPxColor(imageData, moveDistance, 2);
 
-        // 自定义颜色需要动态设置CSS变量
-        document.documentElement.style.setProperty(`--primaryColor`, `rgb(${color[0]}, ${color[1]}, ${color[2]})`)
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(${color[0]}, ${color[1]}, ${color[2]},${globalVar.oneself ? '.8' : '1'})`)
+        // 使用新的主题应用函数设置主色调和背景色
+        applyCustomColorTheme({
+            primaryColor: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
+            broundColor: `rgba(${color[0]}, ${color[1]}, ${color[2]},${globalVar.oneself ? '.8' : '1'})`
+        }, globalVar.oneself === 1)
+
         localStorage.setItem('primaryColor',`${color[0]},${color[1]},${color[2]}`)
         localStorage.setItem('broundColor',`${color[0]},${color[1]},${color[2]},${globalVar.oneself ? '.8' : '1'}`)
         MainMenu.primaryColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
@@ -143,8 +144,11 @@ function endMove(): void {
 
 //canvas设置
 onMounted(() => {
-    document.documentElement.style.setProperty(`--btnT`, `${Number(localStorage.getItem('baseT'))}px`)
-    document.documentElement.style.setProperty(`--btnB`, `${Number(localStorage.getItem('baseB'))}px`)
+    // 使用新的主题应用函数设置按钮位置
+    applyCustomColorTheme({
+        btnT: `${Number(localStorage.getItem('baseT'))}px`,
+        btnB: `${Number(localStorage.getItem('baseB'))}px`
+    }, globalVar.oneself === 1)
     Hue = document.querySelector('#canvasHue') as HTMLCanvasElement;
     SMask = document.querySelector('#canvasSMask') as HTMLCanvasElement;
     //上颜色
@@ -170,7 +174,10 @@ onMounted(() => {
 
     let imageData = ctx.getImageData(0, 0, Hue.width, Hue.height)
     let color = getPxColor(imageData, Number(localStorage.getItem('baseT')), 2);
-    document.documentElement.style.setProperty(`--bottomLinearColor`, `hsl(${hsl(color)[0]}, 100%, 70%)`)
+    // 使用新的主题应用函数设置底部渐变色
+    applyCustomColorTheme({
+        bottomLinearColor: `hsl(${hsl(color)[0]}, 100%, 70%)`
+    }, globalVar.oneself === 1)
     //下颜色
     ctx = SMask.getContext('2d') as CanvasRenderingContext2D;
     linearGradient = ctx.createLinearGradient(0, 0, 240, 0) //创建线性渐变

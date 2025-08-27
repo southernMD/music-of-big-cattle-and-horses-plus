@@ -9,6 +9,7 @@
 <script lang="ts" setup>
 import { getCurrentInstance, onMounted, toRef ,nextTick} from 'vue';
 import { getPxColor } from '@renderer/utils/getCanvasColor'
+import { applyTheme } from '@renderer/hooks/useColor'
 import icon from '@renderer/assets/icon.png'
 import iconRed from '@renderer/assets/iconRed.png'
 import pickColorOther from '@renderer/assets/pickColorOther.json'
@@ -90,13 +91,16 @@ const showColor = () => {
             html.classList.remove('oneself')
         }
 
-        // 自定义颜色需要动态设置CSS变量
-        document.documentElement.style.setProperty(`--primaryColor`, `rgb(${arr[0]}, ${arr[1]}, ${arr[2]})`)
-        document.documentElement.style.setProperty(`--broundColor`, `rgba(${arr[0]}, ${arr[1]}, ${arr[2]},${globalVar.oneself ? '.8' : '1'})`)
-        document.documentElement.style.setProperty(`--MainTitle`, `rgb(255, 255, 255)`)
-        document.documentElement.style.setProperty(`--MainMenu`, `rgba(255, 255, 255,.7)`)
-        document.documentElement.style.setProperty(`--MainMenuHover`, `rgb(255, 255, 255)`)
-
+        // 使用新的主题应用函数设置自定义颜色
+        // debugger
+        applyTheme($el?.props.index,globalVar.oneself === 1,{
+            primaryColor: `rgb(${arr[0]}, ${arr[1]}, ${arr[2]})`,
+            broundColor: `rgba(${arr[0]}, ${arr[1]}, ${arr[2]},${globalVar.oneself ? '.8' : '1'})`,
+            MainTitle: `rgb(255, 255, 255)`,
+            MainMenu: `rgba(255, 255, 255,.7)`,
+            MainMenuHover: `rgb(255, 255, 255)`
+        })
+        // debugger
         localStorage.setItem('primaryColor',`${arr[0]},${arr[1]},${arr[2]}`)
         localStorage.setItem('broundColor',`${arr[0]},${arr[1]},${arr[2]},${globalVar.oneself ? '.8' : '1'}`)
         localStorage.setItem('MainTitle',`255, 255, 255`)

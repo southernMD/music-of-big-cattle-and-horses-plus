@@ -294,10 +294,20 @@
 // 自定义颜色主题 - 用于ColorPick组件和ColorBlock组件
 .theme-custom {
   // 自定义颜色会通过CSS变量动态设置
+  // 这些变量会在JavaScript中动态设置：
+  // --primaryColor: 主色调
+  // --broundColor: 背景色
+  // --MainTitle: 主标题颜色
+  // --MainMenu: 主菜单颜色
+  // --MainMenuHover: 主菜单悬停颜色
+  // --bottomLinearColor: 底部渐变色（ColorPick专用）
+  // --btnT: 按钮T位置（ColorPick专用）
+  // --btnB: 按钮B位置（ColorPick专用）
 }
 
 .theme-custom.oneself {
   // oneself状态下的自定义颜色透明度调整
+  // --broundColor 会被设置为带透明度的版本
 }
 
 .el-overlay{

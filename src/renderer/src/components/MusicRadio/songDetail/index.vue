@@ -503,6 +503,7 @@ const prevenDrag = (e: MouseEvent) => {
 };
 
 let BKbase64 = inject<Ref<string>>('BKbase64') as Ref<string>
+//TODO:SongDetail的背景图片被背景色挡住
 watch(BKbase64, () => {
   const h: any = $el.refs.songDetail as HTMLElement
   if (h) h.style.backgroundImage = 'url(' + BKbase64.value + ')'
