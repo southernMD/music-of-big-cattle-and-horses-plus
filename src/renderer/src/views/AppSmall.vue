@@ -191,8 +191,7 @@ const startVideoRendering = (videoSrc: string) => {
     const video = document.createElement('video')
     video.muted = true
     video.loop = true
-    video.preload = 'metadata'
-    video.playsInline = true // 防止全屏播放
+    video.type = 'video/mp4'
     currentVideo = video
 
     // 设置canvas上下文
@@ -854,13 +853,13 @@ const searchUpdate = async()=>{
     let res =  await githubUpdate()
     if(res == null){
     }else{
-        const v = res.data.name.split('v')[1]
+        const v = res.name.split('v')[1]
         console.log(v,globalVar.setting.version);
         if(v <= globalVar.setting.version){
         }else{
-            newVersion.value = res.data.name
+            newVersion.value = res.name
             updateFlag.value = true
-            url.value = res.data.assets[0].browser_download_url
+            url.value = res.assets[0].browser_download_url
             // const assets = response.data.assets;
             // console.log(assets,response.data);
         }
