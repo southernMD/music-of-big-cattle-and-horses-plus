@@ -9,7 +9,7 @@ import stringSimilarity from "string-similarity";
 const getKuwoSongId = async (keyword: string): Promise<string | null> => {
     try {
         const result = await fetch(`http://search.kuwo.cn/r.s?&correct=1&stype=comprehensive&encoding=utf8&rformat=json&mobi=1&show_copyright_off=1&searchapi=6&all=${keyword}`).then(res => res.json()).catch((err) => console.log(err))
-        log.info("获取到酷我搜索结果" + result)
+        log.info("获取到酷我搜索结果",result)
         if (
             !result ||
             result.content.length < 2 ||

@@ -6,7 +6,7 @@ import fs from 'fs'
 import os from 'os'
 import Server from './server/index'
 // import httpSever from './http/app'
-import { createWindow, lrcwindow, dragWindw } from './windows'
+import { createWindow, lrcWindow, dragWindow  } from './windows'
 import log,{cleanupOldLogs} from './utils/log'
 import "./dowloadBiliBili"
 import { findKeyByValue ,noPrintName } from './utils/findKeyByValue'
@@ -55,8 +55,8 @@ if (!isAppAlreadyRunning) {
     // httpSever()
     const mainwin = await createWindow(path)
     Server()
-    const lrcwin = lrcwindow()
-    const dragWin = dragWindw()
+    const lrcwin = lrcWindow()
+    const dragWin = dragWindow ()
     //托盘事件
 
     app.on('activate', function () {

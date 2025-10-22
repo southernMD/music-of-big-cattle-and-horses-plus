@@ -80,6 +80,7 @@ yarn build:win
 - 在v1.1.1版本后,dev模式下音频可视化因为音乐链接跨域问题无法显示，build模式下无跨域问题。
 - <del>dev下，下载后，在歌单内无法播放已下载歌曲</del>
 - <del>在播放本地歌曲时，会向歌单列表重复添加内容</del>
+- 开发环境下缺失resources文件夹生成
   
 ### 浏览
 ![Alt Text](https://cdn.jsdelivr.net/gh/southernMD/images@main/img/202305221528523.png)

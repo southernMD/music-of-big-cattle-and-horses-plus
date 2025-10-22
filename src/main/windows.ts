@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen, dialog, nativeTheme, nativeImage, globalShortcut, Menu, Tray, MessageChannelMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, screen, dialog, nativeTheme, nativeImage, globalShortcut, Menu, Tray, MessageChannelMain, session } from 'electron'
 import { join, extname, parse, resolve, basename } from 'path'
 import fs from 'fs'
 import exfs from 'fs-extra'
@@ -1132,6 +1132,8 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     })
   })
 
+  //登录子窗口
+  ipcMain.on("open-login-web", () => loginWindow(mainWindow!));
   return mainWindow
 }
 
@@ -1157,7 +1159,7 @@ const pares163Key = (comment: string) => {
 }
 
 
-export const lrcwindow = (): BrowserWindow => {
+export const lrcWindow = (): BrowserWindow => {
   const child = new BrowserWindow({
     frame: false, //隐藏默认控件
     transparent: true,
@@ -1259,7 +1261,7 @@ export const lrcwindow = (): BrowserWindow => {
   return child
 }
 
-export const dragWindw = (): BrowserWindow => {
+export const dragWindow  = (): BrowserWindow => {
   const win = new BrowserWindow({
     width: 100,
     height: 23,
@@ -1337,6 +1339,74 @@ export const dragWindw = (): BrowserWindow => {
   return win
 }
 
+export const loginWindow = async (mainWindow:BrowserWindow):Promise<void> =>{
+  let loginTimer: NodeJS.Timeout;
+  const loginSession = session.fromPartition("persist:login");
+  // 清除 Cookie
+  await loginSession.clearStorageData({
+    storages: ["cookies", "localstorage"],
+  });
+
+    const loginWin = new BrowserWindow({
+    parent: mainWindow,
+    title: "登录网易云音乐（ 若遇到无响应请关闭后重试 ）",
+    width: 1280,
+    height: 800,
+    center: true,
+    autoHideMenuBar: true,
+    icon,
+    // resizable: false,
+    // movable: false,
+    // minimizable: false,
+    // maximizable: false,
+    webPreferences: {
+      session: loginSession,
+      sandbox: false,
+      webSecurity: false,
+      preload: join(__dirname, "../preload/index.mjs"),
+    },
+  });
+
+    // 打开网易云
+  loginWin.loadURL("https://music.163.com/#/login/");
+
+  // 阻止新窗口创建
+  loginWin.webContents.setWindowOpenHandler(() => {
+    return { action: "deny" };
+  });
+
+  // 检查是否登录
+  const checkLogin = async () => {
+    try {
+      loginWin.webContents.executeJavaScript(
+        "document.title = '登录网易云音乐（ 若遇到无响应请关闭后重试 ）'",
+      );
+      // 是否登录？判断 MUSIC_U
+      const MUSIC_U = await loginSession.cookies.get({
+        name: "MUSIC_U",
+      });
+      if (MUSIC_U && MUSIC_U?.length > 0) {
+        if (loginTimer) clearInterval(loginTimer);
+        const value = `MUSIC_U=${MUSIC_U[0].value};`;
+        // 发送回主进程
+        mainWindow?.webContents.send("send-cookies", value);
+        loginWin.destroy();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // 循环检查
+  loginWin.webContents.once("did-finish-load", () => {
+    loginWin.show();
+    loginTimer = setInterval(checkLogin, 1000);
+    loginWin.on("closed", () => {
+      clearInterval(loginTimer);
+    });
+  });
+
+}
 
 //合并音频切片
 // ipcMain.on('save-music-pick',async(e,{name})=>{

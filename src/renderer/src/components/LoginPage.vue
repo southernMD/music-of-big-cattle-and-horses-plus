@@ -30,7 +30,7 @@
         </div>
         <div v-show="!otherLogin">
             <div class="title" >大牛马登录</div>
-            <div>
+            <div class="form-container">
                 <el-form :model="formLabelAlign" style="max-width: 460px" ref="ruleFormRef" :rules="rules"  @mousedown.stop>
                     <el-form-item prop="name">
                         <el-input ref="inputRef1" :placeholder="wayName" v-model="formLabelAlign.name" @focus="inputFn(1)" @blur="inputRemove(1)"/>
@@ -46,8 +46,6 @@
                         </el-input>
                     </el-form-item>
                 </el-form>
-            </div>
-            <div>
                 <el-button class="login-button" @click="submit(ruleFormRef)">{{ way ? '注册' : '登录' }}</el-button>
                 <div class="reg-button" @click="way = !way">{{ way ? '登录' : '注册' }}</div>
             </div>
@@ -62,6 +60,7 @@ import { ref, Ref, onMounted, watch, toRef, onUnmounted, reactive, getCurrentIns
 import { useRouter } from 'vue-router';
 import {NMCode,NMReg,NMlogin} from '@renderer/api/niuma'
 import  { FormInstance, FormRules } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import p1 from '@renderer/assets/image/XW8rcLxOev.png'
 import p2 from '@renderer/assets/image/SgCjDdGyLg.png'
 import {modInput} from '../utils/modInput'
@@ -538,9 +537,17 @@ const inputRemove = (p:number)=>{
         margin-top: 100px;
     }
 
-    .el-form {
+    .form-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         margin-top: 20px;
+    }
+
+    .el-form {
         width: 60%;
+        margin-bottom: 20px;
     }
 
     .login-button {
@@ -548,13 +555,14 @@ const inputRemove = (p:number)=>{
         background-color: @primary-color;
         height: 40px;
         color: #ffffff;
+        margin-bottom: 10px;
     }
 
     .reg-button {
-        margin-top: 10px;
         border-bottom: 1px solid #000;
         padding-bottom: 1px;
         cursor: pointer;
+        text-align: center;
     }
 
     .blankAdd {

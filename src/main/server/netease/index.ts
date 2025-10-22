@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import NeteaseCloudMusicApi from 'NeteaseCloudMusicApi';
+import NeteaseCloudMusicApi from '@neteasecloudmusicapienhanced/api';
 import { pathCase } from "change-case";
 import log from '../../utils/log';
 
