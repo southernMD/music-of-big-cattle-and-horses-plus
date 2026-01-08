@@ -30,7 +30,7 @@
 [v0.0.8-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.8-beta/bingNMmusic-0.0.8-beta-setup.exe)优化启动<br>
 [v0.0.9-beta](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v0.0.9-beta/bingNMmusic-0.0.9-beta-setup.exe)支持播客<br>
 
-后续版本不再列出，自行重release内查看。
+后续版本不再列出，自行从release内查看。
 
 [目前最新的版本 v1.1.0](https://github.com/southernMD/music-of-big-cattle-and-horses-plus/releases/download/v1.1.0/bingNMmusic-1.1.0-setup.exe)<br>
 ## 克隆项目

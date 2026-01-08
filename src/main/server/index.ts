@@ -20,7 +20,7 @@ export default async() =>{
     ipcMain.on('server-port', (event) => {
         event.returnValue = port;
     });
-    app.listen(port, () => {
+    app.listen(port, '127.0.0.1', () => {
         console.log(`http open in ${port}`);
     })
 }

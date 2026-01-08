@@ -1,15 +1,17 @@
 import { is } from "@electron-toolkit/utils";
 import { ipcMain } from "electron";
 import * as fs from "fs";
-import fetch from 'node-fetch';
 import { join } from "path";
 import { Readable } from "stream";
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 import { BASE_PATH } from "./defaultMessage";
+import { WBI } from './wbiBiliBili'
+import fetch from 'node-fetch'
+import log from "./utils/log";
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15'
-let SESSDATA:string | undefined
-let TRANSCOED:boolean | undefined
+let SESSDATA: string | undefined
+let TRANSCOED: boolean | undefined
 const option = {
     headers: {
         'User-Agent': `${UA}`,
@@ -33,25 +35,37 @@ const getVideoMsg = async (videoPath) => {
             const { videoData } = JSON.parse(videoInfo[1]);
             return videoData;
         }
-    }catch (error) {
+    } catch (error) {
         throw error
     }
 };
 
 //获取视频清晰度列表
 const getAcceptQuality = async (cid, bvid) => {
-    const bfeId = ''
     const config = {
         headers: {
             'User-Agent': `${UA}`,
-            cookie: `SESSDATA=${SESSDATA};bfe_id=${bfeId}`
         },
         responseType: 'json'
     }
-    return await (await fetch(
-        `https://api.bilibili.com/x/player/playurl?cid=${cid}&bvid=${bvid}&qn=127&type=&otype=json&fourk=1&fnver=0&fnval=80&session=68191c1dc3c75042c6f35fba895d65b0`,
+    const newApiParams = await WBI(SESSDATA, {
+        cid: `${cid}`,
+        bvid: `${bvid}`,
+        qn: "127",
+        type: "",
+        otype: "json",
+        fourk: "1",
+        fnver: "0",
+        fnval: "80",
+        session: "68191c1dc3c75042c6f35fba895d65b0",
+        gaia_source:`${SESSDATA}`
+    })
+    log.info("请求b站链接",newApiParams)
+    const result = (await fetch(
+        `https://api.bilibili.com/x/player/wbi/playurl?${newApiParams}`,
         config
-    )).json()
+    ))
+    return await result.json()
 }
 
 
@@ -96,6 +110,8 @@ const downloadFile = async (url: string, webUrl: string, type: number, index: nu
         };
     }
 
+
+    //TODO: 修改流下载的实现变成使用node fetch官方api
     return fetch(url, { ...config, signal: abortController[index].signal })
         .then((response: Response) => {
             if (!response.ok) {
@@ -154,7 +170,7 @@ function weightComputed(arr) {
 }
 
 let ffmpegCommand: ffmpeg.FfmpegCommand | null;
-let intervalTimer:NodeJS.Timer | null;
+let intervalTimer: NodeJS.Timer | null;
 const dowloading = async (videoData: any, url: string, event: Electron.IpcMainEvent) => {
     abortController = Array(3).fill(new AbortController())
     loading = Array(3).fill(0)
@@ -192,7 +208,7 @@ const dowloading = async (videoData: any, url: string, event: Electron.IpcMainEv
     return combineVideo(combinePath, join(__dirname, BASE_PATH, nowTime), nowTime, event)
 }
 
-const combineVideo = async (combinePath: string[], basecombinePath: string, filename: string,event: Electron.IpcMainEvent) => {
+const combineVideo = async (combinePath: string[], basecombinePath: string, filename: string, event: Electron.IpcMainEvent) => {
     if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
         ffmpeg.setFfmpegPath(ffmpegPath.path);
     } else {
@@ -204,48 +220,48 @@ const combineVideo = async (combinePath: string[], basecombinePath: string, file
         cover: Buffer | undefined,
         filename: string
     }>((resolve, reject) => {
-        if(TRANSCOED){
+        if (TRANSCOED) {
             ffmpegCommand = ffmpeg()
-            .input(combinePath[0])
-            .input(combinePath[1])
-            .audioCodec('aac') // 使用 AAC 音频编码
-            .videoCodec('libx264') // 使用 H.264 视频编码
-            .outputOptions('-preset', 'fast') // 使用快速编码预设
-            .outputOptions('-crf', '23') // 设置质量（23 是默认值，越小质量越高，文件越大）
-        }else{
+                .input(combinePath[0])
+                .input(combinePath[1])
+                .audioCodec('aac') // 使用 AAC 音频编码
+                .videoCodec('libx264') // 使用 H.264 视频编码
+                .outputOptions('-preset', 'fast') // 使用快速编码预设
+                .outputOptions('-crf', '23') // 设置质量（23 是默认值，越小质量越高，文件越大）
+        } else {
             ffmpegCommand = ffmpeg()
-            .input(combinePath[0])
-            .input(combinePath[1])
-            .audioCodec('copy')
-            .videoCodec('copy')
+                .input(combinePath[0])
+                .input(combinePath[1])
+                .audioCodec('copy')
+                .videoCodec('copy')
         }
         ffmpegCommand!.on('start', () => {
         })
-        .on('progress', function ({ timemark }) {
-            event.reply('download-bilibili-downloading', { progress:  Math.round(pickTime(timemark) / pickTime(total) * 100)})
-        })
-        .on('end', () => {
-            const videoData: {
-                video: Buffer | undefined,
-                cover: Buffer | undefined,
-                filename: string
-            } = {
-                video: undefined,
-                cover: undefined,
-                filename
-            }
-            videoData.video = fs.readFileSync(basecombinePath + '.mp4')
-            videoData.cover = fs.readFileSync(basecombinePath + '.jpg')
-            resolve(videoData)
-            ffmpegCommand = null
-        })
-        .on('error', (err: any) => {
-            ffmpegCommand = null
-            reject(err)
-        }).on('codecData', ({ duration }) => {
-            total = duration
-        })
-        .save(basecombinePath + '.mp4')
+            .on('progress', function ({ timemark }) {
+                event.reply('download-bilibili-downloading', { progress: Math.round(pickTime(timemark) / pickTime(total) * 100) })
+            })
+            .on('end', () => {
+                const videoData: {
+                    video: Buffer | undefined,
+                    cover: Buffer | undefined,
+                    filename: string
+                } = {
+                    video: undefined,
+                    cover: undefined,
+                    filename
+                }
+                videoData.video = fs.readFileSync(basecombinePath + '.mp4')
+                videoData.cover = fs.readFileSync(basecombinePath + '.jpg')
+                resolve(videoData)
+                ffmpegCommand = null
+            })
+            .on('error', (err: any) => {
+                ffmpegCommand = null
+                reject(err)
+            }).on('codecData', ({ duration }) => {
+                total = duration
+            })
+            .save(basecombinePath + '.mp4')
     })
 }
 const pickTime = (time: string) => {
@@ -266,10 +282,10 @@ const handleDeleteFile = (filename: string) => {
         }
     })
 }
-let bilibiliFilename:string | null = null
-ipcMain.on('download-bilibili', async (event, { videoPath,sessdata,transcoed }) => {
+let bilibiliFilename: string | null = null
+ipcMain.on('download-bilibili', async (event, { videoPath, sessdata, transcoed }) => {
     try {
-        if(!sessdata || sessdata.trim() === '')throw new Error('SESSDATA is empty')
+        if (!sessdata || sessdata.trim() === '') throw new Error('SESSDATA is empty')
         SESSDATA = sessdata.trim()
         TRANSCOED = transcoed
         let videoData = await getVideoMsg(videoPath)
@@ -303,11 +319,11 @@ ipcMain.on('download-bilibili', async (event, { videoPath,sessdata,transcoed }) 
             throw new Error('获取视频信息失败')
         }
     } catch (error) {
-        if(error instanceof Error && error.name !== 'AbortError'){
+        if (error instanceof Error && error.name !== 'AbortError') {
             abortController.forEach(item => item.abort())
             ffmpegCommand?.kill("SIGTERM");
-            if(bilibiliFilename)handleDeleteFile(bilibiliFilename)
-            if(intervalTimer)clearInterval(intervalTimer)
+            if (bilibiliFilename) handleDeleteFile(bilibiliFilename)
+            if (intervalTimer) clearInterval(intervalTimer)
             intervalTimer = null
             bilibiliFilename = null
             ffmpegCommand = null
@@ -323,16 +339,16 @@ ipcMain.on("dueTo-del-nedd-close-ffmpeg", () => {
     try {
         abortController.forEach(item => item.abort())
         ffmpegCommand?.kill("SIGTERM");
-        if(bilibiliFilename)handleDeleteFile(bilibiliFilename)
-        if(intervalTimer)clearInterval(intervalTimer)
+        if (bilibiliFilename) handleDeleteFile(bilibiliFilename)
+        if (intervalTimer) clearInterval(intervalTimer)
         intervalTimer = null
         bilibiliFilename = null
         ffmpegCommand = null
         SESSDATA = undefined
         TRANSCOED = undefined
     } catch (error) {
-        if(bilibiliFilename)handleDeleteFile(bilibiliFilename)
-        if(intervalTimer)clearInterval(intervalTimer)
+        if (bilibiliFilename) handleDeleteFile(bilibiliFilename)
+        if (intervalTimer) clearInterval(intervalTimer)
         intervalTimer = null
         bilibiliFilename = null
         ffmpegCommand = null
