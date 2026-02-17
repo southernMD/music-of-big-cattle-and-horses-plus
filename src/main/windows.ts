@@ -30,18 +30,30 @@ import { id3Message } from './types'
 export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
   // let X: number, Y: number; //鼠标基于显示器的坐标
-  let screenMove: any = null;  //鼠标移动监听
+  // let screenMove: any = null;  //鼠标移动监听
   // const primaryDisplay = screen.getPrimaryDisplay()
   // const { width, height } = primaryDisplay.workAreaSize
   let fontColor
   let downloadPath
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    //查看文件夹resources是否存在
+    if (!fs.existsSync(join(__dirname, BASE_PATH))) {
+      fs.mkdirSync(join(__dirname, BASE_PATH))
+    }
+  }
+
   const background = await new Promise<string>((res, reject) => {
     fs.readFile(join(__dirname, BASE_PATH, 'color.json'), 'utf8', (err, jsonString) => {
       if (err) {
         // 文件不存在，创建文件并写入内容
-        fs.writeFileSync(join(__dirname, BASE_PATH, 'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
-        fontColor = "rgba(0,0,0,.7)"
-        res("rgb(255,255,255)")
+        try {
+          fs.writeFileSync(join(__dirname, BASE_PATH, 'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
+          fontColor = "rgba(0,0,0,.7)"
+          res("rgb(255,255,255)")
+        } catch (error) {
+          console.log(error);
+        }
+
       } else {
         // 文件存在，输出文件内容
         fontColor = JSON.parse(jsonString).color
@@ -74,7 +86,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     minWidth: 1020,
     title: '大牛马音乐',
     // autoHideMenuBar: true,
-    icon: !osColorTheme?icon:iconW,
+    icon: !osColorTheme ? icon : iconW,
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       webgl: true,
@@ -84,7 +96,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   mainWindow.setAppDetails({
     appId: '大牛马音乐'
   })
-  if(is.dev)mainWindow.webContents.toggleDevTools()
+  if (is.dev) mainWindow.webContents.toggleDevTools()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -106,13 +118,13 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         mainWindow.focus();
         let path = argv.slice(2).join(' ')
         if (path.endsWith('.mp3')) {
-          const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
+          const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path, title: basename(path) }, NodeID3.read(path))
           if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
             t.comment.text = pares163Key(t.comment.text)
           }
-          const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
-          
-          if(songIdObject && songIdObject!.value.length == 0){
+          const songIdObject = t.userDefinedText.find(item => item.description == 'song id')
+
+          if (songIdObject && songIdObject!.value.length == 0) {
             const endHash = (await getFileHashes([path]))
             songIdObject.value = endHash[0]
           }
@@ -129,13 +141,13 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   ipcMain.on('right-click', async ({ }, { path, flag }) => {
     if (!path.endsWith('.mp3')) path += '.mp3'
     try {
-      const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
+      const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path, title: basename(path) }, NodeID3.read(path))
       if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
         t.comment.text = pares163Key(t.comment.text)
       }
-      const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
-          
-      if(songIdObject && songIdObject!.value.length == 0){
+      const songIdObject = t.userDefinedText.find(item => item.description == 'song id')
+
+      if (songIdObject && songIdObject!.value.length == 0) {
         const endHash = (await getFileHashes([path]))
         songIdObject.value = endHash[0]
       }
@@ -155,13 +167,13 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     try {
       log.info(path)
       pathRead = setInterval(async () => {
-        const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
+        const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path, title: basename(path) }, NodeID3.read(path))
         if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
           t.comment.text = pares163Key(t.comment.text)
         }
-        const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
-          
-        if(songIdObject && songIdObject!.value.length == 0){
+        const songIdObject = t.userDefinedText.find(item => item.description == 'song id')
+
+        if (songIdObject && songIdObject!.value.length == 0) {
           const endHash = (await getFileHashes([path]))
           songIdObject.value = endHash[0]
         }
@@ -179,7 +191,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     clearInterval(pathRead)
   })
   //托盘事件
-  let appIcon = new Tray(!osColorTheme?icon:iconW)
+  let appIcon = new Tray(!osColorTheme ? icon : iconW)
   appIcon.on('double-click', () => {
     mainWindow.show()
   })
@@ -195,7 +207,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       }
     },
     {
-      label:'打开开发者工具',type:'normal',click:()=>{
+      label: '打开开发者工具', type: 'normal', click: () => {
         mainWindow.webContents.openDevTools()
       }
     }
@@ -589,7 +601,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       const Files = fs.readdirSync(downloadPath)
       const detail: any[] = []
       Files.forEach((item) => {
-        detail.push(Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path: downloadPath + '\\' + item,title: item},NodeID3.read(`${downloadPath}/${item}`)))
+        detail.push(Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path: downloadPath + '\\' + item, title: item }, NodeID3.read(`${downloadPath}/${item}`)))
       })
       e.reply('look-download-list-detail', detail)
     } else {
@@ -714,30 +726,30 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
       if (extname(path) == '.mp3') {
         console.log(event, path);
         if (event == 'add' || event == 'change') {
-          const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE),path,title: basename(path)},NodeID3.read(path))
-          
+          const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path, title: basename(path) }, NodeID3.read(path))
+
           if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
             t.comment.text = pares163Key(t.comment.text)
           }
-          const songIdObject = t.userDefinedText.find(item=>item.description == 'song id')
-          
-          if(songIdObject && songIdObject!.value.length == 0){
+          const songIdObject = t.userDefinedText.find(item => item.description == 'song id')
+
+          if (songIdObject && songIdObject!.value.length == 0) {
             const endHash = (await getFileHashes([path]))
             songIdObject.value = endHash[0]
           }
           paths.push(t);
           // clearTimeout(timer);
           // timer = setTimeout(() => {
-            console.log("发送前的值",paths.map(item=>item.userDefinedText));
-            mainWindow.webContents.send('local-music-paths-add', paths);
-            paths = [];
+          console.log("发送前的值", paths.map(item => item.userDefinedText));
+          mainWindow.webContents.send('local-music-paths-add', paths);
+          paths = [];
           // }, DELAY_MS);
         } else if (event == 'unlink') {
           delPath.push(path)
           // clearTimeout(timer2);
           // timer2 = setTimeout(() => {
-            mainWindow.webContents.send('local-music-paths-del', delPath);
-            delPath = [];
+          mainWindow.webContents.send('local-music-paths-del', delPath);
+          delPath = [];
           // }, DELAY_MS);
         }
       }
@@ -1063,14 +1075,14 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
         '-movflags', 'frag_keyframe+empty_moov+faststart',
         '-preset', 'faster', //以损失画质换取流畅度
         '-threads', 'auto',
-        "-crf","20"
+        "-crf", "20"
       )
       .on('progress', function ({ timemark }) {
         event.reply("save-video-progress", { progress: Math.ceil(pickTime(timemark) / pickTime(total) * 100) })
         console.log(Math.ceil(pickTime(timemark) / pickTime(total) * 100));
       }).on('error', function (err) {
         if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
-          event.reply("save-video-error", {err})
+          event.reply("save-video-error", { err })
           ffmpegCommand.kill('SIGTERM')
           console.log('An error occurred: ' + err.message);
         }
@@ -1085,49 +1097,49 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     const fileName = new Date().getTime() + '.jpg'
     ffmpegCommand.output(writableStream).screenshots({
       timestamps: ['1'], // 获取视频的第一帧截图
-      filename:  fileName, // 保存为临时文件
-      folder: join(__dirname, BASE_PATH) , // 临时文件夹
+      filename: fileName, // 保存为临时文件
+      folder: join(__dirname, BASE_PATH), // 临时文件夹
     }).on('error', function (err) {
       if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
-        event.reply("save-video-error",{err})
+        event.reply("save-video-error", { err })
         ffmpegCommand.kill('SIGTERM')
         console.log('An error occurred: ' + err.message);
       }
     })
-    .on('end', function () {
-      ffmpegCommand.kill('SIGTERM')
-      writableStream.destroy();
-      const buffer = Buffer.concat(chunks);
-      event.reply("save-video-progress", { progress: 100 })
-      fs.readFile(join(__dirname, BASE_PATH,fileName), (err, data) => {
-        if (err) {
-          event.reply("save-video-error", {err})
-          console.error('Error reading image file:', err);
-          return;
-        }
-        event.reply('save-video-finish', { arrayBuffer:buffer.buffer,coverArrayBuffer:data.buffer });
-        // 删除图片
-        fs.unlink(join(__dirname, BASE_PATH,fileName), (err) => {
+      .on('end', function () {
+        ffmpegCommand.kill('SIGTERM')
+        writableStream.destroy();
+        const buffer = Buffer.concat(chunks);
+        event.reply("save-video-progress", { progress: 100 })
+        fs.readFile(join(__dirname, BASE_PATH, fileName), (err, data) => {
           if (err) {
-            event.reply('save-video-error',  {err});
+            event.reply("save-video-error", { err })
+            console.error('Error reading image file:', err);
+            return;
           }
+          event.reply('save-video-finish', { arrayBuffer: buffer.buffer, coverArrayBuffer: data.buffer });
+          // 删除图片
+          fs.unlink(join(__dirname, BASE_PATH, fileName), (err) => {
+            if (err) {
+              event.reply('save-video-error', { err });
+            }
+          });
         });
-      });
-    }).on('codecData', ({ duration }) => {
-      total = duration
-    })
-    ipcMain.on("dueTo-del-nedd-close-ffmpeg",()=>{
+      }).on('codecData', ({ duration }) => {
+        total = duration
+      })
+    ipcMain.on("dueTo-del-nedd-close-ffmpeg", () => {
       ffmpegCommand.kill("SIGTERM");
       writableStream.destroy()
-      if(fs.existsSync(join(__dirname, BASE_PATH,fileName))){
-        fs.unlink(join(__dirname, BASE_PATH,fileName), (err) => {
+      if (fs.existsSync(join(__dirname, BASE_PATH, fileName))) {
+        fs.unlink(join(__dirname, BASE_PATH, fileName), (err) => {
           if (err) {
-            event.reply('save-video-error',  {err});
+            event.reply('save-video-error', { err });
           }
         });
       }
     })
-    writableStream.on("error",(err)=>{
+    writableStream.on("error", (err) => {
       writableStream.destroy();
     })
   })
@@ -1261,7 +1273,7 @@ export const lrcWindow = (): BrowserWindow => {
   return child
 }
 
-export const dragWindow  = (): BrowserWindow => {
+export const dragWindow = (): BrowserWindow => {
   const win = new BrowserWindow({
     width: 100,
     height: 23,
@@ -1339,7 +1351,7 @@ export const dragWindow  = (): BrowserWindow => {
   return win
 }
 
-export const loginWindow = async (mainWindow:BrowserWindow):Promise<void> =>{
+export const loginWindow = async (mainWindow: BrowserWindow): Promise<void> => {
   let loginTimer: NodeJS.Timeout;
   const loginSession = session.fromPartition("persist:login");
   // 清除 Cookie
@@ -1347,7 +1359,7 @@ export const loginWindow = async (mainWindow:BrowserWindow):Promise<void> =>{
     storages: ["cookies", "localstorage"],
   });
 
-    const loginWin = new BrowserWindow({
+  const loginWin = new BrowserWindow({
     parent: mainWindow,
     title: "登录网易云音乐（ 若遇到无响应请关闭后重试 ）",
     width: 1280,
@@ -1367,7 +1379,7 @@ export const loginWindow = async (mainWindow:BrowserWindow):Promise<void> =>{
     },
   });
 
-    // 打开网易云
+  // 打开网易云
   loginWin.loadURL("https://music.163.com/#/login/");
 
   // 阻止新窗口创建
