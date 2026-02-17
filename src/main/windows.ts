@@ -27,14 +27,14 @@ import { BASE_PATH, DEFAULT_ID3_MESSAGE, DELAY_MS } from './defaultMessage'
 import { getFileHashes } from './utils/createhash'
 import { cloneDeep } from 'lodash';
 import { id3Message } from './types'
+import { getFileBackground } from './utils/getFileBackground'
+import { getDownloadPath } from './utils/getDownloadPath'
 export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
   // let X: number, Y: number; //鼠标基于显示器的坐标
   // let screenMove: any = null;  //鼠标移动监听
   // const primaryDisplay = screen.getPrimaryDisplay()
   // const { width, height } = primaryDisplay.workAreaSize
-  let fontColor
-  let downloadPath
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     //查看文件夹resources是否存在
     if (!fs.existsSync(join(__dirname, BASE_PATH))) {
@@ -42,36 +42,8 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     }
   }
 
-  const background = await new Promise<string>((res, reject) => {
-    fs.readFile(join(__dirname, BASE_PATH, 'color.json'), 'utf8', (err, jsonString) => {
-      if (err) {
-        // 文件不存在，创建文件并写入内容
-        try {
-          fs.writeFileSync(join(__dirname, BASE_PATH, 'color.json'), `{"background":"rgb(255,255,255)","color":"rgba(0,0,0,.7)"}`, 'utf8');
-          fontColor = "rgba(0,0,0,.7)"
-          res("rgb(255,255,255)")
-        } catch (error) {
-          console.log(error);
-        }
-
-      } else {
-        // 文件存在，输出文件内容
-        fontColor = JSON.parse(jsonString).color
-        res(JSON.parse(jsonString).background)
-      }
-    });
-  })
-  downloadPath = await new Promise<string>((res, reject) => {
-    fs.readFile(join(__dirname, BASE_PATH, 'dowloadPath.json'), 'utf8', (err, jsonString) => {
-      if (err) {
-        // 文件不存在，创建文件并写入内容
-        fs.writeFileSync(join(__dirname, BASE_PATH, 'dowloadPath.json'), `{"dowloadPath":"${resolve("download").replaceAll("\\", "\\\\")}"}`, 'utf8');
-        res(resolve('download'))
-      } else {
-        res(JSON.parse(jsonString).dowloadPath.replaceAll('\\\\', '\\'))
-      }
-    })
-  })
+  const { background, color: fontColor } = await getFileBackground()
+  let downloadPath = await getDownloadPath()
   console.log('下载目录是', downloadPath);
   console.log('主题颜色是', background);
   const osColorTheme = nativeTheme.shouldUseDarkColorsForSystemIntegratedUI
