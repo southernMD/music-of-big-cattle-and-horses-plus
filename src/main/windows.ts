@@ -19,6 +19,7 @@ import { exec, spawn } from 'child_process'
 import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
 import setupLocalPlay, { pares163Key } from './mainWindowsEvents/parseLocalPlayMessage'
+import setupLoadMenu from './mainWindowsEvents/loadMenu'
 
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
@@ -80,32 +81,10 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     return { action: 'deny' }
   })
 
+  //获取本地缓存信息
   setupLocalPlay(mainWindow, path)
-  //托盘事件
-  //托盘事件
-  let appIcon = new Tray(!osColorTheme ? icon : iconW)
-  appIcon.on('double-click', () => {
-    mainWindow.show()
-  })
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: '退出', type: 'normal', click: () => {
-        app.quit()
-      }
-    },
-    {
-      label: '显示主页面', type: 'normal', click: () => {
-        mainWindow.show();
-      }
-    },
-    {
-      label: '打开开发者工具', type: 'normal', click: () => {
-        mainWindow.webContents.openDevTools()
-      }
-    }
-  ])
-  appIcon.setContextMenu(contextMenu)
-  //托盘事件结束
+  //加载右键菜单
+  setupLoadMenu(mainWindow, osColorTheme)
   //应用版本
   console.log('当前版本', app.getVersion());
 
