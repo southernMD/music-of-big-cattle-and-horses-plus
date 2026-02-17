@@ -12,6 +12,7 @@
     "src/main/server/*",
     "src/main/server/netease/*",
     "src/main/server/unlock/*",
+    "src/main/mainWindowsEvents/*"
   ],
   "compilerOptions": {
     "composite": true,
