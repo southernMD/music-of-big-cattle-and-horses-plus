@@ -1,7 +1,7 @@
 <template>
-    <div class="AppSmall">
-        <img src="" id="mainBackground" style="display: none;">
-        <canvas ref="videoCanvas"></canvas>
+    <div class="main-component" >
+        <img src="" id="mainBackground" ref="mainBackgroundRef" style="display: none;">
+        <canvas ref="videoCanvas"  class="video-canvas" style="display: none;"></canvas>
         <MyMainMenu></MyMainMenu>
         <!-- <LoadingBig></LoadingBig> -->
         <Main></Main>
@@ -59,7 +59,8 @@ import { githubUpdate } from '@renderer/api';
 import { setCookies } from '@renderer/utils/cookie'
 import { removeCookie } from '@renderer/utils/cookie'
 import icon from '@renderer/assets/icon.png'
-
+import { mainBackgroundRef, mainBackgroundVideoRef } from '@renderer/utils/refs';
+import { recover } from '@renderer/utils/theme';
 
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
@@ -86,8 +87,8 @@ try {
 }
 
 
-
-window.electron.ipcRenderer.once('memory-background', ({ }, { buffer, extname }) => {
+//图片处理  获取所有的记忆背景缓存区图片
+window.electron.ipcRenderer.on('memory-background', (event, { buffer, extname }) => {
     extname = '.' + extname
     console.log(buffer, extname);
     if (['.jpg', '.png', '.jpeg', '.webp'].includes(extname)) {
@@ -97,11 +98,10 @@ window.electron.ipcRenderer.once('memory-background', ({ }, { buffer, extname })
         reader.onload = function () {
             const newUrl = this.result;
             nextTick(()=>{
-                const h: any = document.getElementById('mainBackground') as HTMLImageElement
-                if (h) {
+                if(mainBackgroundRef.value && newUrl) {
                     BKbase64.value = newUrl as string
-                    h.src = newUrl
-                    h.style.display = 'block'
+                    mainBackgroundRef.value.src = newUrl as string
+                    mainBackgroundRef.value.style.display = 'block'
                 }
             })
         };
@@ -168,6 +168,7 @@ const stopVideoRendering = () => {
             console.warn('Error stopping video:', err)
         } finally {
             currentVideo = null
+            mainBackgroundVideoRef.value = null
         }
     }
 
@@ -194,11 +195,13 @@ const startVideoRendering = (videoSrc: string) => {
 
     // 创建新的video元素，挂载到DOM上避免后台停止解码
     const video = document.createElement('video')
+    video.id = 'mainBackgroundVideo'
     video.muted = true
     video.loop = true
     video.style.display = 'none'
     document.body.appendChild(video)
     currentVideo = video
+    mainBackgroundVideoRef.value = video
 
     // 设置canvas上下文
     if (!context && videoCanvas.value) {
@@ -298,34 +301,6 @@ const startVideoRendering = (videoSrc: string) => {
     })
 }
 
-const recover = ()=>{
-    const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-    if(v)v.src = ''
-    const h:any = document.getElementById('mainBackground') as HTMLImageElement
-    if(h)h.src = ''
-    window.electron.ipcRenderer.send('recove-background')
-    changeNMred()
-    localStorage.setItem('oneself','0')
-    globalVar.oneself = 0
-    const s = document.getElementById('songDetail') as HTMLImageElement
-    if(s)s.style.backgroundImage = ''
-}
-
-const changeNMred = () => {
-    MainMenu.colorBlock = 'NMred'
-    MainMenu.iconSrc = icon
-
-    // 使用CSS类切换主题，NMred是默认主题，移除所有主题类
-    const html = document.documentElement
-    html.classList.remove('theme-dark', 'theme-white', 'theme-custom', 'oneself')
-
-    localStorage.setItem('primaryColor', '236,65,65')
-    localStorage.setItem('broundColor', '236,65,65,1')
-    localStorage.setItem('colorBlock', 'NMred');
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
-}
 
 window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag, filePath }) => {
     if (!flag) globalVar.loadingMp4Bk = true
@@ -339,11 +314,12 @@ window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag, filePath }) => {
         if (videoCanvas.value) {
             videoCanvas.value.style.display = 'block'
         }
-        const h = document.getElementById('mainBackground') as HTMLImageElement
-        h.style.display = 'none'
-        h.src = ''
+        if (mainBackgroundRef.value) {
+            mainBackgroundRef.value.style.display = 'none'
+            mainBackgroundRef.value.src = ''
+        }
     })
-    // fetch(`http://127.0.0.1:${port}/video?path=${filePath}`).then((response) => {
+    // fetch(`http://127.0.0.1:${port}/video?path=${filePath}).then((response) => {
     //     return response.arrayBuffer()
     // }).then((buffer) => {
     //     console.log(buffer);
@@ -407,9 +383,10 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
     reader.readAsDataURL(file);
     reader.onload = function () {
         const newUrl = this.result;
-        const h: any = document.getElementById('mainBackground') as HTMLImageElement
-        h.src = newUrl
-        h.style.display = 'block'
+        if(mainBackgroundRef.value){
+            mainBackgroundRef.value.src = newUrl as string
+            mainBackgroundRef.value.style.display = 'block'
+        }
 
         // 停止视频渲染
         stopVideoRendering()

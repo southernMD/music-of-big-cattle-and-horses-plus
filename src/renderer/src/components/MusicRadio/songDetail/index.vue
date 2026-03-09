@@ -1,5 +1,5 @@
 <template>
-  <div class="songDetail" v-show="detailStatus == 'open'" id="songDetail" ref="songDetail">
+  <div class="songDetail" v-show="detailStatus == 'open'" id="songDetail" ref="songDetailRef">
     <div class="bk" ref="bk">
       <MyMainMenu :songMenu="true" :changefontColor="true" :scrollY="scrollY" ref="MyMainMenuRef">
         <template #songLrc>
@@ -505,7 +505,7 @@ const prevenDrag = (e: MouseEvent) => {
 let BKbase64 = inject<Ref<string>>('BKbase64') as Ref<string>
 //TODO:SongDetail的背景图片被背景色挡住
 watch(BKbase64, () => {
-  const h: any = $el.refs.songDetail as HTMLElement
+  const h: any = $el.refs.songDetailRef as HTMLElement
   if (h) h.style.backgroundImage = 'url(' + BKbase64.value + ')'
 })
 window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
@@ -515,7 +515,7 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
   reader.readAsDataURL(file);
   reader.onload = function () {
     const newUrl = this.result;
-    const h: any = $el.refs.songDetail as HTMLElement
+    const h: any = $el.refs.songDetailRef as HTMLElement
     h.style.backgroundImage = 'url(' + newUrl + ')'
   };
 })

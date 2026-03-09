@@ -55,17 +55,17 @@
 import useClickElsewhereToClose from '@renderer/hooks/useClickElsewhereToClose';
 import { ref, toRef } from 'vue'
 import {UploadFilled } from '@element-plus/icons-vue'
-import { useMainMenu,useGlobalVar } from '@renderer/store'
+import { useMainMenu } from '@renderer/store'
 import icon from '@renderer/assets/icon.png'
+import { changeNMblack, changeNMred, recover } from '@renderer/utils/theme';
 // import ColorPick from '@/components/ColorPick.vue';
 const MainMenu = useMainMenu();
-const globalVar = useGlobalVar();
 
 const bkChangeSkinRef = ref(null)
 
 let flagList = ref([true, false, false])
 const changeTag = (index: number) => {
-    flagList.value.forEach((value, i) => {
+    flagList.value.forEach((_, i) => {
         if (i == index) {
             flagList.value[i] = true
         } else {
@@ -85,62 +85,11 @@ const bkColorList =
         '#28ab62', '#6acc19', '#cb9a10', '#e5804e', '#ef6c67', '#e94d48'
     ]
 
-const changeNMblack = (e: MouseEvent) => {
-    MainMenu.colorBlock = 'NMblack'
-    MainMenu.iconSrc = icon
-
-    // 使用CSS类切换主题，完全替代document.documentElement.style.setProperty
-    const html = document.documentElement
-    html.classList.remove('theme-white', 'theme-custom')
-    html.classList.add('theme-dark')
-
-    if(globalVar.oneself) {
-        html.classList.add('oneself')
-    } else {
-        html.classList.remove('oneself')
-    }
-
-    localStorage.setItem('primaryColor', '236,65,65')
-    localStorage.setItem('broundColor', '33,33,36,1')
-    localStorage.setItem('colorBlock', 'NMblack');
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
-}
-
-const changeNMred = () => {
-    MainMenu.colorBlock = 'NMred'
-    MainMenu.iconSrc = icon
-
-    // 使用CSS类切换主题，NMred是默认主题，移除所有主题类
-    const html = document.documentElement
-    html.classList.remove('theme-dark', 'theme-white', 'theme-custom', 'oneself')
-
-    localStorage.setItem('primaryColor', '236,65,65')
-    localStorage.setItem('broundColor', '236,65,65,1')
-    localStorage.setItem('colorBlock', 'NMred');
-    localStorage.setItem('MainTitle', `255, 255, 255`)
-    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
-    localStorage.setItem('MainMenuHover', `255, 255, 255`)
-}
-
 const upload = ()=>{
     window.electron.ipcRenderer.send('upload-background')
     $emit('close')
 }
 
-const recover = ()=>{
-    const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
-    if(v)v.src = ''
-    const h:any = document.getElementById('mainBackground') as HTMLImageElement
-    if(h)h.src = ''
-    window.electron.ipcRenderer.send('recove-background')
-    changeNMred()
-    localStorage.setItem('oneself','0')
-    globalVar.oneself = 0
-    const s = document.getElementById('songDetail') as HTMLImageElement
-    if(s)s.style.backgroundImage = ''
-}
 
 // window.electron.ipcRenderer.on('ffmpeg-error',()=>{
 //     recover()
