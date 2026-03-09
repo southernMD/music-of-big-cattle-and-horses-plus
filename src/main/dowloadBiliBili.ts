@@ -9,6 +9,7 @@ import { BASE_PATH } from "./defaultMessage";
 import { WBI } from './wbiBiliBili'
 import fetch from 'node-fetch'
 import log from "./utils/log";
+import { pickTime } from "./utils/pickTime";
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15'
 let SESSDATA: string | undefined
 let TRANSCOED: boolean | undefined
@@ -58,9 +59,9 @@ const getAcceptQuality = async (cid, bvid) => {
         fnver: "0",
         fnval: "80",
         session: "68191c1dc3c75042c6f35fba895d65b0",
-        gaia_source:`${SESSDATA}`
+        gaia_source: `${SESSDATA}`
     })
-    log.info("请求b站链接",newApiParams)
+    log.info("请求b站链接", newApiParams)
     const result = (await fetch(
         `https://api.bilibili.com/x/player/wbi/playurl?${newApiParams}`,
         config
@@ -264,14 +265,7 @@ const combineVideo = async (combinePath: string[], basecombinePath: string, file
             .save(basecombinePath + '.mp4')
     })
 }
-const pickTime = (time: string) => {
-    let hao = +time.split('.')[1]
-    let shi = +time.split(':')[0]
-    let feng = +time.split(':')[1]
-    let miao = +time.split(':')[2].split('.')[0]
 
-    return +(shi * 60 * 60 * 100 + feng * 60 * 100 + miao * 100 + hao).toFixed(2)
-}
 const handleDeleteFile = (filename: string) => {
     fs.readdir(join(__dirname, BASE_PATH), (err, list) => {
         if (err) throw err

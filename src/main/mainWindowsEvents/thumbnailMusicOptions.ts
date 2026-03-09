@@ -67,5 +67,12 @@ export default (mainWindow: BrowserWindow) => {
     ipcMain.on('render-play-fail', () => {
         stop();
     })
+    //改变播放缩略图信息
+    ipcMain.on('change-play-thum', (_, message) => {
+        console.log(message);
+
+        mainWindow.setThumbnailToolTip(message)
+        mainWindow.setTitle(message)
+    })
 }
 
