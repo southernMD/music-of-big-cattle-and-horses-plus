@@ -20,6 +20,7 @@ import setupLoadMenu from './mainWindowsEvents/loadMenu'
 import setupThumbnailMusicOptions from './mainWindowsEvents/thumbnailMusicOptions'
 import setupControlWindow from './mainWindowsEvents/controlWindow'
 import setupBackground from './mainWindowsEvents/background'
+import setupRegisterId from './mainWindowsEvents/registerId'
 
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
@@ -134,18 +135,12 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   //   screenMove = null;
   // })
 
+  //设置背景
   setupBackground(mainWindow)
 
-  //注册名称
-  mainWindow.webContents.on('did-finish-load', () => {
-    // 二、注册窗口id
-    registerWindowId('Main', mainWindow.webContents.id);
-  })
+  //注册窗口Id
+  setupRegisterId(mainWindow)
 
-  mainWindow.webContents.on('destroyed', () => {
-    // 三、销毁窗口 id
-    removeWindowId('Main');
-  })
   ipcMain.on('save-music', (e, { arrayBuffer, name, id3 }) => {
     const buffer = Buffer.from(arrayBuffer);
     const imageUrl = id3.image
