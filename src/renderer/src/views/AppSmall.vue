@@ -58,6 +58,8 @@ import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
 import { setCookies } from '@renderer/utils/cookie'
 import { removeCookie } from '@renderer/utils/cookie'
+import icon from '@renderer/assets/icon.png'
+
 
 const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
@@ -158,6 +160,9 @@ const stopVideoRendering = () => {
             currentVideo.pause()
             currentVideo.removeAttribute('src')
             currentVideo.load() // 重置video元素
+            if (currentVideo.parentNode) {
+                currentVideo.parentNode.removeChild(currentVideo)
+            }
             console.log('Video stopped and cleaned up')
         } catch (err) {
             console.warn('Error stopping video:', err)
@@ -187,11 +192,12 @@ const startVideoRendering = (videoSrc: string) => {
     // 先停止之前的渲染
     stopVideoRendering()
 
-    // 创建新的video元素（不添加到DOM）
+    // 创建新的video元素，挂载到DOM上避免后台停止解码
     const video = document.createElement('video')
     video.muted = true
     video.loop = true
-    video.type = 'video/mp4'
+    video.style.display = 'none'
+    document.body.appendChild(video)
     currentVideo = video
 
     // 设置canvas上下文
@@ -203,21 +209,27 @@ const startVideoRendering = (videoSrc: string) => {
     const handleLoadedMetadata = () => {
         console.log('Video metadata loaded')
         if (videoCanvas.value && context && currentVideo) {
-            videoCanvas.value.width = currentVideo.videoWidth
-            videoCanvas.value.height = currentVideo.videoHeight
+            if (currentVideo.videoWidth > 0 && currentVideo.videoHeight > 0) {
+                videoCanvas.value.width = currentVideo.videoWidth
+                videoCanvas.value.height = currentVideo.videoHeight
+            }
             context.imageSmoothingEnabled = true
         }
     }
 
     const drawFrame = () => {
-        if (!context || !currentVideo || currentVideo.paused || currentVideo.ended) return
-        try {
-            context.drawImage(currentVideo, 0, 0, videoCanvas.value!.width, videoCanvas.value!.height)
-        } catch (err) {
-            console.warn('Draw frame failed:', err)
-            // 停止渲染循环
+        if (!currentVideo) {
             animationFrameId = null
             return
+        }
+        
+        // 遇到不能画帧的情况不要切断动画循环
+        if (!currentVideo.paused && !currentVideo.ended && context && videoCanvas.value && videoCanvas.value.width > 0 && videoCanvas.value.height > 0) {
+            try {
+                context.drawImage(currentVideo, 0, 0, videoCanvas.value.width, videoCanvas.value.height)
+            } catch (err) {
+                // 静默错误，可能是在后台或尺寸不合法，保持动画循环唤醒
+            }
         }
         animationFrameId = requestAnimationFrame(drawFrame)
     }
@@ -236,12 +248,28 @@ const startVideoRendering = (videoSrc: string) => {
         console.error('Video loading error:', err)
         isVideoLoading = false // 重置加载标志
         stopVideoRendering()
+        startVideoRendering(videoSrc)
+    }
+    
+    let pendingRestart = false
+
+    const handleVisibilityChange = () => {
+        if (!document.hidden) {
+            if (pendingRestart) {
+                pendingRestart = false
+                console.log('恢复可见，重新启动视频渲染...')
+                startVideoRendering(videoSrc)
+            } else if (currentVideo && currentVideo.paused) {
+                currentVideo.play().catch(e => console.warn('恢复播放失败:', e))
+            }
+        }
     }
 
     // 添加事件监听器
     video.addEventListener('loadedmetadata', handleLoadedMetadata)
     video.addEventListener('play', handlePlay)
     video.addEventListener('error', handleError)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     // 保存事件处理函数的引用，用于清理
     cleanupHandlers = () => {
@@ -255,8 +283,48 @@ const startVideoRendering = (videoSrc: string) => {
     video.play().catch((err: any) => {
         console.warn('Video play failed:', err)
         isVideoLoading = false // 重置加载标志
-        stopVideoRendering()
+        
+        if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+            // 如果是因为权限或后台休眠导致的 AbortError，标记待恢复，暂不清除
+            console.log('Video was paused/interrupted due to background power-saving. Waiting to resume when visible.')
+            if (document.hidden) {
+                pendingRestart = true
+            }
+        } else {
+            // 其他严重错误才彻底截断并恢复默认
+            stopVideoRendering()
+            recover()
+        }
     })
+}
+
+const recover = ()=>{
+    const v = document.getElementById('mainBackgroundVideo') as HTMLVideoElement
+    if(v)v.src = ''
+    const h:any = document.getElementById('mainBackground') as HTMLImageElement
+    if(h)h.src = ''
+    window.electron.ipcRenderer.send('recove-background')
+    changeNMred()
+    localStorage.setItem('oneself','0')
+    globalVar.oneself = 0
+    const s = document.getElementById('songDetail') as HTMLImageElement
+    if(s)s.style.backgroundImage = ''
+}
+
+const changeNMred = () => {
+    MainMenu.colorBlock = 'NMred'
+    MainMenu.iconSrc = icon
+
+    // 使用CSS类切换主题，NMred是默认主题，移除所有主题类
+    const html = document.documentElement
+    html.classList.remove('theme-dark', 'theme-white', 'theme-custom', 'oneself')
+
+    localStorage.setItem('primaryColor', '236,65,65')
+    localStorage.setItem('broundColor', '236,65,65,1')
+    localStorage.setItem('colorBlock', 'NMred');
+    localStorage.setItem('MainTitle', `255, 255, 255`)
+    localStorage.setItem('MainMenu', `255, 255, 255,.7`)
+    localStorage.setItem('MainMenuHover', `255, 255, 255`)
 }
 
 window.electron.ipcRenderer.on('mp4-ready', ({ }, { flag, filePath }) => {
@@ -345,7 +413,9 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
 
         // 停止视频渲染
         stopVideoRendering()
-        videoCanvas.value.style.display = 'none'
+        if (videoCanvas.value) {
+            videoCanvas.value.style.display = 'none'
+        }
     };
     // const h = document.querySelector('#header') as HTMLElement
     // h.style.backgroundImage =   "data:image/png;base64," + base64

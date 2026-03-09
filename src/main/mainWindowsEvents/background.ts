@@ -58,48 +58,43 @@ export default (mainWindow: BrowserWindow) => {
             const { canceled, filePaths } = obj
             if (!canceled) {
                 const filePath = filePaths[0]
-                await new Promise<any>((resolve, reject) => {
-                    fs.readFile(filePath, (err, data) => {
-                        if (!err) {
-                            console.log(filePath, extname(filePath));
+                try {
+                    const data = await exfs.readFile(filePath);
+                    console.log(filePath, extname(filePath));
 
-                            if (['.jpg', '.png', '.jpeg', '.webp'].includes(extname(filePath))) {
-                                event.reply('file-ready', { liu: data, extname: extname(filePath) })
-                            } else {
-                                //如果视频大小不为MP4或者大小超过50m
-                                if (extname(filePath) == '.mp4' && data.length <= 52428800) {
-                                    event.reply('mp4-ready', { flag: false, filePath })
-                                } else {
-                                    // 尝试对目标进行转码成MP4
-                                    ifNeedChangeExtname = true
-                                }
-                            }
-                            resolve('ok')
+                    if (['.jpg', '.png', '.jpeg', '.webp'].includes(extname(filePath))) {
+                        event.reply('file-ready', { liu: data, extname: extname(filePath) })
+                    } else {
+                        //如果视频大小不为MP4或者大小超过50m
+                        if (extname(filePath) == '.mp4' && data.length <= 52428800) {
+                            event.reply('mp4-ready', { flag: false, filePath })
                         } else {
-                            console.log(err);
-                            reject(err)
+                            // 尝试对目标进行转码成MP4
+                            ifNeedChangeExtname = true
                         }
-                    })
-                })
+                    }
+                } catch (err) {
+                    console.log(err);
+                    return;
+                }
+
                 if (!ifNeedChangeExtname) {
                     const path = join(__dirname, BASE_PATH, `background${extname(filePath)}`)
-                    const p1 = new Promise((resolve, reject) => {
-                        fs.readdir(join(__dirname, BASE_PATH), (err, list) => {
-                            resolve(list)
-                        })
-                    }).then((list: any) => {
+                    try {
+                        const list = await exfs.readdir(join(__dirname, BASE_PATH));
                         for (let i = 0; i < list.length; i++) {
-                            console.log(list);
+                            console.log(list[i]);
                             if (list[i].startsWith('background')) {
                                 exfs.removeSync(join(__dirname, BASE_PATH, list[i]))
                             }
                         }
-                    })
-                    Promise.all([p1]).then((value) => {
+
                         let readStream = fs.createReadStream(filePath)
                         let writeStream = fs.createWriteStream(path)
                         readStream.pipe(writeStream)
-                    })
+                    } catch (err) {
+                        console.error(err);
+                    }
                 } else {
                     event.reply('mp4-msg', { msg: "目标格式需要进行转码请稍后" })
                     console.log("开始进行视频转码");
@@ -150,17 +145,16 @@ export default (mainWindow: BrowserWindow) => {
         })
     })
 
-    ipcMain.on('recove-background', () => {
-        new Promise((resolve, reject) => {
-            fs.readdir(join(__dirname, BASE_PATH), (err, list) => {
-                resolve(list)
-            })
-        }).then((list: any) => {
+    ipcMain.on('recove-background', async () => {
+        try {
+            const list = await exfs.readdir(join(__dirname, BASE_PATH));
             for (let i = 0; i < list.length; i++) {
                 if (list[i].startsWith('background')) {
                     fs.unlink(join(__dirname, BASE_PATH, list[i]), () => { })
                 }
             }
-        })
+        } catch (err) {
+            console.error(err);
+        }
     })
 }
