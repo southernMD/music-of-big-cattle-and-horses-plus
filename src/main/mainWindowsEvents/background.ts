@@ -32,7 +32,7 @@ export default (mainWindow: BrowserWindow) => {
                             if (!ext.endsWith('mp4')) {
                                 mainWindow.webContents.send('memory-background', { buffer: data, extname: ext })
                             } else {
-                                mainWindow.webContents.send('mp4-ready', { flag: true })
+                                mainWindow.webContents.send('mp4-ready', { flag: true, filePath: join(__dirname, BASE_PATH, `background.${ext}`) })
                             }
                         } else {
                             console.log(err);

@@ -127,11 +127,14 @@ window.electron.ipcRenderer.once('memory-background', ({ }, { buffer, extname })
 onMounted(()=>{
     window.electron.ipcRenderer.send('renderer-ready')
 })
-const videoCanvas = ref()
-let context
+const videoCanvas = ref<HTMLCanvasElement | null>(null)
+let context: CanvasRenderingContext2D | null = null
 let animationFrameId: number | null = null
 let currentVideo: HTMLVideoElement | null = null
 let isVideoLoading = false // 防止重复加载
+
+// 清理事件函数的缓存
+let cleanupHandlers: (() => void) | null = null;
 
 // 停止当前的视频渲染
 const stopVideoRendering = () => {
@@ -139,36 +142,33 @@ const stopVideoRendering = () => {
 
     isVideoLoading = false // 重置加载标志
 
-    if (animationFrameId) {
+    if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId)
         animationFrameId = null
     }
 
+    if (cleanupHandlers) {
+        cleanupHandlers()
+        cleanupHandlers = null
+    }
+
     if (currentVideo) {
         try {
-            // 移除所有事件监听器（使用保存的引用）
-            if (currentVideo._handleLoadedMetadata) {
-                currentVideo.removeEventListener('loadedmetadata', currentVideo._handleLoadedMetadata)
-            }
-            if (currentVideo._handlePlay) {
-                currentVideo.removeEventListener('play', currentVideo._handlePlay)
-            }
-            if (currentVideo._handleError) {
-                currentVideo.removeEventListener('error', currentVideo._handleError)
-            }
-
             // 停止视频
             currentVideo.pause()
-            currentVideo.currentTime = 0
-            currentVideo.src = ''
+            currentVideo.removeAttribute('src')
             currentVideo.load() // 重置video元素
-
             console.log('Video stopped and cleaned up')
         } catch (err) {
             console.warn('Error stopping video:', err)
         } finally {
             currentVideo = null
         }
+    }
+
+    // 清空 canvas
+    if (context && videoCanvas.value) {
+        context.clearRect(0, 0, videoCanvas.value.width, videoCanvas.value.height)
     }
 }
 
@@ -199,47 +199,41 @@ const startVideoRendering = (videoSrc: string) => {
         context = videoCanvas.value.getContext('2d')
     }
 
-    // 定义事件处理函数，这样可以正确移除
+    // 定义事件处理函数
     const handleLoadedMetadata = () => {
         console.log('Video metadata loaded')
         if (videoCanvas.value && context && currentVideo) {
             videoCanvas.value.width = currentVideo.videoWidth
             videoCanvas.value.height = currentVideo.videoHeight
-            context.imageSmoothingEnabled = false
+            context.imageSmoothingEnabled = true
         }
+    }
+
+    const drawFrame = () => {
+        if (!context || !currentVideo || currentVideo.paused || currentVideo.ended) return
+        try {
+            context.drawImage(currentVideo, 0, 0, videoCanvas.value!.width, videoCanvas.value!.height)
+        } catch (err) {
+            console.warn('Draw frame failed:', err)
+            // 停止渲染循环
+            animationFrameId = null
+            return
+        }
+        animationFrameId = requestAnimationFrame(drawFrame)
     }
 
     const handlePlay = () => {
         console.log('Video started playing')
         isVideoLoading = false // 视频开始播放，重置加载标志
 
-        if (animationFrameId) {
+        if (animationFrameId !== null) {
             cancelAnimationFrame(animationFrameId) // 确保没有重复的动画帧
-        }
-
-        const drawFrame = () => {
-            if (context && currentVideo && !currentVideo.paused && !currentVideo.ended) {
-                try {
-                    context.drawImage(currentVideo, 0, 0, videoCanvas.value.width, videoCanvas.value.height)
-                    animationFrameId = requestAnimationFrame(drawFrame)
-                } catch (err) {
-                    console.warn('Draw frame failed:', err)
-                    // 停止渲染循环
-                    animationFrameId = null
-                }
-            }
         }
         drawFrame()
     }
 
-    const handleError = (err) => {
+    const handleError = (err: Event) => {
         console.error('Video loading error:', err)
-        console.error('Video error details:', {
-            error: currentVideo?.error,
-            networkState: currentVideo?.networkState,
-            readyState: currentVideo?.readyState,
-            src: currentVideo?.src
-        })
         isVideoLoading = false // 重置加载标志
         stopVideoRendering()
     }
@@ -250,15 +244,15 @@ const startVideoRendering = (videoSrc: string) => {
     video.addEventListener('error', handleError)
 
     // 保存事件处理函数的引用，用于清理
-    video._handleLoadedMetadata = handleLoadedMetadata
-    video._handlePlay = handlePlay
-    video._handleError = handleError
+    cleanupHandlers = () => {
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+        video.removeEventListener('play', handlePlay)
+        video.removeEventListener('error', handleError)
+    }
 
     // 设置视频源并播放
     video.src = videoSrc
-    video.load() // 确保重新加载
-
-    video.play().catch(err => {
+    video.play().catch((err: any) => {
         console.warn('Video play failed:', err)
         isVideoLoading = false // 重置加载标志
         stopVideoRendering()
