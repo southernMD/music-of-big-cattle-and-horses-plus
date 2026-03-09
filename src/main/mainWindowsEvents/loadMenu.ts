@@ -1,8 +1,7 @@
 import { app, Menu, Tray, type BrowserWindow } from "electron"
-import icon from '../../../build/favicon.ico?asset'
-import iconW from '../../../build/faviconW.ico?asset'
+import icon from '@build/favicon.ico?asset'
+import iconW from '@build/faviconW.ico?asset'
 export default function (mainWindow: BrowserWindow, osColorTheme: boolean) {
-    //托盘事件
     //托盘事件
     let appIcon = new Tray(!osColorTheme ? icon : iconW)
     appIcon.on('double-click', () => {

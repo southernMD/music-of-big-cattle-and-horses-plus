@@ -2,12 +2,9 @@ import { app, shell, BrowserWindow, ipcMain, screen, dialog, nativeTheme, native
 import { join, extname, parse, resolve, basename } from 'path'
 import fs from 'fs'
 import exfs from 'fs-extra'
-import icon from '../../build/favicon.ico?asset'
-import iconW from '../../build/faviconW.ico?asset'
-import prevIcon from '../../build/prev.png?asset'
-import playIcon from '../../build/play.png?asset'
-import stopIcon from '../../build/stop.png?asset'
-import nextIcon from '../../build/next.png?asset'
+import icon from '@build/favicon.ico?asset'
+import iconW from '@build/faviconW.ico?asset'
+
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerWindowId, removeWindowId } from './windowManager'
 import chokidar from 'chokidar'
@@ -20,6 +17,7 @@ import { Worker } from 'worker_threads'
 import moveFileWorker from './moveFile?nodeWorker'
 import setupLocalPlay, { pares163Key } from './mainWindowsEvents/parseLocalPlayMessage'
 import setupLoadMenu from './mainWindowsEvents/loadMenu'
+import setupThumbnailMusicOptions from './mainWindowsEvents/thumbnailMusicOptions'
 
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
@@ -125,6 +123,9 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     })
   })
 
+  //加载缩略图下方的音乐工具按钮
+  setupThumbnailMusicOptions(mainWindow)
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -132,68 +133,7 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
-  //缩略图
-  function play() {
-    return mainWindow.setThumbarButtons([
-      {
-        tooltip: '上一首',
-        icon: nativeImage.createFromPath(prevIcon),
-        click() {
-          mainWindow.webContents.send('main-prev', true)
-        }
-      },
-      {
-        tooltip: '暂停',
-        icon: nativeImage.createFromPath(stopIcon),
-        click() {
-          stop()
-          mainWindow.webContents.send('main-play', true)
-        }
-      },
-      {
-        tooltip: '下一首',
-        icon: nativeImage.createFromPath(nextIcon),
-        click() {
-          mainWindow.webContents.send('main-next', true)
-        }
-      }
-    ])
-  }
 
-  function stop() {
-    mainWindow.setThumbarButtons([
-      {
-        tooltip: '上一首',
-        icon: nativeImage.createFromPath(prevIcon),
-        click() {
-          mainWindow.webContents.send('main-prev', true)
-        }
-      },
-      {
-        tooltip: '播放',
-        icon: nativeImage.createFromPath(playIcon),
-        click() {
-          play();
-          mainWindow.webContents.send('main-play', true)
-        }
-      },
-      {
-        tooltip: '下一首',
-        icon: nativeImage.createFromPath(nextIcon),
-        click() {
-          mainWindow.webContents.send('main-next', true)
-
-        }
-      }
-    ])
-  }
-  stop();
-  ipcMain.on('render-play', () => {
-    play();
-  })
-  ipcMain.on('render-play-fail', () => {
-    stop();
-  })
   mainWindow.setThumbnailClip({ x: 10, y: 0, width: 150, height: 60 })
   mainWindow.setThumbnailToolTip('大牛马音乐')
 

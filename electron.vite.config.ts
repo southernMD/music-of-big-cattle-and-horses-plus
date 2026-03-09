@@ -10,17 +10,22 @@ import vueJsx from '@vitejs/plugin-vue-jsx';
 
 import { Env } from "./env";
 
-export default defineConfig(({command, mode})=>{
+export default defineConfig(({ command, mode }) => {
   const getEnv = (name: keyof Env): string => {
     return loadEnv(mode, process.cwd())[name];
   };
   const webPort: number = Number(getEnv("VITE_WEB_PORT") || 5522);
   const servePort: number = Number(getEnv("VITE_SERVER_PORT") || 2233);
-  console.log(command,webPort,servePort,"环境值");
+  console.log(command, webPort, servePort, "环境值");
 
   return {
     main: {
       plugins: [externalizeDepsPlugin()],
+      resolve: {
+        alias: {
+          '@build': resolve(__dirname, 'build')
+        }
+      },
       build: {
         rollupOptions: {
           external: ['express']
