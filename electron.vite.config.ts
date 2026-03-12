@@ -23,7 +23,8 @@ export default defineConfig(({ command, mode }) => {
       plugins: [externalizeDepsPlugin()],
       resolve: {
         alias: {
-          '@build': resolve(__dirname, 'build')
+          '@build': resolve(__dirname, 'build'),
+          '@main': resolve(__dirname, 'src/main')
         }
       },
       build: {

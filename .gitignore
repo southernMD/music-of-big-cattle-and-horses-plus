@@ -3,7 +3,7 @@ dist
 out
 *.log*
 .vscode
-download
+/download
 download2
 resources
 *.nmd2

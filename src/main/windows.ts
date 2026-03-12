@@ -1,34 +1,28 @@
-import { app, shell, BrowserWindow, ipcMain, screen, dialog, nativeTheme, nativeImage, globalShortcut, Menu, Tray, MessageChannelMain, session } from 'electron'
-import { join, extname, parse, resolve, basename } from 'path'
+import { app, shell, BrowserWindow, ipcMain, screen, dialog, nativeTheme, globalShortcut, Menu, session } from 'electron'
+import { join } from 'path'
 import fs from 'fs'
 import icon from '@build/favicon.ico?asset'
 import iconW from '@build/faviconW.ico?asset'
 
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { is } from '@electron-toolkit/utils'
 import { registerWindowId, removeWindowId } from './windowManager'
-import chokidar from 'chokidar'
-import NodeID3 from 'node-id3'
-import request from 'request'
 
 import fontList from 'font-list'
 import { exec, spawn } from 'child_process'
-import { Worker } from 'worker_threads'
-import moveFileWorker from './moveFile?nodeWorker'
 
-import setupLocalPlay, { pares163Key } from './mainWindowsEvents/parseLocalPlayMessage'
+import setupLocalPlay from './mainWindowsEvents/parseLocalPlayMessage'
 import setupLoadMenu from './mainWindowsEvents/loadMenu'
 import setupThumbnailMusicOptions from './mainWindowsEvents/thumbnailMusicOptions'
 import setupControlWindow from './mainWindowsEvents/controlWindow'
 import setupBackground from './mainWindowsEvents/background'
 import setupRegisterId from './mainWindowsEvents/registerId'
+import setupDownloadMusic from './mainWindowsEvents/download/downloadMusic'
+import setupDownloadDir from './mainWindowsEvents/download/downloadDir'
 
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 import { Writable } from 'stream'
 import { BASE_PATH, DEFAULT_ID3_MESSAGE, DELAY_MS } from './defaultMessage'
-import { getFileHashes } from './utils/createhash'
-import { cloneDeep } from 'lodash';
-import { id3Message } from './types'
 import { getFileBackground } from './utils/getFileBackground'
 import { getDownloadPath } from './utils/getDownloadPath'
 import { pickTime } from './utils/pickTime'
@@ -141,243 +135,13 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   //注册窗口Id
   setupRegisterId(mainWindow)
 
-  ipcMain.on('save-music', (e, { arrayBuffer, name, id3 }) => {
-    const buffer = Buffer.from(arrayBuffer);
-    const imageUrl = id3.image
-    fs.mkdirSync('download', { recursive: true });
-    const cleanFileName = name.replace(/[\\/:\*\?"<>\|]/g, "");
-    arrayBuffer = new Uint8Array(arrayBuffer);
-    request.get(imageUrl, { encoding: null }, function (error, response, body) {
-      if (error) console.log(error);
-      const image = {
-        mime: `image/${parse(imageUrl).ext}`,
-        imageBuffer: body,
-      };
-      const oldtags = NodeID3.read(arrayBuffer);
-      const newTags = Object.assign({}, oldtags, id3);
-      newTags['image'] = image
-      newTags['userDefinedText'] =
-        [{
-          "description": "song id",
-          "value": id3.ids[0]
-        }, {
-          "description": "al id",
-          "value": id3.ids[1]
-        }, {
-          "description": "ar ids",
-          "value": id3.ids.slice(2).join(',')
-        }]
-      NodeID3.update(newTags, arrayBuffer, function (err, buffer) {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        fs.writeFileSync(`${downloadPath}/${cleanFileName}.mp3`, buffer);
-        console.log(NodeID3.read(`${downloadPath}/${cleanFileName}.mp3`))
-      });
-      e.reply('save-music-finished', { which: cleanFileName, id: id3.ids[0] })
-    })
+  //下载音乐
+  setupDownloadMusic(downloadPath)
 
-  })
-  ipcMain.on('get-download-list', (e) => {
-    console.log(downloadPath, '空的你在搞笑么');
-    if (fs.existsSync(downloadPath)) {
-      const Files = fs.readdirSync(downloadPath)
-      e.reply('look-download-list', Files)
-    } else {
-      e.reply('look-download-list', [])
-    }
-  })
-  ipcMain.on('get-download-list-detail', (e) => {
-    if (fs.existsSync(downloadPath)) {
-      console.log(downloadPath);
-      const Files = fs.readdirSync(downloadPath)
-      const detail: any[] = []
-      Files.forEach((item) => {
-        detail.push(Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path: downloadPath + '\\' + item, title: item }, NodeID3.read(`${downloadPath}/${item}`)))
-      })
-      e.reply('look-download-list-detail', detail)
-    } else {
-      e.reply('look-download-list-detail', [])
-    }
-  })
-  //下载目录文件变化
+  //监听下载目录和本地音乐目录
+  setupDownloadDir(downloadPath, mainWindow)
 
-  const watcher = chokidar.watch(downloadPath, {
-    persistent: true
-  });
-  const delMusic = (path: string) => {
-    // console.log(path,'delMusic');
-    // const Files = fs.readdirSync(downloadPath).filter(item=>item.endsWith('mp3'))
-    // mainWindow.webContents.send('look-download-list',Files)
-    // const detail:any[] = []
-    // Files.forEach((item)=>{
-    //   detail.push(NodeID3.read(`${downloadPath}/${item}`))
-    // })
-    mainWindow.webContents.send('look-download-list-del-path', path)
-  }
-  const addMuisc = (path: string) => {
-    // console.log(path,'addMuisc');
-    mainWindow.webContents.send('look-download-list-add-path', NodeID3.read(path))
-  }
-  const delDir = (path: string) => {
-    console.log(path, 'delDir');
-    watcher.off('unlink', delMusic)
-    watcher.off('add', delMusic)
-    watcher.off('unlinkDir', delDir)
-    watcher.close()
-    fs.mkdirSync(downloadPath, { recursive: true });
-    watcher.on('unlink', delMusic)
-    watcher.on('unlink', delMusic)
-    watcher.on('unlinkDir', delDir)
-  }
-  watcher.on('unlink', delMusic);
-  watcher.on('add', addMuisc);
-  watcher.on('unlinkDir', delDir);
-  watcher.add(downloadPath);
 
-  //获取默认下载目录路径
-  ipcMain.handle('get-download-path', () => {
-    return downloadPath ?? resolve('download')
-  })
-
-  ipcMain.handle('change-download-path', ({ }, path) => {
-    watcher.off('unlink', delMusic);
-    watcher.off('add', addMuisc);
-    watcher.off('unlinkDir', delDir);
-    watcher.close();
-    if (path != downloadPath) {
-      moveFileWorker({ workerData: { downloadPath, destinationPath: path } }).on('message', () => {
-        downloadPath = path;
-        console.log('完成');
-        watcher.add(downloadPath);
-        watcher.on('unlink', delMusic);
-        watcher.on('add', addMuisc);
-        watcher.on('unlinkDir', delDir);
-        return 'ok'
-      })
-    }
-  })
-  ipcMain.on('open-download-dir', () => {
-    shell.openPath(downloadPath)
-  })
-  //获取本地音乐
-  ipcMain.handle('get-local-music', ({ }, { path }) => {
-    try {
-      const buffer = Buffer.from(fs.readFileSync(path))
-      return { base64: buffer.toString('base64') }
-    } catch (error) {
-      return { error }
-    }
-  })
-  //添加本地文件目录
-  ipcMain.handle('add-local-dir', ({ }) => {
-    const paths: string[] | undefined = dialog.showOpenDialogSync(mainWindow, {
-      title: '选择添加目录',
-      properties: ['openDirectory', 'dontAddToRecent'],
-    })
-    console.log(paths);
-    if (paths == undefined) {
-      return { canceled: true, path: [] }
-    } else {
-      // fs.writeFileSync(join(__dirname, BASE_PATH, 'dowloadPath.json'), `{"dowloadPath":"${paths[0].replaceAll("\\", "\\\\")}"}`, 'utf8');
-      return { canceled: false, path: paths };
-    }
-  })
-  //删除音乐文件
-  ipcMain.handle('del-music', async (_, path) => {
-    if (!path.endsWith('.mp3')) path += '.mp3';
-    return new Promise((resolve, reject) => {
-      try {
-        fs.unlink(path, (err) => {
-          if (err) {
-            resolve(err);
-          } else {
-            resolve('');
-          }
-        });
-      } catch (error) {
-        resolve(error);
-      }
-    });
-  });
-  let watcherLocalMusic: chokidar.FSWatcher | null = null;
-
-  // let timer;
-  // let timer2;
-  ipcMain.handle('watch-files-toread-music', ({ }, { readPath }) => {
-    console.log(readPath);
-    if (watcherLocalMusic !== null) {
-      watcherLocalMusic.close(); // 如果 watcher 已经存在，关闭它
-    }
-    watcherLocalMusic = chokidar.watch(readPath, {
-      persistent: true,
-    })
-    watcherLocalMusic.on('all', async (event, path) => {
-      let paths: id3Message[] = [];
-      let delPath: any[] = []
-      if (extname(path) == '.mp3') {
-        console.log(event, path);
-        if (event == 'add' || event == 'change') {
-          const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path, title: basename(path) }, NodeID3.read(path))
-
-          if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
-            t.comment.text = pares163Key(t.comment.text)
-          }
-          const songIdObject = t.userDefinedText.find(item => item.description == 'song id')
-
-          if (songIdObject && songIdObject!.value.length == 0) {
-            const endHash = (await getFileHashes([path]))
-            songIdObject.value = endHash[0]
-          }
-          paths.push(t);
-          // clearTimeout(timer);
-          // timer = setTimeout(() => {
-          console.log("发送前的值", paths.map(item => item.userDefinedText));
-          mainWindow.webContents.send('local-music-paths-add', paths);
-          paths = [];
-          // }, DELAY_MS);
-        } else if (event == 'unlink') {
-          delPath.push(path)
-          // clearTimeout(timer2);
-          // timer2 = setTimeout(() => {
-          mainWindow.webContents.send('local-music-paths-del', delPath);
-          delPath = [];
-          // }, DELAY_MS);
-        }
-      }
-    })
-    // const delMusic = ()=>{
-    //   const Files = fs.readdirSync('download')
-    //   const detail:any[] = []
-    //   Files.forEach((item)=>{
-    //     detail.push(NodeID3.read(`download/${item}`))
-    //   })
-    //   mainWindow.webContents.send('local-music',{Files,detail})
-    //   return {Files,detail}
-    // }
-    // const delDir = (path:string)=>{
-    //   watcher.off('unlink', delMusic)
-    //   watcher.off('unlinkDir', delDir)
-    //   watcher.close()
-    //   fs.mkdirSync('download', { recursive: true });
-    //   watcher.on('unlink',delMusic)
-    //   watcher.on('unlinkDir',delDir)
-    // }
-    // watcher.on('unlink',delMusic)
-    // watcher.on('unlinkDir',delDir)
-    // return delMusic()
-  })
-  //获取音乐路径
-  ipcMain.handle('get-song-path', ({ }, cleanFileName) => {
-    return downloadPath + '\\' + cleanFileName
-  })
-  //打开指定目录
-  ipcMain.on('open-path', ({ }, path) => {
-    // path+'.mp3'
-    if (!path.endsWith('.mp3')) path += '.mp3'
-    shell.showItemInFolder(path)
-  })
   //全局播放
   ipcMain.handle('set-global-op', async ({ }, keys) => {
     globalShortcut.unregisterAll()

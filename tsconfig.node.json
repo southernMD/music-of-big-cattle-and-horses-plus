@@ -2,17 +2,8 @@
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
   "include": [
     "electron.vite.config.*",
-    "src/preload/*",
-    "src/main/*",
-    "src/main/http/*",
-    "src/main/http/api/*",
-    "src/main/http/handles/*",
-    "src/main/utils/*",
-    "src/main/workers/*",
-    "src/main/server/*",
-    "src/main/server/netease/*",
-    "src/main/server/unlock/*",
-    "src/main/mainWindowsEvents/*"
+    "src/preload/**/*",
+    "src/main/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -20,6 +11,9 @@
     "paths": {
       "@build/*": [
         "build/*"
+      ],
+      "@main/*": [
+        "src/main/*"
       ]
     },
     "types": [
