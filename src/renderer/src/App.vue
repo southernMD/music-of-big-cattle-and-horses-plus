@@ -5,7 +5,7 @@ import useColor from '@renderer/hooks/useColor';
 import { RouterView } from 'vue-router';
 import getWindowsWorker from '@renderer/workers/getWindowsWorker?worker'
 const { background, fontColor } = window.electron.ipcRenderer.sendSync('get-background-color')
-console.log(background, fontColor);
+console.log(background, fontColor,"主题色是");
 const globalVar = useGlobalVar()
 useColor()
 const Main = useMain()

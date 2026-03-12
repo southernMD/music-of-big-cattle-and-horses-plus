@@ -7,6 +7,7 @@ import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 import { pickTime } from "../utils/pickTime";
 import { is } from "@electron-toolkit/utils";
+import { getFileBackground } from "@main/utils/getFileBackground";
 
 export default (mainWindow: BrowserWindow) => {
 
@@ -156,5 +157,15 @@ export default (mainWindow: BrowserWindow) => {
         } catch (err) {
             console.error(err);
         }
+    })
+
+    //记忆启动色
+    ipcMain.on('set-background-color', ({ }, arr) => {
+        console.log(arr[0], arr[1]);
+        fs.writeFileSync(join(__dirname, BASE_PATH, 'color.json'), `{"background":"${arr[0]}","color":"${arr[1]}"}`)
+    })
+    ipcMain.on('get-background-color', async (event) => {
+        const { background, color: fontColor } = await getFileBackground()
+        event.returnValue = { background, fontColor }
     })
 }

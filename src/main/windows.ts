@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen, dialog, nativeTheme, globalShortcut, Menu, session } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, screen, nativeTheme, globalShortcut, Menu, session } from 'electron'
 import { join } from 'path'
 import fs from 'fs'
 import icon from '@build/favicon.ico?asset'
@@ -6,9 +6,6 @@ import iconW from '@build/faviconW.ico?asset'
 
 import { is } from '@electron-toolkit/utils'
 import { registerWindowId, removeWindowId } from './windowManager'
-
-import fontList from 'font-list'
-import { exec, spawn } from 'child_process'
 
 import setupLocalPlay from './mainWindowsEvents/parseLocalPlayMessage'
 import setupLoadMenu from './mainWindowsEvents/loadMenu'
@@ -19,14 +16,11 @@ import setupRegisterId from './mainWindowsEvents/registerId'
 import setupDownloadMusic from './mainWindowsEvents/download/downloadMusic'
 import setupDownloadDir from './mainWindowsEvents/download/downloadDir'
 import setupGlobalOp from './mainWindowsEvents/globalOp'
-
-import ffmpegPath from '@ffmpeg-installer/ffmpeg';
-import ffmpeg from 'fluent-ffmpeg';
-import { Writable } from 'stream'
-import { BASE_PATH, DEFAULT_ID3_MESSAGE, DELAY_MS } from './defaultMessage'
+import setupSystem from './mainWindowsEvents/system'
+import setupLoadFileOptions from './mainWindowsEvents/loadFileOptions'
+import { BASE_PATH } from './defaultMessage'
 import { getFileBackground } from './utils/getFileBackground'
 import { getDownloadPath } from './utils/getDownloadPath'
-import { pickTime } from './utils/pickTime'
 export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   // let windowX: number = 0, windowY: number = 0; //中化后的窗口坐标
   // let X: number, Y: number; //鼠标基于显示器的坐标
@@ -96,39 +90,10 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
-  // mainWindow.setThumbnailClip({ x: 10, y: 0, width: 150, height: 60 })
   mainWindow.setThumbnailToolTip('大牛马音乐')
-
-  // const albumImage = nativeImage.createFromPath('resources/background.jpg');
-  // const hwnd = mainWindow.getNativeWindowHandle().readUInt32LE(0);
-
-  // const user32 = new ffi.Library('user32.dll', {
-  //   'SendMessageA': ['long', ['long', 'int', 'long', 'long']],
-  // });
 
   //加载控制窗口事件
   setupControlWindow(mainWindow)
-
-  // ipcMain.on('move-screen', (e, obj) => {
-  //   let { mouseX, mouseY } = obj //鼠标按下时的坐标
-  //   let { x, y } = mainWindow.getBounds();  //左上点坐标
-  //   console.log('按下时',screenMove);
-  //   if(!screenMove){
-  //       console.log('beginmoving');
-  //       screenMove = setInterval(() => {
-  //           X = screen.getCursorScreenPoint().x
-  //           Y = screen.getCursorScreenPoint().y
-  //           let nW = mainWindow.getContentBounds().width
-  //           let nH = mainWindow.getContentBounds().height
-  //           mainWindow.setContentBounds({width:nW,height:nH,x:x + (X - (mouseX + x)),y:y + (Y - (mouseY + y))})
-  //       }, 10)
-  //   }
-  // })
-  // ipcMain.on('cancel-screen', () => {
-  //   console.log('endmoving');
-  //   clearInterval(screenMove)
-  //   screenMove = null;
-  // })
 
   //设置背景
   setupBackground(mainWindow)
@@ -145,258 +110,11 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
   //全局操作
   setupGlobalOp(mainWindow)
 
-  //歌词请求出现详情页面
-  ipcMain.on('lrc-open-playDetail', () => {
-    mainWindow.show()
-  })
-  //选择修改歌单封面
-  ipcMain.on('detail-pic', (event) => {
-    dialog.showOpenDialog(mainWindow, {
-      title: '选择一张图片或一段视频',
-      filters: [
-        { name: '图片资源', extensions: ['jpg', 'png', 'jpeg', 'webp'] },
-      ],
-      properties: ['openFile', 'promptToCreate']
-    }).then((obj) => {
-      const { canceled, filePaths } = obj
-      if (!canceled) {
-        const filePath = filePaths[0]
-        fs.readFile(filePath, (err, data) => {
-          if (err) {
-            event.returnValue = err.toString()
-          } else {
-            event.returnValue = data.toString('base64')
-          }
-        })
-      } else {
-        event.returnValue = null
-      }
-    })
-  })
-  //保存图片
-  ipcMain.handle('save-image', (event, { buffer, ext }) => {
-    return new Promise((resolve, reject) => {
-      dialog
-        .showSaveDialog(mainWindow, {
-          title: '另存为',
-          buttonLabel: '保存',
-          defaultPath: `${new Date().getTime()}${ext}`,
-        })
-        .then(({ filePath, canceled }) => {
-          if (canceled) {
-            resolve('');
-            return
-          }
-          if (filePath) {
-            fs.writeFile(filePath, Buffer.from(buffer), (err) => {
-              if (err) {
-                console.error(err);
-                resolve(false);
-              } else {
-                resolve(true);
-              }
-            });
-          } else {
-            resolve(false);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          resolve(false);
-        });
-    });
-  });
-  //字体列表
-  ipcMain.handle('get-font-list', () => {
-    return new Promise<any>((resolve, reject) => {
-      fontList.getFonts()
-        .then(fonts => {
-          resolve(fonts)
-          // console.log(fonts)
-        })
-        .catch(err => {
-          console.log(err)
-        })
-    })
-  })
-  //设置默认播放器
-  ipcMain.handle('to-link-local', ({ }, flag) => {
-    return new Promise<any>((resolve, reject) => {
-      if (flag) {
-        exec("reg add HKCU\\Software\\Classes\\.mp3 /ve /d mp3file /f", (err) => {
-          if (err) {
-            console.log(err);
-            resolve(false);
-          }
-          exec('reg add HKCU\\Software\\Classes\\mp3file\\shell\\open\\command /ve /d "\"' + process.execPath + '\" \"%1\"" /f', (err) => {
-            if (err) {
-              console.log(err);
-              resolve(false);
-            }
-            resolve(true);
-          })
-        })
-      } else {
-        exec("reg delete HKCU\\Software\\Classes\\.mp3 /f", (err) => {
-          if (err) {
-            console.log(err);
-            resolve(false);
-          }
-          exec('reg delete HKCU\\Software\\Classes\\mp3file\\shell\\open\\command /f', (err) => {
-            if (err) {
-              console.log(err);
-              resolve(false);
-            }
-            resolve(true);
-          })
-        })
-      }
-    })
-  })
-  //设置开机自启
-  ipcMain.handle('auto-open', ({ }, flag) => {
-    return new Promise<any>((resolve, reject) => {
-      if (flag) {
-        exec('reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v "bigNMusice" /d "\"' + process.execPath + '\" /f', (err) => {
-          if (err) {
-            console.log(err);
-            resolve(false);
-          }
-          resolve(true);
-        })
-      } else {
-        exec('reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v "bigNMusice" /f', (err) => {
-          if (err) {
-            console.log(err);
-            resolve(false);
-          }
-          resolve(true);
-        })
-      }
-    })
-  })
-  //分享图片
-  ipcMain.handle('add-share-image', ({ }, length) => {
-    return new Promise<any>((resolve, reject) => {
-      dialog.showOpenDialog(mainWindow, {
-        title: '选择图片',
-        filters: [
-          { name: '图片资源', extensions: ['jpg', 'png', 'jpeg'] },
-        ],
-        properties: ['openFile', 'multiSelections']
-      }).then(async ({ canceled, filePaths }) => {
-        if (!canceled) {
-          //file-re
-          filePaths = filePaths.slice(0, 9 - length)
-          const lius = await Promise.allSettled(filePaths.map((path) => {
-            return new Promise<any>((resolve, reject) => {
-              fs.readFile(path, (err, data) => {
-                if (err) reject(err)
-                else resolve(data)
-              })
-            })
-          }))
-          resolve(lius)
-        }
-      })
-    })
+  setupSystem()
 
-  })
-  //记忆启动色
-  ipcMain.on('set-background-color', ({ }, arr) => {
-    console.log(arr[0], arr[1]);
-    fs.writeFileSync(join(__dirname, BASE_PATH, 'color.json'), `{"background":"${arr[0]}","color":"${arr[1]}"}`)
-  })
-  ipcMain.on('get-background-color', (event) => {
-    event.returnValue = { background, fontColor }
-  })
-  //下载视频
-  ipcMain.on('saveVideo', (event, { videoPath, coverPath }) => {
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      ffmpeg.setFfmpegPath(ffmpegPath.path);
-    } else {
-      ffmpeg.setFfmpegPath(join(__dirname, '../../../app.asar.unpacked/node_modules/@ffmpeg-installer/win32-x64/ffmpeg.exe'));
-    }
-    let total = '0'
-    const ffmpegCommand = ffmpeg(videoPath)
-      .nativeFramerate()
-      .videoCodec('libx264')
-      .format('mp4')
-      .outputOptions(
-        '-movflags', 'frag_keyframe+empty_moov+faststart',
-        '-preset', 'faster', //以损失画质换取流畅度
-        '-threads', 'auto',
-        "-crf", "20"
-      )
-      .on('progress', function ({ timemark }) {
-        event.reply("save-video-progress", { progress: Math.ceil(pickTime(timemark) / pickTime(total) * 100) })
-        console.log(Math.ceil(pickTime(timemark) / pickTime(total) * 100));
-      }).on('error', function (err) {
-        if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
-          event.reply("save-video-error", { err })
-          ffmpegCommand.kill('SIGTERM')
-          console.log('An error occurred: ' + err.message);
-        }
-      })
-    const chunks: Uint8Array[] = [];
-    const writableStream = new Writable({
-      write(chunk, encoding, callback) {
-        chunks.push(chunk);
-        callback();
-      }
-    });
-    const fileName = new Date().getTime() + '.jpg'
-    ffmpegCommand.output(writableStream).screenshots({
-      timestamps: ['1'], // 获取视频的第一帧截图
-      filename: fileName, // 保存为临时文件
-      folder: join(__dirname, BASE_PATH), // 临时文件夹
-    }).on('error', function (err) {
-      if (!(err.message == 'ffmpeg was killed with signal SIGKILL' || err.message == 'Output stream closed')) {
-        event.reply("save-video-error", { err })
-        ffmpegCommand.kill('SIGTERM')
-        console.log('An error occurred: ' + err.message);
-      }
-    })
-      .on('end', function () {
-        ffmpegCommand.kill('SIGTERM')
-        writableStream.destroy();
-        const buffer = Buffer.concat(chunks);
-        event.reply("save-video-progress", { progress: 100 })
-        fs.readFile(join(__dirname, BASE_PATH, fileName), (err, data) => {
-          if (err) {
-            event.reply("save-video-error", { err })
-            console.error('Error reading image file:', err);
-            return;
-          }
-          event.reply('save-video-finish', { arrayBuffer: buffer.buffer, coverArrayBuffer: data.buffer });
-          // 删除图片
-          fs.unlink(join(__dirname, BASE_PATH, fileName), (err) => {
-            if (err) {
-              event.reply('save-video-error', { err });
-            }
-          });
-        });
-      }).on('codecData', ({ duration }) => {
-        total = duration
-      })
-    ipcMain.on("dueTo-del-nedd-close-ffmpeg", () => {
-      ffmpegCommand.kill("SIGTERM");
-      writableStream.destroy()
-      if (fs.existsSync(join(__dirname, BASE_PATH, fileName))) {
-        fs.unlink(join(__dirname, BASE_PATH, fileName), (err) => {
-          if (err) {
-            event.reply('save-video-error', { err });
-          }
-        });
-      }
-    })
-    writableStream.on("error", (err) => {
-      writableStream.destroy();
-    })
-  })
+  //本地文件操作
+  setupLoadFileOptions(mainWindow)
 
-  //登录子窗口
-  ipcMain.on("open-login-web", () => loginWindow(mainWindow!));
   return mainWindow
 }
 

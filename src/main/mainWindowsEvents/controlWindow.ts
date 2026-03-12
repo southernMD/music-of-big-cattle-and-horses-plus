@@ -29,4 +29,8 @@ export default (mainWindow: BrowserWindow) => {
         mainWindow.maximize()
         mainWindow.webContents.send('to-changeFished-finshed')
     })
+    //歌词请求出现详情页面
+    ipcMain.on('lrc-open-playDetail', () => {
+        mainWindow.show()
+    })
 }
