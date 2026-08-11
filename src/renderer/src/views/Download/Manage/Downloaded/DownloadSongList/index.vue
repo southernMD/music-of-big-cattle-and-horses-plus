@@ -39,6 +39,7 @@ import { useMain } from '@renderer/store';
 import {throttle} from 'lodash'
 import { useGlobalVar } from '@renderer/store';
 import { removeDuplicatesKeepLast } from '@renderer/utils/removeDuplicatesKeepLast';
+import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64';
 const globalVar = useGlobalVar()
 const props = defineProps<{
     searchKey:string
@@ -162,17 +163,6 @@ watch(()=>globalVar.playLoacalIndex,async()=>{
     }
 })
 
-function bufferToBase64(buffer) {
-  const reader = new FileReader();
-  reader.readAsDataURL(new Blob([buffer], { type: 'image/jpeg' }));
-  return new Promise((resolve, reject) => {
-    reader.onloadend = () => {
-      const base64String = reader.result;
-      resolve(base64String);
-    };
-    reader.onerror = reject;
-  });
-}
 const listCopyLength = ref(0)
 const listCopy:Ref<{title:string,al:string,ar:string[],indexList:number}[]> = ref([])
 watch(()=>props.searchKey,throttle(searchKeyFn, 500))

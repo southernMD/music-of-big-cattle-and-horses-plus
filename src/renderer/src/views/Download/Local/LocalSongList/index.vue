@@ -40,6 +40,7 @@ import { useGlobalVar, useMain } from '@renderer/store';
 import LineMusic from '@renderer/components/myVC/LineMusic/index.vue'
 import { throttle } from 'lodash';
 import { removeDuplicatesKeepLast } from '@renderer/utils/removeDuplicatesKeepLast'
+import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64';
 const globalVar = useGlobalVar()
 const props = defineProps<{
     list:id3Message[]
@@ -200,18 +201,7 @@ const localPlay = async({index,id})=>{
     if(globalVar.setting.playWay)Main.beforePlayListId = -2
     Main.playing = id
 }
-function bufferToBase64(buffer) {
-    if(buffer == undefined)return Promise.resolve('')
-    const reader = new FileReader();
-    reader.readAsDataURL(new Blob([buffer], { type: 'image/jpeg' }));
-    return new Promise((resolve, reject) => {
-        reader.onloadend = () => {
-        const base64String = reader.result;
-        resolve(base64String);
-        };
-        reader.onerror = reject;
-    });
-}
+
 const listCopyLength = ref(0)
 const listCopy:Ref<{title:string,al:string,ar:string[],indexList:number}[]> = ref([])
 watch(()=>props.searchKey,throttle(searchKeyFn, 500))

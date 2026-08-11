@@ -261,6 +261,7 @@ import musicCanSeeWorker from '@renderer/workers/musicCanSeeWorker?worker'
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 import { unlockSong } from '@renderer/api';
+import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64.js';
 
 const playSpeedRef = ref(null)
 const playLevelRef = ref(null)
@@ -2511,18 +2512,7 @@ window.electron.ipcRenderer.on('load-local-music',async({},{msg,error,flag})=>{
 
 })
 
-function bufferToBase64(buffer) {
-    if(buffer == undefined)return Promise.resolve('')
-    const reader = new FileReader();
-    reader.readAsDataURL(new Blob([buffer], { type: 'image/jpeg' }));
-    return new Promise((resolve, reject) => {
-        reader.onloadend = () => {
-        const base64String = reader.result;
-        resolve(base64String);
-        };
-        reader.onerror = reject;
-    });
-}
+
 const getZhuanji = (msg:id3Message,name: string ,detail: {description: string;value: string;} | undefined,_163key:string | undefined) => {
     if(detail && detail.description == 'al id'){
         return { name, id: +detail.value, tns: [] }
