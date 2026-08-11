@@ -18,32 +18,52 @@ import { getFileHashes } from "@main/utils/createhash";
 export default (downloadPath: string, mainWindow: BrowserWindow) => {
     //下载目录文件变化
 
-    const watcher = chokidar.watch(downloadPath, {
+    let watcher = chokidar.watch(downloadPath, {
         persistent: true
     });
     const delMusic = (path: string) => {
+        console.log('[setupDownloadDir Watcher] File unlinked:', path);
         mainWindow.webContents.send('look-download-list-del-path', path)
     }
     const addMuisc = (path: string) => {
-        mainWindow.webContents.send('look-download-list-add-path', NodeID3.read(path))
+        console.log('[setupDownloadDir Watcher] File added:', path);
+        const t = Object.assign({ ...cloneDeep(DEFAULT_ID3_MESSAGE), path, title: basename(path) }, NodeID3.read(path))
+        if (t.comment && t.comment.text.startsWith("163 key(Don't modify)")) {
+            t.comment.text = pares163Key(t.comment.text)
+        }
+        mainWindow.webContents.send('look-download-list-add-path', t)
     }
-    const delDir = (path: string) => {
+    const delDir = async (path: string) => {
         console.log(path, 'delDir');
-        watcher.off('unlink', delMusic)
-        watcher.off('add', addMuisc)
-        watcher.off('unlinkDir', delDir)
-        watcher.removeAllListeners()
-        watcher.close()
+        if (watcher) {
+            watcher.off('unlink', delMusic)
+            watcher.off('add', addMuisc)
+            watcher.off('unlinkDir', delDir)
+            watcher.removeAllListeners()
+            await watcher.close()
+        }
         fs.mkdirSync(downloadPath, { recursive: true });
 
         // 重新监听
+        watcher = chokidar.watch(downloadPath, {
+            persistent: true
+        });
         watcher.on('unlink', delMusic)
         watcher.on('add', addMuisc)
         watcher.on('unlinkDir', delDir)
+        watcher.on('ready', () => {
+            console.log('[setupDownloadDir Watcher] Watched after delDir:', watcher.getWatched());
+        });
     }
     watcher.on('unlink', delMusic);
     watcher.on('add', addMuisc);
     watcher.on('unlinkDir', delDir);
+    watcher.on('ready', () => {
+        console.log('[setupDownloadDir Watcher] Watcher is ready. Watched:', watcher.getWatched());
+    });
+    watcher.on('error', (err) => {
+        console.error('[setupDownloadDir Watcher] Error:', err);
+    });
     watcher.add(downloadPath);
 
     //获取默认下载目录路径
@@ -51,24 +71,32 @@ export default (downloadPath: string, mainWindow: BrowserWindow) => {
         return downloadPath ?? resolve('download')
     })
 
-    ipcMain.handle('change-download-path', ({ }, path) => {
-        watcher.off('unlink', delMusic);
-        watcher.off('add', addMuisc);
-        watcher.off('unlinkDir', delDir);
-        watcher.close();
-        if (path !== downloadPath) {
-            moveFileWorker({ workerData: { downloadPath, destinationPath: path } }).on('message', () => {
-                downloadPath = path;
-                console.log('完成转移音乐文件');
-                watcher.add(downloadPath);
-
-                // 重新挂载事件
-                watcher.on('unlink', delMusic);
-                watcher.on('add', addMuisc);
-                watcher.on('unlinkDir', delDir);
-                return 'ok'
-            })
+    ipcMain.handle('change-download-path', async ({ }, path) => {
+        if (path === downloadPath) {
+            return 'ok';
         }
+        if (watcher) {
+            watcher.off('unlink', delMusic);
+            watcher.off('add', addMuisc);
+            watcher.off('unlinkDir', delDir);
+            await watcher.close();
+        }
+        moveFileWorker({ workerData: { downloadPath, destinationPath: path } }).on('message', () => {
+            downloadPath = path;
+            console.log('完成转移音乐文件');
+            watcher = chokidar.watch(downloadPath, {
+                persistent: true
+            });
+
+            // 重新挂载事件
+            watcher.on('unlink', delMusic);
+            watcher.on('add', addMuisc);
+            watcher.on('unlinkDir', delDir);
+            watcher.on('ready', () => {
+                console.log('[setupDownloadDir Watcher] New watcher ready:', watcher.getWatched());
+            });
+            return 'ok'
+        })
     })
     ipcMain.on('open-download-dir', () => {
         shell.openPath(downloadPath)
