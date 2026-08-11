@@ -24,8 +24,6 @@ declare module '@vue/runtime-core' {
     EditorPage: typeof import('./src/components/myVC/editorPage.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
-    ElCollapse: typeof import('element-plus/es')['ElCollapse']
-    ElCollapseItem: typeof import('element-plus/es')['ElCollapseItem']
     ElColorPicker: typeof import('element-plus/es')['ElColorPicker']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDivider: typeof import('element-plus/es')['ElDivider']
@@ -38,7 +36,6 @@ declare module '@vue/runtime-core' {
     ElRadio: typeof import('element-plus/es')['ElRadio']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
-    ElTag: typeof import('element-plus/es')['ElTag']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     Emoji: typeof import('./src/components/myVC/WriteCommit/emoji/index.vue')['default']
     EventBlock: typeof import('./src/components/myVC/eventBlock.vue')['default']
@@ -75,8 +72,5 @@ declare module '@vue/runtime-core' {
     Tag: typeof import('./src/components/myVC/Tag.vue')['default']
     WriteCommit: typeof import('./src/components/myVC/WriteCommit/index.vue')['default']
     ZhuanJi: typeof import('./src/components/myVC/LineMusic/ZhuanJi/index.vue')['default']
-  }
-  export interface ComponentCustomProperties {
-    vInfiniteScroll: typeof import('element-plus/es')['ElInfiniteScroll']
   }
 }

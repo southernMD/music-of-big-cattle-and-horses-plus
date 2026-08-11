@@ -2,10 +2,13 @@
   "files": [],
   "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.web.json" }],
   "compilerOptions": {
-    // ...
+    "baseUrl": ".",
     "types": ["element-plus/global","p-queue"],
     "paths": {
-      "p-queue": ["./node_modules/p-queue/dist/index"]
+      "p-queue": ["./node_modules/p-queue/dist/index"],
+      "@renderer/*": ["src/renderer/src/*"],
+      "@main/*": ["src/main/*"],
+      "@build/*": ["build/*"]
     }
   }
 }
