@@ -815,7 +815,7 @@ watch(downLoadAll, async () => {
         // })
     } else {
         globalVar.downloadId.push(props.id)
-        globalVar.downloadList.push({ id: props.id, name: cleanFileName, controller: new AbortController(), ifcancel: false, url: '' })
+        globalVar.downloadList.push({ id: props.id, name: cleanFileName, controller: new AbortController(), ifcancel: false, url: '', downloadingFlag: true })
     }
 })
 

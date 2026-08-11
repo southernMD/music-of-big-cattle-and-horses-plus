@@ -19,8 +19,8 @@
             </div>
         </div>
         <div class="option">
-            <i class="iconfont icon-zanting" v-show="downloadingFlag && !val.ifcancel" @click="stop(false)"></i>
-            <i class="iconfont icon-gf-play" v-show="!downloadingFlag || val.ifcancel" @click="stop(true)"></i>
+            <i class="iconfont icon-zanting" v-show="val.downloadingFlag && !val.ifcancel" @click="stop(false)"></i>
+            <i class="iconfont icon-gf-play" v-show="!val.downloadingFlag || val.ifcancel" @click="stop(true)"></i>
             <i class="iconfont icon-lajixiang" @click="cancel"></i>
         </div>
     </div>
@@ -28,7 +28,9 @@
 
 <script setup lang="ts">
 import { toRef, watch,computed, getCurrentInstance, ComponentInternalInstance, ref, inject, ShallowRef } from 'vue'
+import PromiseQueue from 'p-queue';
 import { useGlobalVar, useMain } from '@renderer/store';
+import { downloadMusic } from '@renderer/utils/downloadMusic';
 
 const $el = getCurrentInstance() as ComponentInternalInstance;
 const globalVar = useGlobalVar()
@@ -42,10 +44,12 @@ const props = defineProps<{
         br?: number | undefined;
         controller: AbortController
         ifcancel: boolean
+        downloadingFlag: boolean
     }
 }>()
 const loadingFillWidth = computed(() => {
-  return ((globalVar.loadingValue.get(props.val.id)[0] / globalVar.loadingValue.get(props.val.id)[1])) * 100 + '%'
+    const [now,total] = globalVar.loadingValue.get(props.val.id) ?? [0,1] as [number,number]
+    return (now / total) * 100 + '%'
 })
 function searchFather(d: HTMLElement): HTMLElement {
     if (d.classList.contains('line-music')) {
@@ -79,26 +83,17 @@ watch(oneself, () => {
     const dom = $el.refs['line-music'] as HTMLElement
     if (dom) dom.style.backgroundColor = ''
 })
-const downloadingFlag = ref(true)
-if (globalVar.initDownloadButton == false) {
-    downloadingFlag.value = false
-} else {
-    downloadingFlag.value = true
-}
-const downloadQueue = inject('downloadQueue') 
+
+const downloadQueue = inject<ShallowRef<PromiseQueue>>('downloadQueue') as ShallowRef<PromiseQueue>
 
 const stop = (flag: boolean) => {
-    downloadingFlag.value = flag
+    props.val.downloadingFlag = flag
     if (flag == false) {  //暂停下载
-        const download = globalVar.downloadList.find(item => item.id === props.val.id)
-        download?.controller.abort()
+        props.val.controller.abort()
     } else {  //继续下载
-        const download = globalVar.downloadList.find(item => item.id === props.val.id)
-        //@ts-ignore
-        download.ifcancel = false
-        //@ts-ignore
-        download.controller = new AbortController()
-        downloadQueue.value.add(() => getUrl(props.val.id, props.val.name), { signal: download!.controller.signal, priority: 1 })
+        props.val.ifcancel = false
+        props.val.controller = new AbortController()
+        downloadQueue.value.add(() => downloadMusic(props.val.id, props.val.name), { signal: props.val.controller.signal, priority: 1 })
     }
 }
 
@@ -109,145 +104,8 @@ const cancel = () => {
     globalVar.downloadList = globalVar.downloadList.filter(item => item.id != props.val.id)
     globalVar.musicPick.delete(props.val.id)
 }
-//下载请求
-const br = (str: string) => {
-    if (str == 'standard') return 128000
-    else if (str == 'higher') return 192000
-    else if (str == 'exhigh') return 320000
-    else return 999000
-}
-const WaitdownloadList = toRef(globalVar, 'downloadList')
-const getUrl = async (id, name) => {
-    globalVar.initDownloadButton = true
-    const downloadObj = globalVar.downloadList.find(item => item.id === id)
-    const loadedBase = globalVar.loadingValue.get(id)?.[0] as number
-    let totalBase = globalVar.loadingValue.get(id)?.[1] as number
-    let url
-    let result;
-    let chunks: Uint8Array[]
-    console.log(downloadObj);
-    console.log('是继续下载对吧',name);
-    if (globalVar.musicPick.get(id) == undefined) { //切片数据)
-        globalVar.musicPick.set(id, [])
-        //@ts-ignore
-        chunks = globalVar.musicPick.get(id)
-    } else {
-        //@ts-ignore
-        chunks = globalVar.musicPick.get(id)
-    }
-    try {
-        if (downloadObj?.url) {
-            url = downloadObj?.url
-        } else {
-            if (downloadObj?.level) {
-                url = await Main.reqSongUrl(id,'','song',downloadObj?.level)
-            } else if (downloadObj?.br) {
-                result = await Main.reqSongDlUrl(id, downloadObj?.br)
-                url = result.data.data.url
-            } else {
-                result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
-                url = result.data.data.url
-                if (url == null) {
-                    url = await Main.reqSongUrl(id,name.replaceAll(" ",""),'song',globalVar.setting.downloadlevel)
-                    //@ts-ignore
-                    downloadObj.level = globalVar.setting.downloadlevel
-                } else {
-                    //@ts-ignore
-                    downloadObj.br = br(globalVar.setting.downloadlevel)
-                }
-                //@ts-ignore
-                downloadObj.url = url
-            }
-        }
-    } catch (error) {
-        globalVar.musicPick.set(id, chunks)
-        //@ts-ignore
-        downloadObj.ifcancel = true
-    }
-    const Range = loadedBase == 0 && totalBase == 1 ? `bytes=${loadedBase}-` : `bytes=${loadedBase}-${totalBase}`
-    //@ts-ignore
-    return fetch(url, {
-        headers: {
-            Range: Range // 下载前 范围
-        },
-        signal: globalVar.downloadList.find(item => item.id === id)?.controller.signal
-    }).then(response => {
-        let loaded = loadedBase
-        //@ts-ignore
-        if (loadedBase == 0 && totalBase == 1) totalBase = +response.headers.get('content-length')
-        const reader = response.body?.getReader() as ReadableStreamDefaultReader<Uint8Array>
-        return new ReadableStream({
-            start(controller) {
-                function push() {
-                    reader.read().then(({ done, value }) => {
-                        if (done) {
-                            controller.close()
-                            return
-                        }
 
-                        loaded += value.byteLength
-                        controller.enqueue(value)
-                        chunks.push(value)
-                        // 计算进度
-                        globalVar.loadingValue.set(id, [loaded, totalBase])
-                        push()
-                    }).catch(async (error) => {
-                        console.log(error);
-                        console.log(error.name);
-                        if (error.name === 'AbortError') {
-                            globalVar.musicPick.set(id, chunks)
-                            return null
-
-                        } else {
-                            globalVar.musicPick.set(id, chunks)
-                            //@ts-ignore
-                            downloadObj.ifcancel = true
-                            return null
-
-                        }
-                    })
-                }
-                push()
-            }
-        })
-    })
-        .then(stream => new Response(stream))
-        .then(response => response.arrayBuffer())
-        .then(async () => {
-            const detail = (await Main.reqSongDetail([id])).data.songs[0]
-            console.log(detail);
-            const title = `${detail.name}`
-            const artistId:any[] = []
-            const artist = (detail.ar.map((item)=>{
-                artistId.push(item.id)
-                return `${item.name}`
-            })).join('/')
-            const image = detail.al.picUrl
-            const album = `${detail.al.name}`
-            const id3 = {
-                title,artist,image,album,ids:[detail.id,detail.al.id,...artistId],time:detail.dt
-            }
-            const mergedChunks = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-            let offset = 0;
-            for (const chunk of chunks) {
-                mergedChunks.set(chunk, offset);
-                offset += chunk.byteLength;
-            }
-            const arrayBuffer = mergedChunks.buffer;
-            //@ts-ignore
-            window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: name,id3 })
-            globalVar.musicPick.delete(id)
-            WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
-            // window.electron.ipcRenderer.send('save-music-pick',{name})
-        })
-        .catch(() => {
-            globalVar.musicPick.set(id, chunks)
-            //@ts-ignore
-            downloadObj.ifcancel = true
-            // WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
-        })
-}
-defineExpose({ downloadingFlag, val: props.val })
+defineExpose({ val: props.val })
 
 </script>
 

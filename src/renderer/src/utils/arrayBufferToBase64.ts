@@ -1,7 +1,7 @@
-export function bufferToBase64(buffer:ArrayBuffer):Promise<string> {
-    if(buffer == undefined)return Promise.resolve('')
+export function bufferToBase64(buffer: ArrayBuffer | ArrayBufferView | undefined): Promise<string> {
+    if (buffer == undefined) return Promise.resolve('')
     const reader = new FileReader();
-    reader.readAsDataURL(new Blob([buffer], { type: 'image/jpeg' }));
+    reader.readAsDataURL(new Blob([buffer as any], { type: 'image/jpeg' }));
     return new Promise((resolve, reject) => {
         reader.onloadend = () => {
         const base64String = reader.result;

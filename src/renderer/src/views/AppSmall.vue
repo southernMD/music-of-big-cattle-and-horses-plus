@@ -56,6 +56,7 @@ import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import rightBlock from '@renderer/components/myVC/RightBlock.vue'
 import PromiseQueue from 'p-queue';
 import { githubUpdate } from '@renderer/api';
+import { downloadMusic } from '@renderer/utils/downloadMusic';
 import { setCookies } from '@renderer/utils/cookie'
 import { removeCookie } from '@renderer/utils/cookie'
 import icon from '@renderer/assets/icon.png'
@@ -535,142 +536,16 @@ const weight = (str: string) => {
     else return 4
 }
 
-const br = (str: string) => {
-    if (str == 'standard') return 128000
-    else if (str == 'higher') return 192000
-    else if (str == 'exhigh') return 320000
-    else return 999000
-}
-const WaitdownloadList = toRef(globalVar, 'downloadList')
 
 const toDownload = () => {
     const controller = new AbortController()
-    downloadQueue.value.add(() => getUrl(controller), { signal: controller.signal })
-}
-const getUrl = async (controller: AbortController) => {
-    let result
-    let url
-    globalVar.initDownloadButton = true
     const id = downloadLevel.value.id
+    const name = downloadLevel.value.songName
     downloadFlag.value = false
     globalVar.loadingValue.set(id, [0, 1])
     globalVar.downloadId.push(id)
-    globalVar.downloadList.push({ id: id, name: downloadLevel.value.songName, controller, ifcancel: false, url: '' })
-    console.log("我是什么name",downloadLevel.value.songName);
-    const downloadObj = globalVar.downloadList[globalVar.downloadList.length - 1]
-    let chunks: Uint8Array[]
-    if (globalVar.musicPick.get(id) == undefined) { //切片数据)
-        //@ts-ignore
-        chunks = []
-    } else {
-        //@ts-ignore
-        chunks = globalVar.musicPick.get(id)
-    }
-    try {
-        //a,b,c - N ---> N-a-b-c
-        const unlockName = downloadLevel.value.songName.split(' - ').reverse().join(',').replaceAll(",","-")
-        if (dlWay.value == 0) {
-            url = await MainPinia.reqSongUrl(id,unlockName,'song',level.value)
-            downloadObj.level = level.value
-        } else {
-            result = await MainPinia.reqSongDlUrl(id, br(level.value))
-            url = result.data.data.url
-            if(!url) url = await MainPinia.reqSongUrl(id,unlockName,'song',level.value)
-            downloadObj.br = br(level.value)
-        }
-    } catch (error) {
-        globalVar.musicPick.set(id, chunks)
-        downloadObj.ifcancel = true
-    }
-    let loaded = 0 //下载量
-    downloadObj.url = url
-    if(!url){
-        ElMessage({
-            message: `${downloadLevel.value.songName}下载失败`,
-            type: 'error'
-        })
-        controller.abort()
-        globalVar.downloadId = globalVar.downloadId.filter(item => item != id)
-        globalVar.loadingValue.delete(id)
-        globalVar.downloadList = globalVar.downloadList.filter(item => item.id != id)
-        globalVar.musicPick.delete(id)
-        return 
-    }
-    return fetch(url, {
-        signal: downloadObj.controller.signal
-    }).then(response => {
-        const total = response.headers.get('content-length') as string//响应体大小
-        const reader = response.body?.getReader() as ReadableStreamDefaultReader<Uint8Array>
-        return new ReadableStream({
-            start(controller) {
-                function push() {
-                    reader.read().then(({ done, value }) => {
-                        if (done) {
-                            controller.close()
-                            return
-                        }
-
-                        loaded += value.byteLength
-                        controller.enqueue(value)
-                        chunks.push(value)
-                        // 计算进度
-                        globalVar.loadingValue.set(id, [loaded, (+total)])
-                        push()
-                    }).catch(error => {
-                        console.log(error);
-                        console.log(error.name);
-                        if (error.name === 'AbortError') {
-                            globalVar.musicPick.set(id, chunks)
-                            return null
-
-                        } else {
-                            globalVar.musicPick.set(id, chunks)
-                            //@ts-ignore
-                            downloadObj.ifcancel = true
-                            return null
-
-                        }
-                    })
-                }
-                push()
-            }
-        })
-    })
-        .then(stream => new Response(stream))
-        .then(response => response.arrayBuffer())
-        .then(async () => {
-            const detail = (await MainPinia.reqSongDetail([id])).data.songs[0]
-            console.log(detail);
-            const title = `${detail.name}`
-            const artistId: any[] = []
-            const artist = (detail.ar.map((item) => {
-                artistId.push(item.id)
-                return `${item.name}`
-            })).join('/')
-            const image = detail.al.picUrl
-            const album = `${detail.al.name}`
-            const id3 = {
-                title, artist, image, album, ids: [detail.id, detail.al.id, ...artistId], time: detail.dt
-            }
-            const mergedChunks = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-            let offset = 0;
-            for (const chunk of chunks) {
-                mergedChunks.set(chunk, offset);
-                offset += chunk.byteLength;
-            }
-            const arrayBuffer = mergedChunks.buffer;
-            window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: downloadLevel.value.songName, id3 })
-            globalVar.musicPick.delete(id)
-            WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
-            // window.electron.ipcRenderer.send('save-music-pick',{name:downloadLevel.value.songName})
-            // globalVar.loadingValue.delete(id)
-            // globalVar.downloadId = globalVar.downloadId.filter(item => item != id)
-        }).catch((err) => {
-            console.log(err);
-            globalVar.musicPick.set(id, chunks)
-            //@ts-ignore
-            downloadObj.ifcancel = true
-        })
+    globalVar.downloadList.push({ id: id, name: name, controller, ifcancel: false, url: '', downloadingFlag: true })
+    downloadQueue.value.add(() => downloadMusic(id, name, controller), { signal: controller.signal })
 }
 const downloadList = ref([])
 window.electron.ipcRenderer.send('get-download-list')

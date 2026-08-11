@@ -29,7 +29,6 @@
       </div>
       <div class="music-list" :class="{ 'music-list-oneself': globalVar.oneself == 1 }">
         <LoadingLineMusic
-          :ref="ref => { return loadingLineMusicRefs[index] = ref as InstanceType<typeof LoadingLineMusic> }"
           v-show="index >=(nowPage-1)*20 && index < nowPage*20"
           v-for="(val, index) in globalVar.downloadList" :index="index" :val="val" :key="val.id"
           >
@@ -45,65 +44,29 @@
 
 <script setup lang="ts">
 import { useMain, useGlobalVar } from '@renderer/store';
+import { downloadMusic } from '@renderer/utils/downloadMusic';
 import { inject, ShallowRef, toRef, getCurrentInstance, ComponentInternalInstance, ref, nextTick, watch, ComponentPublicInstance } from 'vue';
+import PromiseQueue from 'p-queue';
 import LoadingLineMusic from './LoadingLineMusic/index.vue'
 const Main = useMain()
 const globalVar = useGlobalVar()
-const downloadQueue = inject('downloadQueue')
+const downloadQueue = inject<ShallowRef<PromiseQueue>>('downloadQueue') as ShallowRef<PromiseQueue>
 const downloadALL = () => {
-  const refs = loadingLineMusicRefs.value.slice(); // 复制数组
-  globalVar.downloadList.forEach(async(item,index) => {
+  globalVar.downloadList.forEach((item) => {
     if (item.ifcancel || item.controller.signal.aborted) {
       item.controller = new AbortController()
       item.ifcancel = false
-      loadingLineMusicRefs.value[index].downloadingFlag = true
-      downloadQueue.value.add(() => getUrl(item.id, item.name), { signal: item!.controller.signal, priority: 1 })
+      item.downloadingFlag = true
+      downloadQueue.value.add(() => downloadMusic(item.id, item.name), { signal: item!.controller.signal, priority: 1 })
     }
-    await nextTick();
-    refs[index] = refs[index] || ref(null);
-    // loadingLineMusicRefs.value[index] = loadingLineMusicRefs.value[index] || ref(null)
   })
-  nextTick(() => {
-    loadingLineMusicRefs.value = refs;
-  });
 }
 
-const loadingLineMusicRefs = ref<(InstanceType<typeof LoadingLineMusic>[])>([]);
-
-// 监听 globalVar.downloadList 的变化
-watch(
-  () => globalVar.downloadList,
-  (newVal, { }) => {
-    // 更新 loadingLineMusicRefs 数组
-    const refs = loadingLineMusicRefs.value.slice(); // 复制数组
-    refs.length = newVal.length;
-    nextTick(() => {
-      // 在下一次 DOM 更新后更新数组元素的值
-      for (let i = 0; i < newVal.length; i++) {
-        refs[i] = refs[i] || null;
-      }
-      loadingLineMusicRefs.value = refs;
-    });
-  }
-);
-
-const stopALL = async () => {
-  // globalVar.downloadList.forEach((item) => {
-  //   item.controller.abort()
-  // })
-  const refs = loadingLineMusicRefs.value.slice(); // 复制数组
-  console.log(loadingLineMusicRefs.value);
-  loadingLineMusicRefs.value.forEach(async(rf,index) => {
-    if (rf) {
-      rf.downloadingFlag = false
-      rf.val.controller.abort()
-    }
-    await nextTick();
-    refs[index] = refs[index] || null;
+const stopALL = () => {
+  globalVar.downloadList.forEach((item) => {
+    item.downloadingFlag = false
+    item.controller.abort()
   })
-  nextTick(() => {
-    loadingLineMusicRefs.value = refs;
-  });
 }
 
 const deleteALL = () => {
@@ -116,147 +79,6 @@ const deleteALL = () => {
   globalVar.musicPick.clear()
 }
 
-const WaitdownloadList = toRef(globalVar, 'downloadList')
-const br = (str: string) => {
-    if (str == 'standard') return 128000
-    else if (str == 'higher') return 192000
-    else if (str == 'exhigh') return 320000
-    else return 999000
-}
-
-const getUrl = async (id, name) => {
-  globalVar.initDownloadButton = true
-  const downloadObj = globalVar.downloadList.find(item => item.id === id)
-  const loadedBase = globalVar.loadingValue.get(id)?.[0] as number
-  let totalBase = globalVar.loadingValue.get(id)?.[1] as number
-  let url
-  let result;
-  let chunks: Uint8Array[]
-  console.log(downloadObj);
-  if (globalVar.musicPick.get(id) == undefined) { //切片数据)
-    globalVar.musicPick.set(id, [])
-    //@ts-ignore
-    chunks = globalVar.musicPick.get(id)
-  } else {
-    //@ts-ignore
-    chunks = globalVar.musicPick.get(id)
-  }
-  try {
-    if (downloadObj?.url) {
-      url = downloadObj?.url
-    } else {
-      if (downloadObj?.level) {
-        url= await Main.reqSongUrl(id,"",'song',downloadObj?.level)
-      } else if (downloadObj?.br) {
-        result = await Main.reqSongDlUrl(id, downloadObj?.br)
-        url = result.data.data.url
-      } else {
-        result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
-        url = result.data.data.url
-        if (url == null) {
-          url = await Main.reqSongUrl(id,name.replaceAll(" ",""),"song",globalVar.setting.downloadlevel)
-          //@ts-ignore
-          downloadObj.level = globalVar.setting.downloadlevel
-        } else {
-          //@ts-ignore
-          downloadObj.br = br(globalVar.setting.downloadlevel)
-        }
-        //@ts-ignore
-        downloadObj.url = url
-      }
-    }
-  } catch (error) {
-    globalVar.musicPick.set(id, chunks)
-    //@ts-ignore
-    downloadObj.ifcancel = true
-    return
-  }
-  const Range = loadedBase == 0 && totalBase == 1 ? `bytes=${loadedBase}-` : `bytes=${loadedBase}-${totalBase}`
-  if (!url) {
-    globalVar.musicPick.set(id, chunks)
-      //@ts-ignore
-    downloadObj.ifcancel = true
-    return
-  }
-  return fetch(url, {
-    headers: {
-      Range: Range // 下载前 范围
-    },
-    signal: globalVar.downloadList.find(item => item.id === id)?.controller.signal
-  }).then(response => {
-    let loaded = loadedBase
-    //@ts-ignore
-    if (loadedBase == 0 && totalBase == 1) totalBase = +response.headers.get('content-length')
-    const reader = response.body?.getReader() as ReadableStreamDefaultReader<Uint8Array>
-    return new ReadableStream({
-      start(controller) {
-        function push() {
-          reader.read().then(({ done, value }) => {
-            if (done) {
-              controller.close()
-              return
-            }
-
-            loaded += value.byteLength
-            controller.enqueue(value)
-            chunks.push(value)
-            // 计算进度
-            globalVar.loadingValue.set(id, [loaded, totalBase])
-            push()
-          }).catch(async (error) => {
-            console.log(error);
-            console.log(error.name);
-            if (error.name === 'AbortError') {
-              globalVar.musicPick.set(id, chunks)
-              return null
-            } else {
-              globalVar.musicPick.set(id, chunks)
-              //@ts-ignore
-              downloadObj.ifcancel = true
-              return null
-            }
-          })
-        }
-        push()
-      }
-    })
-  })
-    .then(stream => new Response(stream))
-    .then(response => response.arrayBuffer())
-    .then(async () => {
-      const detail = (await Main.reqSongDetail([id])).data.songs[0]
-      console.log(detail);
-      const title = `${detail.name}`
-      const artistId:any[] = []
-      const artist = (detail.ar.map((item)=>{
-          artistId.push(item.id)
-          return `${item.name}`
-      })).join('/')
-      const image = detail.al.picUrl
-      const album = `${detail.al.name}`
-      const id3 = {
-          title,artist,image,album,ids:[detail.id,detail.al.id,...artistId],time:detail.dt
-      }
-      const mergedChunks = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-      let offset = 0;
-      for (const chunk of chunks) {
-        mergedChunks.set(chunk, offset);
-        offset += chunk.byteLength;
-      }
-      const arrayBuffer = mergedChunks.buffer;
-      //@ts-ignore
-      window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: name ,id3})
-      globalVar.musicPick.delete(id)
-      WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
-      // window.electron.ipcRenderer.send('save-music-pick',{name})
-    })
-    .catch(() => {
-      globalVar.musicPick.set(id, chunks)
-      //@ts-ignore
-      downloadObj.ifcancel = true
-      // WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
-    })
-}
 
 const total = ref(globalVar.downloadList.length)
 const totalPage = ref(Math.ceil(total.value / 20))

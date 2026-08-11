@@ -1469,8 +1469,7 @@ interface V {
     downloadId: number[]    //下载id
     loadingValue: Map<number, [number, number]> //下载值
     downLoadAll: number //全下指标
-    downloadList: { id: number, name: string, level?: string, br?: number, controller: AbortController ,ifcancel:boolean,url:string}[]
-    initDownloadButton: boolean
+    downloadList: { id: number, name: string, level?: string, br?: number, controller: AbortController ,ifcancel:boolean,url:string, downloadingFlag: boolean}[]
     musicPick:Map<number,Uint8Array[]>
     searchKey:string
     changeMainScroll:number //修改主右滚动条
@@ -1559,7 +1558,6 @@ export const useGlobalVar = defineStore('globalVar', {
             loadingValue: new Map(),
             downLoadAll: 0,
             downloadList: [],
-            initDownloadButton: false,
             musicPick:new Map(),
             searchKey:'',
             changeMainScroll:0,

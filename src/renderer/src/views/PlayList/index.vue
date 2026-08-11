@@ -186,12 +186,14 @@
 <script lang="ts" setup>
 import { dayjsStamp } from '@renderer/utils/dayjs'  //时间修正
 import { numberSimp } from '@renderer/utils/numberSimp' //数字修正
+import PromiseQueue from 'p-queue'
 import {
     onActivated, onMounted, ref, shallowRef, provide, toRef, watch, Ref, nextTick,
     toRefs, reactive, getCurrentInstance, ComponentInternalInstance, inject, ShallowRef
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useMain, useBasicApi, useMainMenu, useGlobalVar,useNM } from '@renderer/store';
+import { downloadMusic } from '@renderer/utils/downloadMusic';
 import AddTipDialog from '@renderer/components/myVC/AddTipDialog.vue'
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
@@ -616,7 +618,7 @@ router.afterEach((to) => {
 })
 
 
-const downloadQueue = inject('downloadQueue') 
+const downloadQueue = inject<ShallowRef<PromiseQueue>>('downloadQueue') as ShallowRef<PromiseQueue>
 let oldlength = 0
 const promises: Promise<any>[] = []
 const dowloadAll = async () => {
@@ -638,7 +640,7 @@ const dowloadAll = async () => {
             const name = item!.name
             globalVar.loadingValue.set(id, [0, 1])
             const signal = item.controller.signal
-            const pq = downloadQueue.value.add(() => getUrl(id, name), { signal })
+            const pq = downloadQueue.value.add(() => downloadMusic(id, name), { signal })
             promises.push(pq)
         }
         // await Promise.allSettled(promises)
@@ -646,127 +648,7 @@ const dowloadAll = async () => {
 }
 
 const WaitdownloadList = toRef(globalVar, 'downloadList')
-const br = (str: string) => {
-    if (str == 'standard') return 128000
-    else if (str == 'higher') return 192000
-    else if (str == 'exhigh') return 320000
-    else return 999000
-}
 
-//下载请求
-const getUrl = async (id, name) => {
-    globalVar.initDownloadButton = true
-    const downloadObj = globalVar.downloadList.find(item => item.id === id)
-    //判断请求是否被取消
-    let url
-    let result
-    let chunks: Uint8Array[]
-    if (globalVar.musicPick.get(id) == undefined) { //切片数据)
-        //@ts-ignore
-        chunks = []
-    } else {
-        //@ts-ignore
-        chunks = globalVar.musicPick.get(id)
-    }
-    try {
-        result = await Main.reqSongDlUrl(id, br(globalVar.setting.downloadlevel))
-        //@ts-ignore
-        url = result.data.data.url
-        if (url == null) {
-            url = await Main.reqSongUrl(id,name.replaceAll(" ",""),"song",globalVar.setting.downloadlevel)
-            //@ts-ignore
-            downloadObj.level = globalVar.setting.downloadlevel
-        } else {
-            //@ts-ignore
-            downloadObj.br = br(globalVar.setting.downloadlevel)
-        }
-    } catch (error) {
-        globalVar.musicPick.set(id, chunks)
-        //@ts-ignore
-        downloadObj.ifcancel = true
-    }
-    if (url == null) {
-        globalVar.loadingValue.delete(id)
-    }
-    //@ts-ignore
-    downloadObj.url = url
-    if (downloadObj?.controller.signal.aborted && !url) return
-    return fetch(url, {
-        signal: downloadObj?.controller.signal
-    }).then(response => {
-        const total = response.headers.get('content-length') as string//响应体大小
-        let loaded = 0
-        const reader = response.body?.getReader() as ReadableStreamDefaultReader<Uint8Array>
-        return new ReadableStream({
-            start(controller) {
-                function push() {
-                    reader.read().then(({ done, value }) => {
-                        if (done) {
-                            controller.close()
-                            return
-                        }
-
-                        loaded += value.byteLength
-                        controller.enqueue(value)
-                        chunks.push(value)
-                        // 计算进度
-                        globalVar.loadingValue.set(id, [loaded, (+total)])
-                        push()
-                    }).catch(error => {
-                        if (error.name === 'AbortError') {
-                            globalVar.musicPick.set(id, chunks)
-                            return null
-
-                        } else {
-                            globalVar.musicPick.set(id, chunks)
-                            //@ts-ignore
-                            downloadObj.ifcancel = true
-                            return null
-
-                        }
-                    })
-                }
-                push()
-            }
-        })
-    })
-        .then(stream => new Response(stream))
-        .then(response => response.arrayBuffer())
-        .then(async () => {
-            const detail = (await Main.reqSongDetail([id])).data.songs[0]
-            console.log(detail);
-            const title = `${detail.name}`
-            const artistId:any[] = []
-            const artist = (detail.ar.map((item)=>{
-                artistId.push(item.id)
-                return `${item.name}`
-            })).join('/')
-            const image = detail.al.picUrl
-            const album = `${detail.al.name}`
-            const id3 = {
-                title,artist,image,album,ids:[detail.id,detail.al.id,...artistId],time:detail.dt
-            }
-            const mergedChunks = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-            let offset = 0;
-            for (const chunk of chunks) {
-                mergedChunks.set(chunk, offset);
-                offset += chunk.byteLength;
-            }
-            const arrayBuffer = mergedChunks.buffer;
-            window.electron.ipcRenderer.send('save-music', { arrayBuffer, name: name,id3 })
-            globalVar.musicPick.delete(id)
-            WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
-            // window.electron.ipcRenderer.send('save-music-pick',{name})
-        }).catch(() => {
-            globalVar.musicPick.set(id, chunks)
-            //@ts-ignore
-            downloadObj.ifcancel = true
-        })
-    // .catch((error) =>{
-    //     console.error(error)
-    //     // WaitdownloadList.value = WaitdownloadList.value.filter(item => item.id !== id)
-    // })
-}
 
 //编辑歌单信息
 const gotoUpdatePlayList = () => {
