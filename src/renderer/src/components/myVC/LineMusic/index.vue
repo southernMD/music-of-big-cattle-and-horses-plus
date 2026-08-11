@@ -97,7 +97,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect, reactive } from 'vue';
+import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect, reactive, computed } from 'vue';
 import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
 import { useRouter,useRoute } from 'vue-router';
 import { useMain, useBasicApi, useGlobalVar,useNM } from '@renderer/store';
@@ -164,41 +164,39 @@ if(props.imageBuffer){
 //leftblock传过来的id，限自己的歌单的id
 let playListid = inject<Ref<number>>('playListId') as Ref<number>
 let downloadList = inject<Ref<string[]>>('downloadList') as Ref<string[]>
-const ifDownload = ref(false)
-let name = ''
-let cleanFileName = ''
-if(props.singer){
-    props.singer.forEach((el, index) => {
-        name += el.name
-        if (index != props.singer!.length - 1) name += ','
-    })
-}
-name = name + ' - ' + props.title
-cleanFileName = name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
-console.log(cleanFileName,downloadList.value,'&^%$%^&*()(*&^%^&&&&&&&&&&&&&&&&&&)');
+const cleanFileName = computed(() => {
+    console.log(cleanFileName.value);
+    let name = ''
+    if(props.singer){
+        props.singer.forEach((el, index) => {
+            name += el.name
+            if (index != props.singer!.length - 1) name += ','
+        })
+    }
+    name = name + ' - ' + props.title
+    return name.replace(/<\/?span[^>]*>/g, "").replace(/[\\/:\*\?"<>\|]/g, "");
+})
+const ifDownload = computed(() => {
+    return downloadList.value.includes(cleanFileName.value)
+})
+console.log(downloadList.value,'&^%$%^&*()(*&^%^&&&&&&&&&&&&&&&&&&)');
 const myPath = ref('')
 watch(()=>props.path,()=>{
     myPath.value = props.path + ''
 },{immediate:true})
 watchEffect(async()=>{
     if(!(globalVar.downloadId.includes(props.id)) && !(!ifDownload.value)){
-        const replyMessage = await window.electron.ipcRenderer.invoke('get-song-path',cleanFileName)
+        const replyMessage = await window.electron.ipcRenderer.invoke('get-song-path',cleanFileName.value)
         myPath.value = replyMessage
     }
 })
-watch(downloadList, () => {
-    if (downloadList.value.includes(cleanFileName)) {
-        ifDownload.value = true
-    } else {
-        ifDownload.value = false
-    }
-}, { immediate: true })
 
 window.electron.ipcRenderer.on('save-music-finished', ({ }, {which,id}) => {
-    if (cleanFileName == which) {
-        console.log(cleanFileName, which);
-        downloadList.value.push(cleanFileName)
-        ifDownload.value = true
+    if (cleanFileName.value == which) {
+        console.log(cleanFileName.value, which);
+        if (!downloadList.value.includes(cleanFileName.value)) {
+            downloadList.value.push(cleanFileName.value)
+        }
         downloadId.value = downloadId.value.filter(el => el != props.id)
         loadingValue.value.delete(props.id)
     }
@@ -815,7 +813,7 @@ watch(downLoadAll, async () => {
         // })
     } else {
         globalVar.downloadId.push(props.id)
-        globalVar.downloadList.push({ id: props.id, name: cleanFileName, controller: new AbortController(), ifcancel: false, url: '', downloadingFlag: true })
+        globalVar.downloadList.push({ id: props.id, name: cleanFileName.value, controller: new AbortController(), ifcancel: false, url: '', downloadingFlag: true })
     }
 })
 

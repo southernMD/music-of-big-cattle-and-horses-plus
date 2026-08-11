@@ -95,7 +95,7 @@ export async function downloadMusic(id: number, name: string, customController?:
                 totalBase = +(response.headers.get('content-length') || 1);
             }
         }
-        const reader = response.body?.getReader();
+        const reader = response.body?.getReader()!;
         if (!reader) throw new Error('Response body is null');
         
         return new ReadableStream({
