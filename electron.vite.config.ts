@@ -72,10 +72,12 @@ export default defineConfig(({ command, mode }) => {
           }
         }),
         AutoImport({
-          resolvers: [ElementPlusResolver()]
+          resolvers: [ElementPlusResolver()],
+          dts: 'src/auto-imports.d.ts'
         }),
         Components({
-          resolvers: [ElementPlusResolver()]
+          resolvers: [ElementPlusResolver()],
+          dts: 'src/components.d.ts'
         })
       ],
       server: {
