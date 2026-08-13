@@ -98,18 +98,25 @@ export async function downloadMusic(id: number, name: string, customController?:
         const reader = response.body?.getReader()!;
         if (!reader) throw new Error('Response body is null');
         
+        let lastUpdateTime = 0;
         return new ReadableStream({
             start(controller) {
                 function push() {
                     reader.read().then(({ done, value }) => {
                         if (done) {
                             controller.close();
+                            globalVar.loadingValue.set(id, [loaded, totalBase]);
                             return;
                         }
                         loaded += value.byteLength;
                         controller.enqueue(value);
                         chunks.push(value);
-                        globalVar.loadingValue.set(id, [loaded, totalBase]);
+                        
+                        const now = Date.now();
+                        if (now - lastUpdateTime > 100) {
+                            globalVar.loadingValue.set(id, [loaded, totalBase]);
+                            lastUpdateTime = now;
+                        }
                         push();
                     }).catch(error => {
                         globalVar.musicPick.set(id, chunks);
@@ -142,20 +149,13 @@ export async function downloadMusic(id: number, name: string, customController?:
             title, artist, image, album, ids: [detail.id, detail.al.id, ...artistId], time: detail.dt
         };
         
-        const mergedChunks = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-        let offset = 0;
-        for (const chunk of chunks) {
-            mergedChunks.set(chunk, offset);
-            offset += chunk.byteLength;
-        }
-        
-        window.electron.ipcRenderer.send('save-music', { arrayBuffer: mergedChunks.buffer, name, id3 });
+        window.electron.ipcRenderer.send('save-music', { arrayBuffer, name, id3 });
         globalVar.musicPick.delete(id);
         globalVar.downloadList = globalVar.downloadList.filter(item => item.id !== id);
     })
     .catch((error) => {
         globalVar.musicPick.set(id, chunks);
-        if (error.name !== 'AbortError') {
+        if (error.name !== 'AbortError' && downloadObj) {
             downloadObj.ifcancel = true;
             downloadObj.downloadingFlag = false;
         }

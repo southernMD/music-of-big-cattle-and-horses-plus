@@ -37,8 +37,13 @@ export default async (downloadPath: string) => {
                     console.error(err);
                     return;
                 }
-                fs.writeFileSync(`${downloadPath}/${cleanFileName}.mp3`, buffer);
-                console.log(NodeID3.read(`${downloadPath}/${cleanFileName}.mp3`))
+                fs.writeFile(`${downloadPath}/${cleanFileName}.mp3`, buffer, (writeErr) => {
+                    if (writeErr) {
+                        console.error(writeErr);
+                        return;
+                    }
+                    console.log(NodeID3.read(`${downloadPath}/${cleanFileName}.mp3`))
+                });
             });
             e.reply('save-music-finished', { which: cleanFileName, id: id3.ids[0] })
         })
