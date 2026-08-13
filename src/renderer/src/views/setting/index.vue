@@ -217,6 +217,12 @@
             <el-radio :label="true" size="large">有新版本时提醒我</el-radio>
         </el-radio-group>
     </div>
+    <div class="logs">
+        <div class="title">日志</div>
+        <div class="logs-export">
+            <div class="btn" @click="exportLogs">导出日志</div>
+        </div>
+    </div>
   </div>
 </template>
 
@@ -643,7 +649,31 @@ const searchUpdate = async()=>{
     }
 }
 
-
+const exportLogs = async () => {
+    try {
+        const res = await window.electron.ipcRenderer.invoke('export-logs')
+        if (res.success) {
+            Loading({
+                message: `导出成功`,
+                showTime: 3000
+            })
+        } else if (res.message !== 'user-canceled') {
+            Loading({
+                type: 'error',
+                message: `导出失败`,
+                showTime: 3000
+            })
+            console.log('导出失败：',res.message);
+        }
+    } catch (err: any) {
+        Loading({
+            type: 'error',
+            message: `导出异常：${err.message}`,
+            showTime: 3000
+        })
+        console.log('导出异常：',err.message);
+    }
+}
 
 </script>
 
@@ -952,6 +982,31 @@ const searchUpdate = async()=>{
             font-size:12px;
         }
         .now-version{
+            display:flex;
+            align-items:center;
+            .txt{
+                font-size:12px;
+            }
+        }
+    }
+    .logs{
+        .btn{
+            width: 80px;
+            height: 20px;
+            border-radius: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid @split-line-color;
+            margin-left:10px;
+            font-size:12px;
+            &:hover {
+                color: @primary-color;
+                border-color: @primary-color;
+            }
+        }
+        .logs-export{
             display:flex;
             align-items:center;
             .txt{

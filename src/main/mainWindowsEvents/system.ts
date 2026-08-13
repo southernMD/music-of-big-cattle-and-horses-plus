@@ -1,9 +1,33 @@
 import { exec } from "child_process"
-import { ipcMain } from "electron"
+import { ipcMain, dialog, app } from "electron"
 import fontList from 'font-list'
+import path from 'path'
+import fs from 'fs'
 
 
 export default () => {
+    // 导出日志
+    ipcMain.handle('export-logs', async () => {
+        const result = await dialog.showOpenDialog({
+            title: '选择保存日志的文件夹',
+            properties: ['openDirectory']
+        })
+        if (!result.canceled && result.filePaths.length > 0) {
+            try {
+                const logsRoot = path.join(app.getPath('appData'), app.getName(), 'logs')
+                if (!fs.existsSync(logsRoot)) {
+                    return { success: false, message: '暂无日志文件' }
+                }
+                const targetDir = path.join(result.filePaths[0], 'bigNMmusic-logs')
+                fs.cpSync(logsRoot, targetDir, { recursive: true })
+                return { success: true, path: targetDir }
+            } catch (err: any) {
+                return { success: false, message: err.message }
+            }
+        }
+        return { success: false, message: 'user-canceled' }
+    })
+
     //字体列表
     ipcMain.handle('get-font-list', async () => {
         try {
