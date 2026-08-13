@@ -37,14 +37,14 @@
             </span>
         </span>
         <div class="lrc" ref="lrcBlock" :class="{fill:fillHeight}">
-            <span ref="lrc" v-if="lrcArr.length!==0" class="one" >
+            <span ref="lrcRef" v-if="lrcArr.length!==0" class="one" >
                 <div class="i-bk" @mouseover="can" @mouseout="nocan" :class="{opacity:suoFlag && suoShowFlag}">
                     <i title="解锁桌面歌词" class="iconfont icon-jiesuo"  @click.self="jiesuo"></i>
                 </div>
                 <span>{{ lrcArr[indexLrc]?.time === 0 || lrcArr[indexLrc]?.lyric === '' ? title :
                 lrcArr[indexLrc]?.lyric}}</span>
             </span>
-            <span ref="lrc" class="one" v-if="lrcArr.length==0" >
+            <span ref="lrcRef" class="one" v-if="lrcArr.length==0" >
                 <div class="i-bk" @mouseover="can" @mouseout="nocan" :class="{opacity:suoFlag && suoShowFlag}" >
                     <i title="解锁桌面歌词" class="iconfont icon-jiesuo" @click.self="jiesuo"></i>
                 </div>
@@ -65,12 +65,19 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, Ref, nextTick, 
-    watch, toRef, getCurrentInstance, ComponentInternalInstance,onUnmounted, computed } from 'vue';
+    watch, toRef, onUnmounted, computed } from 'vue';
 import { useElectronToApp, useMain ,useGlobalVar} from '@renderer/store/index'
 import { parseLyricLine } from '@renderer/utils/parseLyricLine'
+const Main = useMain()
+const globalVar = useGlobalVar()
+
+const lyric = ref<HTMLElement>()
+const lrcBlock = ref<HTMLElement>()
+const lrcRef = ref<HTMLElement>()
+const roma = ref<HTMLElement>()
+const tly = ref<HTMLElement>()
+
 const electronToApp = useElectronToApp();
-const Main = useMain();
-const $el = getCurrentInstance() as ComponentInternalInstance;
 
 let mainId = ref(undefined)
 let t =setInterval(()=>{
@@ -146,26 +153,23 @@ const showLrc = (array: Ref<any>, index: Ref<number>) => {
 }
 
 watch(indexRm, () => {
-    let roma = $el.refs.roma as HTMLElement
-    if (roma) {
-        let child = roma.children[0] as HTMLElement
+    if (roma.value) {
+        let child = roma.value.children[0] as HTMLElement
         child.style.removeProperty('transition')
         child.style.removeProperty('transform')
     }
 
 })
 watch(indexLrc, () => {
-    let l = $el.refs.lrc as HTMLElement
-    if (l) {
-        let child = l.querySelector('span') as HTMLElement
+    if (lrcRef.value) {
+        let child = lrcRef.value.querySelector('span') as HTMLElement
         child.style.removeProperty('transition')
         child.style.removeProperty('transform')
     }
 })
 watch(indexTr, () => {
-    let tly = $el.refs.tly as HTMLElement
-    if (tly) {
-        let child = tly.children[0] as HTMLElement
+    if (tly.value) {
+        let child = tly.value.children[0] as HTMLElement
         child.style.removeProperty('transition')
         child.style.removeProperty('transform')
     }
@@ -179,10 +183,10 @@ window.electron.ipcRenderer.on('to-currentTime', ({}, {data}:{data:number}) => {
     window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'Main-Menu-song-lrc',data:lrcArr.value[indexLrc.value]?.lyric})
     if (lrcArry.value?.romalrc) showLrc(romalrcArr, indexRm)
     if (lrcArry.value?.tlyric) showLrc(tlyricArr, indexTr)
-    let dom = $el.refs.lyric as HTMLElement
-    let l = $el.refs.lrc as HTMLElement
-    let roma = $el.refs.roma as HTMLElement
-    let tly = $el.refs.tly as HTMLElement
+    let dom = lyric.value
+    let l = lrcRef.value
+    let romaDom = roma.value
+    let tlyDom = tly.value
     if (l) {
         let child = l.querySelector('span') as HTMLElement
         if (l.scrollWidth > l.offsetWidth) {
@@ -191,20 +195,20 @@ window.electron.ipcRenderer.on('to-currentTime', ({}, {data}:{data:number}) => {
         }
     }
 
-    if (roma) {
-        console.log(roma.scrollWidth, roma.offsetWidth);
-        let child = roma.children[0] as HTMLElement
-        if (roma.scrollWidth > roma.offsetWidth) {
-            child.style.transform = 'translateX(' + -(roma.scrollWidth - roma.offsetWidth) + 'px' + ')'
+    if (romaDom) {
+        console.log(romaDom.scrollWidth, romaDom.offsetWidth);
+        let child = romaDom.children[0] as HTMLElement
+        if (romaDom.scrollWidth > romaDom.offsetWidth) {
+            child.style.transform = 'translateX(' + -(romaDom.scrollWidth - romaDom.offsetWidth) + 'px' + ')'
             child.style.transition = 'transform ' + (romalrcArr.value[indexRm.value + 1].time - romalrcArr.value[indexRm.value].time + 200) + 'ms' + ' linear'
 
         }
     }
 
-    if (tly) {
-        let child = tly.children[0] as HTMLElement
-        if (tly.scrollWidth > dom.offsetWidth) {
-            child.style.transform = 'translateX(' + -(tly.scrollWidth - tly.offsetWidth) + 'px' + ')'
+    if (tlyDom && dom) {
+        let child = tlyDom.children[0] as HTMLElement
+        if (tlyDom.scrollWidth > dom.offsetWidth) {
+            child.style.transform = 'translateX(' + -(tlyDom.scrollWidth - tlyDom.offsetWidth) + 'px' + ')'
             child.style.transition = 'transform ' + (tlyricArr.value[indexTr.value + 1].time - tlyricArr.value[indexTr.value].time + 200) + 'ms' + ' linear'
         }
     }
@@ -269,30 +273,29 @@ watch(lrcArry, () => {
 
 }, { immediate: true })
 const resize = (obj)=>{
-    let dom = $el.refs.lyric as HTMLElement
-    let l = $el.refs.lrc as HTMLElement
-    let roma = $el.refs.roma as HTMLElement
-    let tly = $el.refs.tly as HTMLElement
-    let lrcBlock = $el.refs.lrcBlock as HTMLElement
-    console.log(baseFontSize.value);
-    lrcBlock.style.fontSize = baseFontSize.value + 'px'
-    // if (romalrcArr.value.length == 0 && tlyricArr.value.length == 0) {
-    //     dom.style.height = 'calc(' + obj.y + 'px' + ' * 0.8)'
-    // } else {
+    let dom = lyric.value
+    let l = lrcRef.value
+    let romaDom = roma.value
+    let tlyDom = tly.value
+    let lrcBlockDom = lrcBlock.value
+    if (lrcBlockDom) {
+        lrcBlockDom.style.fontSize = baseFontSize.value + 'px'
+    }
+    if (dom) {
         dom.style.height = obj.y + 'px'
-    // }
-    dom.style.width = 'calc(' + obj.x + 'px + 16px )';
+        dom.style.width = 'calc(' + obj.x + 'px + 16px )';
+    }
     if (l) {
         l.style.width = 'calc((' + obj.x + 'px + 16px ) * 0.9 )'
         l.style.height = 'calc(' + obj.y + 'px' + ' * 0.35)'
     }
-    if (roma) {
-        roma.style.width = 'calc((' + obj.x + 'px + 16px ) * 0.9 )'
-        roma.style.height = 'calc(' + obj.y + 'px' + ' * 0.4)'
+    if (romaDom) {
+        romaDom.style.width = 'calc((' + obj.x + 'px + 16px ) * 0.9 )'
+        romaDom.style.height = 'calc(' + obj.y + 'px' + ' * 0.4)'
     }
-    if (tly) {
-        tly.style.width = 'calc((' + obj.x + 'px + 16px ) * 0.9 )'
-        tly.style.height = 'calc(' + obj.y + 'px' + ' * 0.4)'
+    if (tlyDom) {
+        tlyDom.style.width = 'calc((' + obj.x + 'px + 16px ) * 0.9 )'
+        tlyDom.style.height = 'calc(' + obj.y + 'px' + ' * 0.4)'
     }
 }
 
@@ -324,22 +327,26 @@ onMounted(async () => {
 let isDragging = false;
 const moveBegin = (e: MouseEvent) => {
     if (!suoFlag.value) {
-        let dom = $el.refs.lyric as HTMLElement
-        dom.style.cursor = 'grabbing'
-        flagOption.value = true
-        dom.style.backgroundColor = 'rgba(0,0,0,.4)';
-        window.addEventListener('mouseup', destoryMove);
-        isDragging = true;
-        window.electron.ipcRenderer.send('move-child', { mouseY: e.pageY, mouseX: e.pageX,width:dom.offsetWidth,height:dom.offsetHeight })
+        let dom = lyric.value
+        if (dom) {
+            dom.style.cursor = 'grabbing'
+            flagOption.value = true
+            dom.style.backgroundColor = 'rgba(0,0,0,.4)';
+            window.addEventListener('mouseup', destoryMove);
+            isDragging = true;
+            window.electron.ipcRenderer.send('move-child', { mouseY: e.pageY, mouseX: e.pageX,width:dom.offsetWidth,height:dom.offsetHeight })
+        }
     }
 }
 
 const destoryMove = () => {
-    let dom = $el.refs.lyric as HTMLElement
-    dom.style.cursor = 'grab'
-    window.electron.ipcRenderer.send('destory-move-child')
-    window.removeEventListener('mouseup', destoryMove);
-    isDragging = false;
+    let dom = lyric.value
+    if (dom) {
+        dom.style.cursor = 'grab'
+        window.electron.ipcRenderer.send('destory-move-child')
+        window.removeEventListener('mouseup', destoryMove);
+        isDragging = false;
+    }
 }
 
 const can = () => {
@@ -364,8 +371,10 @@ const show = () => {
         clearTimeout(time2)
         time1 = setTimeout(() => {
             flagOption.value = true
-            let dom = $el.refs.lyric as HTMLElement
-            dom.style.backgroundColor = 'rgba(0,0,0,.4)';
+            let dom = lyric.value
+            if (dom) {
+                dom.style.backgroundColor = 'rgba(0,0,0,.4)';
+            }
             clearTimeout(time1)
             time1 = null
         }, 1000)
@@ -378,8 +387,10 @@ const hide = () => {
         clearTimeout(time1)
         time2 = setTimeout(() => {
             flagOption.value = false
-            let dom = $el.refs.lyric as HTMLElement
-            dom.style.backgroundColor = 'rgba(0,0,0,.0)';
+            let dom = lyric.value
+            if (dom) {
+                dom.style.backgroundColor = 'rgba(0,0,0,.0)';
+            }
             clearTimeout(time2)
             time2 = null
         }, 1000)
@@ -387,23 +398,18 @@ const hide = () => {
 }
 window.addEventListener('resize', async() => {
     if (!suoFlag.value && !isDragging) {
-        let dom = $el.refs.lyric as HTMLElement
-        dom.style.backgroundColor = 'rgba(0,0,0,.4)';
-        flagOption.value = true
-        //20 96
-        let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
-        let lrcBlock = $el.refs.lrcBlock as HTMLElement
-        let size = (obj.y - 123)/(291 - 123) * (96 - 20) + 20
-        lrcBlock.style.fontSize = size + 'px'
-        baseFontSize.value = size
-        window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'setting-size',data:size})
-        // window.electron.ipcRenderer.sendTo(mainId.value,'setting-size',{size})
-        //291 - 123 = 168
-        //obj.y - 123 = ? 
-        //size = ? / 168 nowSize /(96 - 20)
-        // minHeight:123,
-        // height:123,
-        // maxHeight:291,
+        let dom = lyric.value
+        let lrcBlockDom = lrcBlock.value
+        if (dom && lrcBlockDom) {
+            dom.style.backgroundColor = 'rgba(0,0,0,.4)';
+            flagOption.value = true
+            //20 96
+            let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
+            let size = (obj.y - 123)/(291 - 123) * (96 - 20) + 20
+            lrcBlockDom.style.fontSize = size + 'px'
+            baseFontSize.value = size
+            window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'setting-size',data:size})
+        }
     }
 })
 
@@ -412,8 +418,10 @@ window.addEventListener('resize', async() => {
 //关闭
 const close = async () => {
     flagOption.value = false
-    let dom = $el.refs.lyric as HTMLElement
-    dom.style.backgroundColor = 'rgba(0,0,0,.0)';
+    let dom = lyric.value
+    if (dom) {
+        dom.style.backgroundColor = 'rgba(0,0,0,.0)';
+    }
     window.electron.ipcRenderer.send('open-lyric', false)
     // window.electron.ipcRenderer.sendTo(mainId.value, 'to-close-ci', false);
     window.electron.ipcRenderer.send('transpond-window-message', {to:mainId.value,name:'to-close-ci',data:false})
@@ -470,9 +478,11 @@ const suo = () => {
     suoFlag.value = true
     suoShowFlag.value = false
     flagOption.value = false
-    let dom = $el.refs.lyric as HTMLElement
-    dom.style.cursor = 'default'
-    dom.style.backgroundColor = 'rgba(0,0,0,.0)';
+    let dom = lyric.value
+    if (dom) {
+        dom.style.cursor = 'default'
+        dom.style.backgroundColor = 'rgba(0,0,0,.0)';
+    }
     clearTimeout(time1)
     clearTimeout(time2)
     window.electron.ipcRenderer.send('no-resizable')
@@ -484,9 +494,11 @@ const jiesuo = () => {
     suoFlag.value = false
     suoShowFlag.value = true
     flagOption.value = true
-    let dom = $el.refs.lyric as HTMLElement
-    dom.style.cursor = 'grab'
-    dom.style.backgroundColor = 'rgba(0,0,0,.4)';
+    let dom = lyric.value
+    if (dom) {
+        dom.style.cursor = 'grab'
+        dom.style.backgroundColor = 'rgba(0,0,0,.4)';
+    }
     window.electron.ipcRenderer.send('can-resizable')
     window.electron.ipcRenderer.send('mouse-can')
 }
@@ -510,10 +522,12 @@ window.electron.ipcRenderer.on('lrc-fontSize',({},{data})=>{
     const y = (data - 20) / (96 - 20) * (291 - 123) + 123
     console.log(y,data,'重设');
     window.electron.ipcRenderer.sendSync('send-child-y',y)
-    let dom = $el.refs.lyric as HTMLElement
-    let lrcBlock = $el.refs.lrcBlock as HTMLElement
-    lrcBlock.style.fontSize = data + 'px'
-    dom.style.height = y + 'px'
+    let dom = lyric.value
+    let lrcBlockDom = lrcBlock.value
+    if (dom && lrcBlockDom) {
+        lrcBlockDom.style.fontSize = data + 'px'
+        dom.style.height = y + 'px'
+    }
     let obj = window.electron.ipcRenderer.sendSync('get-child-x-y')
     resize(obj)
 })

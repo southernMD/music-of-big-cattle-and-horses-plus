@@ -5,8 +5,7 @@
 </template>
 
 <script lang='ts' setup>
-import { getCurrentInstance, onMounted ,ComponentInternalInstance } from 'vue';
-const $el = getCurrentInstance() as ComponentInternalInstance 
+import { onMounted } from 'vue';
 
 defineProps<{
     message:string,

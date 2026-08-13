@@ -27,15 +27,15 @@
 
 <script lang='ts' setup>
 import {useRoute} from 'vue-router'
-import {onMounted, ref,toRef,watch,getCurrentInstance,ComponentInternalInstance, onActivated } from 'vue'
+import {onMounted, ref,toRef,watch, onActivated } from 'vue'
 import {useMain,useGlobalVar} from '@renderer/store'
 import { ElInput } from 'element-plus'
 import Emoji from './emoji/index.vue'
 const Main = useMain()
 const $route = useRoute()
 const globalVar = useGlobalVar()
-const $el = getCurrentInstance() as ComponentInternalInstance 
 const text = ref<InstanceType<typeof ElInput>>()
+const i = ref<HTMLElement>()
 let routeQuery = toRef($route,'query')
 let routeId = ref(routeQuery.value.id)
 watch(routeQuery,()=>{
@@ -68,10 +68,12 @@ let leftValue = ref(0)
 let mainScroll = toRef(globalVar,'mainScroll')
 
 const reSizePositon = ()=>{
-    let dom = $el.refs.i as HTMLElement
-    let {left,top} = dom.getBoundingClientRect()
-    topValue.value = top
-    leftValue.value = left
+    let dom = i.value as HTMLElement
+    if (dom) {
+        let {left,top} = dom.getBoundingClientRect()
+        topValue.value = top
+        leftValue.value = left
+    }
 }
 
 watch(mainScroll,()=>{

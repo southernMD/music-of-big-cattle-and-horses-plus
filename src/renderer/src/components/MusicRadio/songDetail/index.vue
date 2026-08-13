@@ -183,8 +183,6 @@ import {
   nextTick,
   onMounted,
   Ref,
-  getCurrentInstance,
-  ComponentInternalInstance,
   ref,
   inject,
 } from "vue";
@@ -199,8 +197,13 @@ import Singer from '@renderer/components/myVC/LineMusic/Singer/index.vue'
 const Main = useMain();
 const NM = useNM()
 const MainMenu = useMainMenu();
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const $router = useRouter()
+
+const left = ref<HTMLElement>()
+const ba = ref<HTMLElement>()
+const pian = ref<HTMLElement>()
+const bk = ref<HTMLElement>()
+const songDetailRef = ref<HTMLElement>()
 let windowMidlle = toRef(MainMenu, "model");
 let playStatus = toRef(Main, "playStatus");
 let playingindex = toRef(Main, "playingindex");
@@ -342,37 +345,43 @@ const isNMColor = () => {
 };
 
 watch(windowMidlle, () => {
-  let l = $el.refs.left as HTMLElement;
-  if (windowMidlle.value) {
-    l.classList.add("left-active");
-  } else {
-    l.classList.remove("left-active");
+  let l = left.value;
+  if (l) {
+    if (windowMidlle.value) {
+      l.classList.add("left-active");
+    } else {
+      l.classList.remove("left-active");
+    }
   }
 });
 
 watch(playStatus, () => {
-  let ba = $el.refs.ba as HTMLElement;
-  let pian = $el.refs.pian as HTMLElement;
-  if (playStatus.value == "play") {
-    ba.classList.add("ba-play");
-    pian.style.animationPlayState = "running";
-  } else {
-    ba.classList.remove("ba-play");
-    pian.style.animationPlayState = "paused";
+  let baDom = ba.value;
+  let pianDom = pian.value;
+  if (baDom && pianDom) {
+    if (playStatus.value == "play") {
+      baDom.classList.add("ba-play");
+      pianDom.style.animationPlayState = "running";
+    } else {
+      baDom.classList.remove("ba-play");
+      pianDom.style.animationPlayState = "paused";
+    }
   }
 });
 const globalVar = useGlobalVar()
 const MyMainMenuRef = ref<InstanceType<typeof MyMainMenu>>()
 watch(playingindex, async () => {
   if (playingindex.value != -1) {
-    let pian = $el.refs.pian as HTMLElement;
+    let pianDom = pian.value;
     let imgUrl = playingList.value[playingindex.value - 1]?.al?.picUrl
     if(!imgUrl){
       const songAlId = playingList.value[playingindex.value - 1]?.al?.id!
       imgUrl = (await Main.reqAlbum(songAlId)).data.album.picUrl
       playingList.value[playingindex.value - 1]["al"]["picUrl"] = imgUrl
-  }
-    pian.style.backgroundImage = "url(" + imgUrl + ")";
+    }
+    if (pianDom) {
+      pianDom.style.backgroundImage = "url(" + imgUrl + ")";
+    }
     if (!globalVar.oneself && MainMenu.colorBlock != 'NMblack') {
       const image = new Image();
       image.crossOrigin = 'Anonymous'
@@ -395,13 +404,16 @@ watch(playingindex, async () => {
           hc[1] = 30;
           hc[2] = 85;
         }
-        const bk: any = $el.refs.bk as HTMLElement
-        bk.style.backgroundColor = 'transparent';
-        bk.style.backgroundImage = 'linear-gradient(hsl(' + hc[0] + ',' + hc[1] + "%," + hc[2] + '%),#fff)'
+        const bkDom = bk.value
+        if (bkDom) {
+          bkDom.style.backgroundColor = 'transparent';
+          bkDom.style.backgroundImage = 'linear-gradient(hsl(' + hc[0] + ',' + hc[1] + "%," + hc[2] + '%),#fff)'
+        }
         //@ts-ignore
-        MyMainMenuRef.value.$refs.header.style.backgroundColor = 'transparent';
-        //@ts-ignore
-        MyMainMenuRef.value.$refs.header.style.backgroundImage = `hsl(${hc[0]},${hc[1]},${hc[2]})`
+        if (MyMainMenuRef.value && MyMainMenuRef.value.header) {
+          MyMainMenuRef.value.header.style.backgroundColor = 'transparent';
+          MyMainMenuRef.value.header.style.backgroundImage = `hsl(${hc[0]},${hc[1]},${hc[2]})`
+        }
       })
     }
 
@@ -441,22 +453,26 @@ watch(() => MainMenu.colorBlock, () => {
         hc[1] = 30;
         hc[2] = 85;
       }
-      const bk: any = $el.refs.bk as HTMLElement
-      bk.style.backgroundColor = 'transparent';
-      bk.style.backgroundImage = 'linear-gradient(hsl(' + hc[0] + ',' + hc[1] + "%," + hc[2] + '%),#fff)'
-      //@ts-ignore
-      MyMainMenuRef.value.$refs.header.style.backgroundColor = 'transparent';
-      //@ts-ignore
-      MyMainMenuRef.value.$refs.header.style.backgroundImage = `hsl(${hc[0]},${hc[1]},${hc[2]})`
+      const bkDom = bk.value
+      if (bkDom) {
+        bkDom.style.backgroundColor = 'transparent';
+        bkDom.style.backgroundImage = 'linear-gradient(hsl(' + hc[0] + ',' + hc[1] + "%," + hc[2] + '%),#fff)'
+      }
+      if (MyMainMenuRef.value && MyMainMenuRef.value.header) {
+        MyMainMenuRef.value.header.style.backgroundColor = 'transparent';
+        MyMainMenuRef.value.header.style.backgroundImage = `linear-gradient(hsl(${hc[0]},${hc[1]}%,${hc[2]}%),#fff)`
+      }
     })
   } else {
-    const bk: any = $el.refs.bk as HTMLElement
-    bk.style.backgroundColor = '';
-    bk.style.backgroundImage = ""
-    //@ts-ignore
-    MyMainMenuRef.value.$refs.header.style.backgroundImage = ''
-    //@ts-ignore
-    MyMainMenuRef.value.$refs.header.style.backgroundColor = '';
+    const bkDom = bk.value
+    if (bkDom) {
+      bkDom.style.backgroundColor = '';
+      bkDom.style.backgroundImage = ""
+    }
+    if (MyMainMenuRef.value && MyMainMenuRef.value.header) {
+      MyMainMenuRef.value.header.style.backgroundImage = ''
+      MyMainMenuRef.value.header.style.backgroundColor = '';
+    }
   }
 })
 
@@ -505,7 +521,7 @@ const prevenDrag = (e: MouseEvent) => {
 let BKbase64 = inject<Ref<string>>('BKbase64') as Ref<string>
 //TODO:SongDetail的背景图片被背景色挡住
 watch(BKbase64, () => {
-  const h: any = $el.refs.songDetailRef as HTMLElement
+  const h = songDetailRef.value
   if (h) h.style.backgroundImage = 'url(' + BKbase64.value + ')'
 })
 window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
@@ -515,8 +531,8 @@ window.electron.ipcRenderer.on('file-ready', ({ }, { liu, extname }) => {
   reader.readAsDataURL(file);
   reader.onload = function () {
     const newUrl = this.result;
-    const h: any = $el.refs.songDetailRef as HTMLElement
-    h.style.backgroundImage = 'url(' + newUrl + ')'
+    const h = songDetailRef.value
+    if (h) h.style.backgroundImage = 'url(' + newUrl + ')'
   };
 })
 

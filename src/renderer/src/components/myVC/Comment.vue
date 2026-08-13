@@ -43,7 +43,7 @@
 </template>
 
 <script lang='ts' setup>
-import { computed, getCurrentInstance, ComponentInternalInstance, inject, toRef,ref, watchEffect, Ref } from 'vue'
+import { computed, inject, toRef,ref, watchEffect, Ref } from 'vue'
 import { Timeago2, dayjsCN } from '@renderer/utils/dayjs'
 import { regEmoji } from '@renderer/utils/regEmoji'
 import { useRouter } from 'vue-router'
@@ -55,7 +55,6 @@ const BasicApi = useBasicApi()
 const globalVar = useGlobalVar()
 const NM = useNM()
 const $router = useRouter()
-const $el = getCurrentInstance() as ComponentInternalInstance
 const props = defineProps<{
     userUrl: string
     userNickname: string

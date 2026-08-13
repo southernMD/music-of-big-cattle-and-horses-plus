@@ -59,8 +59,7 @@ import {watchEffect} from 'vue'
 import {useMain} from '@renderer/store'
 import {useRouter,useRoute} from 'vue-router';
 import { useGlobalVar,useNM } from '@renderer/store';
-import {getCurrentInstance, watch,ComponentInternalInstance,toRef,Ref,ref, onMounted, nextTick } from 'vue'
-const $el = getCurrentInstance() as ComponentInternalInstance 
+import { watch,toRef,Ref,ref, onMounted, nextTick } from 'vue'
 const $router = useRouter()
 const globalVar = useGlobalVar()
 const $route = useRoute()
@@ -81,12 +80,12 @@ const props = defineProps<{
     djprogramid?:number
 }>()
 
-let nowPage = toRef($el.props,'nowPage') as Ref<number>
-let commentFlag = toRef($el.props,'commentFlag')
-let id = toRef($el.props,'id') as Ref<number>
-let threadId = toRef($el.props,'threadId') as Ref<any>
-let type = toRef($el.props,'type') as Ref<number>
-let comments = toRef($el.props,'comments') as Ref<Array<any>>
+let nowPage = toRef(props,'nowPage') as Ref<number>
+let commentFlag = toRef(props,'commentFlag')
+let id = toRef(props,'id') as Ref<number>
+let threadId = toRef(props,'threadId') as Ref<any>
+let type = toRef(props,'type') as Ref<number>
+let comments = toRef(props,'comments') as Ref<Array<any>>
 const goMoreComment = () => {
     Main.detailStatus = "close";
     let {index,my} = $route.query;

@@ -38,19 +38,20 @@
 </template>
 
 <script lang='ts' setup>
-import { getCurrentInstance,toRef, ComponentInternalInstance,onMounted } from 'vue'
+import { ref, toRef, onMounted } from 'vue'
 import { useMain,useBasicApi } from '@renderer/store';
 import { useRouter } from 'vue-router';
 const $router = useRouter()
 const Main = useMain()
-const $el = getCurrentInstance() as ComponentInternalInstance
 const BasicApi = useBasicApi()
+const page = ref<HTMLElement>()
 let startDjArr = toRef(BasicApi,'startDjArr')
 let createDjArr = toRef(BasicApi,'createDjArr')
 const sendUrl = (e: Event) => {
     e.preventDefault();
-    let t: HTMLElement = $el.refs.page as HTMLElement
-    window.electron.ipcRenderer.send('new-window', t.getAttribute('href'))
+    if (page.value) {
+        window.electron.ipcRenderer.send('new-window', page.value.getAttribute('href'))
+    }
 }
 onMounted(async()=>{
     await Promise.all([ BasicApi.reqStartDj(),BasicApi.reqCreateDj(BasicApi.account?.id)])

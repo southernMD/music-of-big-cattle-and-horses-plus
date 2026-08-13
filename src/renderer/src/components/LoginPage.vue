@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { useBasicApi, useMain, useGlobalVar,useNM } from '../store'
-import { ref, Ref, onMounted, watch, toRef, onUnmounted, reactive, getCurrentInstance} from 'vue'
+import { ref, Ref, onMounted, watch, toRef, onUnmounted, reactive} from 'vue'
 import { useRouter } from 'vue-router';
 import {NMCode,NMReg,NMlogin} from '@renderer/api/niuma'
 import  { FormInstance, FormRules } from 'element-plus'

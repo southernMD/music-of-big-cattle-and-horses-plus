@@ -23,22 +23,22 @@
 </template>
 
 <script lang='ts' setup>
-import {getCurrentInstance, toRef,ComponentInternalInstance,watch,Ref,ref,reactive,nextTick,onUpdated, readonly } from 'vue'
+import { toRef, watch, Ref, ref, reactive, nextTick, readonly } from 'vue'
 import {getAssetsFile} from '@renderer/utils/importSVG'
 import { useMain,useGlobalVar } from '@renderer/store';
 const Main = useMain()
 const globalVar = useGlobalVar()
-const $el = getCurrentInstance() as ComponentInternalInstance 
-defineProps<{
+const emoji = ref<HTMLElement>()
+
+const props = defineProps<{
     left:number
     top:number
     flag:boolean
 }>()
 
-
 const emojiName = readonly(Main.emojiName)
-let leftValue:Ref<number> = toRef($el.props,'left') as Ref<number>
-let topValue:Ref<number> = toRef($el.props,'top') as Ref<number>
+let leftValue:Ref<number> = toRef(props,'left') as Ref<number>
+let topValue:Ref<number> = toRef(props,'top') as Ref<number>
 let baseNumber = ref(0)
 //添加emoji
 const addEmoji = (index:number)=>{
@@ -55,12 +55,14 @@ const sendEmojiStrToFather = (emojiStr:string)=>{
     $emit('sendEmojiStr',emojiStr)
 }
 
-let top = toRef($el.props,'top')
+let top = toRef(props,'top')
 watch(top,()=>{
     nextTick(()=>{
-        let e = $el.refs.emoji as HTMLElement
-        e.style.left = leftValue.value + 'px'
-        e.style.top = topValue.value + 25 + 'px'
+        let e = emoji.value as HTMLElement
+        if (e) {
+            e.style.left = leftValue.value + 'px'
+            e.style.top = topValue.value + 25 + 'px'
+        }
     })
    
 },{immediate:true})
@@ -92,7 +94,7 @@ const wheelFn = (e:WheelEvent)=>{
     }
 }
 
-let emojiFlag = toRef($el.props,'flag')
+let emojiFlag = toRef(props,'flag')
 
 watch(emojiFlag,()=>{
     if(emojiFlag.value){

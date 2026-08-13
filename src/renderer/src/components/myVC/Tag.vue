@@ -6,13 +6,13 @@
         big:(ifClick || $route.name == name) && big,
         'tag-oneself':oneself && globalVar.oneself
     }">
-        <span  class="message" ref="message">{{message}}</span>
+        <span  class="message" ref="messageDom">{{message}}</span>
         <div class="line" ref="line"></div>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { getCurrentInstance, onMounted,ComponentInternalInstance,ref, toRef, watch,nextTick } from 'vue';
+import { onMounted,ref, toRef, watch,nextTick } from 'vue';
 import {useMainMenu,useMain,useGlobalVar} from '@renderer/store'
 import {useRouter,useRoute} from 'vue-router'
 // const $router = useRouter()
@@ -20,22 +20,26 @@ const $route = useRoute()
 const MainMenu = useMainMenu();
 const globalVar = useGlobalVar();
 const Main = useMain();
-const $el:ComponentInternalInstance = getCurrentInstance() as ComponentInternalInstance
-defineProps<{
+
+const props = defineProps<{
     message:string
     big?:boolean
     ifClick:boolean
     size?:number
     name?:string
     oneself?:number
-}
->()
+}>()
+
+const messageDom = ref<HTMLElement>()
+// const tag = ref<HTMLElement>()
+// const line = ref<HTMLElement>()
+
 onMounted(()=>{
     nextTick(()=>{
-        if($el.props.size){
-            let dom = $el.refs.message as HTMLElement
-            console.log(dom);
-            dom.style.fontSize = Number($el.props.size) + 'px'
+        if(props.size){
+            if (messageDom.value) {
+                messageDom.value.style.fontSize = Number(props.size) + 'px'
+            }
         }
     })
 })

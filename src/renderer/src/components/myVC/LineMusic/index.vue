@@ -20,7 +20,7 @@
         topColor: topColorid == id && Main.dragType == 'songMy',
         bottomColor: Main.dragMouse && Main.dragType == 'songMy' && (length == index || length == indexSearch) && Main.mouseDragOnIndex == -1,
         'line-music-oneself': globalVar.oneself == 1 && oneselfColor != false
-    }" @mousedown="pseudoDragBeginn" @click="changColor" ref="line-music" @mouseover="replaceLocation"
+    }" @mousedown="pseudoDragBeginn" @click="changColor" ref="lineMusic" @mouseover="replaceLocation"
         @mouseout="replaceLocationed" @dblclick="gotoPlay" @mouseenter="fnMouseEnter">
         <div class="line">
             <div class="small-jiantou">
@@ -97,7 +97,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, getCurrentInstance, ComponentInternalInstance, inject, ref, Ref, nextTick, watch, toRef, watchEffect, reactive, computed } from 'vue';
+import { onMounted, inject, ref, Ref, nextTick, watch, toRef, watchEffect, reactive, computed } from 'vue';
 import { dayjsMMSS,Timeago } from '@renderer/utils/dayjs'
 import { useRouter,useRoute } from 'vue-router';
 import { useMain, useBasicApi, useGlobalVar,useNM } from '@renderer/store';
@@ -105,8 +105,13 @@ import Singer from './Singer/index.vue'
 import ZhuanJi from './ZhuanJi/index.vue'
 import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 import { removeDuplicatesKeepLast } from '@renderer/utils/removeDuplicatesKeepLast';
+
+const lineMusic = ref<HTMLElement>()
+const line = ref<HTMLElement>()
+const fill = ref<HTMLElement>()
+const loadingCanvas = ref<HTMLCanvasElement>()
+
 // import {ElMessageBox} from 'element-plus'
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const BasicApi = useBasicApi();
 const $router = useRouter();
@@ -464,7 +469,7 @@ const changColor = () => {
             else arr[i].style.backgroundColor = 'rgba(46,46,46,.4)'
         }
     }
-    const domFather = searchFather($el.refs['line-music'] as HTMLElement ?? undefined)
+    const domFather = searchFather(lineMusic.value ?? undefined)
     if(domFather){
         if (!globalVar.oneself) domFather.style.backgroundColor = 'var(--lineColorClick)'
         else domFather.style.backgroundColor = 'rgba(65, 65, 65,.9)'
@@ -472,15 +477,15 @@ const changColor = () => {
 }
 const oneself = toRef(globalVar, 'oneself')
 watch(oneself, () => {
-    const dom = $el.refs['line-music'] as HTMLElement
+    const dom = lineMusic.value
     if (dom) dom.style.backgroundColor = ''
 })
 onMounted(() => {
     if (props.hot) {
-        let dom = $el.refs.line as HTMLElement
-        dom.style.width = 'calc((100% - 110px) * (0.42 - 0.124) )'
-        let dom2 = $el.refs.fill as HTMLElement
-        dom2.style.width = props.hotValue + '%'
+        let dom = line.value
+        if (dom) dom.style.width = 'calc((100% - 110px) * (0.42 - 0.124) )'
+        let dom2 = fill.value
+        if (dom2) dom2.style.width = props.hotValue + '%'
     }
 })
 
@@ -521,7 +526,7 @@ const gotoPlay = (e: MouseEvent) => {
         clearTimeout(mousedownTimer)
         if(!globalVar.radioReady)return
         if (!props.local) {
-            let _this = $el.refs['line-music'] as HTMLElement
+            let _this = lineMusic.value
             if (!_this) return
             let father = _this?.parentNode as HTMLElement
             if (originalList.value.length != 0 && father.getAttribute('id') != 'play-list-Panel-bottom') {
@@ -771,7 +776,7 @@ const loadingValue = toRef(globalVar, 'loadingValue')
 //canvas进度条
 onMounted(() => {
     nextTick(() => {
-        const canvas = $el.refs.loadingCanvas as HTMLCanvasElement
+        const canvas = loadingCanvas.value!
         if(!canvas)return
         const context = canvas.getContext('2d') as CanvasRenderingContext2D
         const centerX = canvas.width / 2;

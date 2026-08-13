@@ -1,5 +1,5 @@
 <template>
-    <div class="line-music" @click="changColor" ref="line-music">
+    <div class="line-music" @click="changColor" ref="lineMusic">
         <div class="number" :class="{ 'number-oneself': globalVar.oneself }">
             <span>{{ index + 1 > 9 ? index + 1 : `0${index + 1}` }}</span>
         </div>
@@ -27,14 +27,14 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, watch,computed, getCurrentInstance, ComponentInternalInstance, ref, inject, ShallowRef } from 'vue'
+import { toRef, watch,computed, ref, inject, ShallowRef } from 'vue'
 import PromiseQueue from 'p-queue';
 import { useGlobalVar, useMain } from '@renderer/store';
 import { downloadMusic } from '@renderer/utils/downloadMusic';
 
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const globalVar = useGlobalVar()
 const Main = useMain()
+const lineMusic = ref<HTMLElement>()
 const props = defineProps<{
     index: number
     val: {
@@ -80,7 +80,7 @@ const changColor = (e: MouseEvent) => {
 }
 const oneself = toRef(globalVar, 'oneself')
 watch(oneself, () => {
-    const dom = $el.refs['line-music'] as HTMLElement
+    const dom = lineMusic.value
     if (dom) dom.style.backgroundColor = ''
 })
 

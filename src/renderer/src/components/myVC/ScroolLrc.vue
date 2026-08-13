@@ -57,7 +57,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, toRef, Ref, getCurrentInstance, ComponentInternalInstance, watch, nextTick, toRaw } from 'vue'
+import { ref, toRef, Ref, watch, nextTick, toRaw } from 'vue'
 import { useMain, useMainMenu, useElectronToApp,useGlobalVar } from "@renderer/store";
 import { dayjsMMSS } from '@renderer/utils/dayjs'
 import { ElScrollbar } from "element-plus";
@@ -81,9 +81,9 @@ let mainId = toRef(Main,'mainId') as Ref<number>;
 // const ciId = window.electron.ipcRenderer.sendSync('getWindowId', 'Ci');
 // const mainId = window.electron.ipcRenderer.sendSync('getWindowId', 'Main');
 const MainMenu = useMainMenu()
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>();
 const globalVar = useGlobalVar()
+const line = ref<HTMLElement>()
 
 const props = defineProps<{
   currentTime: number;
@@ -173,14 +173,14 @@ watch(lrc,()=>{
 },{deep:true})
 
 const isHover = (index: number, time: number) => {
-    let line = $el.refs.line as HTMLElement;
+    let lineDom = line.value;
     let flag: boolean;
-    if (line) {
-        flag = (scrollLrc.value + line.offsetTop >= lrcOffset.value[index]
+    if (lineDom) {
+        flag = (scrollLrc.value + lineDom.offsetTop >= lrcOffset.value[index]
             &&
-            scrollLrc.value + line.offsetTop < lrcOffset.value[index + 1])
+            scrollLrc.value + lineDom.offsetTop < lrcOffset.value[index + 1])
             ||
-            (scrollLrc.value + line.offsetTop >= lrcOffset.value[index]
+            (scrollLrc.value + lineDom.offsetTop >= lrcOffset.value[index]
                 &&
                 lrcOffset.value[index + 1] == undefined)
         if (flag) scroolTime.value = time;
@@ -277,9 +277,9 @@ watch(playingTime, () => {
       }
       nextTick(()=>{
         let dom = document.querySelector(".playingColor") as HTMLElement;
-        let line = $el.refs.line as HTMLElement;
-        if (dom && line) {
-          let newOffset = dom.offsetTop - line.offsetTop + dom.offsetHeight / 2;
+        let lineDom = line.value;
+        if (dom && lineDom) {
+          let newOffset = dom.offsetTop - lineDom.offsetTop + dom.offsetHeight / 2;
           if((suoFlag.value && flag.value) || smallFlag.value){
             scrollbarRef.value!.scrollTo({
               top: newOffset

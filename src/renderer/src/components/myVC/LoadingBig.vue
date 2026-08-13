@@ -12,17 +12,18 @@
 </template>
 
 <script setup lang="ts">
-import { toRef ,ref,getCurrentInstance,ComponentInternalInstance } from 'vue';
+import { toRef ,ref } from 'vue';
 import { useGlobalVar } from '@renderer/store';
 const globalVar = useGlobalVar()
-const $el = getCurrentInstance() as ComponentInternalInstance 
 const loadingMp4Bk = toRef(globalVar, 'loadingMp4Bk')
 const number = ref(0)
+// const line = ref<HTMLElement>()
 // window.electron.ipcRenderer.on('loading-mp4',({},{p})=>{
 //   if(loadingMp4Bk.value == false) number.value = 0
 //   number.value = +p
-//   const line = $el.refs.line as HTMLElement
-//   line.style.width = p + '%'
+//   if (line.value) {
+//     line.value.style.width = p + '%'
+//   }
 //   if(+p === 100){
 //     loadingMp4Bk.value = false
 //     number.value = 0

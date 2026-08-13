@@ -5,7 +5,7 @@
             <i class="iconfont icon-arrow-right-bold" :class="{noDrag:!Main.dragMouse}"></i>
         </div>
         <div class="main" v-if="everyDaySong.length">
-            <div class="imgae" :data-id="everyDaySong[index]?.id" data-right="1" data-type="song" ref="imageS" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton">
+            <div class="imgae" :data-id="everyDaySong[index]?.id" data-right="1" data-type="song" @click.self="playThis" :class="{noDrag:!Main.dragMouse}" @mouseover="showPlayButton" @mouseout="hidePlayButton" :style="{ backgroundImage: everyDaySong[index] ? 'url(' + everyDaySong[index].al.picUrl + ')' : '' }">
                 <div class="play animate__animated" @click.self="playThis"
                 :class="{
                     animate__fadeIn:playButtonFlag,
@@ -24,7 +24,7 @@
                 <div class="song-at">
                     <span :class="{noDrag:!Main.dragMouse}" v-for="({},i) in everyDaySong[index]?.ar">
                     {{everyDaySong[index]?.ar[i].name}}
-                    <span v-if="i < everyDaySong[index]?.ar.length-1" style="
+                    <span v-if="+i < +everyDaySong[index]?.ar.length-1" style="
                         transform: rotate(-10deg) translateY(-2px);
                         display: inline-block;
                         font-size: 10px;
@@ -63,14 +63,13 @@
 </template>
 
 <script lang='ts' setup>
-import {ref,toRef,onMounted, nextTick, getCurrentInstance,ComponentInternalInstance,watch } from 'vue'
+import {ref,toRef,onMounted, nextTick, watch } from 'vue'
 import {useMain,useBasicApi,useGlobalVar} from '@renderer/store'
 import { useRouter } from 'vue-router';
 
 const $router = useRouter()
 const Main = useMain()
 const baseApi = useBasicApi()
-const $el = getCurrentInstance() as ComponentInternalInstance 
 const globalVar = useGlobalVar()
 let everyDaySong = toRef(baseApi,'everyDaySong')
 
@@ -88,13 +87,13 @@ let index = ref(0)
 let hotMessage = ref('')
 onMounted(() => {
     nextTick(async()=>{
-        let image = $el.refs.imageS as HTMLElement
-        image.style.backgroundImage = 'url(' + everyDaySong.value[index.value].al.picUrl + ')'
-        let hot = (await Main.reqCommentHot(everyDaySong.value[index.value].id,0,1)).data.hotComments
-        console.log(hot);
-        if(hot.length == 0)hotMessage.value = '暂无热评'
-        else{
-            hotMessage.value = hot[0].content
+        if (everyDaySong.value[index.value]) {
+            let hot = (await Main.reqCommentHot(everyDaySong.value[index.value].id,0,1)).data.hotComments
+            console.log(hot);
+            if(hot.length == 0)hotMessage.value = '暂无热评'
+            else{
+                hotMessage.value = hot[0].content
+            }
         }
     })
 })
@@ -123,8 +122,6 @@ const playAll = ()=>{
 
 watch(index,async()=>{
     if(index.value >= 0 && index.value <=  everyDaySong.value.length - 1){
-        let image = $el.refs.imageS as HTMLElement
-        image.style.backgroundImage = 'url(' + everyDaySong.value[index.value].al.picUrl + ')'
         let hot = (await Main.reqCommentHot(everyDaySong.value[index.value].id,0,1)).data.hotComments
         console.log(hot);
         if(hot.length == 0)hotMessage.value = '暂无热评'

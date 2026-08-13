@@ -189,7 +189,7 @@ import { numberSimp } from '@renderer/utils/numberSimp' //数字修正
 import PromiseQueue from 'p-queue'
 import {
     onActivated, onMounted, ref, shallowRef, provide, toRef, watch, Ref, nextTick,
-    toRefs, reactive, getCurrentInstance, ComponentInternalInstance, inject, ShallowRef
+    toRefs, reactive, inject, ShallowRef
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useMain, useBasicApi, useMainMenu, useGlobalVar,useNM } from '@renderer/store';
@@ -205,7 +205,6 @@ const router = useRouter();
 const MainMenu = useMainMenu();
 const globalVar = useGlobalVar();
 const NM = useNM()
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const ifNM = ref(false)
 if(localStorage.getItem('NMcookie'))ifNM.value = true
 const changeTag = (index: number) => {

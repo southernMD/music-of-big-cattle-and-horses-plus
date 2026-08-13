@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted,toRef,watch,getCurrentInstance,ComponentInternalInstance,nextTick } from 'vue';
+import { onMounted,toRef,watch,ref,nextTick } from 'vue';
 import { hsl } from '../utils/hsl'
 import {getPxColor} from '../utils/getCanvasColor'
 import {useMainMenu,useGlobalVar} from '@renderer/store'
@@ -25,29 +25,34 @@ let flagC = toRef(MainMenu,'colorBlock')
 let clickX: number;
 let _that: HTMLElement;
 let which: HTMLElement;
-const $el = getCurrentInstance() as ComponentInternalInstance 
+const btnT = ref<HTMLElement>()
+const btnB = ref<HTMLElement>()
 let Hue: HTMLCanvasElement;
 let SMask: HTMLCanvasElement
 
 watch(flagC,()=>{
     nextTick(()=>{
-        const bT = $el.refs.btnT as HTMLElement
-        const bB = $el.refs.btnB as HTMLElement
-        if(flagC.value !== 'Other' && !flagC.value.startsWith('.')){
-            localStorage.setItem('baseT','0')
-            localStorage.setItem('baseB','0')
-            bT.style.left = 0 + 'px'
-            bB.style.left = 0 + 'px'
+        const bT = btnT.value as HTMLElement
+        const bB = btnB.value as HTMLElement
+        if (bT && bB) {
+            if(flagC.value !== 'Other' && !flagC.value.startsWith('.')){
+                localStorage.setItem('baseT','0')
+                localStorage.setItem('baseB','0')
+                bT.style.left = 0 + 'px'
+                bB.style.left = 0 + 'px'
+            }
         }
     })
 
 },{immediate:true})
 
 onMounted(()=>{
-    const bT = $el.refs.btnT as HTMLElement
-    const bB = $el.refs.btnB as HTMLElement
-    bT.style.left = localStorage.getItem('baseT') + 'px'
-    bB.style.left = localStorage.getItem('baseB') + 'px'
+    const bT = btnT.value as HTMLElement
+    const bB = btnB.value as HTMLElement
+    if (bT && bB) {
+        bT.style.left = localStorage.getItem('baseT') + 'px'
+        bB.style.left = localStorage.getItem('baseB') + 'px'
+    }
 })
 
 const beginMove = (e: MouseEvent) => {

@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { useMain, useGlobalVar } from '@renderer/store';
 import { downloadMusic } from '@renderer/utils/downloadMusic';
-import { inject, ShallowRef, toRef, getCurrentInstance, ComponentInternalInstance, ref, nextTick, watch, ComponentPublicInstance } from 'vue';
+import { inject, ShallowRef, toRef, ref, nextTick, watch, ComponentPublicInstance } from 'vue';
 import PromiseQueue from 'p-queue';
 import LoadingLineMusic from './LoadingLineMusic/index.vue'
 const Main = useMain()

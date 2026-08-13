@@ -6,13 +6,12 @@
 </template>
 
 <script lang='ts' setup>
-import {computed, toRef,ref,getCurrentInstance,ComponentInternalInstance} from 'vue'
+import {computed, toRef,ref} from 'vue'
 import {useMain} from '@renderer/store/index'
 import { useRouter } from 'vue-router';
 const $router = useRouter()
-const $el = getCurrentInstance() as ComponentInternalInstance
 const Main = useMain()
-defineProps<{
+const props = defineProps<{
     url:string;
     id:number;
     name:string
@@ -29,31 +28,27 @@ let playingPrivileges = toRef(Main,'playingPrivileges');
 let detailStatus = toRef(Main, "detailStatus");
 
 let message = computed<string>(()=>{
-    if($el.props){
-        if($el.props.type == 'playList')return $el.props.name as unknown as string
-        else if($el.props.type == 'song'){
-            let str:string='';
-            let arr:[any] = $el.props.artists as unknown as [any]
-            str+= $el.props.name+ ' -'
-            arr.forEach((obj)=>{
-                str+=' ' +obj.name
-            })
-            return str
-        }else return ''
-    }else{
-        return ''
-    }
+    if(props.type == 'playList') return props.name
+    else if(props.type == 'song'){
+        let str:string='';
+        let arr = props.artists || []
+        str+= props.name+ ' -'
+        arr.forEach((obj)=>{
+            str+=' ' +obj.name
+        })
+        return str
+    } else return ''
 })
 
 let flag = ref(true)
 const gotoDetail = async()=>{
-    if($el.props.type == 'song' && flag.value){
+    if(props.type == 'song' && flag.value){
         flag.value = false;
         let t = setTimeout(()=>{
             flag.value = true
             clearTimeout(t);
         },1000)
-        playingId.value = $el.props.id as unknown as number
+        playingId.value = props.id
         // playingList.value.splice(playingindex.value - 1,0,'d')
         let result = (await Main.reqSongDetail([playingId.value])).data;
         playingList.value.splice(playingindex.value,0,result.songs[0])
@@ -61,7 +56,7 @@ const gotoDetail = async()=>{
         playingindex.value++;
         Main.beforePlayListId = -1
         Main.playStatus = 'play'
-    }else if($el.props.type == 'playList' && flag.value){
+    }else if(props.type == 'playList' && flag.value){
         flag.value = false;
         let t = setTimeout(()=>{
             flag.value = true
@@ -71,7 +66,7 @@ const gotoDetail = async()=>{
         $router.push({
             name:'songPlaylist',
             query:{
-                id:$el.props.id as number,my:'false',type:'歌单'
+                id:props.id,my:'false',type:'歌单'
             }
         })
     }

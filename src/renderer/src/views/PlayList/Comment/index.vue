@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef, watch, Ref, onMounted, getCurrentInstance, ComponentInternalInstance, computed, provide } from 'vue'
+import { ref, toRef, watch, Ref, onMounted, computed, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMain, useNM } from '@renderer/store'
 import Loading from '@renderer/ImperativeComponents/Loading/Loading'
@@ -25,8 +25,6 @@ import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const Main = useMain()
 const NM = useNM()
 const $route = useRoute()
-const $el = getCurrentInstance() as ComponentInternalInstance
-console.log($el);
 
 let commitMessage = ref('')
 const getText = (message: string) => {

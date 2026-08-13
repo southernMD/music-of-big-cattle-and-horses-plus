@@ -146,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import {ComponentInternalInstance, Ref, getCurrentInstance, nextTick, onMounted, provide, ref, toRaw, watch} from 'vue'
+import { Ref, nextTick, onMounted, provide, ref, toRaw, watch} from 'vue'
 import {useMain,useGlobalVar, useBasicApi,useNM} from '@renderer/store'
 import { Timeago2 } from '@renderer/utils/dayjs'
 import CommentList from './CommentList.vue'

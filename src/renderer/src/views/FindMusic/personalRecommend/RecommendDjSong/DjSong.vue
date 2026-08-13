@@ -1,7 +1,7 @@
 <template>
     <div class="djSong">
         <div class="bk">
-            <div class="img" ref="image" :class="{noDrag:!Main.dragMouse}">
+            <div class="img" :class="{noDrag:!Main.dragMouse}" :style="{ backgroundImage: 'url(' + url + ')' }">
                 <div class="play">
                     <i class="iconfont icon-gf-play"></i>
                 </div>
@@ -28,12 +28,10 @@
 </template>
 
 <script lang='ts' setup>
-import { getCurrentInstance, onMounted, ComponentInternalInstance } from 'vue';
 import { useMain ,useGlobalVar} from '@renderer/store'
 import { numberSimp } from '@renderer/utils/numberSimp'
 import { dayjsMMSS } from '@renderer/utils/dayjs'
 const Main = useMain()
-const $el = getCurrentInstance() as ComponentInternalInstance
 const globalVar = useGlobalVar()
 defineProps<{
     song: {
@@ -49,12 +47,6 @@ defineProps<{
     listenerCount: number
     duration: number
 }>()
-
-onMounted(() => {
-    let pic = $el.refs.image as HTMLElement
-    pic.style.backgroundImage = 'url(' + $el.props.url + ')'
-})
-
 </script>
 
 <style lang='less' scoped>

@@ -6,26 +6,26 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, getCurrentInstance, ComponentInternalInstance,onUnmounted,Ref,toRef,watch,ref } from 'vue';
-let $el = getCurrentInstance() as ComponentInternalInstance
-let time:any
+import { onMounted, onUnmounted, watch, ref } from 'vue';
 
-defineProps<{
+const props = defineProps<{
     message:string
 }>()
 
-
-// let tMessage = toRef($el.props,'message')
+const smallTips = ref<HTMLElement>()
+let time:any
 
 let $emit = defineEmits(['close'])
 onMounted(() => {
-    let dom = $el.refs.smallTips as HTMLElement
-    let father = dom.parentNode as HTMLElement
-    father.style.position = 'relative'
+    let dom = smallTips.value
+    if (dom) {
+        let father = dom.parentNode as HTMLElement
+        father.style.position = 'relative'
+    }
     time = setTimeout(()=>{
         $emit('close')
     },1500)
-    watch($el.props,()=>{
+    watch(props,()=>{
         clearTimeout(time)
         time = setTimeout(()=>{
             $emit('close')

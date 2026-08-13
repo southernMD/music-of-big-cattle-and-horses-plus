@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getCurrentInstance, onMounted, toRef ,nextTick} from 'vue';
+import { onMounted, toRef ,nextTick} from 'vue';
 import { getPxColor } from '@renderer/utils/getCanvasColor'
 import { applyTheme } from '@renderer/hooks/useColor'
 import icon from '@renderer/assets/icon.png'
@@ -16,8 +16,7 @@ import pickColorOther from '@renderer/assets/pickColorOther.json'
 import {useMainMenu,useGlobalVar} from '@renderer/store'
 let MainMenu = useMainMenu();
 let globalVar = useGlobalVar()
-let $el = getCurrentInstance()
-defineProps<{
+const props = defineProps<{
     bkColor?: string,
     index:string
     other?:boolean
@@ -30,20 +29,20 @@ let ctx: CanvasRenderingContext2D
 let flagC = toRef(MainMenu,'colorBlock')
 onMounted(() => {
     nextTick(()=>{
-        canvas = document.querySelector(`#canvas${$el?.props.index}`) as HTMLCanvasElement
+        canvas = document.querySelector(`#canvas${props.index}`) as HTMLCanvasElement
         ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-        if($el?.props.other){
+        if(props.other){
             let ctx = canvas.getContext('2d') as CanvasRenderingContext2D
             const pickColorOtherUint8 = new Uint8ClampedArray(pickColorOther)
             const newImageData = ctx.createImageData(Math.sqrt(pickColorOtherUint8.length / 4),Math.sqrt(pickColorOtherUint8.length / 4));
             newImageData.data.set(pickColorOtherUint8)
             ctx.putImageData(newImageData, 0, 0);
         }else{
-            ctx.fillStyle = $el?.props.bkColor as string
+            ctx.fillStyle = props.bkColor as string
             ctx.fillRect(0, 0, canvas.width, canvas.height)
         }
-        if(!$el?.props.border){
-            let dom = document.querySelector(`#dom${$el?.props.index}`) as HTMLElement
+        if(!props.border){
+            let dom = document.querySelector(`#dom${props.index}`) as HTMLElement
             dom.style.border = 'none'
         }
     })
@@ -51,9 +50,9 @@ onMounted(() => {
 })
 
 const showColor = () => {
-    if($el?.props.other){   //彩色
-        flagC.value = $el?.props.index as string
-    }else if($el?.props.index == '1'){  //白色
+    if(props.other){   //彩色
+        flagC.value = props.index as string
+    }else if(props.index == '1'){  //白色
         MainMenu.iconSrc = iconRed
 
         // 使用白色主题类
@@ -73,7 +72,7 @@ const showColor = () => {
         localStorage.setItem('MainMenu',`0,0,0,.7`)
         localStorage.setItem('MainMenuHover',`255,255,255`)
         localStorage.setItem('colorBlock','1');
-        flagC.value = $el?.props.index as string
+        flagC.value = props.index as string
         MainMenu.primaryColor = 'rgb(236,65,65)'
     }else{
         MainMenu.iconSrc = icon
@@ -93,7 +92,7 @@ const showColor = () => {
 
         // 使用新的主题应用函数设置自定义颜色
         // debugger
-        applyTheme($el?.props.index,globalVar.oneself === 1,{
+        applyTheme(props.index,globalVar.oneself === 1,{
             primaryColor: `rgb(${arr[0]}, ${arr[1]}, ${arr[2]})`,
             broundColor: `rgba(${arr[0]}, ${arr[1]}, ${arr[2]},${globalVar.oneself ? '.8' : '1'})`,
             MainTitle: `rgb(255, 255, 255)`,
@@ -106,8 +105,8 @@ const showColor = () => {
         localStorage.setItem('MainTitle',`255, 255, 255`)
         localStorage.setItem('MainMenu',`255, 255, 255,.7`)
         localStorage.setItem('MainMenuHover',`255, 255, 255`)
-        localStorage.setItem('colorBlock',`${$el?.props.index}`);
-        flagC.value = $el?.props.index as string
+        localStorage.setItem('colorBlock',`${props.index}`);
+        flagC.value = props.index as string
         MainMenu.primaryColor = `rgb(${arr[0]}, ${arr[1]}, ${arr[2]})`
     }
 

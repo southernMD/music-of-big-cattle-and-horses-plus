@@ -5,11 +5,10 @@
 </template>
 
 <script lang='ts' setup>
-import { getCurrentInstance, onMounted, ComponentInternalInstance, toRef, watch } from 'vue';
+import { onMounted, ref, toRef, watch } from 'vue';
 import { useMain } from '@renderer/store';
 const Main = useMain()
-const $el = getCurrentInstance() as ComponentInternalInstance
-defineProps<{
+const props = defineProps<{
     width?: string
     height?: string
     left?: string
@@ -21,36 +20,36 @@ defineProps<{
     option?:string
 }>()
 
+const floatTag = ref<HTMLElement>()
 const $emit = defineEmits(['write','goToTop'])
 
 const methods = ()=>{
-    if($el.props.option == 'write')$emit('write');
-    else if($el.props.option == 'goToTop')$emit('goToTop');
+    if(props.option == 'write')$emit('write');
+    else if(props.option == 'goToTop')$emit('goToTop');
 }
 
 let detailStatus = toRef(Main, 'detailStatus')
 
-
-
 watch(detailStatus, () => {
     if (detailStatus.value === 'open') {
-        let dom = $el.refs.floatTag as HTMLElement
-        console.log($el.props.align); 
-        dom.style.width = String($el.props.width)
-        dom.style.height = String($el.props.height)
-        dom.style.left = String($el.props.left)
-        dom.style.right = String($el.props.right)
-        dom.style.bottom = String($el.props.bottom)
-        dom.style.top = String($el.props.top)
-        dom.style.fontSize = String($el.props.size)
-        if ($el.props.align == 'center') {
-            dom.style.left = '0px'
-            dom.style.right = '0px'
-            dom.style.margin = '0 auto';
+        let dom = floatTag.value
+        if (dom) {
+            console.log(props.align); 
+            dom.style.width = String(props.width)
+            dom.style.height = String(props.height)
+            dom.style.left = String(props.left)
+            dom.style.right = String(props.right)
+            dom.style.bottom = String(props.bottom)
+            dom.style.top = String(props.top)
+            dom.style.fontSize = String(props.size)
+            if (props.align == 'center') {
+                dom.style.left = '0px'
+                dom.style.right = '0px'
+                dom.style.margin = '0 auto';
+            }
         }
     }
 })
-
 </script>
 
 

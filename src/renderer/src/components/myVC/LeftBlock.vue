@@ -31,7 +31,7 @@
 import Loading from '@renderer/ImperativeComponents/Loading/Loading';
 import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 import { useMain,useGlobalVar, useBasicApi,useNM } from '@renderer/store'
-import { toRef, watch, ref, getCurrentInstance,ComponentInternalInstance } from 'vue';
+import { toRef, watch, ref } from 'vue';
 // import $route from '@/router'
 import { useRouter,useRoute } from 'vue-router';
 const $router = useRouter();

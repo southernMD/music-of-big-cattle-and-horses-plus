@@ -119,11 +119,11 @@
             </div>
             <div class="bottom" :class="{ 'bottom-oneself': globalVar.oneself == 1 }">
                 <div class="number-before" v-show="playingList.length != 0">{{ nowTime }}</div>
-                <div class="audio-line" ref="audio-line" :class="{ 'audio-line-oneself': globalVar.oneself == 1 }"
+                <div class="audio-line" ref="audioLine" :class="{ 'audio-line-oneself': globalVar.oneself == 1 }"
                     @click="clickAudioPlay">
-                    <div class="line-loading" ref="line-loading" :class="{ 'line-loading-oneself': globalVar.oneself }"
+                    <div class="line-loading" ref="lineLoading" :class="{ 'line-loading-oneself': globalVar.oneself }"
                         v-show="playingList.length"></div>
-                    <div class="line-play" ref="line-play" v-show="playingList.length"></div>
+                    <div class="line-play" ref="linePlay" v-show="playingList.length"></div>
                     <div class="block" ref="block" v-show="playingList.length" @mousedown="audioPlay"></div>
                 </div>
                 <div class="number-end" v-show="playingList.length != 0">{{ endTime }}</div>
@@ -244,7 +244,7 @@
 
 <script lang="ts" setup>
 import {
-    ref, onMounted, getCurrentInstance, ComponentInternalInstance,
+    ref, onMounted,
     Ref, nextTick, toRef, watch, shallowRef, provide, inject
 } from 'vue'
 import { dayjsSMMSS } from '@renderer/utils/dayjs';
@@ -265,10 +265,18 @@ import { bufferToBase64 } from '@renderer/utils/arrayBufferToBase64.js';
 
 const playSpeedRef = ref(null)
 const playLevelRef = ref(null)
+const top = ref<HTMLElement | null>(null)
+const lineLoading = ref<HTMLElement | null>(null)
+const linePlay = ref<HTMLElement | null>(null)
+const block = ref<HTMLElement | null>(null)
+const audioLine = ref<HTMLElement | null>(null)
+const liangRef = ref<InstanceType<typeof HTMLElement>>()
+const WriteCommitRef = ref()
+const WriteCommitRef2 = ref()
+const imgRef = ref<InstanceType<typeof HTMLElement>>()
 
 let myWorker:null | Worker = null
 let myWorkerFull:null | Worker = null
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const Main = useMain();
 const globalVar = useGlobalVar();
 const BasicApi = useBasicApi()
@@ -795,10 +803,10 @@ watch(playingId, () => {
 })
 
 onMounted(async () => {
-    loadingLine = $el.refs['line-loading'] as HTMLElement
-    playLine = $el.refs['line-play'] as HTMLElement
-    playBall = $el.refs['block'] as HTMLElement
-    line = $el.refs['audio-line'] as HTMLElement
+    loadingLine = lineLoading.value as HTMLElement
+    playLine = linePlay.value as HTMLElement
+    playBall = block.value as HTMLElement
+    line = audioLine.value as HTMLElement
     let timeValueFlag = true
     audioRef.value!.addEventListener('timeupdate', () => {
         if (audioRef.value!.currentTime >= 1 && timeValueFlag) {
@@ -940,16 +948,16 @@ const audioPlay = (e: MouseEvent) => {
     clickX = e.pageX;
     window.addEventListener('mousemove', audioPlayMoving)
     window.addEventListener('mouseup', audioPlayEnd)
-    playLine = $el.refs['line-play'] as HTMLElement
+    playLine = linePlay.value as HTMLElement
     baseWidth = playLine.offsetWidth
 }
 
 const audioPlayMoving = (e: MouseEvent) => {
     if (audioPlayFlag.value) {
         let x = e.pageX
-        playLine = $el.refs['line-play'] as HTMLElement
-        playBall = $el.refs['block'] as HTMLElement
-        line = $el.refs['audio-line'] as HTMLElement
+        playLine = linePlay.value as HTMLElement
+        playBall = block.value as HTMLElement
+        line = audioLine.value as HTMLElement
         let t;
         if (x > clickX) {
             //右移
@@ -980,7 +988,7 @@ const audioPlayMoving = (e: MouseEvent) => {
 
 let suo = ref(true)
 const audioPlayEnd = () => {
-    playLine = $el.refs['line-play'] as HTMLElement
+    playLine = linePlay.value as HTMLElement
     let wh = playLine.style.width
     audioRef.value!.currentTime = Number(wh.substring(0, wh.length - 1)) * audioRef.value!.duration * 0.01
     if(globalVar.setting.opencanvas){
@@ -1028,9 +1036,9 @@ const clickAudioPlay = (e: MouseEvent) => {
     if (loadingCanSeeUrl) return
     if (playingList.value.length) {
         if (suo.value) {
-            playLine = $el.refs['line-play'] as HTMLElement
-            playBall = $el.refs['block'] as HTMLElement
-            line = $el.refs['audio-line'] as HTMLElement
+            playLine = linePlay.value as HTMLElement
+            playBall = block.value as HTMLElement
+            line = audioLine.value as HTMLElement
             let wh = e.offsetX
             playBall.style.left = wh - 4.5 + 'px'
             playLine.style.width = wh / line.offsetWidth * 100 + '%'
@@ -1456,7 +1464,7 @@ const stopPlayAudip = () => {
         // Main.playStatus = 'stop'
         lockPlayBtn.value = true
         nextTick(() => {
-            let dom = $el.refs.top as HTMLElement
+            let dom = top.value as HTMLElement
             if (globalVar.oneself == 1) {
                 dom.classList.add('stop-oneself')
             } else {
@@ -1475,7 +1483,7 @@ const stopPlayAudip = () => {
         // Main.playStatus = 'play'
         lockPlayBtn.value = false
         nextTick(() => {
-            let dom = $el.refs.top as HTMLElement
+            let dom = top.value as HTMLElement
             if (globalVar.oneself == 1) {
                 dom.classList.add('can-oneself')
             } else {
@@ -1493,7 +1501,7 @@ const stopPlayAudip = () => {
 }
 const oneself = toRef(globalVar, 'oneself')
 watch(oneself, () => {
-    let dom = $el.refs.top as HTMLElement
+    let dom = top.value as HTMLElement
     if (oneself.value == 0) {
         if (dom.classList.contains('can-oneself')) {
             dom.classList.remove('can-oneself')
@@ -1691,7 +1699,6 @@ const specialCharactersMap = new Map([
 ]);
 
 //按键监视
-const liangRef = ref<InstanceType<typeof HTMLElement>>()
 const keyDownWatch = (e: KeyboardEvent) => {
     const activeEl = document.activeElement;
     if (!activeEl || activeEl.tagName.toLowerCase() === 'input') return
@@ -2022,7 +2029,6 @@ const goHandSong = (e:MouseEvent)=>{
 
 //操作
 const startDialogFlag = ref(false)
-const imgRef = ref<InstanceType<typeof HTMLElement>>()
 const todoHandle = (index)=>{
     if(playingPrivileges.value[Main.playingindex - 1]?.maxBrLevel != 'DJ'){
         if(index == 0){
@@ -2265,7 +2271,6 @@ const confirm = async()=>{
     }
 
 }
-const WriteCommitRef = ref()
 const cancel = ()=>{
     senddongtaiFlag.value = false
     WriteCommitRef.value.textarea = ''
@@ -2425,7 +2430,6 @@ const openCommentDialog = ()=>{
   WriteCommitRef2.value.getFocus()
 }
 
-const WriteCommitRef2 = ref()
 let commitMessage = ref('')
 const getText = (message:string)=>{
     commitMessage.value = message

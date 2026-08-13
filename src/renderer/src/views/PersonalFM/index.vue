@@ -91,7 +91,7 @@
 </template>
 
 <script lang='ts' setup>
-import { onActivated, ref, Ref, getCurrentInstance, ComponentInternalInstance, nextTick, watch, toRef } from 'vue'
+import { onActivated, ref, Ref, nextTick, watch, toRef } from 'vue'
 import { useMain, useGlobalVar,useNM } from '@renderer/store'
 import { throttle } from 'lodash'
 import { useRouter } from 'vue-router'
@@ -100,8 +100,12 @@ import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const Main = useMain()
 const $router = useRouter()
 const globalVar = useGlobalVar()
-const $el = getCurrentInstance() as ComponentInternalInstance
 const NM = useNM()
+
+const imgs = ref<HTMLElement>()
+const imgL = ref<HTMLElement>()
+const imgXL = ref<HTMLElement>()
+const imgXXL = ref<HTMLElement>()
 let FMplayFlag = ref(false)
 let currentTime = toRef(globalVar, 'currentTime')
 let lyricOffset = toRef(globalVar, 'lyricOffset')
@@ -155,23 +159,24 @@ onActivated(() => {
         playingList.value = []
         playingPrivileges.value = []
         nextTick(() => {
-            let imgXXL = $el.refs.imgXXL as HTMLElement
-            console.log(imgXXL);
-            console.log(Main.FMList[FMindex.value].al.picUrl);
-            imgXXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
+            if (imgXXL.value) {
+                imgXXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
+            }
             addPlay()
             changePlaying()
         })
     } else if (Main.playStatus == 'play' && Main.songType != 'FM') {
         FMplayFlag.value = false;
         one.value = true;
-        let imgXXL = $el.refs.imgXXL as HTMLElement
-        let imgXL = $el.refs.imgXL as HTMLElement
-        if (FMindex.value == 0) {
-            imgXXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
-        } else {
-            imgXXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
-            imgXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 1]?.al?.picUrl + ')'
+        if (imgXXL.value) {
+            if (FMindex.value == 0) {
+                imgXXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
+            } else {
+                imgXXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
+                if (imgXL.value) {
+                    imgXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 1]?.al?.picUrl + ')'
+                }
+            }
         }
         dataTxt.value = `单曲:${Main.FMList[FMindex.value]!.name} - ${Main.FMList[FMindex.value]!.ar.map(it=>it.name).join('/')}`
     }
@@ -216,19 +221,17 @@ const play = () => {
 //替换播放
 const dataTxt = ref('')
 watch(FMindex, async (newValue, oldValue) => {
-    let imgs = $el.refs.imgs as HTMLElement
-    let imgXXL = $el.refs.imgXXL as HTMLElement
-    let imgXL = $el.refs.imgXL as HTMLElement
-    let imgL = $el.refs.imgL as HTMLElement
     if (newValue > oldValue) {
-        imgXXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value]?.al?.picUrl + ')'
-        imgXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 1]?.al?.picUrl + ')'
-        imgL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 2]?.al?.picUrl + ')'
-        imgs.classList.add('active')
-        let t = setTimeout(() => {
-            imgs.classList.remove('active')
-            clearTimeout(t);
-        }, 200)
+        if (imgXXL.value) imgXXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value]?.al?.picUrl + ')'
+        if (imgXL.value) imgXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 1]?.al?.picUrl + ')'
+        if (imgL.value) imgL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 2]?.al?.picUrl + ')'
+        if (imgs.value) {
+            imgs.value.classList.add('active')
+            let t = setTimeout(() => {
+                imgs.value?.classList.remove('active')
+                clearTimeout(t);
+            }, 200)
+        }
         if (FMindex.value == Main.FMList.length - 2) {
             await Main.reqPersonal_fm()
             //    let Need = 
@@ -240,13 +243,13 @@ watch(FMindex, async (newValue, oldValue) => {
         }
         changePlaying()
     } else {
-        imgs.classList.add('active-r')
+        if (imgs.value) imgs.value.classList.add('active-r')
         let t = setTimeout(() => {
             clearTimeout(t);
-            imgXXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
-            imgXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 1]?.al?.picUrl + ')'
-            imgL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 2]?.al?.picUrl + ')'
-            imgs.classList.remove('active-r')
+            if (imgXXL.value) imgXXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
+            if (imgXL.value) imgXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 1]?.al?.picUrl + ')'
+            if (imgL.value) imgL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value - 2]?.al?.picUrl + ')'
+            if (imgs.value) imgs.value.classList.remove('active-r')
         }, 200)
         changePlaying()
     }
@@ -352,14 +355,14 @@ const rubbish = async () => {
         playingList.value.splice(Main.playingindex - 1, 1)
         playingPrivileges.value.splice(Main.playingindex - 1, 1)
         playingId.value = Main.FMList[FMindex.value].id
-        let imgs = $el.refs.imgs as HTMLElement
-        let imgXXL = $el.refs.imgXXL as HTMLElement
-        imgXXL.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
-        imgs.classList.add('active')
-        let t = setTimeout(() => {
-            imgs.classList.remove('active')
-            clearTimeout(t);
-        }, 200)
+        if (imgXXL.value) imgXXL.value.style.backgroundImage = 'url(' + Main.FMList[FMindex.value].al.picUrl + ')'
+        if (imgs.value) {
+            imgs.value.classList.add('active')
+            let t = setTimeout(() => {
+                imgs.value?.classList.remove('active')
+                clearTimeout(t);
+            }, 200)
+        }
         if (FMindex.value == Main.FMList.length - 2) {
             await Main.reqPersonal_fm()
             //    let Need = 

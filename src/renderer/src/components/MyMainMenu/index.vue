@@ -39,7 +39,7 @@
             </transition-group>
         </div>
         <div class="right">
-            <canvas ref="downloading" v-show="loadingIcon" width="22" height="22" @click="gotoDowload"></canvas>
+            <canvas ref="downloadingCanvasRef" v-show="loadingIcon" width="22" height="22" @click="gotoDowload"></canvas>
             <div v-show="!songMenu" class="user" @click="loginOrPerson" ref="user">
                 <el-image draggable="false" style="width:30px; height: 30px" :src="BasicApi.profile?.avatarUrl"
                     :class="{ noDrag: !Main.dragMouse }">
@@ -87,7 +87,7 @@ import { Component, ref, Ref, toRef, watch, defineAsyncComponent, nextTick, watc
 import MyDialog from '@renderer/components/myVC/MyDialog.vue';
 // import { useElectronToApp, useMainMenu, useBasicApi, useMain,useGlobalVar } from '@renderer/store'  //pinia
 import { useMainMenu, useMain, useGlobalVar, useBasicApi } from '@renderer/store'
-import { onMounted, getCurrentInstance, ComponentInternalInstance } from 'vue';
+import { onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import icon from '@renderer/assets/icon.png'
 import iconRed from '@renderer/assets/iconRed.png'
@@ -99,11 +99,15 @@ import LoadingPageImper from '@renderer/ImperativeComponents/LoadingPage';
 // const LoginPage = defineAsyncComponent(() => import('../LoginPage.vue'))
 // const ElectronToApp = useElectronToApp();
 const searchInputRef = ref()
+const header = ref<HTMLElement>()
+const downloadingCanvasRef = ref<HTMLCanvasElement>()
+const user = ref<HTMLElement>()
+const other = ref<HTMLElement>()
+
 const BasicApi = useBasicApi();
 const MainMenu = useMainMenu();
 const Main = useMain()
 const globalVar = useGlobalVar();
-const $el = getCurrentInstance() as ComponentInternalInstance;
 const $router = useRouter();
 const $route = useRoute();
 let model: Ref<boolean> = toRef(MainMenu, 'model')
@@ -117,7 +121,7 @@ let flagMessage: Ref<boolean> = ref(false)
 let flagSkin: Ref<boolean> = ref(false)
 let iconSrc = toRef(MainMenu, 'iconSrc')
 
-defineProps<{
+const props = defineProps<{
     songMenu?: boolean
     changefontColor?: boolean
     scrollY?: number
@@ -158,13 +162,13 @@ watch(()=>[MainMenu.width,MainMenu.Height],()=>{
 
 const prev = () => {
     if ($route.name == 'moreComment' && +$route.query.type! == 0 && Main.songType != 'FM' && Main.playing == +$route.query.id!) Main.detailStatus = 'open'
-    if ($el.props.songMenu) Main.detailStatus = 'close'
+    if (props.songMenu) Main.detailStatus = 'close'
     else $router.go(-1)
 }
 const next = () => {
     console.log(window.history.length);
     if ($route.name == 'moreComment' && +$route.query.type! == 0 && Main.songType != 'FM' && Main.playing == +$route.query.id!) Main.detailStatus = 'open'
-    if ($el.props.songMenu) Main.detailStatus = 'close'
+    if (props.songMenu) Main.detailStatus = 'close'
     else $router.go(1)
 }
 //退出
@@ -178,7 +182,7 @@ const zhonghua = () => {
     window.electron.ipcRenderer.send('to-middle')
     if (flagMessage.value) {
         let t = setTimeout(() => {
-            let dom: HTMLElement = $el.refs.user as HTMLElement
+            let dom: HTMLElement = user.value as HTMLElement
             reSetLeft(dom)
             clearTimeout(t)
         }, 100)
@@ -191,7 +195,7 @@ const zuidahua = () => {
     window.electron.ipcRenderer.send('to-big')
     if (flagMessage.value) {
         let t = setTimeout(() => {
-            let dom: HTMLElement = $el.refs.user as HTMLElement
+            let dom: HTMLElement = user.value as HTMLElement
             reSetLeft(dom)
             clearTimeout(t)
         }, 100)
@@ -261,15 +265,17 @@ onMounted(() => {
     } else {
         MainMenu.iconSrc = icon
     }
-    const header: HTMLElement = $el.refs.header as HTMLElement
-    MainMenu.$patch({
-        Height: header.offsetHeight,
-        width: header.offsetWidth
-    })
-    if (header.offsetWidth > 1200) {
-        model.value = true
-    } else {
-        model.value = false
+    const headerDom = header.value as HTMLElement
+    if (headerDom) {
+        MainMenu.$patch({
+            Height: headerDom.offsetHeight,
+            width: headerDom.offsetWidth
+        })
+        if (headerDom.offsetWidth > 1200) {
+            model.value = true
+        } else {
+            model.value = false
+        }
     }
 })
 
@@ -296,7 +302,7 @@ const loginOrPerson = async (e: any): Promise<any> => {
     } else {
         flagMessage.value = !flagMessage.value
         flagSkin.value = false
-        let dom: HTMLElement = $el.refs.user as HTMLElement
+        let dom: HTMLElement = user.value as HTMLElement
         reSetLeft(dom)
     }
 }
@@ -320,7 +326,7 @@ const reSetLeft = (dom: HTMLElement) => {
 const changeSkin = () => {
     flagSkin.value = !flagSkin.value
     flagMessage.value = false
-    let dom: HTMLElement = $el.refs.other as HTMLElement
+    let dom: HTMLElement = other.value as HTMLElement
     reSetLeft(dom)
 }
 let animationId;
@@ -332,12 +338,12 @@ let endAngle2 = Math.PI * 16 / 9 + Math.PI / 2;
 const radius = 10;
 const lineWidth = 1;
 const speed = 0.05;
-let canvas 
-let ctx 
-let strokeStyle 
+let ctx: CanvasRenderingContext2D
+let strokeStyle: string
 onMounted(() => {
-    canvas = $el.refs.downloading as HTMLCanvasElement
-    ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    if (downloadingCanvasRef.value) {
+        ctx = downloadingCanvasRef.value.getContext('2d') as CanvasRenderingContext2D
+    }
 
     // 定义圆弧的半径、线宽、线条颜色等样式属性
     strokeStyle = document.documentElement.style.getPropertyValue('--primaryColor');
@@ -348,8 +354,8 @@ onMounted(() => {
 })
 // 绘制两段圆弧并旋转角度
 function drawStatic(){
-    const width = canvas.width
-    const height = canvas.height
+    const width = downloadingCanvasRef.value!.width
+    const height = downloadingCanvasRef.value!.height
     ctx.clearRect(0, 0, width, height);
 
     ctx.lineWidth = lineWidth;
@@ -504,6 +510,10 @@ const inputFn = ()=>{
 const inputRemove = ()=>{
     window.removeEventListener('keydown',onKeyDown)
 }
+
+defineExpose({
+    header
+})
 </script> 
 
 <style lang="less" scoped>

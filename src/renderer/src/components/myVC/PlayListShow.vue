@@ -1,5 +1,5 @@
 <template>
-    <div class="imgae" ref="imageS" :class="{
+    <div class="imgae" :class="{
         noDrag:!Main.dragMouse,
         start:i+1 > num
     }" @mouseover="showPlayButton" @mouseout="hidePlayButton" 
@@ -9,6 +9,7 @@
     :data-right="1"
     :data-txt="dataTxt"
     :data-pic="url"
+    :style="{ backgroundImage: url ? 'url(' + url + ')' : '' }"
     >
         <div class="play animate__animated" 
             :class="{
@@ -24,10 +25,9 @@
 </template>
 
 <script lang='ts' setup>
-import { getCurrentInstance, ref, toRef, watch, ComponentInternalInstance, nextTick, onMounted,Ref } from 'vue'
+import { ref, toRef } from 'vue'
 import { useMain } from '@renderer/store'
 const Main = useMain()
-const $el = getCurrentInstance() as ComponentInternalInstance
 
 let playButtonFlag = ref(false)
 
@@ -42,23 +42,8 @@ const props = defineProps<{
     dataType:string
     dataTxt:string
 }>()
-let url = toRef($el.props, 'url')
-let id = toRef($el.props, 'idr') as Ref<number>
-
-watch(url, () => {
-    nextTick(() => {
-        let image = $el.refs.imageS as HTMLElement
-        image.style.backgroundImage = 'url(' + url.value + ')'
-    })
-
-})
-
-onMounted(() => {
-    nextTick(() => {
-        let image = $el.refs.imageS as HTMLElement
-        image.style.backgroundImage = 'url(' + url.value + ')'
-    })
-})
+let url = toRef(props, 'url')
+let id = toRef(props, 'idr')
 
 const showPlayButton = () => {
     playButtonFlag.value = true
