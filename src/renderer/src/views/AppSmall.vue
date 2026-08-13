@@ -67,10 +67,7 @@ const globalVar = useGlobalVar()
 const BasicApi = useBasicApi();
 const NM = useNM();
 const MainPinia = useMain();
-const downloadQueue = shallowRef(new PromiseQueue({ concurrency: 3 }))
-
-
-provide('downloadQueue', downloadQueue)
+const downloadQueue = inject<ShallowRef<PromiseQueue>>('downloadQueue') as ShallowRef<PromiseQueue>
 onMounted(() => {
     globalVar.oneself = Number(localStorage.getItem('oneself')) as 0 | 1
 })

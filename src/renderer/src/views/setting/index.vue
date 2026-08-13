@@ -121,6 +121,13 @@
                 <div class="change" @click="changeDir">更改目录</div>
             </div>
         </div>
+        <div class="concurrency">
+            <div class="title">下载并发数：</div>
+            <div class="input-box">
+                <MyInputNumber v-model="globalVar.setting.concurrency" :min="1" :max="10" size="small" />
+                <span class="desc">同时下载的任务数，推荐范围 1-5（支持 1-10）</span>
+            </div>
+        </div>
     </div>
     <div class="lrc">
         <div class="title">歌词</div>
@@ -219,6 +226,7 @@ import {githubUpdate} from '@renderer/api/index'
 import {useGlobalVar, useMain} from '@renderer/store'
 import dropDown from '@renderer/components/myVC/dropDown.vue'
 import MyInput from '@renderer/components/myVC/MyInput.vue'
+import MyInputNumber from '@renderer/components/myVC/MyInputNumber.vue'
 import Loading from '@renderer/ImperativeComponents/Loading/Loading'
 const Main = useMain()
 const globalVar = useGlobalVar()
@@ -822,6 +830,25 @@ const searchUpdate = async()=>{
                     justify-content: center;
                     cursor: pointer;
                     border: 1px solid @split-line-color;
+                }
+            }
+        }
+        .concurrency{
+            margin-top: 15px;
+            .title{
+                font-size: 12px;
+                color: @small-font-color;
+                margin-bottom: 10px;
+                font-weight: bolder;
+            }
+            .input-box{
+                display: flex;
+                align-items: center;
+                
+                .desc{
+                    margin-left: 15px;
+                    font-size: 12px;
+                    color: @small-font-color;
                 }
             }
         }
