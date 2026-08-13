@@ -32,7 +32,7 @@
                     @keydown="goSearch" 
                     type="text" 
                     :class="{ noDragInput: !Main.dragMouse, dragMouseStyleCan: Main.dragMouse }">
-                    <Teleport to="#header" v-if="flagSearch">
+                    <Teleport :to="header" v-if="flagSearch && header">
                         <SearchTip @close="flagSearch = false" @changeFlag="flag = true" :listTop="listTop" ></SearchTip>
                     </Teleport>
                 </div>
@@ -480,10 +480,21 @@ const close = (done: () => void)=>{
 }
 const listTop = ref({allMatch:[]})
 watch(()=>searchKey.value,async()=>{
+    if (Main.detailStatus == 'open' && !props.songMenu) return
+    if (Main.detailStatus != 'open' && props.songMenu) return
     searchSuggestThrottle()
 })
+let lastSearchKey = ''
 const searchSuggest = async()=>{
-    listTop.value = (await Main.reqSearchSuggest(searchKey.value.trim(),'mobile')).allMatch
+    const trimmed = searchKey.value.trim()
+    if (!trimmed) {
+        listTop.value = { allMatch: [] } as any
+        lastSearchKey = ''
+        return
+    }
+    if (trimmed === lastSearchKey) return
+    lastSearchKey = trimmed
+    listTop.value = (await Main.reqSearchSuggest(trimmed,'mobile')).allMatch
 }
 const searchSuggestThrottle = throttle(searchSuggest,2000)
 const setting = ()=>{
