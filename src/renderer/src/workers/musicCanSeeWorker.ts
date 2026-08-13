@@ -9,7 +9,6 @@ function sendMusiceUintPiece() {
 }
 
 addEventListener('message', (event) => {
-    if(import.meta.env.MODE === 'development')return
     const url = event.data.url;
     const range:undefined | number = event.data.range
     const time:undefined | number = event.data.time ?? 1000
@@ -44,3 +43,5 @@ addEventListener('message', (event) => {
         })
     })
 })
+
+export {}

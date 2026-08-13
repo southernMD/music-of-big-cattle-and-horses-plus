@@ -54,7 +54,8 @@ export const createWindow = async (path?: string): Promise<BrowserWindow> => {
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       webgl: true,
-      sandbox: false
+      sandbox: false,
+      webSecurity: false
     }
   })
   mainWindow.setAppDetails({
